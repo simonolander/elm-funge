@@ -22,6 +22,10 @@ import Array exposing (Array)
 import History exposing (History)
 
 
+type alias LevelId =
+    String
+
+
 type alias WindowSize =
     { width : Int
     , height : Int
@@ -87,7 +91,8 @@ type alias Case =
 
 
 type alias Level =
-    { name : String
+    { id : LevelId
+    , name : String
     , cases : List Case
     , initialBoard : Board
     }
@@ -101,8 +106,8 @@ type alias LevelProgress =
 
 
 type GameState
-    = BrowsingLevels (List LevelProgress)
-    | Sketching LevelProgress
+    = BrowsingLevels
+    | Sketching LevelId
     | Executing Execution
 
 
@@ -120,7 +125,7 @@ type ExecutionMsg
 
 type Msg
     = Resize WindowSize
-    | SelectLevel LevelProgress
+    | SelectLevel LevelId
     | SketchMsg SketchMsg
     | ExecutionMsg ExecutionMsg
 

@@ -13,8 +13,8 @@ update msg model =
             , Cmd.none
             )
 
-        SelectLevel levelProgress ->
-            ( { model | gameState = Sketching levelProgress }, Cmd.none )
+        SelectLevel levelId ->
+            ( { model | gameState = Sketching levelId }, Cmd.none )
 
         SketchMsg sketchMsg ->
             ( model, Cmd.none )

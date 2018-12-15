@@ -14,7 +14,8 @@ init =
     let
         levels : List Level
         levels =
-            [ { name = "Hello world"
+            [ { id = "0c66f4a8-3ce6-442a-85cc-e688f6eaed0b"
+              , name = "Hello world"
               , cases = [ { input = [], output = [ 1 ] } ]
               , initialBoard = BoardUtils.empty 6 6
               }
@@ -39,7 +40,7 @@ init =
 
         gameState : GameState
         gameState =
-            BrowsingLevels levelProgresses
+            BrowsingLevels
 
         model : Model
         model =
