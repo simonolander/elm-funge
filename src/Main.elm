@@ -9,8 +9,8 @@ import Update
 import View
 
 
-init : ( Model, Cmd Msg )
-init =
+init : WindowSize -> ( Model, Cmd Msg )
+init windowSize =
     let
         levels : List Level
         levels =
@@ -34,10 +34,6 @@ init =
                         }
                     )
 
-        windowSize : WindowSize
-        windowSize =
-            { width = 0, height = 0 }
-
         gameState : GameState
         gameState =
             BrowsingLevels
@@ -56,22 +52,26 @@ init =
     ( model, cmd )
 
 
-main : Program () Model Msg
+main : Program WindowSize Model Msg
 main =
     Browser.element
         { view = View.view
-        , init = \_ -> init
+        , init = init
         , update = Update.update
-        , subscriptions =
-            always
-                (Sub.batch
-                    [ Browser.Events.onResize
-                        (\width height ->
-                            Resize
-                                { width = width
-                                , height = height
-                                }
-                        )
-                    ]
-                )
+        , subscriptions = subscriptions
         }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    let
+        windowSizeSubscription =
+            Browser.Events.onResize
+                (\width height ->
+                    Resize
+                        { width = width
+                        , height = height
+                        }
+                )
+    in
+    windowSizeSubscription
