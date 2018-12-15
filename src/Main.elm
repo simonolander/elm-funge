@@ -1,56 +1,76 @@
-module Main exposing (..)
+module Main exposing (main)
 
+import BoardUtils
 import Browser
-import Html exposing (Html, text, div, h1, img)
-import Html.Attributes exposing (src)
-
-
----- MODEL ----
-
-
-type alias Model =
-    {}
+import Browser.Events
+import History
+import Model exposing (..)
+import Update
+import View
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    let
+        levels : List Level
+        levels =
+            [ { name = "Hello world"
+              , cases = [ { input = [], output = [ 1 ] } ]
+              , initialBoard = BoardUtils.empty 6 6
+              }
+            ]
 
+        levelProgresses : List LevelProgress
+        levelProgresses =
+            levels
+                |> List.map
+                    (\level ->
+                        { level = level
+                        , boardSketch =
+                            { boardHistory = History.current level.initialBoard
+                            }
+                        , completed = False
+                        }
+                    )
 
+        windowSize : WindowSize
+        windowSize =
+            { width = 0, height = 0 }
 
----- UPDATE ----
+        gameState : GameState
+        gameState =
+            BrowsingLevels levelProgresses
 
+        model : Model
+        model =
+            { windowSize = windowSize
+            , levelProgresses = levelProgresses
+            , gameState = gameState
+            }
 
-type Msg
-    = NoOp
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
-
-
-
----- VIEW ----
-
-
-view : Model -> Html Msg
-view model =
-    div []
-        [ img [ src "/logo.svg" ] []
-        , h1 [] [ text "Your Elm App is working!" ]
-        ]
-
-
-
----- PROGRAM ----
+        cmd : Cmd Msg
+        cmd =
+            Cmd.batch []
+    in
+    ( model, cmd )
 
 
 main : Program () Model Msg
 main =
     Browser.element
-        { view = view
+        { view = View.view
         , init = \_ -> init
-        , update = update
-        , subscriptions = always Sub.none
+        , update = Update.update
+        , subscriptions =
+            always
+                (Sub.batch
+                    [ Browser.Events.onResize
+                        (\width height ->
+                            Resize
+                                { width = width
+                                , height = height
+                                }
+                        )
+                    ]
+                )
         }
