@@ -7,6 +7,7 @@ module Model exposing
     , ExecutionMsg(..)
     , ExecutionStep
     , GameState(..)
+    , Input
     , Instruction(..)
     , InstructionPointer
     , Level
@@ -14,6 +15,7 @@ module Model exposing
     , LevelProgress
     , Model
     , Msg(..)
+    , Output, Stack
     , Position
     , SketchMsg(..)
     , WindowSize
@@ -25,6 +27,18 @@ import History exposing (History)
 
 type alias LevelId =
     String
+
+
+type alias Input =
+    List Int
+
+
+type alias Stack =
+    List Int
+
+
+type alias Output =
+    List Int
 
 
 type alias WindowSize =
@@ -69,8 +83,9 @@ type alias InstructionPointer =
 type alias ExecutionStep =
     { board : Board
     , instructionPointer : InstructionPointer
-    , input : List Int
-    , output : List Int
+    , stack : Stack
+    , input : Input
+    , output : Output
     }
 
 
@@ -87,8 +102,8 @@ type alias BoardSketch =
 
 
 type alias Case =
-    { input : List Int
-    , output : List Int
+    { input : Input
+    , output : Output
     }
 
 
@@ -116,14 +131,16 @@ type GameState
 type SketchMsg
     = PlaceInstruction Position Instruction
     | SelectInstruction Instruction
-    | Undo
-    | Redo
-    | Execute
+    | SketchUndo
+    | SketchRedo
+    | SketchExecute
+    | SketchBackClicked
 
 
 type ExecutionMsg
-    = Step
-    | UndoExecutionStep
+    = ExecutionStepOne
+    | ExecutionUndo
+    | ExecutionBackClicked
 
 
 type Msg

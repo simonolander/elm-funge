@@ -1,6 +1,7 @@
 module Update exposing (update)
 
 import BoardUtils
+import ExecutionUtils
 import History
 import Model exposing (..)
 
@@ -23,89 +24,7 @@ update msg model =
                 Sketching levelId ->
                     case getLevelProgress levelId model of
                         Just levelProgress ->
-                            case sketchMsg of
-                                SelectInstruction instruction ->
-                                    let
-                                        newBoardSketch =
-                                            levelProgress.boardSketch
-                                                |> withSelectedInstruction (Just instruction)
-
-                                        newLevelProgress =
-                                            levelProgress |> withBoardSketch newBoardSketch
-
-                                        newModel =
-                                            model
-                                                |> setLevelProgress newLevelProgress
-                                    in
-                                    ( newModel, Cmd.none )
-
-                                PlaceInstruction position instruction ->
-                                    let
-                                        boardSketch =
-                                            levelProgress.boardSketch
-
-                                        boardHistory =
-                                            boardSketch.boardHistory
-
-                                        newBoard =
-                                            History.current boardHistory
-                                                |> BoardUtils.set position instruction
-
-                                        newBoardHistory =
-                                            boardHistory
-                                                |> History.push newBoard
-
-                                        newBoardSketch =
-                                            { boardSketch | boardHistory = newBoardHistory }
-
-                                        newLevelProgress =
-                                            { levelProgress | boardSketch = newBoardSketch }
-
-                                        newModel =
-                                            setLevelProgress newLevelProgress model
-                                    in
-                                    ( newModel, Cmd.none )
-
-                                Undo ->
-                                    let
-                                        boardSketch =
-                                            levelProgress.boardSketch
-
-                                        newBoardHistory =
-                                            History.back boardSketch.boardHistory
-
-                                        newBoardSketch =
-                                            { boardSketch | boardHistory = newBoardHistory }
-
-                                        newLevelProgress =
-                                            { levelProgress | boardSketch = newBoardSketch }
-
-                                        newModel =
-                                            setLevelProgress newLevelProgress model
-                                    in
-                                    ( newModel, Cmd.none )
-
-                                Redo ->
-                                    let
-                                        boardSketch =
-                                            levelProgress.boardSketch
-
-                                        newBoardHistory =
-                                            History.forward boardSketch.boardHistory
-
-                                        newBoardSketch =
-                                            { boardSketch | boardHistory = newBoardHistory }
-
-                                        newLevelProgress =
-                                            { levelProgress | boardSketch = newBoardSketch }
-
-                                        newModel =
-                                            setLevelProgress newLevelProgress model
-                                    in
-                                    ( newModel, Cmd.none )
-
-                                _ ->
-                                    Debug.todo (Debug.toString msg)
+                            updateSketchMsg levelProgress sketchMsg model
 
                         Nothing ->
                             ( model, Cmd.none )
@@ -114,7 +33,102 @@ update msg model =
                     Debug.todo (Debug.toString msg)
 
         ExecutionMsg executionMsg ->
-            ( model, Cmd.none )
+            ExecutionUtils.update executionMsg model
+
+
+updateSketchMsg levelProgress msg model =
+    case msg of
+        SelectInstruction instruction ->
+            let
+                newBoardSketch =
+                    levelProgress.boardSketch
+                        |> withSelectedInstruction (Just instruction)
+
+                newLevelProgress =
+                    levelProgress |> withBoardSketch newBoardSketch
+
+                newModel =
+                    model
+                        |> setLevelProgress newLevelProgress
+            in
+            ( newModel, Cmd.none )
+
+        PlaceInstruction position instruction ->
+            let
+                boardSketch =
+                    levelProgress.boardSketch
+
+                boardHistory =
+                    boardSketch.boardHistory
+
+                newBoard =
+                    History.current boardHistory
+                        |> BoardUtils.set position instruction
+
+                newBoardHistory =
+                    boardHistory
+                        |> History.push newBoard
+
+                newBoardSketch =
+                    { boardSketch | boardHistory = newBoardHistory }
+
+                newLevelProgress =
+                    { levelProgress | boardSketch = newBoardSketch }
+
+                newModel =
+                    setLevelProgress newLevelProgress model
+            in
+            ( newModel, Cmd.none )
+
+        SketchUndo ->
+            let
+                boardSketch =
+                    levelProgress.boardSketch
+
+                newBoardHistory =
+                    History.back boardSketch.boardHistory
+
+                newBoardSketch =
+                    { boardSketch | boardHistory = newBoardHistory }
+
+                newLevelProgress =
+                    { levelProgress | boardSketch = newBoardSketch }
+
+                newModel =
+                    setLevelProgress newLevelProgress model
+            in
+            ( newModel, Cmd.none )
+
+        SketchRedo ->
+            let
+                boardSketch =
+                    levelProgress.boardSketch
+
+                newBoardHistory =
+                    History.forward boardSketch.boardHistory
+
+                newBoardSketch =
+                    { boardSketch | boardHistory = newBoardHistory }
+
+                newLevelProgress =
+                    { levelProgress | boardSketch = newBoardSketch }
+
+                newModel =
+                    setLevelProgress newLevelProgress model
+            in
+            ( newModel, Cmd.none )
+
+        SketchBackClicked ->
+            ( { model | gameState = BrowsingLevels }
+            , Cmd.none
+            )
+
+        SketchExecute ->
+            ( { model
+                | gameState = Executing (ExecutionUtils.initialExecution levelProgress)
+              }
+            , Cmd.none
+            )
 
 
 

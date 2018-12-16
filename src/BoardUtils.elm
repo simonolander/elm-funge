@@ -1,13 +1,13 @@
-module BoardUtils exposing (empty, get, set)
+module BoardUtils exposing (empty, get, height, set, width)
 
 import Array exposing (Array)
 import Model exposing (..)
 
 
 empty : Int -> Int -> Board
-empty width height =
-    Array.repeat width NoOp
-        |> Array.repeat height
+empty boardWidth boardHeight =
+    Array.repeat boardWidth NoOp
+        |> Array.repeat boardHeight
 
 
 get : Position -> Board -> Maybe Instruction
@@ -24,3 +24,15 @@ set { x, y } instruction board =
 
         Nothing ->
             board
+
+
+width : Board -> Int
+width board =
+    Array.get 0 board
+        |> Maybe.map Array.length
+        |> Maybe.withDefault 0
+
+
+height : Board -> Int
+height board =
+    Array.length board

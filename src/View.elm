@@ -5,6 +5,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Input as Input
+import ExecutionView
 import Html exposing (Html)
 import Html.Attributes
 import Model exposing (..)
@@ -17,19 +18,22 @@ view model =
         BrowsingLevels ->
             viewBrowsingLevels model.levelProgresses
 
-        Sketching levelId -> 
-            let 
-                maybeLevelProgress = 
+        Sketching levelId ->
+            let
+                maybeLevelProgress =
                     model.levelProgresses
-                    |> List.filter (\progress -> progress.level.id == levelId)
-                    |> List.head
+                        |> List.filter (\progress -> progress.level.id == levelId)
+                        |> List.head
             in
-                case maybeLevelProgress of 
-                    Just levelProgress -> SketchingView.view levelProgress
-                    Nothing -> Debug.todo "no level"
-        
-        otherwise ->
-            Debug.todo (Debug.toString model.gameState)
+            case maybeLevelProgress of
+                Just levelProgress ->
+                    SketchingView.view levelProgress
+
+                Nothing ->
+                    Debug.todo "no level"
+
+        Executing execution ->
+            ExecutionView.view execution
 
 
 viewBrowsingLevels : List LevelProgress -> Html Msg
