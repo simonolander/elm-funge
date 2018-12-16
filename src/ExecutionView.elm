@@ -44,6 +44,7 @@ view execution =
         , row
             [ width fill
             , height fill
+            , htmlAttribute (Html.Attributes.style "height" "90%")
             ]
             [ executionSideBarView
             , boardView
@@ -153,6 +154,7 @@ viewHeader =
     in
     row
         [ width fill
+        , height shrink
         , Background.color (rgb 1 1 0.8)
         ]
         [ backButtonView
