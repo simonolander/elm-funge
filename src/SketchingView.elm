@@ -109,6 +109,9 @@ viewToolbar levelProgress =
         options =
             [ NoOp
             , ChangeDirection Left
+            , ChangeDirection Up
+            , ChangeDirection Right
+            , ChangeDirection Down
             , PushToStack 3
             , Add
             , Subtract

@@ -30,8 +30,11 @@ view execution =
         boardView =
             viewBoard execution
 
-        sidebarView =
-            viewSidebar execution
+        executionSideBarView =
+            viewExecutionSidebar execution
+
+        ioSidebarView =
+            viewIOSidebar (History.current execution.executionHistory)
     in
     column
         [ width fill
@@ -42,16 +45,18 @@ view execution =
             [ width fill
             , height fill
             ]
-            [ sidebarView
+            [ executionSideBarView
             , boardView
+            , ioSidebarView
             ]
         ]
         |> layout
-            []
+            [ height fill
+            ]
 
 
-viewSidebar : Execution -> Element Msg
-viewSidebar levelProgress =
+viewExecutionSidebar : Execution -> Element Msg
+viewExecutionSidebar levelProgress =
     let
         undoButtonView =
             Input.button
@@ -77,34 +82,6 @@ viewSidebar levelProgress =
         , stepButtonView
         , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
         ]
-
-
-viewToolbar : LevelProgress -> Element Msg
-viewToolbar levelProgress =
-    let
-        options =
-            [ NoOp
-            , ChangeDirection Left
-            , PushToStack 3
-            , Add
-            , Subtract
-            , Multiply
-            , Divide
-            , Read
-            , Print
-            ]
-                |> List.map
-                    (\instruction ->
-                        Input.option instruction (text (instructionToString instruction))
-                    )
-    in
-    Input.radio
-        []
-        { onChange = SketchMsg << SelectInstruction
-        , selected = levelProgress.boardSketch.selectedInstruction
-        , label = Input.labelAbove [] (text "Instructions")
-        , options = options
-        }
 
 
 viewBoard : Execution -> Element Msg
@@ -182,11 +159,44 @@ viewHeader =
         ]
 
 
+viewIOSidebar : ExecutionStep -> Element Msg
+viewIOSidebar executionStep =
+    let
+        inputView =
+            executionStep.input
+                |> List.map String.fromInt
+                |> List.map text
+                |> column
+                    [ width (fillPortion 1)
+                    , height fill
+                    , Background.color (rgb 0.5 0.6 0.7)
+                    , scrollbars
+                    ]
+
+        outputView =
+            executionStep.output
+                |> List.map String.fromInt
+                |> List.map text
+                |> column
+                    [ width (fillPortion 1)
+                    , height fill
+                    , Background.color (rgb 0.7 0.6 0.5)
+                    , scrollbars
+                    ]
+    in
+    row
+        [ width (fillPortion 1)
+        , height fill
+        , Background.color (rgb 0.8 0.8 0.8)
+        ]
+        [ inputView, outputView ]
+
+
 instructionToString : Instruction -> String
 instructionToString instruction =
     case instruction of
         NoOp ->
-            "nop"
+            ""
 
         ChangeDirection direction ->
             case direction of

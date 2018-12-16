@@ -8,7 +8,6 @@ import Model exposing (..)
 import Update
 import View
 
-
 init : WindowSize -> ( Model, Cmd Msg )
 init windowSize =
     let
@@ -16,7 +15,12 @@ init windowSize =
         levels =
             [ { id = "0c66f4a8-3ce6-442a-85cc-e688f6eaed0b"
               , name = "Hello world"
-              , cases = [ { input = [], output = [ 1 ] } ]
+              , cases =
+                    [ { input =
+                            (List.range (2^16 - 255) (2^16 - 1))
+                      , output = (List.range 0 255)
+                      }
+                    ]
               , initialBoard = BoardUtils.empty 6 6
               }
             ]
@@ -72,7 +76,7 @@ subscriptions model =
                     Resize
                         { width = width
                         , height = height
-                        }
+                        } |> Debug.log "resize"
                 )
     in
     windowSizeSubscription
