@@ -21,7 +21,7 @@ update msg model =
                     )
 
                 ExecutionBackClicked ->
-                    ( { model | gameState = BrowsingLevels }
+                    ( { model | gameState = Sketching execution.level.id }
                     , Cmd.none
                     )
 
@@ -146,5 +146,12 @@ stepExecutionStep executionStep =
                 | instructionPointer = moveInstructionPointer instructionPointer newDirection
             }
 
+        NoOp ->
+            { executionStep
+                | instructionPointer = moveInstructionPointer instructionPointer direction
+            }
+
         _ ->
-            executionStep
+            { executionStep
+                | instructionPointer = moveInstructionPointer instructionPointer direction
+            }

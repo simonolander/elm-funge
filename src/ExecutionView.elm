@@ -25,35 +25,13 @@ view : Execution -> Html Msg
 view execution =
     let
         headerView =
-            []
-    in
-    layout [] none
-
-
-viewww : LevelProgress -> Html Msg
-viewww levelProgress =
-    let
-        selectedInstruction =
-            levelProgress.boardSketch.selectedInstruction
-
-        boardView =
-            levelProgress.boardSketch.boardHistory
-                |> History.current
-                |> Array.indexedMap (viewRow selectedInstruction)
-                |> Array.toList
-                |> column
-                    [ spacing instructionSpacing
-                    , scrollbars
-                    , width (fillPortion 3)
-                    , height fill
-                    , Background.color (rgb 0.8 1 0.8)
-                    ]
-
-        headerView =
             viewHeader
 
+        boardView =
+            viewBoard execution
+
         sidebarView =
-            viewSidebar levelProgress
+            viewSidebar execution
     in
     column
         [ width fill
@@ -72,30 +50,21 @@ viewww levelProgress =
             []
 
 
+viewSidebar : Execution -> Element Msg
 viewSidebar levelProgress =
     let
-        toolbarView =
-            viewToolbar levelProgress
-
         undoButtonView =
             Input.button
                 []
-                { onPress = Just (SketchMsg SketchUndo)
+                { onPress = Just (ExecutionMsg ExecutionUndo)
                 , label = text "Undo"
                 }
 
-        redoButtonView =
+        stepButtonView =
             Input.button
                 []
-                { onPress = Just (SketchMsg SketchRedo)
-                , label = text "Redo"
-                }
-
-        executeButtonView =
-            Input.button
-                []
-                { onPress = Just (SketchMsg SketchExecute)
-                , label = text "Execute"
+                { onPress = Just (ExecutionMsg ExecutionStepOne)
+                , label = text "Step"
                 }
     in
     column
@@ -104,10 +73,8 @@ viewSidebar levelProgress =
         , Background.color (rgb 0.8 0.8 1)
         , alignTop
         ]
-        [ toolbarView
-        , undoButtonView
-        , redoButtonView
-        , executeButtonView
+        [ undoButtonView
+        , stepButtonView
         , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
         ]
 
@@ -140,39 +107,61 @@ viewToolbar levelProgress =
         }
 
 
-viewRow : Maybe Instruction -> Int -> Array Instruction -> Element Msg
-viewRow selectedInstruction rowIndex boardRow =
-    boardRow
-        |> Array.indexedMap (viewInstruction selectedInstruction rowIndex)
-        |> Array.toList
-        |> row [ spacing instructionSpacing ]
-
-
-viewInstruction : Maybe Instruction -> Int -> Int -> Instruction -> Element Msg
-viewInstruction selectedInstruction rowIndex columnIndex instruction =
+viewBoard : Execution -> Element Msg
+viewBoard execution =
     let
-        instructionLabel =
-            el
-                [ width (px instructionSize)
-                , height (px instructionSize)
-                , Background.color (rgb 1 1 1)
-                , centerX
-                , centerY
-                , Font.center
-                ]
-                (text (instructionToString instruction))
+        executionStep =
+            execution.executionHistory
+                |> History.current
 
-        onPress : Maybe Msg
-        onPress =
-            selectedInstruction
-                |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
-                |> Maybe.map SketchMsg
+        instructionPointer =
+            executionStep.instructionPointer
+
+        board =
+            executionStep.board
+
+        viewInstruction : Int -> Int -> Instruction -> Element Msg
+        viewInstruction rowIndex columnIndex instruction =
+            let
+                backgroundColor =
+                    if instructionPointer.position.x == columnIndex && instructionPointer.position.y == rowIndex then
+                        rgb 1 0.6 0.6
+
+                    else
+                        rgb 1 1 1
+
+                instructionLabel =
+                    el
+                        [ width (px instructionSize)
+                        , height (px instructionSize)
+                        , Background.color backgroundColor
+                        , Font.center
+                        ]
+                        (text (instructionToString instruction))
+            in
+            Input.button
+                []
+                { onPress = Nothing
+                , label = instructionLabel
+                }
+
+        viewRow : Int -> Array Instruction -> Element Msg
+        viewRow rowIndex boardRow =
+            boardRow
+                |> Array.indexedMap (viewInstruction rowIndex)
+                |> Array.toList
+                |> row [ spacing instructionSpacing ]
     in
-    Input.button
-        []
-        { onPress = onPress
-        , label = instructionLabel
-        }
+    board
+        |> Array.indexedMap viewRow
+        |> Array.toList
+        |> column
+            [ spacing instructionSpacing
+            , scrollbars
+            , width (fillPortion 3)
+            , height fill
+            , Background.color (rgb 0.8 1 0.8)
+            ]
 
 
 viewHeader : Element Msg
