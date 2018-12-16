@@ -66,6 +66,44 @@ update msg model =
                                     in
                                     ( newModel, Cmd.none )
 
+                                Undo ->
+                                    let
+                                        boardSketch =
+                                            levelProgress.boardSketch
+
+                                        newBoardHistory =
+                                            History.back boardSketch.boardHistory
+
+                                        newBoardSketch =
+                                            { boardSketch | boardHistory = newBoardHistory }
+
+                                        newLevelProgress =
+                                            { levelProgress | boardSketch = newBoardSketch }
+
+                                        newModel =
+                                            setLevelProgress newLevelProgress model
+                                    in
+                                    ( newModel, Cmd.none )
+
+                                Redo ->
+                                    let
+                                        boardSketch =
+                                            levelProgress.boardSketch
+
+                                        newBoardHistory =
+                                            History.forward boardSketch.boardHistory
+
+                                        newBoardSketch =
+                                            { boardSketch | boardHistory = newBoardHistory }
+
+                                        newLevelProgress =
+                                            { levelProgress | boardSketch = newBoardSketch }
+
+                                        newModel =
+                                            setLevelProgress newLevelProgress model
+                                    in
+                                    ( newModel, Cmd.none )
+
                                 _ ->
                                     Debug.todo (Debug.toString msg)
 
