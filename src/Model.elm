@@ -10,6 +10,7 @@ module Model exposing
     , Instruction(..)
     , InstructionPointer
     , Level
+    , LevelId
     , LevelProgress
     , Model
     , Msg(..)
@@ -81,6 +82,7 @@ type alias Execution =
 
 type alias BoardSketch =
     { boardHistory : History Board
+    , selectedInstruction : Maybe Instruction
     }
 
 
@@ -113,6 +115,7 @@ type GameState
 
 type SketchMsg
     = PlaceInstruction Position Instruction
+    | SelectInstruction Instruction
     | Undo
     | Redo
     | Execute

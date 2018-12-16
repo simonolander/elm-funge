@@ -1,4 +1,13 @@
-module History exposing (History, back, current, forward, hasFuture, hasPast, push)
+module History exposing
+    ( History
+    , back
+    , current
+    , forward
+    , hasFuture
+    , hasPast
+    , push
+    , singleton
+    )
 
 
 type alias History a =
@@ -8,9 +17,14 @@ type alias History a =
     }
 
 
-current : a -> History a
-current a =
+singleton : a -> History a
+singleton a =
     { past = [], current = a, future = [] }
+
+
+current : History a -> a
+current =
+    .current
 
 
 hasPast : History a -> Bool

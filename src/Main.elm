@@ -28,7 +28,8 @@ init windowSize =
                     (\level ->
                         { level = level
                         , boardSketch =
-                            { boardHistory = History.current level.initialBoard
+                            { boardHistory = History.singleton level.initialBoard
+                            , selectedInstruction = Nothing
                             }
                         , completed = False
                         }
@@ -36,7 +37,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            BrowsingLevels
+            Sketching "0c66f4a8-3ce6-442a-85cc-e688f6eaed0b"
 
         model : Model
         model =

@@ -1,5 +1,7 @@
 module Update exposing (update)
 
+import BoardUtils
+import History
 import Model exposing (..)
 
 
@@ -17,7 +19,98 @@ update msg model =
             ( { model | gameState = Sketching levelId }, Cmd.none )
 
         SketchMsg sketchMsg ->
-            ( model, Cmd.none )
+            case model.gameState of
+                Sketching levelId ->
+                    case getLevelProgress levelId model of
+                        Just levelProgress ->
+                            case sketchMsg of
+                                SelectInstruction instruction ->
+                                    let
+                                        newBoardSketch =
+                                            levelProgress.boardSketch
+                                                |> withSelectedInstruction (Just instruction)
+
+                                        newLevelProgress =
+                                            levelProgress |> withBoardSketch newBoardSketch
+
+                                        newModel =
+                                            model
+                                                |> setLevelProgress newLevelProgress
+                                    in
+                                    ( newModel, Cmd.none )
+
+                                PlaceInstruction position instruction ->
+                                    let
+                                        boardSketch =
+                                            levelProgress.boardSketch
+
+                                        boardHistory =
+                                            boardSketch.boardHistory
+
+                                        newBoard =
+                                            History.current boardHistory
+                                                |> BoardUtils.set position instruction
+
+                                        newBoardHistory =
+                                            boardHistory
+                                                |> History.push newBoard
+
+                                        newBoardSketch =
+                                            { boardSketch | boardHistory = newBoardHistory }
+
+                                        newLevelProgress =
+                                            { levelProgress | boardSketch = newBoardSketch }
+
+                                        newModel =
+                                            setLevelProgress newLevelProgress model
+                                    in
+                                    ( newModel, Cmd.none )
+
+                                _ ->
+                                    Debug.todo (Debug.toString msg)
+
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    Debug.todo (Debug.toString msg)
 
         ExecutionMsg executionMsg ->
             ( model, Cmd.none )
+
+
+
+-- LEVELPROGRESS --
+
+
+getLevelProgress : LevelId -> Model -> Maybe LevelProgress
+getLevelProgress levelId model =
+    model.levelProgresses
+        |> List.filter (\levelProgress -> levelProgress.level.id == levelId)
+        |> List.head
+
+
+setLevelProgress : LevelProgress -> Model -> Model
+setLevelProgress levelProgress model =
+    { model
+        | levelProgresses =
+            model.levelProgresses
+                |> List.map
+                    (\progress ->
+                        if progress.level.id == levelProgress.level.id then
+                            levelProgress
+
+                        else
+                            progress
+                    )
+    }
+
+
+withBoardSketch : BoardSketch -> LevelProgress -> LevelProgress
+withBoardSketch boardSketch levelProgress =
+    { levelProgress | boardSketch = boardSketch }
+
+
+withSelectedInstruction : Maybe Instruction -> BoardSketch -> BoardSketch
+withSelectedInstruction selectedInstruction boardSketch =
+    { boardSketch | selectedInstruction = selectedInstruction }
