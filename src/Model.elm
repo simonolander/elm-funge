@@ -10,14 +10,16 @@ module Model exposing
     , Input
     , Instruction(..)
     , InstructionPointer
+    , JumpLocation(..)
     , Level
     , LevelId
     , LevelProgress
     , Model
     , Msg(..)
-    , Output, Stack
+    , Output
     , Position
     , SketchMsg(..)
+    , Stack
     , WindowSize
     )
 
@@ -60,16 +62,36 @@ type Direction
     | Down
 
 
+type JumpLocation
+    = Forward
+    | Absolute Position
+    | Offset Position
+
+
 type Instruction
     = NoOp
     | ChangeDirection Direction
     | PushToStack Int
+    | PopFromStack
+    | Jump JumpLocation
+    | Duplicate
+    | Swap
+    | Negate
+    | Abs
+    | Not
     | Add
     | Subtract
     | Multiply
     | Divide
+    | Equals
+    | And
+    | Or
+    | XOr
     | Read
     | Print
+    | BranchLeftRight
+    | BranchUpDown
+    | Terminate
 
 
 type alias Board =
@@ -86,6 +108,7 @@ type alias ExecutionStep =
     , stack : Stack
     , input : Input
     , output : Output
+    , terminated : Bool
     }
 
 

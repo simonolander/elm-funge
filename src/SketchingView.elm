@@ -227,3 +227,6 @@ instructionToString instruction =
 
         Print ->
             "print"
+
+        otherwise ->
+            Debug.toString otherwise

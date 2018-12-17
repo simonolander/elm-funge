@@ -166,15 +166,38 @@ viewIOSidebar : ExecutionStep -> Element Msg
 viewIOSidebar executionStep =
     let
         inputView =
-            executionStep.input
-                |> List.map String.fromInt
-                |> List.map text
-                |> column
-                    [ width (fillPortion 1)
-                    , height fill
-                    , Background.color (rgb 0.5 0.6 0.7)
-                    , scrollbars
-                    ]
+            let
+                header =
+                    text "Input"
+
+                inputs =
+                    executionStep.input
+                        |> List.map String.fromInt
+                        |> List.map text
+                        |> column
+                            [ width fill
+                            , height fill
+                            , Background.color (rgb 0.2 0.2 0.2)
+                            , Font.family
+                                [ Font.monospace
+                                ]
+                            , Font.color (rgb 1 1 1)
+                            , padding 5
+                            , spacing 2
+                            , scrollbars
+                            ]
+            in
+            column
+                [ width (fillPortion 1)
+                , height fill
+                , padding 5
+                , Border.color (rgb 1 0 0)
+                , Border.solid
+                , Border.width 10
+                ]
+                [ header
+                , inputs
+                ]
 
         outputView =
             executionStep.output
@@ -216,7 +239,10 @@ instructionToString instruction =
                     "down"
 
         PushToStack n ->
-            String.fromInt n
+            "push " ++ String.fromInt n
+
+        PopFromStack ->
+            "pop"
 
         Add ->
             "+"
@@ -235,3 +261,6 @@ instructionToString instruction =
 
         Print ->
             "print"
+
+        otherwise ->
+            Debug.toString otherwise

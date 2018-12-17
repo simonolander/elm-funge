@@ -39,6 +39,7 @@ initialExecutionStep board input =
     , stack = []
     , input = input
     , output = []
+    , terminated = False
     }
 
 
@@ -75,12 +76,66 @@ stepBack execution =
 
 step : Execution -> Execution
 step execution =
+    let
+        executionHistory =
+            execution.executionHistory
+
+        executionStep =
+            History.current executionHistory
+
+        newExecutionHistory =
+            if executionStep.terminated then
+                executionHistory
+
+            else
+                History.push
+                    (stepExecutionStep executionStep)
+                    executionHistory
+    in
     { execution
-        | executionHistory =
-            History.push
-                (stepExecutionStep (History.current execution.executionHistory))
-                execution.executionHistory
+        | executionHistory = newExecutionHistory
     }
+
+
+pop : List Int -> ( Int, List Int )
+pop list =
+    case list of
+        head :: tail ->
+            ( head, tail )
+
+        _ ->
+            ( 0, [] )
+
+
+pop2 : List Int -> ( Int, Int, List Int )
+pop2 list =
+    case list of
+        a :: b :: tail ->
+            ( a, b, tail )
+
+        a :: tail ->
+            ( a, 0, [] )
+
+        _ ->
+            ( 0, 0, [] )
+
+
+op : (Int -> Int) -> Stack -> Stack
+op operation stack =
+    let
+        ( a, stack1 ) =
+            pop stack
+    in
+    operation a :: stack1
+
+
+op2 : (Int -> Int -> Int) -> Stack -> Stack
+op2 operation stack =
+    let
+        ( a, b, stack1 ) =
+            pop2 stack
+    in
+    operation a b :: stack1
 
 
 stepExecutionStep : ExecutionStep -> ExecutionStep
@@ -139,6 +194,11 @@ stepExecutionStep executionStep =
             { position = newPosition
             , direction = newDirection
             }
+
+        movedExecutionStep =
+            { executionStep
+                | instructionPointer = moveInstructionPointer instructionPointer direction
+            }
     in
     case instruction of
         ChangeDirection newDirection ->
@@ -146,12 +206,151 @@ stepExecutionStep executionStep =
                 | instructionPointer = moveInstructionPointer instructionPointer newDirection
             }
 
-        NoOp ->
-            { executionStep
-                | instructionPointer = moveInstructionPointer instructionPointer direction
+        Read ->
+            { movedExecutionStep
+                | stack = Maybe.withDefault 0 (List.head input) :: stack
+                , input = Maybe.withDefault [] (List.tail input)
             }
 
-        _ ->
-            { executionStep
-                | instructionPointer = moveInstructionPointer instructionPointer direction
+        Print ->
+            { movedExecutionStep
+                | stack = Maybe.withDefault [] (List.tail stack)
+                , output = Maybe.withDefault 0 (List.head stack) :: output
             }
+
+        PushToStack number ->
+            { movedExecutionStep
+                | stack = number :: stack
+            }
+
+        PopFromStack ->
+            { movedExecutionStep
+                | stack = Maybe.withDefault [] (List.tail stack)
+            }
+
+        Duplicate ->
+            let
+                ( a, stack1 ) =
+                    pop stack
+            in
+            { movedExecutionStep
+                | stack = a :: a :: stack1
+            }
+
+        Swap ->
+            let
+                ( a, b, stack1 ) =
+                    pop2 stack
+            in
+            { movedExecutionStep
+                | stack = b :: a :: stack1
+            }
+
+        Negate ->
+            { movedExecutionStep
+                | stack = op negate stack
+            }
+
+        Abs ->
+            { movedExecutionStep
+                | stack = op abs stack
+            }
+
+        Not ->
+            { movedExecutionStep
+                | stack =
+                    op
+                        (\a ->
+                            if a == 0 then
+                                1
+
+                            else
+                                0
+                        )
+                        stack
+            }
+
+        Add ->
+            { movedExecutionStep
+                | stack = op2 (+) stack
+            }
+
+        Subtract ->
+            { movedExecutionStep
+                | stack = op2 (-) stack
+            }
+
+        Multiply ->
+            { movedExecutionStep
+                | stack = op2 (*) stack
+            }
+
+        Divide ->
+            { movedExecutionStep
+                | stack = op2 (//) stack
+            }
+
+        Equals ->
+            { movedExecutionStep
+                | stack =
+                    op2
+                        (\a b ->
+                            if a == b then
+                                1
+
+                            else
+                                0
+                        )
+                        stack
+            }
+
+        And ->
+            { movedExecutionStep
+                | stack =
+                    op2
+                        (\a b ->
+                            if a /= 0 && b /= 0 then
+                                1
+
+                            else
+                                0
+                        )
+                        stack
+            }
+
+        Or ->
+            { movedExecutionStep
+                | stack =
+                    op2
+                        (\a b ->
+                            if a /= 0 || b /= 0 then
+                                1
+
+                            else
+                                0
+                        )
+                        stack
+            }
+
+        XOr ->
+            { movedExecutionStep
+                | stack =
+                    op2
+                        (\a b ->
+                            if (a /= 0) /= (b /= 0) then
+                                1
+
+                            else
+                                0
+                        )
+                        stack
+            }
+
+        NoOp ->
+            movedExecutionStep
+
+        Terminate ->
+            { executionStep | terminated = True }
+
+        _ ->
+            movedExecutionStep
