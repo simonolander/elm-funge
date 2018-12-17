@@ -44,7 +44,7 @@ view execution =
         , row
             [ width fill
             , height fill
-            , htmlAttribute (Html.Attributes.style "height" "90%")
+            , htmlAttribute (Html.Attributes.style "height" "90%") -- hack
             ]
             [ executionSideBarView
             , boardView
@@ -53,6 +53,7 @@ view execution =
         ]
         |> layout
             [ height fill
+            , clip
             ]
 
 
