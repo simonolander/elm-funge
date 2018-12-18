@@ -8,22 +8,57 @@ import Model exposing (..)
 update : ExecutionMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model.gameState of
-        Executing execution ->
-            case msg of
-                ExecutionStepOne ->
-                    ( { model | gameState = Executing (step execution) }
-                    , Cmd.none
-                    )
+        Executing executionState -> 
+            case executionState of 
+                ExecutionPaused execution ->
+                    case msg of
+                        ExecutionStepOne ->
+                            ( { model | gameState = Executing (ExecutionPaused (step execution)) }
+                            , Cmd.none
+                            )
 
-                ExecutionUndo ->
-                    ( { model | gameState = Executing (stepBack execution) }
-                    , Cmd.none
-                    )
+                        ExecutionUndo ->
+                            ( { model | gameState = Executing (ExecutionPaused (stepBack execution)) }
+                            , Cmd.none
+                            )
+                        
+                        ExecutionPause -> 
+                            ( model, Cmd.none)
 
-                ExecutionBackClicked ->
-                    ( { model | gameState = Sketching execution.level.id }
-                    , Cmd.none
-                    )
+                        ExecutionRun -> 
+                            ( { model | gameState = Executing (ExecutionRunning execution 100) }
+                            , Cmd.none
+                            )
+
+                        ExecutionBackClicked ->
+                            ( { model | gameState = Sketching execution.level.id }
+                            , Cmd.none
+                            )
+
+                ExecutionRunning execution delay -> 
+                    case msg of
+                        ExecutionStepOne ->
+                            ( { model | gameState = Executing (ExecutionRunning (step execution) delay) }
+                            , Cmd.none
+                            )
+
+                        ExecutionUndo ->
+                            ( { model | gameState = Executing (ExecutionPaused (stepBack execution)) }
+                            , Cmd.none
+                            )
+                        
+                        ExecutionPause -> 
+                            ( { model | gameState = Executing (ExecutionPaused execution) }
+                            , Cmd.none
+                            )
+
+                        ExecutionRun -> 
+                            ( model, Cmd.none)
+
+                        ExecutionBackClicked ->
+                            ( { model | gameState = Sketching execution.level.id }
+                            , Cmd.none
+                            )
 
         _ ->
             ( model, Cmd.none )

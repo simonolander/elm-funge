@@ -125,7 +125,7 @@ updateSketchMsg levelProgress msg model =
 
         SketchExecute ->
             ( { model
-                | gameState = Executing (ExecutionUtils.initialExecution levelProgress)
+                | gameState = Executing (ExecutionPaused (ExecutionUtils.initialExecution levelProgress))
               }
             , Cmd.none
             )

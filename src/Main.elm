@@ -5,8 +5,10 @@ import Browser
 import Browser.Events
 import History
 import Model exposing (..)
+import Time
 import Update
 import View
+
 
 init : WindowSize -> ( Model, Cmd Msg )
 init windowSize =
@@ -17,8 +19,8 @@ init windowSize =
               , name = "Hello world"
               , cases =
                     [ { input =
-                            (List.range (2^16 - 255) (2^16 - 1))
-                      , output = (List.range 0 255)
+                            List.range (2 ^ 16 - 255) (2 ^ 16 - 1)
+                      , output = List.range 0 255
                       }
                     ]
               , initialBoard = BoardUtils.empty 6 6
@@ -76,7 +78,15 @@ subscriptions model =
                     Resize
                         { width = width
                         , height = height
-                        } |> Debug.log "resize"
+                        }
                 )
     in
-    windowSizeSubscription
+    case model.gameState of
+        Executing (ExecutionRunning _ delay) ->
+            Sub.batch
+                [ windowSizeSubscription
+                , Time.every delay (always (ExecutionMsg ExecutionStepOne))
+                ]
+
+        _ ->
+            windowSizeSubscription

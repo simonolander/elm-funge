@@ -21,9 +21,13 @@ instructionSize =
     100
 
 
-view : Execution -> Html Msg
-view execution =
+view : ExecutionState -> Html Msg
+view executionState =
     let
+        execution = case executionState of
+            ExecutionPaused exn -> exn
+            ExecutionRunning exn _ -> exn
+
         headerView =
             viewHeader
 
@@ -73,6 +77,20 @@ viewExecutionSidebar levelProgress =
                 { onPress = Just (ExecutionMsg ExecutionStepOne)
                 , label = text "Step"
                 }
+
+        runButtonView =
+            Input.button
+                []
+                { onPress = Just (ExecutionMsg ExecutionRun)
+                , label = text "Run"
+                }
+
+        pauseButtonView =
+            Input.button
+                []
+                { onPress = Just (ExecutionMsg ExecutionPause)
+                , label = text "Pause"
+                }
     in
     column
         [ width (fillPortion 1)
@@ -82,6 +100,8 @@ viewExecutionSidebar levelProgress =
         ]
         [ undoButtonView
         , stepButtonView
+        , runButtonView
+        , pauseButtonView
         , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
         ]
 

@@ -32,8 +32,8 @@ view model =
                 Nothing ->
                     Debug.todo "no level"
 
-        Executing execution ->
-            ExecutionView.view execution
+        Executing executionState ->
+            ExecutionView.view executionState
 
 
 viewBrowsingLevels : List LevelProgress -> Html Msg

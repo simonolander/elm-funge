@@ -5,6 +5,7 @@ module Model exposing
     , Direction(..)
     , Execution
     , ExecutionMsg(..)
+    , ExecutionState(..)
     , ExecutionStep
     , GameState(..)
     , Input
@@ -145,10 +146,14 @@ type alias LevelProgress =
     }
 
 
+type ExecutionState = 
+    ExecutionPaused Execution
+    | ExecutionRunning Execution Float
+
 type GameState
     = BrowsingLevels
     | Sketching LevelId
-    | Executing Execution
+    | Executing ExecutionState
 
 
 type SketchMsg
@@ -163,6 +168,8 @@ type SketchMsg
 type ExecutionMsg
     = ExecutionStepOne
     | ExecutionUndo
+    | ExecutionRun
+    | ExecutionPause
     | ExecutionBackClicked
 
 
