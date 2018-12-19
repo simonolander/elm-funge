@@ -2,11 +2,13 @@ module History exposing
     ( History
     , back
     , current
+    , first
     , forward
     , hasFuture
     , hasPast
     , push
     , singleton
+    , size
     )
 
 
@@ -69,3 +71,15 @@ push a history =
     , current = a
     , future = []
     }
+
+
+size : History a -> Int
+size history =
+    1 + List.length history.past + List.length history.future
+
+
+first : History a -> a
+first history =
+    case history.past of
+        [] -> current history
+        past -> back history |> first

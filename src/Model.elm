@@ -1,7 +1,7 @@
 module Model exposing
     ( Board
     , BoardSketch
-    , Case
+    , IO
     , Direction(..)
     , Execution
     , ExecutionMsg(..)
@@ -125,7 +125,7 @@ type alias BoardSketch =
     }
 
 
-type alias Case =
+type alias IO =
     { input : Input
     , output : Output
     }
@@ -134,8 +134,9 @@ type alias Case =
 type alias Level =
     { id : LevelId
     , name : String
-    , cases : List Case
+    , io : IO
     , initialBoard : Board
+    , permittedInstructions : List Instruction
     }
 
 

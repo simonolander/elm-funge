@@ -106,20 +106,9 @@ viewSidebar levelProgress =
 viewToolbar : LevelProgress -> Element Msg
 viewToolbar levelProgress =
     let
+        permittedInstructions = levelProgress.level.permittedInstructions
         options =
-            [ NoOp
-            , ChangeDirection Left
-            , ChangeDirection Up
-            , ChangeDirection Right
-            , ChangeDirection Down
-            , PushToStack 3
-            , Add
-            , Subtract
-            , Multiply
-            , Divide
-            , Read
-            , Print
-            ]
+            permittedInstructions
                 |> List.map
                     (\instruction ->
                         Input.option instruction (text (instructionToString instruction))

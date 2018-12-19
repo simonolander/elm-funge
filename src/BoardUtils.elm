@@ -1,6 +1,14 @@
-module BoardUtils exposing (empty, get, height, set, width)
+module BoardUtils exposing
+    ( count
+    , empty
+    , get
+    , height
+    , set
+    , width
+    )
 
 import Array exposing (Array)
+import List
 import Model exposing (..)
 
 
@@ -36,3 +44,11 @@ width board =
 height : Board -> Int
 height board =
     Array.length board
+
+
+count : (Instruction -> Bool) -> Board -> Int
+count predicate board =
+    board
+        |> Array.map (\row -> row |> Array.filter predicate |> Array.length)
+        |> Array.toList
+        |> List.sum

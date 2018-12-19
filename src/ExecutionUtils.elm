@@ -8,8 +8,8 @@ import Model exposing (..)
 update : ExecutionMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model.gameState of
-        Executing executionState -> 
-            case executionState of 
+        Executing executionState ->
+            case executionState of
                 ExecutionPaused execution ->
                     case msg of
                         ExecutionStepOne ->
@@ -21,12 +21,12 @@ update msg model =
                             ( { model | gameState = Executing (ExecutionPaused (stepBack execution)) }
                             , Cmd.none
                             )
-                        
-                        ExecutionPause -> 
-                            ( model, Cmd.none)
 
-                        ExecutionRun -> 
-                            ( { model | gameState = Executing (ExecutionRunning execution 100) }
+                        ExecutionPause ->
+                            ( model, Cmd.none )
+
+                        ExecutionRun ->
+                            ( { model | gameState = Executing (ExecutionRunning execution 250) }
                             , Cmd.none
                             )
 
@@ -35,10 +35,21 @@ update msg model =
                             , Cmd.none
                             )
 
-                ExecutionRunning execution delay -> 
+                ExecutionRunning execution delay ->
                     case msg of
                         ExecutionStepOne ->
-                            ( { model | gameState = Executing (ExecutionRunning (step execution) delay) }
+                            let
+                                executionStep =
+                                    History.current execution.executionHistory
+                            in
+                            ( { model
+                                | gameState =
+                                    if executionStep.terminated then
+                                        Executing (ExecutionPaused execution)
+
+                                    else
+                                        Executing (ExecutionRunning (step execution) delay)
+                              }
                             , Cmd.none
                             )
 
@@ -46,14 +57,14 @@ update msg model =
                             ( { model | gameState = Executing (ExecutionPaused (stepBack execution)) }
                             , Cmd.none
                             )
-                        
-                        ExecutionPause -> 
+
+                        ExecutionPause ->
                             ( { model | gameState = Executing (ExecutionPaused execution) }
                             , Cmd.none
                             )
 
-                        ExecutionRun -> 
-                            ( model, Cmd.none)
+                        ExecutionRun ->
+                            ( model, Cmd.none )
 
                         ExecutionBackClicked ->
                             ( { model | gameState = Sketching execution.level.id }
@@ -88,10 +99,7 @@ initialExecution levelProgress =
             History.current levelProgress.boardSketch.boardHistory
 
         input =
-            level.cases
-                |> List.head
-                |> Maybe.map .input
-                |> Maybe.withDefault []
+            level.io.input
 
         executionHistory =
             initialExecutionStep board input

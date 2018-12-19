@@ -1,6 +1,7 @@
 module ExecutionView exposing (view)
 
 import Array exposing (Array)
+import BoardUtils
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -24,9 +25,13 @@ instructionSize =
 view : ExecutionState -> Html Msg
 view executionState =
     let
-        execution = case executionState of
-            ExecutionPaused exn -> exn
-            ExecutionRunning exn _ -> exn
+        execution =
+            case executionState of
+                ExecutionPaused exn ->
+                    exn
+
+                ExecutionRunning exn _ ->
+                    exn
 
         headerView =
             viewHeader
@@ -51,7 +56,13 @@ view executionState =
             , htmlAttribute (Html.Attributes.style "height" "90%") -- hack
             ]
             [ executionSideBarView
-            , boardView
+            , if isWon execution then
+                boardView
+                    |> el
+                        [ width (fillPortion 3), height fill, inFront (viewVictoryModal execution) ]
+
+              else
+                boardView
             , ioSidebarView
             ]
         ]
@@ -163,6 +174,27 @@ viewBoard execution =
             ]
 
 
+viewVictoryModal : Execution -> Element Msg
+viewVictoryModal execution =
+    let
+        numberOfSteps =
+            History.size execution.executionHistory
+
+        numberOfInstructions =
+            History.first execution.executionHistory
+                |> .board
+                |> BoardUtils.count ((/=) NoOp)
+    in
+    column
+        [ centerX
+        , centerY
+        ]
+        [ text "Solved"
+        , text (String.fromInt numberOfSteps)
+        , text (String.fromInt numberOfInstructions)
+        ]
+
+
 viewHeader : Element Msg
 viewHeader =
     let
@@ -236,6 +268,21 @@ viewIOSidebar executionStep =
         , Background.color (rgb 0.8 0.8 0.8)
         ]
         [ inputView, outputView ]
+
+
+isWon : Execution -> Bool
+isWon execution =
+    let
+        executionStep =
+            History.current execution.executionHistory
+
+        expectedOutput =
+            execution.level.io.output
+
+        outputCorrect =
+            executionStep.output == expectedOutput
+    in
+    executionStep.terminated && outputCorrect
 
 
 instructionToString : Instruction -> String
