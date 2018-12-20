@@ -35,6 +35,11 @@ update msg model =
                             , Cmd.none
                             )
 
+                        ExecutionBackToBrowsingLevels ->
+                            ( { model | gameState = BrowsingLevels }
+                            , Cmd.none
+                            )
+
                 ExecutionRunning execution delay ->
                     case msg of
                         ExecutionStepOne ->
@@ -68,6 +73,11 @@ update msg model =
 
                         ExecutionBackClicked ->
                             ( { model | gameState = Sketching execution.level.id }
+                            , Cmd.none
+                            )
+
+                        ExecutionBackToBrowsingLevels ->
+                            ( { model | gameState = BrowsingLevels }
                             , Cmd.none
                             )
 
@@ -311,6 +321,16 @@ stepExecutionStep executionStep =
                                 0
                         )
                         stack
+            }
+
+        Increment -> 
+            { movedExecutionStep
+                | stack = op ((+) 1) stack
+            }
+
+        Decrement -> 
+            { movedExecutionStep
+                | stack = op ((-) 1) stack
             }
 
         Add ->

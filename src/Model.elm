@@ -80,6 +80,8 @@ type Instruction
     | Negate
     | Abs
     | Not
+    | Increment
+    | Decrement
     | Add
     | Subtract
     | Multiply
@@ -172,6 +174,7 @@ type ExecutionMsg
     | ExecutionRun
     | ExecutionPause
     | ExecutionBackClicked
+    | ExecutionBackToBrowsingLevels
 
 
 type Msg

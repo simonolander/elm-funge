@@ -22,6 +22,14 @@ instructionSize =
     100
 
 
+noPadding =
+    { left = 0
+    , top = 0
+    , right = 0
+    , bottom = 0
+    }
+
+
 view : ExecutionState -> Html Msg
 view executionState =
     let
@@ -69,6 +77,7 @@ view executionState =
         |> layout
             [ height fill
             , clip
+            , Font.family [ Font.monospace ]
             ]
 
 
@@ -178,20 +187,45 @@ viewVictoryModal : Execution -> Element Msg
 viewVictoryModal execution =
     let
         numberOfSteps =
-            History.size execution.executionHistory
+            History.size execution.executionHistory - 1
 
         numberOfInstructions =
             History.first execution.executionHistory
                 |> .board
                 |> BoardUtils.count ((/=) NoOp)
+
+        viewRow ( label, value ) =
+            row [ width fill, spaceEvenly ]
+                [ el [ paddingEach { noPadding | right = 30 } ] (text label)
+                , text (String.fromInt value)
+                ]
     in
     column
         [ centerX
         , centerY
+        , Background.color (rgba 0 0 0 0.5)
+        , padding 20
+        , Font.family [ Font.monospace ]
+        , Font.color (rgb 1 1 1)
+        , spacing 10
         ]
-        [ text "Solved"
-        , text (String.fromInt numberOfSteps)
-        , text (String.fromInt numberOfInstructions)
+        [ el
+            [ Font.size 32
+            ]
+            (text "Solved")
+        , viewRow ( "Number of steps", numberOfSteps )
+        , viewRow ( "Number of instructions", numberOfInstructions )
+        , Input.button
+            [ width fill
+            , Border.width 4
+            , Border.color (rgb 1 1 1)
+            , padding 10
+            , mouseOver [ Background.color (rgba 1 1 1 0.5) ]
+            ]
+            { onPress = Just (ExecutionMsg ExecutionBackToBrowsingLevels)
+            , label =
+                el [ centerX, centerY ] (text "Back to levels")
+            }
         ]
 
 
@@ -207,7 +241,7 @@ viewHeader =
     in
     row
         [ width fill
-        , height shrink
+        , height shrink -- needed?
         , Background.color (rgb 1 1 0.8)
         ]
         [ backButtonView

@@ -15,7 +15,19 @@ init windowSize =
     let
         levels : List Level
         levels =
-            [ { id = "92a2c97b-8aea-4fd4-8ffe-7453bd09dc73"
+            [ { id = "test"
+              , name = "test"
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 3 3
+                        |> BoardUtils.set { x = 2, y = 2 } Terminate
+                , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down, Duplicate, Increment, Print]
+              }
+            ,
+            { id = "92a2c97b-8aea-4fd4-8ffe-7453bd09dc73"
               , name = "Just terminate"
               , io =
                     { input = []
@@ -54,7 +66,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            Sketching "0c66f4a8-3ce6-442a-85cc-e688f6eaed0b"
+            Sketching "test"
 
         model : Model
         model =
