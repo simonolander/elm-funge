@@ -251,57 +251,62 @@ viewHeader =
 viewIOSidebar : ExecutionStep -> Element Msg
 viewIOSidebar executionStep =
     let
-        inputView =
+        viewSingle label values =
             let
-                header =
-                    text "Input"
+                labelView =
+                    el
+                        [ paddingEach { noPadding | bottom = 10 }
+                        , centerX
+                        ]
+                        (text label)
 
-                inputs =
-                    executionStep.input
+                valuesView =
+                    values
                         |> List.map String.fromInt
-                        |> List.map text
+                        |> List.map
+                            (\value ->
+                                el
+                                    [ Font.alignRight
+                                    , width fill
+                                    ]
+                                    (text value)
+                            )
                         |> column
                             [ width fill
                             , height fill
-                            , Background.color (rgb 0.2 0.2 0.2)
-                            , Font.family
-                                [ Font.monospace
-                                ]
-                            , Font.color (rgb 1 1 1)
+                            , Font.alignRight
                             , padding 5
                             , spacing 2
                             , scrollbars
+                            , Border.width 3
                             ]
             in
             column
-                [ width (fillPortion 1)
-                , height fill
+                [ height fill
                 , padding 5
-                , Border.color (rgb 1 0 0)
-                , Border.solid
-                , Border.width 10
                 ]
-                [ header
-                , inputs
+                [ labelView
+                , valuesView
                 ]
 
+        inputView = 
+            viewSingle "Input" executionStep.input
+
+        stackView =
+            viewSingle "Stack" executionStep.stack
+
         outputView =
-            executionStep.output
-                |> List.map String.fromInt
-                |> List.map text
-                |> column
-                    [ width (fillPortion 1)
-                    , height fill
-                    , Background.color (rgb 0.7 0.6 0.5)
-                    , scrollbars
-                    ]
+            viewSingle "Output" executionStep.output
     in
     row
         [ width (fillPortion 1)
         , height fill
-        , Background.color (rgb 0.8 0.8 0.8)
+        , Background.color (rgb 0 0 0)
+        , spacing 10
+        , Font.color (rgb 1 1 1)
+        , padding 5
         ]
-        [ inputView, outputView ]
+        [ inputView, stackView, outputView ]
 
 
 isWon : Execution -> Bool

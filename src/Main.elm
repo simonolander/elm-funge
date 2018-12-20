@@ -18,13 +18,13 @@ init windowSize =
             [ { id = "test"
               , name = "test"
               , io =
-                    { input = []
+                    { input = List.range 80 120
                     , output = []
                     }
               , initialBoard =
                     BoardUtils.empty 3 3
                         |> BoardUtils.set { x = 2, y = 2 } Terminate
-                , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down, Duplicate, Increment, Print]
+                , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down, Duplicate, Increment, Print, Read, Add]
               }
             ,
             { id = "92a2c97b-8aea-4fd4-8ffe-7453bd09dc73"
