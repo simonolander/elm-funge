@@ -118,6 +118,25 @@ updateSketchMsg levelProgress msg model =
             in
             ( newModel, Cmd.none )
 
+        SketchClear ->
+            let
+                boardSketch =
+                    levelProgress.boardSketch
+
+                newBoardHistory =
+                    History.push levelProgress.level.initialBoard boardSketch.boardHistory
+
+                newBoardSketch =
+                    { boardSketch | boardHistory = newBoardHistory }
+
+                newLevelProgress =
+                    { levelProgress | boardSketch = newBoardSketch }
+
+                newModel =
+                    setLevelProgress newLevelProgress model
+            in
+            ( newModel, Cmd.none )
+
         SketchBackClicked ->
             ( { model | gameState = BrowsingLevels }
             , Cmd.none

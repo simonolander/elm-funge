@@ -164,6 +164,7 @@ type SketchMsg
     | SelectInstruction Instruction
     | SketchUndo
     | SketchRedo
+    | SketchClear
     | SketchExecute
     | SketchBackClicked
 

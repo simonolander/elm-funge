@@ -82,6 +82,13 @@ viewSidebar levelProgress =
                 , label = text "Redo"
                 }
 
+        clearButtonView =
+            Input.button
+                []
+                { onPress = Just (SketchMsg SketchClear)
+                , label = text "Clear"
+                }
+
         executeButtonView =
             Input.button
                 []
@@ -98,6 +105,7 @@ viewSidebar levelProgress =
         [ toolbarView
         , undoButtonView
         , redoButtonView
+        , clearButtonView
         , executeButtonView
         , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
         ]

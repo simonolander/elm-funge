@@ -37,14 +37,14 @@ init windowSize =
                     , Add
                     ]
               }
-            , { id = "Double"
-              , name = "Double"
+            , { id = "f10670c5-1a35-448c-81eb-9ef8615af054"
+              , name = "Double the fun"
               , io =
                     { input = [ 1, 8, 19, 3, 5, 31, 9, 0 ]
                     , output = [ 2, 16, 38, 6, 10, 62, 18 ]
                     }
               , initialBoard =
-                    BoardUtils.empty 10 10
+                    BoardUtils.empty 4 4
               , permittedInstructions =
                     [ NoOp
                     , ChangeDirection Left
@@ -53,6 +53,54 @@ init windowSize =
                     , ChangeDirection Down
                     , Duplicate
                     , Add
+                    , Print
+                    , Read
+                    , Terminate
+                    , Branch Left Right
+                    ]
+              }
+            , { id = "d4d0a3ac-5531-4146-88d7-c67985b0e6fc"
+              , name = "One, two, three"
+              , io =
+                    { input = [ ]
+                    , output = [ 1, 2, 3 ]
+                    }
+              , initialBoard =
+                    BoardUtils.empty 4 4
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Increment
+                    , Print
+                    , Read
+                    , Terminate
+                    , Branch Left Right
+                    ]
+              }
+            , { id = "eca91b31-01a0-4adf-b453-7f6d5d0bab5b"
+              , name = "Count down"
+              , io =
+                    { input = [ 7, 3, 10, 0]
+                    , output = 
+                        [7, 3, 10]
+                        |> List.map (List.range 0)
+                        |> List.map List.reverse
+                        |> List.concat
+                    }
+              , initialBoard =
+                    BoardUtils.empty 7 7
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Decrement
                     , Print
                     , Read
                     , Terminate
@@ -98,7 +146,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            Sketching "Double"
+            Sketching "f10670c5-1a35-448c-81eb-9ef8615af054"
 
         model : Model
         model =

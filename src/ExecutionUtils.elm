@@ -350,7 +350,7 @@ stepExecutionStep executionStep =
 
         Decrement ->
             { movedExecutionStep
-                | stack = op ((-) 1) stack
+                | stack = op (\value -> value - 1) stack
             }
 
         Add ->
