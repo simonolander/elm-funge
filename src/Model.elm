@@ -135,6 +135,7 @@ type alias IO =
 type alias Level =
     { id : LevelId
     , name : String
+    , description : String
     , io : IO
     , initialBoard : Board
     , permittedInstructions : List Instruction

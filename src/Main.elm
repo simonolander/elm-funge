@@ -17,6 +17,7 @@ init windowSize =
         levels =
             [ { id = "test"
               , name = "test"
+              , description = "For testing purposes"
               , io =
                     { input = List.range 980 1020
                     , output = []
@@ -39,6 +40,7 @@ init windowSize =
               }
             , { id = "f10670c5-1a35-448c-81eb-9ef8615af054"
               , name = "Double the fun"
+              , description = "> For each number in in the input, print n * 2\nThe last input is 0 and should not be printed"
               , io =
                     { input = [ 1, 8, 19, 3, 5, 31, 9, 0 ]
                     , output = [ 2, 16, 38, 6, 10, 62, 18 ]
@@ -61,8 +63,9 @@ init windowSize =
               }
             , { id = "d4d0a3ac-5531-4146-88d7-c67985b0e6fc"
               , name = "One, two, three"
+              , description = "Print the numbers 1, 2, and 3"
               , io =
-                    { input = [ ]
+                    { input = []
                     , output = [ 1, 2, 3 ]
                     }
               , initialBoard =
@@ -83,13 +86,14 @@ init windowSize =
               }
             , { id = "eca91b31-01a0-4adf-b453-7f6d5d0bab5b"
               , name = "Count down"
+              , description = "> Read a number n from input\n> Output all the numbers from n to 0\nThe last input is 0 and should not be printed"
               , io =
-                    { input = [ 7, 3, 10, 0]
-                    , output = 
-                        [7, 3, 10]
-                        |> List.map (List.range 0)
-                        |> List.map List.reverse
-                        |> List.concat
+                    { input = [ 7, 3, 10, 0 ]
+                    , output =
+                        [ 7, 3, 10 ]
+                            |> List.map (List.range 0)
+                            |> List.map List.reverse
+                            |> List.concat
                     }
               , initialBoard =
                     BoardUtils.empty 7 7
@@ -107,26 +111,31 @@ init windowSize =
                     , Branch Left Right
                     ]
               }
-            , { id = "92a2c97b-8aea-4fd4-8ffe-7453bd09dc73"
-              , name = "Just terminate"
+            , { id = "246ea0f5-fc1f-43de-b061-a55d2f749336s"
+              , name = "Some sums"
+              , description = "> Read two numbers a and b from input\n> Output a + b\nThe last input is 0 and should not be printed"
               , io =
-                    { input = []
-                    , output = []
+                    { input = [ 1, 5, 13, 10, 11, 10, 8, 8, 0 ]
+                    , output =
+                        [ 6, 23, 21, 16 ]
                     }
               , initialBoard =
-                    BoardUtils.empty 3 3
-                        |> BoardUtils.set { x = 2, y = 2 } Terminate
-              , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down ]
-              }
-            , { id = "0c66f4a8-3ce6-442a-85cc-e688f6eaed0b"
-              , name = "Hello world"
-              , io =
-                    { input =
-                        List.range (2 ^ 16 - 255) (2 ^ 16 - 1)
-                    , output = List.range 0 255
-                    }
-              , initialBoard = BoardUtils.empty 6 6
-              , permittedInstructions = [ NoOp ]
+                    BoardUtils.empty 7 7
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Increment
+                    , Decrement
+                    , Swap
+                    , Print
+                    , Read
+                    , Branch Left Right
+                    , Terminate
+                    ]
               }
             ]
 
@@ -146,7 +155,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            Sketching "f10670c5-1a35-448c-81eb-9ef8615af054"
+            BrowsingLevels
 
         model : Model
         model =
