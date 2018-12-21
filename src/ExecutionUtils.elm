@@ -259,6 +259,26 @@ stepExecutionStep executionStep =
                 | instructionPointer = moveInstructionPointer instructionPointer newDirection
             }
 
+        Branch trueDirection falseDirection ->
+            let
+                ( value, newStack ) =
+                    pop stack
+
+                newDirection =
+                    if value /= 0 then
+                        trueDirection
+
+                    else
+                        falseDirection
+
+                newInstructionPointer =
+                    moveInstructionPointer instructionPointer newDirection
+            in
+            { executionStep
+                | instructionPointer = newInstructionPointer
+                , stack = newStack
+            }
+
         Read ->
             { movedExecutionStep
                 | stack = Maybe.withDefault 0 (List.head input) :: stack
@@ -323,12 +343,12 @@ stepExecutionStep executionStep =
                         stack
             }
 
-        Increment -> 
+        Increment ->
             { movedExecutionStep
                 | stack = op ((+) 1) stack
             }
 
-        Decrement -> 
+        Decrement ->
             { movedExecutionStep
                 | stack = op ((-) 1) stack
             }

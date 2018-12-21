@@ -1,13 +1,13 @@
 module Model exposing
     ( Board
     , BoardSketch
-    , IO
     , Direction(..)
     , Execution
     , ExecutionMsg(..)
     , ExecutionState(..)
     , ExecutionStep
     , GameState(..)
+    , IO
     , Input
     , Instruction(..)
     , InstructionPointer
@@ -92,8 +92,7 @@ type Instruction
     | XOr
     | Read
     | Print
-    | BranchLeftRight
-    | BranchUpDown
+    | Branch Direction Direction
     | Terminate
 
 
@@ -149,9 +148,10 @@ type alias LevelProgress =
     }
 
 
-type ExecutionState = 
-    ExecutionPaused Execution
+type ExecutionState
+    = ExecutionPaused Execution
     | ExecutionRunning Execution Float
+
 
 type GameState
     = BrowsingLevels

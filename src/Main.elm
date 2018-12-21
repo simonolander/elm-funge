@@ -18,16 +18,48 @@ init windowSize =
             [ { id = "test"
               , name = "test"
               , io =
-                    { input = List.range 80 120
+                    { input = List.range 980 1020
                     , output = []
                     }
               , initialBoard =
                     BoardUtils.empty 3 3
                         |> BoardUtils.set { x = 2, y = 2 } Terminate
-                , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down, Duplicate, Increment, Print, Read, Add]
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Increment
+                    , Print
+                    , Read
+                    , Add
+                    ]
               }
-            ,
-            { id = "92a2c97b-8aea-4fd4-8ffe-7453bd09dc73"
+            , { id = "Double"
+              , name = "Double"
+              , io =
+                    { input = [ 1, 8, 19, 3, 5, 31, 9, 0 ]
+                    , output = [ 2, 16, 38, 6, 10, 62, 18 ]
+                    }
+              , initialBoard =
+                    BoardUtils.empty 10 10
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Add
+                    , Print
+                    , Read
+                    , Terminate
+                    , Branch Left Right
+                    ]
+              }
+            , { id = "92a2c97b-8aea-4fd4-8ffe-7453bd09dc73"
               , name = "Just terminate"
               , io =
                     { input = []
@@ -36,7 +68,7 @@ init windowSize =
               , initialBoard =
                     BoardUtils.empty 3 3
                         |> BoardUtils.set { x = 2, y = 2 } Terminate
-                , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down]
+              , permittedInstructions = [ NoOp, ChangeDirection Left, ChangeDirection Up, ChangeDirection Right, ChangeDirection Down ]
               }
             , { id = "0c66f4a8-3ce6-442a-85cc-e688f6eaed0b"
               , name = "Hello world"
@@ -66,7 +98,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            Sketching "test"
+            Sketching "Double"
 
         model : Model
         model =

@@ -11,6 +11,7 @@ import Element.Input as Input
 import History
 import Html exposing (Html)
 import Html.Attributes
+import List.Extra
 import Model exposing (..)
 
 
@@ -51,7 +52,7 @@ view executionState =
             viewExecutionSidebar execution
 
         ioSidebarView =
-            viewIOSidebar (History.current execution.executionHistory)
+            viewIOSidebar execution
     in
     column
         [ width fill
@@ -248,9 +249,12 @@ viewHeader =
         ]
 
 
-viewIOSidebar : ExecutionStep -> Element Msg
-viewIOSidebar executionStep =
+viewIOSidebar : Execution -> Element Msg
+viewIOSidebar execution =
     let
+        executionStep =
+            History.current execution.executionHistory
+
         viewSingle label values =
             let
                 labelView =
@@ -289,14 +293,99 @@ viewIOSidebar executionStep =
                 , valuesView
                 ]
 
-        inputView = 
+        viewDouble label expected actual =
+            let
+                correctedActual =
+                    let
+                        correct a b =
+                            case ( a, b ) of
+                                ( ha :: ta, hb :: tb ) ->
+                                    ( hb, ha == hb ) :: correct ta tb
+
+                                ( _, [] ) ->
+                                    []
+
+                                ( [], bb ) ->
+                                    List.map (\h -> ( h, False )) bb
+                    in
+                    correct expected (List.reverse actual)
+
+                labelView =
+                    el
+                        [ paddingEach { noPadding | bottom = 10 }
+                        , centerX
+                        ]
+                        (text label)
+
+                expectedView =
+                    expected
+                        |> List.map String.fromInt
+                        |> List.map
+                            (\value ->
+                                el
+                                    [ Font.alignRight
+                                    , width fill
+                                    ]
+                                    (text value)
+                            )
+                        |> column
+                            [ width fill
+                            , height fill
+                            , Font.alignRight
+                            , padding 5
+                            , spacing 2
+                            , scrollbars
+                            , Border.width 3
+                            ]
+
+                actualView =
+                    correctedActual
+                        |> List.map
+                            (\( value, correct ) ->
+                                el
+                                    [ Font.alignRight
+                                    , width fill
+                                    , Background.color
+                                        (if correct then
+                                            rgba 0 0 0 0
+
+                                         else
+                                            rgb 0.5 0 0
+                                        )
+                                    ]
+                                    (text (String.fromInt value))
+                            )
+                        |> column
+                            [ width fill
+                            , height fill
+                            , Font.alignRight
+                            , padding 5
+                            , spacing 2
+                            , scrollbars
+                            , Border.widthEach { left = 0, top = 3, right = 3, bottom = 3 }
+                            ]
+            in
+            column
+                [ height fill
+                , width fill
+                , padding 5
+                ]
+                [ labelView
+                , row
+                    [ height fill
+                    , width fill
+                    ]
+                    [ expectedView, actualView ]
+                ]
+
+        inputView =
             viewSingle "Input" executionStep.input
 
         stackView =
             viewSingle "Stack" executionStep.stack
 
         outputView =
-            viewSingle "Output" executionStep.output
+            viewDouble "Output" execution.level.io.output executionStep.output
     in
     row
         [ width (fillPortion 1)
@@ -317,6 +406,7 @@ isWon execution =
 
         expectedOutput =
             execution.level.io.output
+                |> List.reverse
 
         outputCorrect =
             executionStep.output == expectedOutput
