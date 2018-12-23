@@ -21,8 +21,28 @@ view model =
         levelProgresses =
             model.levelProgresses
 
+        maybeSelectedLevelProgress : Maybe LevelProgress
+        maybeSelectedLevelProgress =
+            case model.gameState of
+                BrowsingLevels maybeLevelId ->
+                    maybeLevelId
+                        |> Maybe.andThen
+                            (\levelId ->
+                                levelProgresses
+                                    |> List.filter (\levelProgress -> levelProgress.level.id == levelId)
+                                    |> List.head
+                            )
+
+                _ ->
+                    Nothing
+
         levelsView =
             viewLevels levelProgresses
+
+        sidebarView =
+            maybeSelectedLevelProgress
+                |> Maybe.map viewSidebar
+                |> Maybe.withDefault none
     in
     layout
         [ Background.color (rgb 0 0 0)
@@ -37,7 +57,7 @@ view model =
             [ width fill
             , height fill
             ]
-            [ levelsView ]
+            [ sidebarView, levelsView ]
         )
 
 
@@ -58,8 +78,8 @@ viewLevels levelProgresses =
                             [ Background.color (rgba 1 1 1 0.5)
                             ]
                         ]
-                        [ el [centerX, Font.center] (paragraph [] [ text levelProgress.level.name ])
-                        , el [centerX]
+                        [ el [ centerX, Font.center ] (paragraph [] [ text levelProgress.level.name ])
+                        , el [ centerX ]
                             (paragraph
                                 [ Font.color
                                     (rgb 0.2 0.2 0.2)
@@ -72,8 +92,38 @@ viewLevels levelProgresses =
     levelProgresses
         |> List.map viewLevel
         |> wrappedRow
-            [ width fill
+            [ width (fillPortion 3)
             , spacing 20
             , alignTop
             , padding 20
             ]
+
+
+viewSidebar : LevelProgress -> Element Msg
+viewSidebar levelProgress =
+    let
+        levelNameView =
+            el [width fill, Font.center, Font.size 24] (text levelProgress.level.name)
+
+        goToSketchView =
+            Input.button
+                [ width fill
+                , Border.width 3
+                , padding 10
+                , mouseOver [
+                    Background.color (rgb 0.5 0.5 0.5)
+                ]
+                ]
+                { onPress = Just (SketchLevelProgress levelProgress.level.id)
+                , label = el [ Font.center, width fill ] (text "Open Editor")
+                }
+    in
+    column
+        [ width (fillPortion 1)
+        , padding 20
+        , spacing 20
+        , alignTop
+        ]
+        [ levelNameView
+        , goToSketchView
+        ]

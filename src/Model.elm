@@ -155,7 +155,7 @@ type ExecutionState
 
 
 type GameState
-    = BrowsingLevels
+    = BrowsingLevels (Maybe LevelId)
     | Sketching LevelId
     | Executing ExecutionState
 
@@ -182,6 +182,7 @@ type ExecutionMsg
 type Msg
     = Resize WindowSize
     | SelectLevel LevelId
+    | SketchLevelProgress LevelId
     | SketchMsg SketchMsg
     | ExecutionMsg ExecutionMsg
 

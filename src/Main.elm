@@ -155,7 +155,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            BrowsingLevels
+            BrowsingLevels Nothing
 
         model : Model
         model =

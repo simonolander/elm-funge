@@ -16,7 +16,7 @@ import BrowsingLevelsView
 view : Model -> Html Msg
 view model =
     case model.gameState of
-        BrowsingLevels ->
+        BrowsingLevels _ ->
             BrowsingLevelsView.view model
         Sketching levelId ->
             let

@@ -17,6 +17,9 @@ update msg model =
             )
 
         SelectLevel levelId ->
+            ( { model | gameState = BrowsingLevels (Just levelId) }, Cmd.none )
+
+        SketchLevelProgress levelId -> 
             ( { model | gameState = Sketching levelId }, Cmd.none )
 
         SketchMsg sketchMsg ->
@@ -138,7 +141,7 @@ updateSketchMsg levelProgress msg model =
             ( newModel, Cmd.none )
 
         SketchBackClicked ->
-            ( { model | gameState = BrowsingLevels }
+            ( { model | gameState = BrowsingLevels (Just levelProgress.level.id)}
             , Cmd.none
             )
 
