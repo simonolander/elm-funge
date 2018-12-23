@@ -34,111 +34,123 @@ view attributes instruction =
                 , description = ""
                 }
 
-        Branch Left Left -> 
+        Branch Left Left ->
             image attributes
                 { src = "assets/instruction-images/branch-left-left.svg"
                 , description = ""
                 }
 
-        Branch Left Up -> 
+        Branch Left Up ->
             image attributes
                 { src = "assets/instruction-images/branch-left-up.svg"
                 , description = ""
                 }
 
-        Branch Left Right -> 
+        Branch Left Right ->
             image attributes
                 { src = "assets/instruction-images/branch-left-right.svg"
                 , description = ""
                 }
 
-        Branch Left Down -> 
+        Branch Left Down ->
             image attributes
                 { src = "assets/instruction-images/branch-left-down.svg"
                 , description = ""
                 }
 
-        Branch Up Left -> 
+        Branch Up Left ->
             image attributes
                 { src = "assets/instruction-images/branch-up-left.svg"
                 , description = ""
                 }
 
-        Branch Up Up -> 
+        Branch Up Up ->
             image attributes
                 { src = "assets/instruction-images/branch-up-up.svg"
                 , description = ""
                 }
 
-        Branch Up Right -> 
+        Branch Up Right ->
             image attributes
                 { src = "assets/instruction-images/branch-up-right.svg"
                 , description = ""
                 }
 
-        Branch Up Down -> 
+        Branch Up Down ->
             image attributes
                 { src = "assets/instruction-images/branch-up-down.svg"
                 , description = ""
                 }
 
-        Branch Right Left -> 
+        Branch Right Left ->
             image attributes
                 { src = "assets/instruction-images/branch-right-left.svg"
                 , description = ""
                 }
 
-        Branch Right Up -> 
+        Branch Right Up ->
             image attributes
                 { src = "assets/instruction-images/branch-right-up.svg"
                 , description = ""
                 }
 
-        Branch Right Right -> 
+        Branch Right Right ->
             image attributes
                 { src = "assets/instruction-images/branch-right-right.svg"
                 , description = ""
                 }
 
-        Branch Right Down -> 
+        Branch Right Down ->
             image attributes
                 { src = "assets/instruction-images/branch-right-down.svg"
                 , description = ""
                 }
 
-        Branch Down Left -> 
+        Branch Down Left ->
             image attributes
                 { src = "assets/instruction-images/branch-down-left.svg"
                 , description = ""
                 }
 
-        Branch Down Up -> 
+        Branch Down Up ->
             image attributes
                 { src = "assets/instruction-images/branch-down-up.svg"
                 , description = ""
                 }
 
-        Branch Down Right -> 
+        Branch Down Right ->
             image attributes
                 { src = "assets/instruction-images/branch-down-right.svg"
                 , description = ""
                 }
 
-        Branch Down Down -> 
+        Branch Down Down ->
             image attributes
                 { src = "assets/instruction-images/branch-down-down.svg"
                 , description = ""
                 }
 
-        Add -> 
+        Add ->
             image attributes
                 { src = "assets/instruction-images/add.svg"
                 , description = ""
                 }
 
-        Subtract -> 
+        Subtract ->
             image attributes
                 { src = "assets/instruction-images/subtract.svg"
+                , description = ""
+                }
+
+        Read ->
+            image attributes
+                { src = "assets/instruction-images/read.svg"
+                , description = ""
+                }
+
+        Print ->
+            image attributes
+                { src = "assets/instruction-images/print.svg"
                 , description = ""
                 }
 
