@@ -154,6 +154,12 @@ view attributes instruction =
                 , description = ""
                 }
 
+        Duplicate ->
+            image attributes
+                { src = "assets/instruction-images/duplicate.svg"
+                , description = ""
+                }
+
         Terminate ->
             image attributes
                 { src = "assets/instruction-images/terminate.svg"
