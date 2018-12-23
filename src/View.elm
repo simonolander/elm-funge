@@ -10,16 +10,17 @@ import Html exposing (Html)
 import Html.Attributes
 import Model exposing (..)
 import SketchingView
+import BrowsingLevelsView
 
 
 view : Model -> Html Msg
 view model =
     case model.gameState of
         BrowsingLevels ->
-            viewBrowsingLevels model.levelProgresses
-
+            BrowsingLevelsView.view model
         Sketching levelId ->
             let
+                maybeLevelProgress : Maybe LevelProgress
                 maybeLevelProgress =
                     model.levelProgresses
                         |> List.filter (\progress -> progress.level.id == levelId)
@@ -34,26 +35,3 @@ view model =
 
         Executing executionState ->
             ExecutionView.view executionState
-
-
-viewBrowsingLevels : List LevelProgress -> Html Msg
-viewBrowsingLevels progresses =
-    progresses
-        |> List.map viewProgress
-        |> column [ centerX ]
-        |> layout []
-
-
-viewProgress : LevelProgress -> Element Msg
-viewProgress progress =
-    Input.button
-        []
-        { onPress = Just (SelectLevel progress.level.id)
-        , label =
-            row
-                [ Background.color (rgb 0.5 0.5 0.5)
-                , padding 20
-                , Border.rounded 10
-                ]
-                [ el [] (text progress.level.name) ]
-        }
