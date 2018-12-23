@@ -160,6 +160,18 @@ view attributes instruction =
                 , description = ""
                 }
 
+        Increment ->
+            image attributes
+                { src = "assets/instruction-images/increment.svg"
+                , description = ""
+                }
+
+        Decrement ->
+            image attributes
+                { src = "assets/instruction-images/decrement.svg"
+                , description = ""
+                }
+
         Terminate ->
             image attributes
                 { src = "assets/instruction-images/terminate.svg"
