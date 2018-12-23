@@ -11,6 +11,7 @@ import Element.Input as Input
 import History
 import Html exposing (Html)
 import Html.Attributes
+import InstructionView
 import List.Extra
 import Model exposing (..)
 
@@ -145,22 +146,28 @@ viewBoard execution =
             let
                 backgroundColor =
                     if instructionPointer.position.x == columnIndex && instructionPointer.position.y == rowIndex then
-                        rgb 1 0.6 0.6
+                        rgb 0.4 0.4 0.4
 
                     else
-                        rgb 1 1 1
+                        rgb 0 0 0
 
                 instructionLabel =
-                    el
-                        [ width (px instructionSize)
+                    el [ width (px instructionSize)
                         , height (px instructionSize)
                         , Background.color backgroundColor
                         , Font.center
+                        , padding 10
                         ]
-                        (text (instructionToString instruction))
+                        (
+                    InstructionView.view
+                        [width fill, height fill
+                        ]
+                        instruction)
             in
             Input.button
-                []
+                [ Border.width 3
+                , Border.color (rgb 1 1 1)
+                ]
                 { onPress = Nothing
                 , label = instructionLabel
                 }
@@ -180,7 +187,8 @@ viewBoard execution =
             , scrollbars
             , width (fillPortion 3)
             , height fill
-            , Background.color (rgb 0.8 1 0.8)
+            , Background.color (rgb 0 0 0)
+            , padding 10
             ]
 
 
@@ -412,51 +420,3 @@ isWon execution =
             executionStep.output == expectedOutput
     in
     executionStep.terminated && outputCorrect
-
-
-instructionToString : Instruction -> String
-instructionToString instruction =
-    case instruction of
-        NoOp ->
-            ""
-
-        ChangeDirection direction ->
-            case direction of
-                Left ->
-                    "left"
-
-                Up ->
-                    "up"
-
-                Right ->
-                    "right"
-
-                Down ->
-                    "down"
-
-        PushToStack n ->
-            "push " ++ String.fromInt n
-
-        PopFromStack ->
-            "pop"
-
-        Add ->
-            "+"
-
-        Subtract ->
-            "-"
-
-        Multiply ->
-            "*"
-
-        Divide ->
-            "/"
-
-        Read ->
-            "read"
-
-        Print ->
-            "print"
-
-        otherwise ->
-            Debug.toString otherwise
