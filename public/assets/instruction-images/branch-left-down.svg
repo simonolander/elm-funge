@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <polygon fill="white" points="0,50 20,30 20,70" />
+  <path fill-rule="nonzero" fill="white" d="M50,100 L70,80 L30,80 z M50,98 L33.414213562373092,81.414213562373092 L66.585786437626908,81.414213562373092 z"/>
+</svg>
