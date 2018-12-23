@@ -154,5 +154,11 @@ view attributes instruction =
                 , description = ""
                 }
 
+        Terminate ->
+            image attributes
+                { src = "assets/instruction-images/terminate.svg"
+                , description = ""
+                }
+
         _ ->
             el attributes (text (Debug.toString instruction))
