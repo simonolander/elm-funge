@@ -172,6 +172,12 @@ view attributes instruction =
                 , description = ""
                 }
 
+        Swap ->
+            image attributes
+                { src = "assets/instruction-images/swap.svg"
+                , description = ""
+                }
+
         Terminate ->
             image attributes
                 { src = "assets/instruction-images/terminate.svg"
