@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect fill="white" x="0" y="68.60696619672773" width="20" height="20" />
+  <rect fill="white" x="40" y="68.60696619672773" width="20" height="20" />
+  <rect fill="white" x="80" y="68.60696619672773" width="20" height="20" />
+  <polygon fill="white" points="50,11.393033803272274 6.5358983848622456,55.142864581589976 13.464101615137753,62.071067811865476 50,25.535169427003225 86.53589838486225,62.071067811865476 93.46410161513775,55.142864581589976" />
+  <polygon fill="white" points="93.46410161513775,62.071067811865476 93.46410161513775,41.000728957859025 72.393762761131299,62.071067811865476" />
+</svg>

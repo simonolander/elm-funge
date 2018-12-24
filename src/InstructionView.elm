@@ -184,6 +184,12 @@ view attributes instruction =
                 , description = ""
                 }
 
+        Jump _ ->
+            image attributes
+                { src = "assets/instruction-images/jump-one-forward.svg"
+                , description = ""
+                }
+
         Terminate ->
             image attributes
                 { src = "assets/instruction-images/terminate.svg"
