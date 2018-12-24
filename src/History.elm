@@ -67,10 +67,7 @@ forward history =
 
 push : a -> History a -> History a
 push a history =
-    { past = history.current :: history.past
-    , current = a
-    , future = []
-    }
+    singleton a
 
 
 size : History a -> Int
