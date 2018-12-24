@@ -1,7 +1,6 @@
 module ExecutionControlView exposing (ExecutionControlInstruction(..), view)
 
 import Element exposing (..)
-import Model exposing (..)
 
 
 type ExecutionControlInstruction

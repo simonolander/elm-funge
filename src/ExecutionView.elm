@@ -8,6 +8,7 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import ExecutionControlView
 import History
 import Html exposing (Html)
 import Html.Attributes
@@ -86,44 +87,60 @@ view executionState =
 viewExecutionSidebar : Execution -> Element Msg
 viewExecutionSidebar levelProgress =
     let
-        undoButtonView =
+        controlSize =
+            80
+
+        viewButton : ExecutionControlView.ExecutionControlInstruction -> Maybe Msg -> Element Msg
+        viewButton executionControlInstruction onPress =
             Input.button
-                []
-                { onPress = Just (ExecutionMsg ExecutionUndo)
-                , label = text "Undo"
+                [ width (px controlSize)
+                , height (px controlSize)
+                , padding 10
+                , Border.width 3
+                , Border.color (rgb 1 1 1)
+                , mouseOver
+                    [ Background.color (rgb 0.5 0.5 0.5)
+                    ]
+                ]
+                { onPress = onPress
+                , label =
+                    ExecutionControlView.view
+                        [ width fill
+                        , height fill
+                        ]
+                        executionControlInstruction
                 }
+
+        undoButtonView =
+            viewButton ExecutionControlView.Undo (Just (ExecutionMsg ExecutionUndo))
 
         stepButtonView =
-            Input.button
-                []
-                { onPress = Just (ExecutionMsg ExecutionStepOne)
-                , label = text "Step"
-                }
+            viewButton ExecutionControlView.Step (Just (ExecutionMsg ExecutionStepOne))
 
         runButtonView =
-            Input.button
-                []
-                { onPress = Just (ExecutionMsg ExecutionRun)
-                , label = text "Run"
-                }
+            viewButton ExecutionControlView.Play (Just (ExecutionMsg ExecutionRun))
 
         pauseButtonView =
-            Input.button
-                []
-                { onPress = Just (ExecutionMsg ExecutionPause)
-                , label = text "Pause"
-                }
+            viewButton ExecutionControlView.Pause (Just (ExecutionMsg ExecutionPause))
+
+        executionControlInstructionsView =
+            wrappedRow
+                [ spacing 10
+                ]
+                [ undoButtonView
+                , stepButtonView
+                , runButtonView
+                , pauseButtonView
+                ]
     in
     column
         [ width (fillPortion 1)
         , height fill
-        , Background.color (rgb 0.8 0.8 1)
+        , Background.color (rgb 0 0 0)
         , alignTop
+        , padding 10
         ]
-        [ undoButtonView
-        , stepButtonView
-        , runButtonView
-        , pauseButtonView
+        [ executionControlInstructionsView
         , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
         ]
 
@@ -152,17 +169,19 @@ viewBoard execution =
                         rgb 0 0 0
 
                 instructionLabel =
-                    el [ width (px instructionSize)
+                    el
+                        [ width (px instructionSize)
                         , height (px instructionSize)
                         , Background.color backgroundColor
                         , Font.center
                         , padding 10
                         ]
-                        (
-                    InstructionView.view
-                        [width fill, height fill
-                        ]
-                        instruction)
+                        (InstructionView.view
+                            [ width fill
+                            , height fill
+                            ]
+                            instruction
+                        )
             in
             Input.button
                 [ Border.width 3
