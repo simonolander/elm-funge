@@ -133,6 +133,34 @@ init windowSize =
                     , Swap
                     , Print
                     , Read
+                    , Branch Down Right
+                    , Branch Left Right
+                    , Terminate
+                    ]
+              }
+            , { id = "87e1f6b0-9cc1-4809-8a62-219507cee40a"
+              , name = "Powers of two"
+              , description = "> Read a number n from input\n> Output 2^n \nThe last input is 0 and should not be printed"
+              , io =
+                    { input = [ 1, 4, 3, 8, 5, 7, 0 ]
+                    , output =
+                        [ 2 ^ 1, 2 ^ 4, 2 ^ 3, 2 ^ 8, 2 ^ 5, 2 ^ 7 ]
+                    }
+              , initialBoard =
+                    BoardUtils.empty 8 8
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Increment
+                    , Decrement
+                    , Swap
+                    , Print
+                    , Read
+                    , Branch Down Right
                     , Branch Left Right
                     , Terminate
                     ]
