@@ -178,6 +178,12 @@ view attributes instruction =
                 , description = ""
                 }
 
+        PopFromStack ->
+            image attributes
+                { src = "assets/instruction-images/pop-from-stack.svg"
+                , description = ""
+                }
+
         Terminate ->
             image attributes
                 { src = "assets/instruction-images/terminate.svg"
