@@ -11,6 +11,7 @@ module Model exposing
     , Input
     , Instruction(..)
     , InstructionPointer
+    , InstructionTool(..)
     , JumpLocation(..)
     , Level
     , LevelId
@@ -96,6 +97,12 @@ type Instruction
     | Terminate
 
 
+type InstructionTool
+    = JustInstruction Instruction
+    | ChangeAnyDirection
+    | BranchAnyDirection
+
+
 type alias Board =
     Array (Array Instruction)
 
@@ -122,7 +129,7 @@ type alias Execution =
 
 type alias BoardSketch =
     { boardHistory : History Board
-    , selectedInstruction : Maybe Instruction
+    , selectedInstructionTool : Maybe InstructionTool
     }
 
 
@@ -138,7 +145,7 @@ type alias Level =
     , description : String
     , io : IO
     , initialBoard : Board
-    , permittedInstructions : List Instruction
+    , instructionTools : List InstructionTool
     }
 
 
@@ -162,7 +169,7 @@ type GameState
 
 type SketchMsg
     = PlaceInstruction Position Instruction
-    | SelectInstruction Instruction
+    | SelectInstructionTool InstructionTool
     | SketchUndo
     | SketchRedo
     | SketchClear

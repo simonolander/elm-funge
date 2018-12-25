@@ -25,17 +25,17 @@ init windowSize =
               , initialBoard =
                     BoardUtils.empty 3 3
                         |> BoardUtils.set { x = 2, y = 2 } Terminate
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Increment
-                    , Print
-                    , Read
-                    , Add
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction Add
                     ]
               }
             , { id = "f10670c5-1a35-448c-81eb-9ef8615af054"
@@ -47,18 +47,18 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 4 4
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Add
-                    , Print
-                    , Read
-                    , Terminate
-                    , Branch Left Right
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Add
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction Terminate
+                    , JustInstruction (Branch Left Right)
                     ]
               }
             , { id = "d4d0a3ac-5531-4146-88d7-c67985b0e6fc"
@@ -70,18 +70,18 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 4 4
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Increment
-                    , Print
-                    , Read
-                    , Terminate
-                    , Branch Left Right
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction Terminate
+                    , JustInstruction (Branch Left Right)
                     ]
               }
             , { id = "eca91b31-01a0-4adf-b453-7f6d5d0bab5b"
@@ -97,18 +97,18 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 7 7
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Decrement
-                    , Print
-                    , Read
-                    , Terminate
-                    , Branch Left Right
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Decrement
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction Terminate
+                    , JustInstruction (Branch Left Right)
                     ]
               }
             , { id = "246ea0f5-fc1f-43de-b061-a55d2f749336s"
@@ -121,21 +121,21 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 7 7
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Increment
-                    , Decrement
-                    , Swap
-                    , Print
-                    , Read
-                    , Branch Down Right
-                    , Branch Left Right
-                    , Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction (Branch Down Right)
+                    , JustInstruction (Branch Left Right)
+                    , JustInstruction Terminate
                     ]
               }
             , { id = "87e1f6b0-9cc1-4809-8a62-219507cee40a"
@@ -148,21 +148,21 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 8 8
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Increment
-                    , Decrement
-                    , Swap
-                    , Print
-                    , Read
-                    , Branch Down Right
-                    , Branch Left Right
-                    , Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction (Branch Down Right)
+                    , JustInstruction (Branch Left Right)
+                    , JustInstruction Terminate
                     ]
               }
             , { id = "872e1d003c2ab606"
@@ -173,28 +173,28 @@ init windowSize =
                         input =
                             [ 5, 13, 7, 11, 1, 10, 3 ]
                     in
-                    { input = input ++ [0]
+                    { input = input ++ [ 0 ]
                     , output =
                         input
                             |> List.map (\n -> n * (n + 1) // 2)
                     }
               , initialBoard =
                     BoardUtils.empty 8 8
-              , permittedInstructions =
-                    [ NoOp
-                    , ChangeDirection Left
-                    , ChangeDirection Up
-                    , ChangeDirection Right
-                    , ChangeDirection Down
-                    , Duplicate
-                    , Increment
-                    , Decrement
-                    , Swap
-                    , Print
-                    , Read
-                    , Branch Down Right
-                    , Branch Left Right
-                    , Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , JustInstruction (ChangeDirection Left)
+                    , JustInstruction (ChangeDirection Up)
+                    , JustInstruction (ChangeDirection Right)
+                    , JustInstruction (ChangeDirection Down)
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction (Branch Down Right)
+                    , JustInstruction (Branch Left Right)
+                    , JustInstruction Terminate
                     ]
               }
             ]

@@ -114,33 +114,35 @@ viewSidebar levelProgress =
 viewToolbar : LevelProgress -> Element Msg
 viewToolbar levelProgress =
     let
-        permittedInstructions = levelProgress.level.permittedInstructions
+        instructionTools =
+            levelProgress.level.instructionTools
+
         options =
-            permittedInstructions
+            instructionTools
                 |> List.map
-                    (\instruction ->
-                        Input.option instruction (text (instructionToString instruction))
+                    (\instructionTool ->
+                        Input.option instructionTool (text (Debug.toString instructionTool))
                     )
     in
     Input.radio
         []
-        { onChange = SketchMsg << SelectInstruction
-        , selected = levelProgress.boardSketch.selectedInstruction
+        { onChange = SketchMsg << SelectInstructionTool
+        , selected = levelProgress.boardSketch.selectedInstructionTool
         , label = Input.labelAbove [] (text "Instructions")
         , options = options
         }
 
 
-viewRow : Maybe Instruction -> Int -> Array Instruction -> Element Msg
-viewRow selectedInstruction rowIndex boardRow =
+viewRow : Maybe InstructionTool -> Int -> Array Instruction -> Element Msg
+viewRow selectedInstructionTool rowIndex boardRow =
     boardRow
-        |> Array.indexedMap (viewInstruction selectedInstruction rowIndex)
+        |> Array.indexedMap (viewInstruction selectedInstructionTool rowIndex)
         |> Array.toList
         |> row [ spacing instructionSpacing ]
 
 
-viewInstruction : Maybe Instruction -> Int -> Int -> Instruction -> Element Msg
-viewInstruction selectedInstruction rowIndex columnIndex instruction =
+viewInstruction : Maybe InstructionTool -> Int -> Int -> Instruction -> Element Msg
+viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
     let
         instructionLabel =
             el
@@ -151,11 +153,11 @@ viewInstruction selectedInstruction rowIndex columnIndex instruction =
                 , centerY
                 , Font.center
                 ]
-                (text (instructionToString instruction))
+                (text (Debug.toString instruction))
 
         onPress : Maybe Msg
         onPress =
-            selectedInstruction
+            selectedInstructionTool
                 |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
                 |> Maybe.map SketchMsg
     in
@@ -182,48 +184,3 @@ viewHeader =
         ]
         [ backButtonView
         ]
-
-
-instructionToString : Instruction -> String
-instructionToString instruction =
-    case instruction of
-        NoOp ->
-            "nop"
-
-        ChangeDirection direction ->
-            case direction of
-                Left ->
-                    "left"
-
-                Up ->
-                    "up"
-
-                Right ->
-                    "right"
-
-                Down ->
-                    "down"
-
-        PushToStack n ->
-            String.fromInt n
-
-        Add ->
-            "+"
-
-        Subtract ->
-            "-"
-
-        Multiply ->
-            "*"
-
-        Divide ->
-            "/"
-
-        Read ->
-            "read"
-
-        Print ->
-            "print"
-
-        otherwise ->
-            Debug.toString otherwise
