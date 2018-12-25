@@ -165,6 +165,38 @@ init windowSize =
                     , Terminate
                     ]
               }
+            , { id = "872e1d003c2ab606"
+              , name = "Triangular numbers"
+              , description = "> Read a number n from input\n> Output n*(n+1)/2 \nThe last input is 0 and should not be printed"
+              , io =
+                    let
+                        input =
+                            [ 5, 13, 7, 11, 1, 10, 3 ]
+                    in
+                    { input = input ++ [0]
+                    , output =
+                        input
+                            |> List.map (\n -> n * (n + 1) // 2)
+                    }
+              , initialBoard =
+                    BoardUtils.empty 8 8
+              , permittedInstructions =
+                    [ NoOp
+                    , ChangeDirection Left
+                    , ChangeDirection Up
+                    , ChangeDirection Right
+                    , ChangeDirection Down
+                    , Duplicate
+                    , Increment
+                    , Decrement
+                    , Swap
+                    , Print
+                    , Read
+                    , Branch Down Right
+                    , Branch Left Right
+                    , Terminate
+                    ]
+              }
             ]
 
         levelProgresses : List LevelProgress
