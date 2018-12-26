@@ -11,7 +11,6 @@ import Element.Input as Input
 import History
 import Html exposing (Html)
 import Html.Attributes
-import List.Extra
 import Model exposing (..)
 
 
