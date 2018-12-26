@@ -78,5 +78,8 @@ size history =
 first : History a -> a
 first history =
     case history.past of
-        [] -> current history
-        past -> back history |> first
+        [] ->
+            current history
+
+        past ->
+            back history |> first

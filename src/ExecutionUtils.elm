@@ -36,7 +36,7 @@ update msg model =
                             )
 
                         ExecutionBackToBrowsingLevels ->
-                            ( { model | gameState = BrowsingLevels (Just execution.level.id)}
+                            ( { model | gameState = BrowsingLevels (Just execution.level.id) }
                             , Cmd.none
                             )
 
@@ -77,7 +77,7 @@ update msg model =
                             )
 
                         ExecutionBackToBrowsingLevels ->
-                            ( { model | gameState = BrowsingLevels (Just execution.level.id)}
+                            ( { model | gameState = BrowsingLevels (Just execution.level.id) }
                             , Cmd.none
                             )
 

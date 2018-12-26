@@ -13,7 +13,6 @@ import History
 import Html exposing (Html)
 import Html.Attributes
 import InstructionView
-import List.Extra
 import Model exposing (..)
 
 

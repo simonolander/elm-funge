@@ -1,5 +1,6 @@
 module View exposing (view)
 
+import BrowsingLevelsView
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -10,7 +11,6 @@ import Html exposing (Html)
 import Html.Attributes
 import Model exposing (..)
 import SketchingView
-import BrowsingLevelsView
 
 
 view : Model -> Html Msg
@@ -18,6 +18,7 @@ view model =
     case model.gameState of
         BrowsingLevels _ ->
             BrowsingLevelsView.view model
+
         Sketching levelId ->
             let
                 maybeLevelProgress : Maybe LevelProgress
