@@ -102,16 +102,16 @@ viewSidebar : LevelProgress -> Element Msg
 viewSidebar levelProgress =
     let
         levelNameView =
-            el [width fill, Font.center, Font.size 24] (text levelProgress.level.name)
+            el [ width fill, Font.center, Font.size 24 ] (text levelProgress.level.name)
 
         goToSketchView =
             Input.button
                 [ width fill
                 , Border.width 3
                 , padding 10
-                , mouseOver [
-                    Background.color (rgb 0.5 0.5 0.5)
-                ]
+                , mouseOver
+                    [ Background.color (rgb 0.5 0.5 0.5)
+                    ]
                 ]
                 { onPress = Just (SketchLevelProgress levelProgress.level.id)
                 , label = el [ Font.center, width fill ] (text "Open Editor")

@@ -173,7 +173,7 @@ init windowSize =
                         input =
                             [ 5, 13, 7, 11, 1, 10, 3 ]
                     in
-                    { input = input ++ [0]
+                    { input = input ++ [ 0 ]
                     , output =
                         input
                             |> List.map (\n -> n * (n + 1) // 2)

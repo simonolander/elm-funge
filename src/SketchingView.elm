@@ -114,7 +114,9 @@ viewSidebar levelProgress =
 viewToolbar : LevelProgress -> Element Msg
 viewToolbar levelProgress =
     let
-        permittedInstructions = levelProgress.level.permittedInstructions
+        permittedInstructions =
+            levelProgress.level.permittedInstructions
+
         options =
             permittedInstructions
                 |> List.map
