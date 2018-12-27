@@ -70,6 +70,15 @@ push a history =
     singleton a
 
 
+
+-- push : a -> History a -> History a
+-- push a history =
+--     { past = history.current :: history.past
+--     , current = a
+--     , future = []
+--     }
+
+
 size : History a -> Int
 size history =
     1 + List.length history.past + List.length history.future
