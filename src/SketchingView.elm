@@ -10,6 +10,7 @@ import Element.Input as Input
 import History
 import Html exposing (Html)
 import Html.Attributes
+import InstructionView
 import Model exposing (..)
 
 
@@ -37,7 +38,7 @@ view levelProgress =
                     , scrollbars
                     , width (fillPortion 3)
                     , height fill
-                    , Background.color (rgb 0.8 1 0.8)
+                    , padding instructionSpacing
                     ]
 
         headerView =
@@ -60,7 +61,7 @@ view levelProgress =
             ]
         ]
         |> layout
-            []
+            [ Background.color (rgb 0 0 0) ]
 
 
 viewSidebar levelProgress =
@@ -160,12 +161,15 @@ viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
             el
                 [ width (px instructionSize)
                 , height (px instructionSize)
-                , Background.color (rgb 1 1 1)
-                , centerX
-                , centerY
                 , Font.center
+                , padding 10
                 ]
-                (text (Debug.toString instruction))
+                (InstructionView.view
+                    [ width fill
+                    , height fill
+                    ]
+                    instruction
+                )
 
         onPress : Maybe Msg
         onPress =
@@ -175,7 +179,9 @@ viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
                 |> Maybe.map SketchMsg
     in
     Input.button
-        []
+        [ Border.width 3
+        , Border.color (rgb 1 1 1)
+        ]
         { onPress = onPress
         , label = instructionLabel
         }
