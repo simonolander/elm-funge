@@ -10,6 +10,7 @@ import Element.Input as Input
 import History
 import Html exposing (Html)
 import Html.Attributes
+import InstructionToolView
 import InstructionView
 import Model exposing (..)
 
@@ -121,29 +122,206 @@ viewToolbar levelProgress =
         instructionTools =
             instructionToolbox.instructionTools
 
-        options =
-            instructionTools
-                |> List.indexedMap
-                    (\index instructionTool ->
-                        Input.option index (text (Debug.toString instructionTool))
-                    )
+        viewTool index tool =
+            let
+                backgroundColor =
+                    case instructionToolbox.selectedIndex of
+                        Just selectedIndex ->
+                            if index == selectedIndex then
+                                rgb 0.5 0.5 0.5
 
-        selectInstructionTool : Int -> Msg
-        selectInstructionTool index =
+                            else
+                                rgb 0 0 0
+
+                        Nothing ->
+                            rgb 0 0 0
+
+                instructionLabel =
+                    el
+                        [ width (px instructionSize)
+                        , height (px instructionSize)
+                        , Background.color backgroundColor
+                        , Font.center
+                        , padding 10
+                        , mouseOver
+                            [ Background.color (rgb 0.5 0.5 0.5) ]
+                        ]
+                        (InstructionToolView.view
+                            [ width fill
+                            , height fill
+                            ]
+                            tool
+                        )
+            in
+            Input.button
+                [ Border.width 3
+                , Border.color (rgb 1 1 1)
+                ]
+                { onPress =
+                    Just
+                        (SketchMsg
+                            (NewInstructionToolbox
+                                { instructionToolbox
+                                    | selectedIndex = Just index
+                                }
+                            )
+                        )
+                , label = instructionLabel
+                }
+
+        replaceToolMessage index instructionTool =
             SketchMsg
                 (NewInstructionToolbox
                     { instructionToolbox
-                        | selectedIndex = Just index
+                        | instructionTools =
+                            instructionTools
+                                |> Array.fromList
+                                |> Array.set index instructionTool
+                                |> Array.toList
                     }
                 )
+
+        toolExtraView =
+            case instructionToolbox.selectedIndex of
+                Just index ->
+                    case getSelectedInstructionTool instructionToolbox of
+                        Just (ChangeAnyDirection selectedDirection) ->
+                            [ Left, Up, Right, Down ]
+                                |> List.map
+                                    (\direction ->
+                                        Input.button
+                                            [ Border.width 3
+                                            , Border.color (rgb 1 1 1)
+                                            ]
+                                            { onPress =
+                                                Just
+                                                    (replaceToolMessage index
+                                                        (ChangeAnyDirection direction)
+                                                    )
+                                            , label =
+                                                el
+                                                    [ width (px instructionSize)
+                                                    , height (px instructionSize)
+                                                    , Background.color
+                                                        (if selectedDirection == direction then
+                                                            rgb 0.5 0.5 0.5
+
+                                                         else
+                                                            rgb 0 0 0
+                                                        )
+                                                    , Font.center
+                                                    , padding 10
+                                                    , mouseOver
+                                                        [ Background.color (rgb 0.5 0.5 0.5) ]
+                                                    ]
+                                                    (InstructionView.view
+                                                        [ width fill
+                                                        , height fill
+                                                        ]
+                                                        (ChangeDirection direction)
+                                                    )
+                                            }
+                                    )
+                                |> wrappedRow
+                                    [ spacing 10 ]
+
+                        Just (BranchAnyDirection trueDirection falseDirection) ->
+                            row []
+                                [ [ Left, Up, Right, Down ]
+                                    |> List.map
+                                        (\direction ->
+                                            Input.button
+                                                [ Border.width 3
+                                                , Border.color (rgb 1 1 1)
+                                                ]
+                                                { onPress =
+                                                    Just
+                                                        (replaceToolMessage index
+                                                            (BranchAnyDirection direction falseDirection)
+                                                        )
+                                                , label =
+                                                    el
+                                                        [ width (px instructionSize)
+                                                        , height (px instructionSize)
+                                                        , Background.color
+                                                            (if trueDirection == direction then
+                                                                rgb 0.5 0.5 0.5
+
+                                                             else
+                                                                rgb 0 0 0
+                                                            )
+                                                        , Font.center
+                                                        , padding 10
+                                                        , mouseOver
+                                                            [ Background.color (rgb 0.5 0.5 0.5) ]
+                                                        ]
+                                                        (InstructionView.view
+                                                            [ width fill
+                                                            , height fill
+                                                            ]
+                                                            (ChangeDirection direction)
+                                                        )
+                                                }
+                                        )
+                                    |> column
+                                        [ spacing 10 ]
+                                , [ Left, Up, Right, Down ]
+                                    |> List.map
+                                        (\direction ->
+                                            Input.button
+                                                [ Border.width 3
+                                                , Border.color (rgb 1 1 1)
+                                                ]
+                                                { onPress =
+                                                    Just
+                                                        (replaceToolMessage index
+                                                            (BranchAnyDirection trueDirection direction)
+                                                        )
+                                                , label =
+                                                    el
+                                                        [ width (px instructionSize)
+                                                        , height (px instructionSize)
+                                                        , Background.color
+                                                            (if falseDirection == direction then
+                                                                rgb 0.5 0.5 0.5
+
+                                                             else
+                                                                rgb 0 0 0
+                                                            )
+                                                        , Font.center
+                                                        , padding 10
+                                                        , mouseOver
+                                                            [ Background.color (rgb 0.5 0.5 0.5) ]
+                                                        ]
+                                                        (InstructionView.view
+                                                            [ width fill
+                                                            , height fill
+                                                            ]
+                                                            (ChangeDirection direction)
+                                                        )
+                                                }
+                                        )
+                                    |> column
+                                        [ spacing 10 ]
+                                ]
+
+                        Just (JustInstruction _) ->
+                            none
+
+                        Nothing ->
+                            none
+
+                Nothing ->
+                    none
     in
-    Input.radio
+    column
         []
-        { onChange = selectInstructionTool
-        , selected = instructionToolbox.selectedIndex
-        , label = Input.labelAbove [] (text "Instructions")
-        , options = options
-        }
+        [ instructionTools
+            |> List.indexedMap viewTool
+            |> wrappedRow
+                [ spacing 10 ]
+        , toolExtraView
+        ]
 
 
 viewRow : Maybe InstructionTool -> Int -> Array Instruction -> Element Msg
@@ -163,6 +341,8 @@ viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
                 , height (px instructionSize)
                 , Font.center
                 , padding 10
+                , mouseOver
+                    [ Background.color (rgb 0.5 0.5 0.5) ]
                 ]
                 (InstructionView.view
                     [ width fill
@@ -222,5 +402,8 @@ getInstruction instructionTool =
         JustInstruction instruction ->
             instruction
 
-        _ ->
-            NoOp
+        ChangeAnyDirection direction ->
+            ChangeDirection direction
+
+        BranchAnyDirection trueDirection falseDirection ->
+            Branch trueDirection falseDirection

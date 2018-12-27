@@ -100,8 +100,8 @@ type Instruction
 
 type InstructionTool
     = JustInstruction Instruction
-    | ChangeAnyDirection
-    | BranchAnyDirection
+    | ChangeAnyDirection Direction
+    | BranchAnyDirection Direction Direction
 
 
 type alias Board =

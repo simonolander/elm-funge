@@ -27,15 +27,13 @@ init windowSize =
                         |> BoardUtils.set { x = 2, y = 2 } Terminate
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Print
                     , JustInstruction Read
                     , JustInstruction Add
+                    , BranchAnyDirection Left Right
                     ]
               }
             , { id = "f10670c5-1a35-448c-81eb-9ef8615af054"
@@ -49,16 +47,13 @@ init windowSize =
                     BoardUtils.empty 4 4
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Add
                     , JustInstruction Print
                     , JustInstruction Read
                     , JustInstruction Terminate
-                    , JustInstruction (Branch Left Right)
+                    , BranchAnyDirection Left Right
                     ]
               }
             , { id = "d4d0a3ac-5531-4146-88d7-c67985b0e6fc"
@@ -72,16 +67,13 @@ init windowSize =
                     BoardUtils.empty 4 4
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Print
                     , JustInstruction Read
                     , JustInstruction Terminate
-                    , JustInstruction (Branch Left Right)
+                    , BranchAnyDirection Left Right
                     ]
               }
             , { id = "eca91b31-01a0-4adf-b453-7f6d5d0bab5b"
@@ -99,16 +91,13 @@ init windowSize =
                     BoardUtils.empty 7 7
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Decrement
                     , JustInstruction Print
                     , JustInstruction Read
                     , JustInstruction Terminate
-                    , JustInstruction (Branch Left Right)
+                    , BranchAnyDirection Left Right
                     ]
               }
             , { id = "246ea0f5-fc1f-43de-b061-a55d2f749336s"
@@ -123,18 +112,14 @@ init windowSize =
                     BoardUtils.empty 7 7
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
                     , JustInstruction Print
                     , JustInstruction Read
-                    , JustInstruction (Branch Down Right)
-                    , JustInstruction (Branch Left Right)
+                    , BranchAnyDirection Left Right
                     , JustInstruction Terminate
                     ]
               }
@@ -150,18 +135,14 @@ init windowSize =
                     BoardUtils.empty 8 8
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
                     , JustInstruction Print
                     , JustInstruction Read
-                    , JustInstruction (Branch Down Right)
-                    , JustInstruction (Branch Left Right)
+                    , BranchAnyDirection Left Right
                     , JustInstruction Terminate
                     ]
               }
@@ -182,18 +163,14 @@ init windowSize =
                     BoardUtils.empty 8 8
               , instructionTools =
                     [ JustInstruction NoOp
-                    , JustInstruction (ChangeDirection Left)
-                    , JustInstruction (ChangeDirection Up)
-                    , JustInstruction (ChangeDirection Right)
-                    , JustInstruction (ChangeDirection Down)
+                    , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
                     , JustInstruction Print
                     , JustInstruction Read
-                    , JustInstruction (Branch Down Right)
-                    , JustInstruction (Branch Left Right)
+                    , BranchAnyDirection Left Right
                     , JustInstruction Terminate
                     ]
               }
