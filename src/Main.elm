@@ -207,7 +207,10 @@ init windowSize =
                         { level = level
                         , boardSketch =
                             { boardHistory = History.singleton level.initialBoard
-                            , selectedInstruction = Nothing
+                            , instructionToolbox =
+                                { instructionTools = level.instructionTools
+                                , selectedIndex = Nothing
+                                }
                             }
                         , completed = False
                         }

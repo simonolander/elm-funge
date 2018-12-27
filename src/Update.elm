@@ -41,11 +41,15 @@ update msg model =
 
 updateSketchMsg levelProgress msg model =
     case msg of
-        SelectInstructionTool instructionTool ->
+        NewInstructionToolbox instructionToolbox ->
             let
-                newBoardSketch =
+                boardSketch =
                     levelProgress.boardSketch
-                        |> withSelectedInstructionTool (Just instructionTool)
+
+                newBoardSketch =
+                    { boardSketch
+                        | instructionToolbox = instructionToolbox
+                    }
 
                 newLevelProgress =
                     levelProgress |> withBoardSketch newBoardSketch
@@ -183,8 +187,3 @@ setLevelProgress levelProgress model =
 withBoardSketch : BoardSketch -> LevelProgress -> LevelProgress
 withBoardSketch boardSketch levelProgress =
     { levelProgress | boardSketch = boardSketch }
-
-
-withSelectedInstructionTool : Maybe InstructionTool -> BoardSketch -> BoardSketch
-withSelectedInstructionTool selectedInstructionTool boardSketch =
-    { boardSketch | selectedInstructionTool = selectedInstructionTool }

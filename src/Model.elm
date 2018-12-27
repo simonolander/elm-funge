@@ -12,6 +12,7 @@ module Model exposing
     , Instruction(..)
     , InstructionPointer
     , InstructionTool(..)
+    , InstructionToolbox
     , JumpLocation(..)
     , Level
     , LevelId
@@ -127,9 +128,15 @@ type alias Execution =
     }
 
 
+type alias InstructionToolbox =
+    { instructionTools : List InstructionTool
+    , selectedIndex : Maybe Int
+    }
+
+
 type alias BoardSketch =
     { boardHistory : History Board
-    , selectedInstructionTool : Maybe InstructionTool
+    , instructionToolbox : InstructionToolbox
     }
 
 
@@ -169,7 +176,7 @@ type GameState
 
 type SketchMsg
     = PlaceInstruction Position Instruction
-    | SelectInstructionTool InstructionTool
+    | NewInstructionToolbox InstructionToolbox
     | SketchUndo
     | SketchRedo
     | SketchClear

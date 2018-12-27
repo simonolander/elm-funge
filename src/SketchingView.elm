@@ -24,13 +24,13 @@ instructionSize =
 view : LevelProgress -> Html Msg
 view levelProgress =
     let
-        selectedInstruction =
-            levelProgress.boardSketch.selectedInstruction
+        selectedInstructionTool =
+            getSelectedInstructionTool levelProgress.boardSketch.instructionToolbox
 
         boardView =
             levelProgress.boardSketch.boardHistory
                 |> History.current
-                |> Array.indexedMap (viewRow selectedInstruction)
+                |> Array.indexedMap (viewRow selectedInstructionTool)
                 |> Array.toList
                 |> column
                     [ spacing instructionSpacing
@@ -114,20 +114,32 @@ viewSidebar levelProgress =
 viewToolbar : LevelProgress -> Element Msg
 viewToolbar levelProgress =
     let
+        instructionToolbox =
+            levelProgress.boardSketch.instructionToolbox
+
         instructionTools =
-            levelProgress.level.instructionTools
+            instructionToolbox.instructionTools
 
         options =
             instructionTools
-                |> List.map
-                    (\instructionTool ->
-                        Input.option instructionTool (text (Debug.toString instructionTool))
+                |> List.indexedMap
+                    (\index instructionTool ->
+                        Input.option index (text (Debug.toString instructionTool))
                     )
+
+        selectInstructionTool : Int -> Msg
+        selectInstructionTool index =
+            SketchMsg
+                (NewInstructionToolbox
+                    { instructionToolbox
+                        | selectedIndex = Just index
+                    }
+                )
     in
     Input.radio
         []
-        { onChange = SketchMsg << SelectInstructionTool
-        , selected = levelProgress.boardSketch.selectedInstructionTool
+        { onChange = selectInstructionTool
+        , selected = instructionToolbox.selectedIndex
         , label = Input.labelAbove [] (text "Instructions")
         , options = options
         }
@@ -158,6 +170,7 @@ viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
         onPress : Maybe Msg
         onPress =
             selectedInstructionTool
+                |> Maybe.map getInstruction
                 |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
                 |> Maybe.map SketchMsg
     in
@@ -184,3 +197,24 @@ viewHeader =
         ]
         [ backButtonView
         ]
+
+
+getSelectedInstructionTool : InstructionToolbox -> Maybe InstructionTool
+getSelectedInstructionTool instructionToolbox =
+    instructionToolbox.selectedIndex
+        |> Maybe.andThen
+            (\index ->
+                instructionToolbox.instructionTools
+                    |> Array.fromList
+                    |> Array.get index
+            )
+
+
+getInstruction : InstructionTool -> Instruction
+getInstruction instructionTool =
+    case instructionTool of
+        JustInstruction instruction ->
+            instruction
+
+        _ ->
+            NoOp
