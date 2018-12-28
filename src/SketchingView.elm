@@ -13,6 +13,7 @@ import Html.Attributes
 import InstructionToolView
 import InstructionView
 import Model exposing (..)
+import ViewComponents exposing (..)
 
 
 instructionSpacing =
@@ -74,38 +75,32 @@ viewSidebar levelProgress =
             viewToolbar levelProgress
 
         undoButtonView =
-            Input.button
-                []
-                { onPress = Just (SketchMsg SketchUndo)
-                , label = text "Undo"
-                }
+            textButton []
+                (Just (SketchMsg SketchUndo))
+                "Undo"
 
         redoButtonView =
-            Input.button
-                []
-                { onPress = Just (SketchMsg SketchRedo)
-                , label = text "Redo"
-                }
+            textButton []
+                (Just (SketchMsg SketchRedo))
+                "Redo"
 
         clearButtonView =
-            Input.button
-                []
-                { onPress = Just (SketchMsg SketchClear)
-                , label = text "Clear"
-                }
+            textButton []
+                (Just (SketchMsg SketchClear))
+                "Clear"
 
         executeButtonView =
-            Input.button
-                []
-                { onPress = Just (SketchMsg SketchExecute)
-                , label = text "Execute"
-                }
+            textButton []
+                (Just (SketchMsg SketchExecute))
+                "Execute"
     in
     column
         [ width (fillPortion 1)
         , height fill
         , alignTop
         , Background.color (rgb 0.08 0.08 0.08)
+        , spacing 10
+        , padding 10
         ]
         [ toolbarView
         , undoButtonView
@@ -125,53 +120,37 @@ viewToolbar levelProgress =
         instructionTools =
             instructionToolbox.instructionTools
 
-        viewTool index tool =
+        viewTool index instructionTool =
             let
-                backgroundColor =
+                attributes =
                     case instructionToolbox.selectedIndex of
                         Just selectedIndex ->
                             if index == selectedIndex then
-                                rgb 0.5 0.5 0.5
+                                [ Background.color (rgba 1 1 1 0.5)
+                                , InstructionToolView.description instructionTool
+                                    |> Html.Attributes.title
+                                    |> htmlAttribute
+                                ]
 
                             else
-                                rgb 0 0 0
+                                [ InstructionToolView.description instructionTool
+                                    |> Html.Attributes.title
+                                    |> htmlAttribute
+                                ]
 
                         Nothing ->
-                            rgb 0 0 0
-
-                instructionLabel =
-                    el
-                        [ width (px instructionSize)
-                        , height (px instructionSize)
-                        , Background.color backgroundColor
-                        , Font.center
-                        , padding 10
-                        , mouseOver
-                            [ Background.color (rgb 0.5 0.5 0.5) ]
-                        , htmlAttribute (Html.Attributes.title (InstructionToolView.description tool))
-                        ]
-                        (InstructionToolView.view
-                            [ width fill
-                            , height fill
+                            [ InstructionToolView.description instructionTool
+                                |> Html.Attributes.title
+                                |> htmlAttribute
                             ]
-                            tool
-                        )
+
+                onPress =
+                    { instructionToolbox | selectedIndex = Just index }
+                        |> NewInstructionToolbox
+                        |> SketchMsg
+                        |> Just
             in
-            Input.button
-                [ Border.width 3
-                , Border.color (rgb 1 1 1)
-                ]
-                { onPress =
-                    Just
-                        (SketchMsg
-                            (NewInstructionToolbox
-                                { instructionToolbox
-                                    | selectedIndex = Just index
-                                }
-                            )
-                        )
-                , label = instructionLabel
-                }
+            instructionToolButton attributes onPress instructionTool
 
         replaceToolMessage index instructionTool =
             SketchMsg
@@ -193,38 +172,23 @@ viewToolbar levelProgress =
                             [ Left, Up, Right, Down ]
                                 |> List.map
                                     (\direction ->
-                                        Input.button
-                                            [ Border.width 3
-                                            , Border.color (rgb 1 1 1)
-                                            ]
-                                            { onPress =
-                                                Just
-                                                    (replaceToolMessage index
-                                                        (ChangeAnyDirection direction)
-                                                    )
-                                            , label =
-                                                el
-                                                    [ width (px instructionSize)
-                                                    , height (px instructionSize)
-                                                    , Background.color
-                                                        (if selectedDirection == direction then
-                                                            rgb 0.5 0.5 0.5
+                                        let
+                                            attributes =
+                                                if selectedDirection == direction then
+                                                    [ Background.color (rgb 0.5 0.5 0.5) ]
 
-                                                         else
-                                                            rgb 0 0 0
-                                                        )
-                                                    , Font.center
-                                                    , padding 10
-                                                    , mouseOver
-                                                        [ Background.color (rgb 0.5 0.5 0.5) ]
-                                                    ]
-                                                    (InstructionView.view
-                                                        [ width fill
-                                                        , height fill
-                                                        ]
-                                                        (ChangeDirection direction)
-                                                    )
-                                            }
+                                                else
+                                                    []
+
+                                            onPress =
+                                                ChangeAnyDirection direction
+                                                    |> replaceToolMessage index
+                                                    |> Just
+
+                                            instruction =
+                                                ChangeDirection direction
+                                        in
+                                        instructionButton attributes onPress instruction
                                     )
                                 |> wrappedRow
                                     [ spacing 10
@@ -238,76 +202,46 @@ viewToolbar levelProgress =
                                 [ [ Left, Up, Right, Down ]
                                     |> List.map
                                         (\direction ->
-                                            Input.button
-                                                [ Border.width 3
-                                                , Border.color (rgb 1 1 1)
-                                                ]
-                                                { onPress =
-                                                    Just
-                                                        (replaceToolMessage index
-                                                            (BranchAnyDirection direction falseDirection)
-                                                        )
-                                                , label =
-                                                    el
-                                                        [ width (px instructionSize)
-                                                        , height (px instructionSize)
-                                                        , Background.color
-                                                            (if trueDirection == direction then
-                                                                rgb 0.5 0.5 0.5
+                                            let
+                                                attributes =
+                                                    if trueDirection == direction then
+                                                        [ Background.color (rgb 0.5 0.5 0.5) ]
 
-                                                             else
-                                                                rgb 0 0 0
-                                                            )
-                                                        , Font.center
-                                                        , padding 10
-                                                        , mouseOver
-                                                            [ Background.color (rgb 0.5 0.5 0.5) ]
-                                                        ]
-                                                        (InstructionView.view
-                                                            [ width fill
-                                                            , height fill
-                                                            ]
-                                                            (ChangeDirection direction)
-                                                        )
-                                                }
+                                                    else
+                                                        []
+
+                                                onPress =
+                                                    BranchAnyDirection direction falseDirection
+                                                        |> replaceToolMessage index
+                                                        |> Just
+
+                                                instruction =
+                                                    ChangeDirection direction
+                                            in
+                                            instructionButton attributes onPress instruction
                                         )
                                     |> column
                                         [ spacing 10 ]
                                 , [ Left, Up, Right, Down ]
                                     |> List.map
                                         (\direction ->
-                                            Input.button
-                                                [ Border.width 3
-                                                , Border.color (rgb 1 1 1)
-                                                ]
-                                                { onPress =
-                                                    Just
-                                                        (replaceToolMessage index
-                                                            (BranchAnyDirection trueDirection direction)
-                                                        )
-                                                , label =
-                                                    el
-                                                        [ width (px instructionSize)
-                                                        , height (px instructionSize)
-                                                        , Background.color
-                                                            (if falseDirection == direction then
-                                                                rgb 0.5 0.5 0.5
+                                            let
+                                                attributes =
+                                                    if falseDirection == direction then
+                                                        [ Background.color (rgb 0.5 0.5 0.5) ]
 
-                                                             else
-                                                                rgb 0 0 0
-                                                            )
-                                                        , Font.center
-                                                        , padding 10
-                                                        , mouseOver
-                                                            [ Background.color (rgb 0.5 0.5 0.5) ]
-                                                        ]
-                                                        (InstructionView.view
-                                                            [ width fill
-                                                            , height fill
-                                                            ]
-                                                            (ChangeDirection direction)
-                                                        )
-                                                }
+                                                    else
+                                                        []
+
+                                                onPress =
+                                                    BranchAnyDirection trueDirection direction
+                                                        |> replaceToolMessage index
+                                                        |> Just
+
+                                                instruction =
+                                                    ChangeDirection direction
+                                            in
+                                            instructionButton attributes onPress instruction
                                         )
                                     |> column
                                         [ spacing 10 ]
@@ -344,36 +278,13 @@ viewRow selectedInstructionTool rowIndex boardRow =
 viewInstruction : Maybe InstructionTool -> Int -> Int -> Instruction -> Element Msg
 viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
     let
-        instructionLabel =
-            el
-                [ width (px instructionSize)
-                , height (px instructionSize)
-                , Font.center
-                , padding 10
-                , mouseOver
-                    [ Background.color (rgb 0.5 0.5 0.5) ]
-                ]
-                (InstructionView.view
-                    [ width fill
-                    , height fill
-                    ]
-                    instruction
-                )
-
-        onPress : Maybe Msg
         onPress =
             selectedInstructionTool
                 |> Maybe.map getInstruction
                 |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
                 |> Maybe.map SketchMsg
     in
-    Input.button
-        [ Border.width 3
-        , Border.color (rgb 1 1 1)
-        ]
-        { onPress = onPress
-        , label = instructionLabel
-        }
+    instructionButton [] onPress instruction
 
 
 viewHeader : Element Msg
