@@ -112,17 +112,13 @@ viewSidebar : LevelProgress -> Element Msg
 viewSidebar levelProgress =
     let
         levelNameView =
-            el [ width fill, Font.center, Font.size 24 ] (text levelProgress.level.name)
+            ViewComponents.viewTitle []
+                levelProgress.level.name
 
         descriptionView =
-            column
-                [ width fill
-                , padding 10
-                , spacing 15
-                , Border.width 3
-                , Border.color (rgb 1 1 1)
-                ]
-                (List.map (paragraph [] << List.singleton << text) levelProgress.level.description)
+            ViewComponents.descriptionTextbox
+                []
+                levelProgress.level.description
 
         goToSketchView =
             ViewComponents.textButton

@@ -64,6 +64,15 @@ view levelProgress =
 
 viewSidebar levelProgress =
     let
+        titleView =
+            viewTitle
+                []
+                levelProgress.level.name
+
+        descriptionView =
+            descriptionTextbox []
+                levelProgress.level.description
+
         backButton =
             textButton []
                 (Just (SketchMsg SketchBackClicked))
@@ -90,19 +99,33 @@ viewSidebar levelProgress =
                 "Execute"
     in
     column
-        [ fillPortion 1 |> maximum 242 |> width
+        [ fillPortion 1 |> maximum 350 |> width
         , height fill
         , alignTop
         , Background.color (rgb 0.08 0.08 0.08)
         , spacing 10
         , padding 10
+        , scrollbarY
         ]
-        [ backButton
-        , undoButtonView
-        , redoButtonView
-        , clearButtonView
-        , executeButtonView
-        , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
+        [ column
+            [ width fill
+            , spacing 20
+            , paddingEach
+                { left = 0, top = 20, right = 0, bottom = 30 }
+            ]
+            [ titleView
+            , descriptionView
+            , backButton
+            ]
+        , column
+            [ width fill
+            , spacing 10
+            ]
+            [ undoButtonView
+            , redoButtonView
+            , clearButtonView
+            , executeButtonView
+            ]
         ]
 
 

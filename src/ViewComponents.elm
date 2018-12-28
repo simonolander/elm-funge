@@ -1,4 +1,11 @@
-module ViewComponents exposing (imageButton, instructionButton, instructionToolButton, textButton)
+module ViewComponents exposing
+    ( descriptionTextbox
+    , imageButton
+    , instructionButton
+    , instructionToolButton
+    , textButton
+    , viewTitle
+    )
 
 import Element exposing (..)
 import Element.Background as Background
@@ -102,3 +109,28 @@ instructionToolButton attributes onPress instructionTool =
             ]
             instructionTool
         )
+
+
+descriptionTextbox : List (Attribute msg) -> List String -> Element msg
+descriptionTextbox attributes description =
+    let
+        attrs =
+            List.concat
+                [ [ width fill
+                  , padding 10
+                  , spacing 15
+                  , Border.width 3
+                  , Border.color (rgb 1 1 1)
+                  ]
+                , attributes
+                ]
+    in
+    description
+        |> List.map (paragraph [] << List.singleton << text)
+        |> column
+            attrs
+
+
+viewTitle : List (Attribute msg) -> String -> Element msg
+viewTitle attributes title =
+    el [ width fill, Font.center, Font.size 24 ] (paragraph [] [ text title ])
