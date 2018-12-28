@@ -175,6 +175,36 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "407410b1638112a9"
+              , name = "Sequence reverser"
+              , description = "> Read a sequence of numbers from input\n> Output the sequence in reverse\nThe last input is 0 is not part of the sequence"
+              , io =
+                    let
+                        input =
+                            [ -19, -2, 94, -5, 19, 7, 33, -92, 29, -39 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> List.reverse
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction (Jump Forward)
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
             ]
 
         levelProgresses : List LevelProgress
