@@ -17,7 +17,7 @@ init windowSize =
         levels =
             [ { id = "e182f31307fecaac"
               , name = "test"
-              , description = "For testing purposes"
+              , description = [ "For testing purposes" ]
               , io =
                     { input = List.range 980 1020
                     , output = []
@@ -39,7 +39,7 @@ init windowSize =
               }
             , { id = "42fe70779bd30656"
               , name = "Double the fun"
-              , description = "> For each number in in the input, print n * 2\nThe last input is 0 and should not be printed"
+              , description = [ "> Read a number n from input", "> Output n * 2", "The last input is 0 and should not be printed" ]
               , io =
                     { input = [ 1, 8, 19, 3, 5, 31, 9, 0 ]
                     , output = [ 2, 16, 38, 6, 10, 62, 18 ]
@@ -59,7 +59,7 @@ init windowSize =
               }
             , { id = "88c653c6c3a5b5e7"
               , name = "One, two, three"
-              , description = "Print the numbers 1, 2, and 3"
+              , description = [ "> Output the numbers 1, 2, and 3" ]
               , io =
                     { input = []
                     , output = [ 1, 2, 3 ]
@@ -79,7 +79,7 @@ init windowSize =
               }
             , { id = "e2f96c5345e5f1f6"
               , name = "Count down"
-              , description = "> Read a number n from input\n> Output all the numbers from n to 0\nThe last input is 0 and should not be printed"
+              , description = [ "> Read a number n from input", "> Output all the numbers from n to 0", "The last input is 0 and should not be printed" ]
               , io =
                     { input = [ 7, 3, 10, 0 ]
                     , output =
@@ -103,7 +103,7 @@ init windowSize =
               }
             , { id = "c2003520d988f8d0"
               , name = "Some sums"
-              , description = "> Read two numbers a and b from input\n> Output a + b\nThe last input is 0 and should not be printed"
+              , description = [ "> Read two numbers a and b from input", "> Output a + b", "The last input is 0 and should not be printed" ]
               , io =
                     { input = [ 1, 5, 13, 10, 11, 10, 8, 8, 0 ]
                     , output =
@@ -126,7 +126,7 @@ init windowSize =
               }
             , { id = "3ee1f15ae601fc94"
               , name = "Powers of two"
-              , description = "> Read a number n from input\n> Output 2^n \nThe last input is 0 and should not be printed"
+              , description = [ "> Read a number n from input", "> Output 2^n ", "The last input is 0 and should not be printed" ]
               , io =
                     { input = [ 1, 4, 3, 8, 5, 7, 0 ]
                     , output =
@@ -149,7 +149,7 @@ init windowSize =
               }
             , { id = "24c7efb5c41f8f8f"
               , name = "Triangular numbers"
-              , description = "> Read a number n from input\n> Output n*(n+1)/2 \nThe last input is 0 and should not be printed"
+              , description = [ "> Read a number n from input", "> Output n*(n+1)/2 ", "The last input is 0 and should not be printed" ]
               , io =
                     let
                         input =
@@ -177,7 +177,7 @@ init windowSize =
               }
             , { id = "407410b1638112a9"
               , name = "Sequence reverser"
-              , description = "> Read a sequence of numbers from input\n> Output the sequence in reverse\nThe last input is 0 is not part of the sequence"
+              , description = [ "> Read a sequence of numbers from input", "> Output the sequence in reverse", "The last input is 0 is not part of the sequence" ]
               , io =
                     let
                         input =

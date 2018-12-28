@@ -12,6 +12,7 @@ import History
 import Html exposing (Html)
 import Html.Attributes
 import Model exposing (..)
+import ViewComponents
 
 
 view : Model -> Html Msg
@@ -35,8 +36,11 @@ view model =
                 _ ->
                     Nothing
 
+        maybeSelectedLevelId =
+            Maybe.map (.level >> .id) maybeSelectedLevelProgress
+
         levelsView =
-            viewLevels levelProgresses
+            viewLevels maybeSelectedLevelId levelProgresses
 
         sidebarView =
             maybeSelectedLevelProgress
@@ -60,7 +64,7 @@ view model =
         )
 
 
-viewLevels levelProgresses =
+viewLevels maybeSelectedLevelId levelProgresses =
     let
         viewLevel levelProgress =
             Input.button
@@ -76,6 +80,13 @@ viewLevels levelProgresses =
                         , mouseOver
                             [ Background.color (rgba 1 1 1 0.5)
                             ]
+                        , Background.color
+                            (if maybeSelectedLevelId == Just levelProgress.level.id then
+                                rgba 1 1 1 0.5
+
+                             else
+                                rgba 0 0 0 0
+                            )
                         ]
                         [ el [ centerX, Font.center ] (paragraph [] [ text levelProgress.level.name ])
                         , el [ centerX ]
@@ -104,25 +115,31 @@ viewSidebar levelProgress =
         levelNameView =
             el [ width fill, Font.center, Font.size 24 ] (text levelProgress.level.name)
 
-        goToSketchView =
-            Input.button
+        descriptionView =
+            column
                 [ width fill
-                , Border.width 3
                 , padding 10
-                , mouseOver
-                    [ Background.color (rgb 0.5 0.5 0.5)
-                    ]
+                , spacing 15
+                , Border.width 3
+                , Border.color (rgb 1 1 1)
                 ]
-                { onPress = Just (SketchLevelProgress levelProgress.level.id)
-                , label = el [ Font.center, width fill ] (text "Open Editor")
-                }
+                (List.map (paragraph [] << List.singleton << text) levelProgress.level.description)
+
+        goToSketchView =
+            ViewComponents.textButton
+                []
+                (Just (SketchLevelProgress levelProgress.level.id))
+                "Open Editor"
     in
     column
         [ width (fillPortion 1)
+        , height fill
         , padding 20
         , spacing 20
         , alignTop
+        , Background.color (rgb 0.05 0.05 0.05)
         ]
         [ levelNameView
+        , descriptionView
         , goToSketchView
         ]
