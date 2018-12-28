@@ -34,6 +34,7 @@ init windowSize =
                     , JustInstruction Read
                     , JustInstruction Add
                     , BranchAnyDirection Left Right
+                    , JustInstruction (Jump Forward)
                     ]
               }
             , { id = "42fe70779bd30656"

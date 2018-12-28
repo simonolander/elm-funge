@@ -225,7 +225,7 @@ stepExecutionStep executionStep =
         boardHeight =
             BoardUtils.height board
 
-        moveInstructionPointer pointer newDirection =
+        moveInstructionPointer newDirection pointer =
             let
                 oldPosition =
                     pointer.position
@@ -233,16 +233,16 @@ stepExecutionStep executionStep =
                 newPosition =
                     case newDirection of
                         Left ->
-                            { position | x = modBy boardWidth (position.x - 1) }
+                            { oldPosition | x = modBy boardWidth (oldPosition.x - 1) }
 
                         Up ->
-                            { position | y = modBy boardWidth (position.y - 1) }
+                            { oldPosition | y = modBy boardWidth (oldPosition.y - 1) }
 
                         Right ->
-                            { position | x = modBy boardWidth (position.x + 1) }
+                            { oldPosition | x = modBy boardWidth (oldPosition.x + 1) }
 
                         Down ->
-                            { position | y = modBy boardWidth (position.y + 1) }
+                            { oldPosition | y = modBy boardWidth (oldPosition.y + 1) }
             in
             { position = newPosition
             , direction = newDirection
@@ -250,13 +250,13 @@ stepExecutionStep executionStep =
 
         movedExecutionStep =
             { executionStep
-                | instructionPointer = moveInstructionPointer instructionPointer direction
+                | instructionPointer = moveInstructionPointer direction instructionPointer
             }
     in
     case instruction of
         ChangeDirection newDirection ->
             { executionStep
-                | instructionPointer = moveInstructionPointer instructionPointer newDirection
+                | instructionPointer = moveInstructionPointer newDirection instructionPointer
             }
 
         Branch trueDirection falseDirection ->
@@ -272,7 +272,7 @@ stepExecutionStep executionStep =
                         falseDirection
 
                 newInstructionPointer =
-                    moveInstructionPointer instructionPointer newDirection
+                    moveInstructionPointer newDirection instructionPointer
             in
             { executionStep
                 | instructionPointer = newInstructionPointer
@@ -434,6 +434,14 @@ stepExecutionStep executionStep =
 
         Terminate ->
             { executionStep | terminated = True }
+
+        Jump Forward ->
+            { executionStep
+                | instructionPointer =
+                    instructionPointer
+                        |> moveInstructionPointer direction
+                        |> moveInstructionPointer direction
+            }
 
         _ ->
             movedExecutionStep
