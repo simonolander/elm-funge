@@ -1,8 +1,21 @@
-module InstructionToolView exposing (view)
+module InstructionToolView exposing (description, view)
 
 import Element exposing (..)
 import InstructionView
 import Model exposing (..)
+
+
+description : InstructionTool -> String
+description instructionTool =
+    case instructionTool of
+        JustInstruction instruction ->
+            InstructionView.description instruction
+
+        ChangeAnyDirection direction ->
+            InstructionView.description (ChangeDirection direction)
+
+        BranchAnyDirection trueDirection falseDirection ->
+            InstructionView.description (Branch trueDirection falseDirection)
 
 
 view : List (Attribute msg) -> InstructionTool -> Element msg

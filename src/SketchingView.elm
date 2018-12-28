@@ -62,7 +62,10 @@ view levelProgress =
             ]
         ]
         |> layout
-            [ Background.color (rgb 0 0 0) ]
+            [ Background.color (rgb 0 0 0)
+            , Font.family [ Font.monospace ]
+            , Font.color (rgb 1 1 1)
+            ]
 
 
 viewSidebar levelProgress =
@@ -101,8 +104,8 @@ viewSidebar levelProgress =
     column
         [ width (fillPortion 1)
         , height fill
-        , Background.color (rgb 0.8 0.8 1)
         , alignTop
+        , Background.color (rgb 0.08 0.08 0.08)
         ]
         [ toolbarView
         , undoButtonView
@@ -145,6 +148,7 @@ viewToolbar levelProgress =
                         , padding 10
                         , mouseOver
                             [ Background.color (rgb 0.5 0.5 0.5) ]
+                        , htmlAttribute (Html.Attributes.title (InstructionToolView.description tool))
                         ]
                         (InstructionToolView.view
                             [ width fill
@@ -223,10 +227,14 @@ viewToolbar levelProgress =
                                             }
                                     )
                                 |> wrappedRow
-                                    [ spacing 10 ]
+                                    [ spacing 10
+                                    ]
 
                         Just (BranchAnyDirection trueDirection falseDirection) ->
-                            row []
+                            row
+                                [ centerX
+                                , spacing 10
+                                ]
                                 [ [ Left, Up, Right, Down ]
                                     |> List.map
                                         (\direction ->
@@ -315,7 +323,8 @@ viewToolbar levelProgress =
                     none
     in
     column
-        []
+        [ spacing 20
+        ]
         [ instructionTools
             |> List.indexedMap viewTool
             |> wrappedRow
