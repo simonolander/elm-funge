@@ -40,36 +40,34 @@ view levelProgress =
                     , padding instructionSpacing
                     ]
 
-        headerView =
-            viewHeader
-
         sidebarView =
             viewSidebar levelProgress
+
+        toolSidebarView =
+            viewToolSidebar levelProgress
     in
-    column
+    row
         [ width fill
         , height fill
         ]
-        [ headerView
-        , row
-            [ width fill
-            , height fill
-            ]
-            [ sidebarView
-            , boardView
-            ]
+        [ sidebarView
+        , boardView
+        , toolSidebarView
         ]
         |> layout
             [ Background.color (rgb 0 0 0)
             , Font.family [ Font.monospace ]
             , Font.color (rgb 1 1 1)
+            , height fill
             ]
 
 
 viewSidebar levelProgress =
     let
-        toolbarView =
-            viewToolbar levelProgress
+        backButton =
+            textButton []
+                (Just (SketchMsg SketchBackClicked))
+                "Back"
 
         undoButtonView =
             textButton []
@@ -99,7 +97,7 @@ viewSidebar levelProgress =
         , spacing 10
         , padding 10
         ]
-        [ toolbarView
+        [ backButton
         , undoButtonView
         , redoButtonView
         , clearButtonView
@@ -108,8 +106,8 @@ viewSidebar levelProgress =
         ]
 
 
-viewToolbar : LevelProgress -> Element Msg
-viewToolbar levelProgress =
+viewToolSidebar : LevelProgress -> Element Msg
+viewToolSidebar levelProgress =
     let
         instructionToolbox =
             levelProgress.boardSketch.instructionToolbox
@@ -252,14 +250,22 @@ viewToolbar levelProgress =
 
                 Nothing ->
                     none
+
+        toolsView =
+            instructionTools
+                |> List.indexedMap viewTool
+                |> wrappedRow
+                    [ spacing 10 ]
     in
     column
-        [ spacing 20
+        [ fillPortion 1 |> maximum 242 |> width
+        , height fill
+        , Background.color (rgb 0.08 0.08 0.08)
+        , spacing 40
+        , padding 10
+        , scrollbarY
         ]
-        [ instructionTools
-            |> List.indexedMap viewTool
-            |> wrappedRow
-                [ spacing 10 ]
+        [ toolsView
         , toolExtraView
         ]
 
@@ -301,24 +307,6 @@ viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instru
                 Nothing
     in
     instructionButton attributes onPress instruction
-
-
-viewHeader : Element Msg
-viewHeader =
-    let
-        backButtonView =
-            Input.button
-                []
-                { onPress = Just (SketchMsg SketchBackClicked)
-                , label = text "Back"
-                }
-    in
-    row
-        [ width fill
-        , Background.color (rgb 1 1 0.8)
-        ]
-        [ backButtonView
-        ]
 
 
 getSelectedInstructionTool : InstructionToolbox -> Maybe InstructionTool
