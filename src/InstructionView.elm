@@ -103,6 +103,9 @@ description instruction =
         Terminate ->
             "End the program"
 
+        Exception message ->
+            message
+
         _ ->
             Debug.toString instruction
 
@@ -296,6 +299,12 @@ view attributes instruction =
         Terminate ->
             image attributes
                 { src = "assets/instruction-images/terminate.svg"
+                , description = description instruction
+                }
+
+        Exception _ ->
+            image attributes
+                { src = "assets/instruction-images/exception.svg"
                 , description = description instruction
                 }
 

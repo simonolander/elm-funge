@@ -7,7 +7,7 @@ import Element.Font as Font
 import Element.Input as Input
 import InstructionToolView
 import InstructionView
-import Model exposing (Instruction, InstructionTool)
+import Model exposing (Instruction(..), InstructionTool(..))
 
 
 textButton : List (Attribute msg) -> Maybe msg -> String -> Element msg
@@ -54,7 +54,21 @@ imageButton attributes onPress image =
 
 instructionButton : List (Attribute msg) -> Maybe msg -> Instruction -> Element msg
 instructionButton attributes onPress instruction =
-    imageButton attributes
+    let
+        attrs2 =
+            case instruction of
+                Exception _ ->
+                    [ Background.color (rgba 1 0 0 0.1) ]
+
+                _ ->
+                    []
+    in
+    imageButton
+        (List.concat
+            [ attrs2
+            , attributes
+            ]
+        )
         onPress
         (InstructionView.view
             [ width fill
@@ -66,7 +80,21 @@ instructionButton attributes onPress instruction =
 
 instructionToolButton : List (Attribute msg) -> Maybe msg -> InstructionTool -> Element msg
 instructionToolButton attributes onPress instructionTool =
-    imageButton attributes
+    let
+        attrs2 =
+            case instructionTool of
+                JustInstruction (Exception _) ->
+                    [ Background.color (rgba 1 0 0 0.1) ]
+
+                _ ->
+                    []
+    in
+    imageButton
+        (List.concat
+            [ attrs2
+            , attributes
+            ]
+        )
         onPress
         (InstructionToolView.view
             [ width fill

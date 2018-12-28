@@ -96,6 +96,7 @@ type Instruction
     | Print
     | Branch Direction Direction
     | Terminate
+    | Exception String
 
 
 type InstructionTool

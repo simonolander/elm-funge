@@ -21,7 +21,6 @@ view model =
         levelProgresses =
             model.levelProgresses
 
-        maybeSelectedLevelProgress : Maybe LevelProgress
         maybeSelectedLevelProgress =
             case model.gameState of
                 BrowsingLevels maybeLevelId ->
