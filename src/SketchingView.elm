@@ -1,6 +1,7 @@
 module SketchingView exposing (view)
 
 import Array exposing (Array)
+import BoardUtils
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -20,10 +21,6 @@ instructionSpacing =
     10
 
 
-instructionSize =
-    100
-
-
 view : LevelProgress -> Html Msg
 view levelProgress =
     let
@@ -33,7 +30,7 @@ view levelProgress =
         boardView =
             levelProgress.boardSketch.boardHistory
                 |> History.current
-                |> Array.indexedMap (viewRow selectedInstructionTool)
+                |> Array.indexedMap (viewRow levelProgress.level.initialBoard selectedInstructionTool)
                 |> Array.toList
                 |> column
                     [ spacing instructionSpacing
@@ -267,24 +264,43 @@ viewToolbar levelProgress =
         ]
 
 
-viewRow : Maybe InstructionTool -> Int -> Array Instruction -> Element Msg
-viewRow selectedInstructionTool rowIndex boardRow =
+viewRow : Board -> Maybe InstructionTool -> Int -> Array Instruction -> Element Msg
+viewRow initialBoard selectedInstructionTool rowIndex boardRow =
     boardRow
-        |> Array.indexedMap (viewInstruction selectedInstructionTool rowIndex)
+        |> Array.indexedMap (viewInstruction initialBoard selectedInstructionTool rowIndex)
         |> Array.toList
         |> row [ spacing instructionSpacing ]
 
 
-viewInstruction : Maybe InstructionTool -> Int -> Int -> Instruction -> Element Msg
-viewInstruction selectedInstructionTool rowIndex columnIndex instruction =
+viewInstruction : Board -> Maybe InstructionTool -> Int -> Int -> Instruction -> Element Msg
+viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instruction =
     let
+        editable =
+            BoardUtils.get { x = columnIndex, y = rowIndex } initialBoard
+                |> Maybe.withDefault NoOp
+                |> (==) NoOp
+
+        attributes =
+            if editable then
+                []
+
+            else
+                [ Background.color (rgb 0.15 0.15 0.15)
+                , htmlAttribute (Html.Attributes.style "cursor" "not-allowed")
+                , mouseOver []
+                ]
+
         onPress =
-            selectedInstructionTool
-                |> Maybe.map getInstruction
-                |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
-                |> Maybe.map SketchMsg
+            if editable then
+                selectedInstructionTool
+                    |> Maybe.map getInstruction
+                    |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
+                    |> Maybe.map SketchMsg
+
+            else
+                Nothing
     in
-    instructionButton [] onPress instruction
+    instructionButton attributes onPress instruction
 
 
 viewHeader : Element Msg
