@@ -15,7 +15,7 @@ init windowSize =
     let
         levels : List Level
         levels =
-            [ { id = "test"
+            [ { id = "e182f31307fecaac"
               , name = "test"
               , description = "For testing purposes"
               , io =
@@ -36,7 +36,7 @@ init windowSize =
                     , BranchAnyDirection Left Right
                     ]
               }
-            , { id = "f10670c5-1a35-448c-81eb-9ef8615af054"
+            , { id = "42fe70779bd30656"
               , name = "Double the fun"
               , description = "> For each number in in the input, print n * 2\nThe last input is 0 and should not be printed"
               , io =
@@ -56,7 +56,7 @@ init windowSize =
                     , BranchAnyDirection Left Right
                     ]
               }
-            , { id = "d4d0a3ac-5531-4146-88d7-c67985b0e6fc"
+            , { id = "88c653c6c3a5b5e7"
               , name = "One, two, three"
               , description = "Print the numbers 1, 2, and 3"
               , io =
@@ -76,7 +76,7 @@ init windowSize =
                     , BranchAnyDirection Left Right
                     ]
               }
-            , { id = "eca91b31-01a0-4adf-b453-7f6d5d0bab5b"
+            , { id = "e2f96c5345e5f1f6"
               , name = "Count down"
               , description = "> Read a number n from input\n> Output all the numbers from n to 0\nThe last input is 0 and should not be printed"
               , io =
@@ -100,7 +100,7 @@ init windowSize =
                     , BranchAnyDirection Left Right
                     ]
               }
-            , { id = "246ea0f5-fc1f-43de-b061-a55d2f749336s"
+            , { id = "c2003520d988f8d0"
               , name = "Some sums"
               , description = "> Read two numbers a and b from input\n> Output a + b\nThe last input is 0 and should not be printed"
               , io =
@@ -123,7 +123,7 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
-            , { id = "87e1f6b0-9cc1-4809-8a62-219507cee40a"
+            , { id = "3ee1f15ae601fc94"
               , name = "Powers of two"
               , description = "> Read a number n from input\n> Output 2^n \nThe last input is 0 and should not be printed"
               , io =
@@ -146,7 +146,7 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
-            , { id = "872e1d003c2ab606"
+            , { id = "24c7efb5c41f8f8f"
               , name = "Triangular numbers"
               , description = "> Read a number n from input\n> Output n*(n+1)/2 \nThe last input is 0 and should not be printed"
               , io =
