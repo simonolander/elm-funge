@@ -206,6 +206,28 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "be13bbdd076a586c"
+              , name = "Labyrinth 1"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 2, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 4 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    ]
+              }
             ]
 
         levelProgresses : List LevelProgress

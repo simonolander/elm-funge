@@ -304,17 +304,28 @@ viewRow initialBoard selectedInstructionTool rowIndex boardRow =
 viewInstruction : Board -> Maybe InstructionTool -> Int -> Int -> Instruction -> Element Msg
 viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instruction =
     let
-        editable =
+        initialInstruction =
             BoardUtils.get { x = columnIndex, y = rowIndex } initialBoard
                 |> Maybe.withDefault NoOp
-                |> (==) NoOp
+
+        editable =
+            initialInstruction == NoOp
 
         attributes =
             if editable then
                 []
 
             else
-                [ Background.color (rgb 0.15 0.15 0.15)
+                let
+                    backgroundColor =
+                        case initialInstruction of
+                            Exception _ ->
+                                rgb 0.15 0 0
+
+                            _ ->
+                                rgb 0.15 0.15 0.15
+                in
+                [ Background.color backgroundColor
                 , htmlAttribute (Html.Attributes.style "cursor" "not-allowed")
                 , mouseOver []
                 ]
