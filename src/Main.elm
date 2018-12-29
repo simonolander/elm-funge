@@ -228,6 +228,52 @@ init windowSize =
                     , ChangeAnyDirection Right
                     ]
               }
+            , { id = "e6d9465e4aacaa0f"
+              , name = "Labyrinth 2"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 2 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    ]
+              }
+            , { id = "e81d1f82a8a37103"
+              , name = "Labyrinth 3"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 2 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction (Jump Forward)
+                    ]
+              }
             ]
 
         levelProgresses : List LevelProgress
