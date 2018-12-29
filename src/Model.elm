@@ -121,6 +121,7 @@ type alias ExecutionStep =
     , output : Output
     , terminated : Bool
     , exception : Maybe String
+    , stepCount : Int
     }
 
 

@@ -44,9 +44,6 @@ view executionState =
                 ExecutionRunning exn _ ->
                     exn
 
-        headerView =
-            viewHeader
-
         boardView =
             viewBoard execution
 
@@ -60,8 +57,7 @@ view executionState =
         [ width fill
         , height fill
         ]
-        [ headerView
-        , row
+        [ row
             [ width fill
             , height fill
             , htmlAttribute (Html.Attributes.style "height" "90%") -- hack
@@ -94,6 +90,7 @@ view executionState =
             [ height fill
             , clip
             , Font.family [ Font.monospace ]
+            , Font.color (rgb 1 1 1)
             ]
 
 
@@ -102,6 +99,11 @@ viewExecutionSidebar levelProgress =
     let
         controlSize =
             80
+
+        backButtonView =
+            ViewComponents.textButton []
+                (Just (ExecutionMsg ExecutionBackClicked))
+                "Back"
 
         viewButton : ExecutionControlView.ExecutionControlInstruction -> Maybe Msg -> Element Msg
         viewButton executionControlInstruction onPress =
@@ -149,12 +151,14 @@ viewExecutionSidebar levelProgress =
     column
         [ width (fillPortion 1)
         , height fill
-        , Background.color (rgb 0 0 0)
+        , Background.color (rgb 0.08 0.08 0.08)
         , alignTop
         , padding 10
+        , spacing 10
+        , scrollbarY
         ]
-        [ executionControlInstructionsView
-        , el [ alignBottom, Background.color (rgb 1 0.8 0.8), width fill ] (text "footer")
+        [ backButtonView
+        , executionControlInstructionsView
         ]
 
 
@@ -175,11 +179,20 @@ viewBoard execution =
         viewInstruction rowIndex columnIndex instruction =
             let
                 backgroundColor =
-                    if instructionPointer.position.x == columnIndex && instructionPointer.position.y == rowIndex then
-                        rgb 0.4 0.4 0.4
+                    case instruction of
+                        Exception _ ->
+                            if instructionPointer.position.x == columnIndex && instructionPointer.position.y == rowIndex then
+                                rgb 0.4 0 0
 
-                    else
-                        rgb 0 0 0
+                            else
+                                rgb 0.1 0 0
+
+                        _ ->
+                            if instructionPointer.position.x == columnIndex && instructionPointer.position.y == rowIndex then
+                                rgb 0.4 0.4 0.4
+
+                            else
+                                rgb 0 0 0
 
                 instructionLabel =
                     el
@@ -256,7 +269,9 @@ viewVictoryModal : Execution -> Element Msg
 viewVictoryModal execution =
     let
         numberOfSteps =
-            History.size execution.executionHistory - 1
+            execution.executionHistory
+                |> History.current
+                |> .stepCount
 
         numberOfInstructions =
             History.first execution.executionHistory
@@ -297,25 +312,6 @@ viewVictoryModal execution =
             , label =
                 el [ centerX, centerY ] (text "Back to levels")
             }
-        ]
-
-
-viewHeader : Element Msg
-viewHeader =
-    let
-        backButtonView =
-            Input.button
-                []
-                { onPress = Just (ExecutionMsg ExecutionBackClicked)
-                , label = text "Back"
-                }
-    in
-    row
-        [ width fill
-        , height shrink -- needed?
-        , Background.color (rgb 1 1 0.8)
-        ]
-        [ backButtonView
         ]
 
 
@@ -460,7 +456,7 @@ viewIOSidebar execution =
     row
         [ width (fillPortion 1)
         , height fill
-        , Background.color (rgb 0 0 0)
+        , Background.color (rgb 0.08 0.08 0.08)
         , spacing 10
         , Font.color (rgb 1 1 1)
         , padding 5

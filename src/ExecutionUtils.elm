@@ -97,6 +97,7 @@ initialExecutionStep board input =
     , output = []
     , terminated = False
     , exception = Nothing
+    , stepCount = 0
     }
 
 
@@ -254,14 +255,19 @@ stepExecutionStep executionStep =
             , direction = newDirection
             }
 
-        movedExecutionStep =
+        incrementedExecutionStep =
             { executionStep
+                | stepCount = executionStep.stepCount + 1
+            }
+
+        movedExecutionStep =
+            { incrementedExecutionStep
                 | instructionPointer = moveInstructionPointer direction instructionPointer
             }
     in
     case instruction of
         ChangeDirection newDirection ->
-            { executionStep
+            { incrementedExecutionStep
                 | instructionPointer = moveInstructionPointer newDirection instructionPointer
             }
 
@@ -280,7 +286,7 @@ stepExecutionStep executionStep =
                 newInstructionPointer =
                     moveInstructionPointer newDirection instructionPointer
             in
-            { executionStep
+            { incrementedExecutionStep
                 | instructionPointer = newInstructionPointer
                 , stack = newStack
             }
@@ -439,13 +445,13 @@ stepExecutionStep executionStep =
             movedExecutionStep
 
         Terminate ->
-            { executionStep | terminated = True }
+            { incrementedExecutionStep | terminated = True }
 
         Exception message ->
-            { executionStep | exception = Just message }
+            { incrementedExecutionStep | exception = Just message }
 
         Jump Forward ->
-            { executionStep
+            { incrementedExecutionStep
                 | instructionPointer =
                     instructionPointer
                         |> moveInstructionPointer direction
