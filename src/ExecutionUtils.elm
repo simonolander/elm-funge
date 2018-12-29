@@ -96,6 +96,7 @@ initialExecutionStep board input =
     , input = input
     , output = []
     , terminated = False
+    , exception = Nothing
     }
 
 
@@ -137,13 +138,18 @@ step execution =
             History.current executionHistory
 
         newExecutionHistory =
-            if executionStep.terminated then
-                executionHistory
-
-            else
-                History.push
-                    (stepExecutionStep executionStep)
+            case executionStep.exception of
+                Just message ->
                     executionHistory
+
+                Nothing ->
+                    if executionStep.terminated then
+                        executionHistory
+
+                    else
+                        History.push
+                            (stepExecutionStep executionStep)
+                            executionHistory
     in
     { execution
         | executionHistory = newExecutionHistory
@@ -434,6 +440,9 @@ stepExecutionStep executionStep =
 
         Terminate ->
             { executionStep | terminated = True }
+
+        Exception message ->
+            { executionStep | exception = Just message }
 
         Jump Forward ->
             { executionStep

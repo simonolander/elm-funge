@@ -14,6 +14,7 @@ import Html exposing (Html)
 import Html.Attributes
 import InstructionView
 import Model exposing (..)
+import ViewComponents
 
 
 instructionSpacing =
@@ -66,13 +67,26 @@ view executionState =
             , htmlAttribute (Html.Attributes.style "height" "90%") -- hack
             ]
             [ executionSideBarView
-            , if isWon execution then
-                boardView
-                    |> el
-                        [ width (fillPortion 3), height fill, inFront (viewVictoryModal execution) ]
+            , case getExceptionMessage execution of
+                Just message ->
+                    boardView
+                        |> el
+                            [ width (fillPortion 3)
+                            , height fill
+                            , inFront (viewExceptionModal message)
+                            ]
 
-              else
-                boardView
+                Nothing ->
+                    if isWon execution then
+                        boardView
+                            |> el
+                                [ width (fillPortion 3)
+                                , height fill
+                                , inFront (viewVictoryModal execution)
+                                ]
+
+                    else
+                        boardView
             , ioSidebarView
             ]
         ]
@@ -210,6 +224,34 @@ viewBoard execution =
             ]
 
 
+viewExceptionModal : String -> Element Msg
+viewExceptionModal exceptionMessage =
+    column
+        [ centerX
+        , centerY
+        , Background.color (rgb 0.1 0 0)
+        , padding 20
+        , Font.color (rgb 1 0 0)
+        , spacing 10
+        , Border.width 3
+        , Border.color (rgb 0.5 0 0)
+        ]
+        [ el
+            [ Font.size 32
+            ]
+            (text "Exception")
+        , paragraph
+            []
+            [ text exceptionMessage ]
+        , ViewComponents.textButton
+            [ Background.color (rgb 0 0 0)
+            , Font.color (rgb 1 1 1)
+            ]
+            (Just (ExecutionMsg ExecutionBackClicked))
+            "Back to editor"
+        ]
+
+
 viewVictoryModal : Execution -> Element Msg
 viewVictoryModal execution =
     let
@@ -230,11 +272,13 @@ viewVictoryModal execution =
     column
         [ centerX
         , centerY
-        , Background.color (rgba 0 0 0 0.5)
+        , Background.color (rgb 0 0 0)
         , padding 20
         , Font.family [ Font.monospace ]
         , Font.color (rgb 1 1 1)
         , spacing 10
+        , Border.width 3
+        , Border.color (rgb 1 1 1)
         ]
         [ el
             [ Font.size 32
@@ -438,3 +482,10 @@ isWon execution =
             executionStep.output == expectedOutput
     in
     executionStep.terminated && outputCorrect
+
+
+getExceptionMessage : Execution -> Maybe String
+getExceptionMessage execution =
+    execution.executionHistory
+        |> History.current
+        |> .exception

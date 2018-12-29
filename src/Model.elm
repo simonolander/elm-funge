@@ -120,6 +120,7 @@ type alias ExecutionStep =
     , input : Input
     , output : Output
     , terminated : Bool
+    , exception : Maybe String
     }
 
 

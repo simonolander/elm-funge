@@ -320,7 +320,7 @@ viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instru
                     backgroundColor =
                         case initialInstruction of
                             Exception _ ->
-                                rgb 0.15 0 0
+                                rgb 0.1 0 0
 
                             _ ->
                                 rgb 0.15 0.15 0.15
