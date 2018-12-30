@@ -65,18 +65,18 @@ forward history =
             }
 
 
-push : a -> History a -> History a
-push a history =
-    singleton a
-
-
 
 -- push : a -> History a -> History a
 -- push a history =
---     { past = history.current :: history.past
---     , current = a
---     , future = []
---     }
+--     singleton a
+
+
+push : a -> History a -> History a
+push a history =
+    { past = history.current :: history.past
+    , current = a
+    , future = []
+    }
 
 
 size : History a -> Int

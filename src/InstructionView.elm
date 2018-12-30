@@ -80,7 +80,7 @@ description instruction =
             "Pop the top value from the input and push it to the stack"
 
         Print ->
-            "Pop the top value from the stack and push it to the input"
+            "Pop the top value from the stack and push it to the output"
 
         Duplicate ->
             "Pop the top value from the stack and push two copies of the value to the stack"

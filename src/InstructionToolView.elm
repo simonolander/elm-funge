@@ -12,10 +12,10 @@ description instructionTool =
             InstructionView.description instruction
 
         ChangeAnyDirection direction ->
-            InstructionView.description (ChangeDirection direction)
+            "Change direction"
 
         BranchAnyDirection trueDirection falseDirection ->
-            InstructionView.description (Branch trueDirection falseDirection)
+            "Branch direction (if 0 go black, else go white)"
 
 
 view : List (Attribute msg) -> InstructionTool -> Element msg
