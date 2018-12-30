@@ -283,22 +283,23 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 5 5
-                        -- |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
-                        -- |> BoardUtils.set { x = 3, y = 2 } Terminate
+                        |> BoardUtils.set { x = 1, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 3 } Terminate
               , instructionTools =
                     [ JustInstruction NoOp
                     , ChangeAnyDirection Right
                     , JustInstruction (Jump Forward)
-                    , JustInstruction (Exception "")
-                    , JustInstruction Terminate
                     ]
               }
             ]
