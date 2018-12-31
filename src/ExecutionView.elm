@@ -98,7 +98,16 @@ viewExecutionSidebar : Execution -> Element Msg
 viewExecutionSidebar levelProgress =
     let
         controlSize =
-            80
+            60
+
+        titleView =
+            ViewComponents.viewTitle
+                []
+                levelProgress.level.name
+
+        descriptionView =
+            ViewComponents.descriptionTextbox []
+                levelProgress.level.description
 
         backButtonView =
             ViewComponents.textButton []
@@ -141,6 +150,7 @@ viewExecutionSidebar levelProgress =
         executionControlInstructionsView =
             wrappedRow
                 [ spacing 10
+                , centerX
                 ]
                 [ undoButtonView
                 , stepButtonView
@@ -157,8 +167,21 @@ viewExecutionSidebar levelProgress =
         , spacing 10
         , scrollbarY
         ]
-        [ backButtonView
+        [ column
+            [ width fill
+            , spacing 20
+            , paddingEach
+                { left = 0, top = 20, right = 0, bottom = 30 }
+            ]
+            [ titleView
+            , descriptionView
+            ]
         , executionControlInstructionsView
+        , el
+            [ width fill
+            , alignBottom
+            ]
+            backButtonView
         ]
 
 
