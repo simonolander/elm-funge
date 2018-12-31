@@ -236,6 +236,44 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "1fac7ddba473e99d"
+              , name = "Less is more"
+              , description = [ "> Read two numbers a and b from the input", "> If a < b output a, otherwise output b", "The last input is 0 is not part of the sequence" ]
+              , io =
+                    let
+                        input =
+                            [ 6, 15, 11, 3, 9, 7, 17, 15, 3, 7 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> listPairs
+                            |> List.map
+                                (\( a, b ) ->
+                                    if a < b then
+                                        a
+
+                                    else
+                                        b
+                                )
+                    }
+              , initialBoard =
+                    BoardUtils.empty 8 8
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction (Jump Forward)
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
             , { id = "be13bbdd076a586c"
               , name = "Labyrinth 1"
               , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
@@ -400,3 +438,13 @@ subscriptions model =
 
         _ ->
             windowSizeSubscription
+
+
+listPairs : List a -> List ( a, a )
+listPairs list =
+    case list of
+        a :: b :: tail ->
+            ( a, b ) :: listPairs tail
+
+        _ ->
+            []
