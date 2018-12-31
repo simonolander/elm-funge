@@ -68,7 +68,12 @@ viewLevels maybeSelectedLevelId levelProgresses =
         viewLevel levelProgress =
             Input.button
                 []
-                { onPress = Just (SelectLevel levelProgress.level.id)
+                { onPress =
+                    if maybeSelectedLevelId == Just levelProgress.level.id then
+                        Just (SketchLevelProgress levelProgress.level.id)
+
+                    else
+                        Just (SelectLevel levelProgress.level.id)
                 , label =
                     column
                         [ padding 20
@@ -81,7 +86,7 @@ viewLevels maybeSelectedLevelId levelProgresses =
                             ]
                         , Background.color
                             (if maybeSelectedLevelId == Just levelProgress.level.id then
-                                rgba 1 1 1 0.5
+                                rgba 1 1 1 0.4
 
                              else
                                 rgba 0 0 0 0
