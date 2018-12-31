@@ -115,16 +115,17 @@ viewSidebar levelProgress =
             ]
             [ titleView
             , descriptionView
-            , backButton
+            , executeButtonView
             ]
         , column
             [ width fill
+            , height fill
             , spacing 10
             ]
             [ undoButtonView
             , redoButtonView
             , clearButtonView
-            , executeButtonView
+            , el [ alignBottom, width fill ] backButton
             ]
         ]
 
