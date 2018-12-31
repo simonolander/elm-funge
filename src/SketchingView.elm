@@ -232,11 +232,8 @@ viewToolSidebar levelProgress =
                                                     BranchAnyDirection direction falseDirection
                                                         |> replaceToolMessage index
                                                         |> Just
-
-                                                instruction =
-                                                    ChangeDirection direction
                                             in
-                                            instructionButton attributes onPress instruction
+                                            branchDirectionExtraButton attributes onPress True direction
                                         )
                                     |> column
                                         [ spacing 10 ]
@@ -255,11 +252,8 @@ viewToolSidebar levelProgress =
                                                     BranchAnyDirection trueDirection direction
                                                         |> replaceToolMessage index
                                                         |> Just
-
-                                                instruction =
-                                                    ChangeDirection direction
                                             in
-                                            instructionButton attributes onPress instruction
+                                            branchDirectionExtraButton attributes onPress False direction
                                         )
                                     |> column
                                         [ spacing 10 ]

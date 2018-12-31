@@ -5,6 +5,7 @@ module ViewComponents exposing
     , instructionToolButton
     , textButton
     , viewTitle
+    , branchDirectionExtraButton
     )
 
 import Element exposing (..)
@@ -14,7 +15,7 @@ import Element.Font as Font
 import Element.Input as Input
 import InstructionToolView
 import InstructionView
-import Model exposing (Instruction(..), InstructionTool(..))
+import Model exposing (..)
 
 
 textButton : List (Attribute msg) -> Maybe msg -> String -> Element msg
@@ -82,6 +83,67 @@ instructionButton attributes onPress instruction =
             , height fill
             ]
             instruction
+        )
+
+
+branchDirectionExtraButton : List (Attribute msg) -> Maybe msg -> Bool -> Direction -> Element msg
+branchDirectionExtraButton attributes onPress true direction =
+    let
+        ( sourceFile, description ) =
+            case ( true, direction ) of
+                ( True, Left ) ->
+                    ( "assets/instruction-images/small-filled-arrow-left.svg"
+                    , "Go left when not zero"
+                    )
+
+                ( True, Up ) ->
+                    ( "assets/instruction-images/small-filled-arrow-up.svg"
+                    , "Go up when not zero"
+                    )
+
+                ( True, Right ) ->
+                    ( "assets/instruction-images/small-filled-arrow-right.svg"
+                    , "Go right when not zero"
+                    )
+
+                ( True, Down ) ->
+                    ( "assets/instruction-images/small-filled-arrow-down.svg"
+                    , "Go down when not zero"
+                    )
+
+                ( False, Left ) ->
+                    ( "assets/instruction-images/small-hollow-arrow-left.svg"
+                    , "Go left when zero"
+                    )
+
+                ( False, Up ) ->
+                    ( "assets/instruction-images/small-hollow-arrow-up.svg"
+                    , "Go up when zero"
+                    )
+
+                ( False, Right ) ->
+                    ( "assets/instruction-images/small-hollow-arrow-right.svg"
+                    , "Go right when zero"
+                    )
+
+                ( False, Down ) ->
+                    ( "assets/instruction-images/small-hollow-arrow-down.svg"
+                    , "Go down when zero"
+                    )
+    in
+    imageButton
+        (List.concat
+            [ attributes
+            ]
+        )
+        onPress
+        (image
+            [ width fill
+            , height fill
+            ]
+            { src = sourceFile
+            , description = description
+            }
         )
 
 
