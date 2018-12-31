@@ -187,7 +187,7 @@ viewToolSidebar levelProgress =
                 Just index ->
                     case getSelectedInstructionTool instructionToolbox of
                         Just (ChangeAnyDirection selectedDirection) ->
-                            [ Left, Up, Right, Down ]
+                            [ Left, Up, Down, Right ]
                                 |> List.map
                                     (\direction ->
                                         let
@@ -217,7 +217,7 @@ viewToolSidebar levelProgress =
                                 [ centerX
                                 , spacing 10
                                 ]
-                                [ [ Left, Up, Right, Down ]
+                                [ [ Up, Left, Right, Down ]
                                     |> List.map
                                         (\direction ->
                                             let
@@ -237,7 +237,7 @@ viewToolSidebar levelProgress =
                                         )
                                     |> column
                                         [ spacing 10 ]
-                                , [ Left, Up, Right, Down ]
+                                , [ Up, Left, Right, Down ]
                                     |> List.map
                                         (\direction ->
                                             let
