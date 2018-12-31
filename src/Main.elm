@@ -176,6 +176,36 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "d3c077ea5033222c"
+              , name = "Signal amplifier"
+              , description = [ "> Read a number x from the input", "> Output x + 10", "The last input is 0 should not be outputed" ]
+              , io =
+                    let
+                        input =
+                            [ 24, 145, 49, 175, 166, 94, 38, 90, 165, 211 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> List.map ((+) 10)
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction (Jump Forward)
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
             , { id = "407410b1638112a9"
               , name = "Sequence reverser"
               , description = [ "> Read a sequence of numbers from input", "> Output the sequence in reverse", "The last input is 0 is not part of the sequence" ]
