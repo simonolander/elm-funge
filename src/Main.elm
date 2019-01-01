@@ -272,7 +272,7 @@ init windowSize =
               , io =
                     let
                         input =
-                            [ 6, 15, 11, 3, 9, 7, 17, 15, 3, 7 ]
+                            [ 6, 15, 11, 3, 9, 7, 15, 15, 3, 7 ]
                     in
                     { input = input ++ [ 0 ]
                     , output =
