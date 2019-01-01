@@ -191,6 +191,7 @@ type ExecutionMsg
     = ExecutionStepOne
     | ExecutionUndo
     | ExecutionRun
+    | ExecutionFastForward
     | ExecutionPause
     | ExecutionBackClicked
     | ExecutionBackToBrowsingLevels

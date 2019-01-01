@@ -98,7 +98,7 @@ viewExecutionSidebar : Execution -> Element Msg
 viewExecutionSidebar levelProgress =
     let
         controlSize =
-            60
+            50
 
         titleView =
             ViewComponents.viewTitle
@@ -144,6 +144,9 @@ viewExecutionSidebar levelProgress =
         runButtonView =
             viewButton ExecutionControlView.Play (Just (ExecutionMsg ExecutionRun))
 
+        fastForwardButtonView =
+            viewButton ExecutionControlView.FastForward (Just (ExecutionMsg ExecutionFastForward))
+
         pauseButtonView =
             viewButton ExecutionControlView.Pause (Just (ExecutionMsg ExecutionPause))
 
@@ -155,6 +158,7 @@ viewExecutionSidebar levelProgress =
                 [ undoButtonView
                 , stepButtonView
                 , runButtonView
+                , fastForwardButtonView
                 , pauseButtonView
                 ]
     in

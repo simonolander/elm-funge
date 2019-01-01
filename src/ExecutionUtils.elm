@@ -30,6 +30,11 @@ update msg model =
                             , Cmd.none
                             )
 
+                        ExecutionFastForward ->
+                            ( { model | gameState = Executing (ExecutionRunning execution 100) }
+                            , Cmd.none
+                            )
+
                         ExecutionBackClicked ->
                             ( { model | gameState = Sketching execution.level.id }
                             , Cmd.none
@@ -69,7 +74,14 @@ update msg model =
                             )
 
                         ExecutionRun ->
-                            ( model, Cmd.none )
+                            ( { model | gameState = Executing (ExecutionRunning execution 250) }
+                            , Cmd.none
+                            )
+
+                        ExecutionFastForward ->
+                            ( { model | gameState = Executing (ExecutionRunning execution 100) }
+                            , Cmd.none
+                            )
 
                         ExecutionBackClicked ->
                             ( { model | gameState = Sketching execution.level.id }
