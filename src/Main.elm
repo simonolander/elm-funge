@@ -125,6 +125,36 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "1a3c6d6a80769a07"
+              , name = "One minus the other"
+              , description = [ "> Read two numbers a and b from input", "> Output a - b", "The last input is 0 and should not be printed" ]
+              , io =
+                    let
+                        input =
+                            [ 18, 4, 17, 9, 13, 13, 12, 1, 17, 3 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> listPairs
+                            |> List.map (\( a, b ) -> a - b)
+                    }
+              , initialBoard =
+                    BoardUtils.empty 7 7
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction Print
+                    , JustInstruction Read
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
             , { id = "3ee1f15ae601fc94"
               , name = "Powers of two"
               , description = [ "> Read a number n from input", "> Output 2^n ", "The last input is 0 and should not be printed" ]
