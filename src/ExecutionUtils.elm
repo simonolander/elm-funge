@@ -411,6 +411,20 @@ stepExecutionStep executionStep =
                         stack
             }
 
+        CompareLessThan ->
+            { movedExecutionStep
+                | stack =
+                    op2
+                        (\a b ->
+                            if a < b then
+                                1
+
+                            else
+                                0
+                        )
+                        stack
+            }
+
         And ->
             { movedExecutionStep
                 | stack =

@@ -131,7 +131,7 @@ init windowSize =
               , io =
                     let
                         input =
-                            [ 18, 4, 17, 9, 13, 13, 12, 1, 17, 3 ]
+                            [ 18, 4, 9, 17, 13, 13, 12, 1, 17, 3 ]
                     in
                     { input = input ++ [ 0 ]
                     , output =

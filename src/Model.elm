@@ -89,6 +89,7 @@ type Instruction
     | Multiply
     | Divide
     | Equals
+    | CompareLessThan
     | And
     | Or
     | XOr

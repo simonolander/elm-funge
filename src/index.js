@@ -13,7 +13,7 @@ Elm.Main.init({
 registerServiceWorker();
 
 
-window.addEventListener("beforeunload", function (event) {
-  event.preventDefault();
-  return "Are you sure you want to exit? All progress will be lost.";
-})
+// window.addEventListener("beforeunload", function (event) {
+//   event.preventDefault();
+//   return "Are you sure you want to exit? All progress will be lost.";
+// })
