@@ -107,9 +107,11 @@ viewLevels maybeSelectedLevelId levelProgresses =
         |> List.map viewLevel
         |> wrappedRow
             [ width (fillPortion 3)
+            , height fill
             , spacing 20
             , alignTop
             , padding 20
+            , scrollbarY
             ]
 
 
