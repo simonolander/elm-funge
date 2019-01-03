@@ -163,7 +163,7 @@ viewExecutionSidebar levelProgress =
                 ]
     in
     column
-        [ width (fillPortion 1)
+        [ px 350 |> width
         , height fill
         , Background.color (rgb 0.08 0.08 0.08)
         , alignTop
