@@ -33,6 +33,7 @@ init windowSize =
                     , JustInstruction Print
                     , JustInstruction Read
                     , JustInstruction Add
+                    , JustInstruction SendToBottom
                     , BranchAnyDirection Left Right
                     , JustInstruction (Jump Forward)
                     , JustInstruction (Exception "Some exception")

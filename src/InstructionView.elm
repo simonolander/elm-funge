@@ -103,6 +103,9 @@ description instruction =
         Terminate ->
             "End the program"
 
+        SendToBottom ->
+            "Move the top value of the stack to the bottom of the stack"
+
         Exception message ->
             message
 
@@ -305,6 +308,12 @@ view attributes instruction =
         Exception _ ->
             image attributes
                 { src = "assets/instruction-images/exception.svg"
+                , description = description instruction
+                }
+
+        SendToBottom ->
+            image attributes
+                { src = "assets/instruction-images/send-to-bottom.svg"
                 , description = description instruction
                 }
 

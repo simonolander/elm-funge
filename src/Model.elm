@@ -97,6 +97,7 @@ type Instruction
     | Print
     | Branch Direction Direction
     | Terminate
+    | SendToBottom
     | Exception String
 
 

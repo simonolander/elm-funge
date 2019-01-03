@@ -484,5 +484,17 @@ stepExecutionStep executionStep =
                         |> moveInstructionPointer direction
             }
 
+        SendToBottom ->
+            let
+                ( value, tempStack ) =
+                    pop stack
+
+                newStack =
+                    tempStack ++ [ value ]
+            in
+            { movedExecutionStep
+                | stack = newStack
+            }
+
         _ ->
             movedExecutionStep
