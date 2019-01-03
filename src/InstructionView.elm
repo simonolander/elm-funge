@@ -23,52 +23,52 @@ description instruction =
             "Change the direction of the instruction pointer to down"
 
         Branch Left Left ->
-            "Pop the stack. If the value is not zero, go left, otherwise go left"
+            "Peek the stack. If the value is not zero, go left, otherwise go left"
 
         Branch Left Up ->
-            "Pop the stack. If the value is not zero, go left, otherwise go up"
+            "Peek the stack. If the value is not zero, go left, otherwise go up"
 
         Branch Left Right ->
-            "Pop the stack. If the value is not zero, go left, otherwise go right"
+            "Peek the stack. If the value is not zero, go left, otherwise go right"
 
         Branch Left Down ->
-            "Pop the stack. If the value is not zero, go left, otherwise go down"
+            "Peek the stack. If the value is not zero, go left, otherwise go down"
 
         Branch Up Left ->
-            "Pop the stack. If the value is not zero, go up, otherwise go left"
+            "Peek the stack. If the value is not zero, go up, otherwise go left"
 
         Branch Up Up ->
-            "Pop the stack. If the value is not zero, go up, otherwise go up"
+            "Peek the stack. If the value is not zero, go up, otherwise go up"
 
         Branch Up Right ->
-            "Pop the stack. If the value is not zero, go up, otherwise go right"
+            "Peek the stack. If the value is not zero, go up, otherwise go right"
 
         Branch Up Down ->
-            "Pop the stack. If the value is not zero, go up, otherwise go down"
+            "Peek the stack. If the value is not zero, go up, otherwise go down"
 
         Branch Right Left ->
-            "Pop the stack. If the value is not zero, go right, otherwise go left"
+            "Peek the stack. If the value is not zero, go right, otherwise go left"
 
         Branch Right Up ->
-            "Pop the stack. If the value is not zero, go right, otherwise go up"
+            "Peek the stack. If the value is not zero, go right, otherwise go up"
 
         Branch Right Right ->
-            "Pop the stack. If the value is not zero, go right, otherwise go right"
+            "Peek the stack. If the value is not zero, go right, otherwise go right"
 
         Branch Right Down ->
-            "Pop the stack. If the value is not zero, go right, otherwise go down"
+            "Peek the stack. If the value is not zero, go right, otherwise go down"
 
         Branch Down Left ->
-            "Pop the stack. If the value is not zero, go down, otherwise go left"
+            "Peek the stack. If the value is not zero, go down, otherwise go left"
 
         Branch Down Up ->
-            "Pop the stack. If the value is not zero, go down, otherwise go up"
+            "Peek the stack. If the value is not zero, go down, otherwise go up"
 
         Branch Down Right ->
-            "Pop the stack. If the value is not zero, go down, otherwise go right"
+            "Peek the stack. If the value is not zero, go down, otherwise go right"
 
         Branch Down Down ->
-            "Pop the stack. If the value is not zero, go down, otherwise go down"
+            "Peek the stack. If the value is not zero, go down, otherwise go down"
 
         Add ->
             "Pop the top two values from the stack, add them, and push the result to the stack"
@@ -80,10 +80,10 @@ description instruction =
             "Pop the top value from the input and push it to the stack"
 
         Print ->
-            "Pop the top value from the stack and push it to the output"
+            "Peek the top value from the stack and push it to the output"
 
         Duplicate ->
-            "Pop the top value from the stack and push two copies of the value to the stack"
+            "Duplicate the top value in the stack"
 
         Increment ->
             "Pop the top value a from the stack and push a + 1 to the stack"
@@ -92,10 +92,10 @@ description instruction =
             "Pop the top value a from the stack and push a - 1 to the stack"
 
         Swap ->
-            "Pop the top two value a and b from the stack, push a to the stack, then push b to the stack"
+            "Swap the top two values in the stack"
 
         PopFromStack ->
-            "Pop the top value from the stack and discard it"
+            "Discard the top value from the stack"
 
         Jump Forward ->
             "Move the instruction pointer two steps in the current direction"

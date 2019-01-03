@@ -34,6 +34,7 @@ init windowSize =
                     , JustInstruction Print
                     , JustInstruction Add
                     , JustInstruction SendToBottom
+                    , JustInstruction PopFromStack
                     , BranchAnyDirection Left Right
                     , JustInstruction (Jump Forward)
                     , JustInstruction (Exception "Some exception")
@@ -55,6 +56,7 @@ init windowSize =
                     , JustInstruction Add
                     , JustInstruction Read
                     , JustInstruction Print
+                    , JustInstruction PopFromStack
                     , JustInstruction Terminate
                     , BranchAnyDirection Left Right
                     ]
@@ -74,6 +76,7 @@ init windowSize =
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Read
+                    , JustInstruction PopFromStack
                     , JustInstruction Print
                     , JustInstruction Terminate
                     , BranchAnyDirection Left Right
@@ -98,6 +101,7 @@ init windowSize =
                     , JustInstruction Duplicate
                     , JustInstruction Decrement
                     , JustInstruction Read
+                    , JustInstruction PopFromStack
                     , JustInstruction Print
                     , JustInstruction Terminate
                     , BranchAnyDirection Left Right
@@ -121,6 +125,7 @@ init windowSize =
                     , JustInstruction Decrement
                     , JustInstruction Swap
                     , JustInstruction Read
+                    , JustInstruction PopFromStack
                     , JustInstruction Print
                     , BranchAnyDirection Left Right
                     , JustInstruction Terminate
@@ -177,6 +182,7 @@ init windowSize =
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Decrement
+                    , JustInstruction PopFromStack
                     , JustInstruction Swap
                     , JustInstruction Read
                     , JustInstruction Print
@@ -205,6 +211,7 @@ init windowSize =
                     , JustInstruction Duplicate
                     , JustInstruction Increment
                     , JustInstruction Decrement
+                    , JustInstruction PopFromStack
                     , JustInstruction Swap
                     , JustInstruction Read
                     , JustInstruction Print

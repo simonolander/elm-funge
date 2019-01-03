@@ -179,6 +179,12 @@ pop list =
             ( 0, [] )
 
 
+peek : List Int -> Int
+peek list =
+    List.head list
+        |> Maybe.withDefault 0
+
+
 pop2 : List Int -> ( Int, Int, List Int )
 pop2 list =
     case list of
@@ -192,8 +198,21 @@ pop2 list =
             ( 0, 0, [] )
 
 
-op : (Int -> Int) -> Stack -> Stack
-op operation stack =
+peek2 : List Int -> ( Int, Int )
+peek2 list =
+    case list of
+        a :: b :: _ ->
+            ( a, b )
+
+        a :: _ ->
+            ( a, 0 )
+
+        _ ->
+            ( 0, 0 )
+
+
+popOp : (Int -> Int) -> Stack -> Stack
+popOp operation stack =
     let
         ( a, stack1 ) =
             pop stack
@@ -201,8 +220,8 @@ op operation stack =
     operation a :: stack1
 
 
-op2 : (Int -> Int -> Int) -> Stack -> Stack
-op2 operation stack =
+popOp2 : (Int -> Int -> Int) -> Stack -> Stack
+popOp2 operation stack =
     let
         ( a, b, stack1 ) =
             pop2 stack
@@ -210,10 +229,16 @@ op2 operation stack =
     operation a b :: stack1
 
 
-op2Peek operation stack =
+peekOp : (Int -> Int) -> Stack -> Stack
+peekOp operation stack =
+    operation (peek stack) :: stack
+
+
+peekOp2 : (Int -> Int -> Int) -> Stack -> Stack
+peekOp2 operation stack =
     let
-        ( a, b, stack1 ) =
-            pop2 stack
+        ( a, b ) =
+            peek2 stack
     in
     operation a b :: stack
 
@@ -293,11 +318,8 @@ stepExecutionStep executionStep =
 
         Branch trueDirection falseDirection ->
             let
-                ( value, newStack ) =
-                    pop stack
-
                 newDirection =
-                    if value /= 0 then
+                    if peek stack /= 0 then
                         trueDirection
 
                     else
@@ -308,19 +330,21 @@ stepExecutionStep executionStep =
             in
             { incrementedExecutionStep
                 | instructionPointer = newInstructionPointer
-                , stack = newStack
             }
 
         Read ->
+            let
+                ( value, newInput ) =
+                    pop input
+            in
             { movedExecutionStep
-                | stack = Maybe.withDefault 0 (List.head input) :: stack
-                , input = Maybe.withDefault [] (List.tail input)
+                | stack = value :: stack
+                , input = newInput
             }
 
         Print ->
             { movedExecutionStep
-                | stack = Maybe.withDefault [] (List.tail stack)
-                , output = Maybe.withDefault 0 (List.head stack) :: output
+                | output = peek stack :: output
             }
 
         PushToStack number ->
@@ -330,16 +354,15 @@ stepExecutionStep executionStep =
 
         PopFromStack ->
             { movedExecutionStep
-                | stack = Maybe.withDefault [] (List.tail stack)
+                | stack =
+                    stack
+                        |> pop
+                        |> Tuple.second
             }
 
         Duplicate ->
-            let
-                ( a, stack1 ) =
-                    pop stack
-            in
             { movedExecutionStep
-                | stack = a :: a :: stack1
+                | stack = peek stack :: stack
             }
 
         Swap ->
@@ -353,18 +376,18 @@ stepExecutionStep executionStep =
 
         Negate ->
             { movedExecutionStep
-                | stack = op negate stack
+                | stack = popOp negate stack
             }
 
         Abs ->
             { movedExecutionStep
-                | stack = op abs stack
+                | stack = popOp abs stack
             }
 
         Not ->
             { movedExecutionStep
                 | stack =
-                    op
+                    popOp
                         (\a ->
                             if a == 0 then
                                 1
@@ -377,38 +400,38 @@ stepExecutionStep executionStep =
 
         Increment ->
             { movedExecutionStep
-                | stack = op ((+) 1) stack
+                | stack = popOp ((+) 1) stack
             }
 
         Decrement ->
             { movedExecutionStep
-                | stack = op (\value -> value - 1) stack
+                | stack = popOp (\value -> value - 1) stack
             }
 
         Add ->
             { movedExecutionStep
-                | stack = op2 (+) stack
+                | stack = popOp2 (+) stack
             }
 
         Subtract ->
             { movedExecutionStep
-                | stack = op2 (-) stack
+                | stack = popOp2 (-) stack
             }
 
         Multiply ->
             { movedExecutionStep
-                | stack = op2 (*) stack
+                | stack = popOp2 (*) stack
             }
 
         Divide ->
             { movedExecutionStep
-                | stack = op2 (//) stack
+                | stack = popOp2 (//) stack
             }
 
         Equals ->
             { movedExecutionStep
                 | stack =
-                    op2
+                    popOp2
                         (\a b ->
                             if a == b then
                                 1
@@ -422,7 +445,7 @@ stepExecutionStep executionStep =
         CompareLessThan ->
             { movedExecutionStep
                 | stack =
-                    op2Peek
+                    peekOp2
                         (\a b ->
                             if a < b then
                                 1
@@ -436,7 +459,7 @@ stepExecutionStep executionStep =
         And ->
             { movedExecutionStep
                 | stack =
-                    op2
+                    popOp2
                         (\a b ->
                             if a /= 0 && b /= 0 then
                                 1
@@ -450,7 +473,7 @@ stepExecutionStep executionStep =
         Or ->
             { movedExecutionStep
                 | stack =
-                    op2
+                    popOp2
                         (\a b ->
                             if a /= 0 || b /= 0 then
                                 1
@@ -464,7 +487,7 @@ stepExecutionStep executionStep =
         XOr ->
             { movedExecutionStep
                 | stack =
-                    op2
+                    popOp2
                         (\a b ->
                             if (a /= 0) /= (b /= 0) then
                                 1
