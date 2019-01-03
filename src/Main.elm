@@ -159,9 +159,14 @@ init windowSize =
               , name = "Powers of two"
               , description = [ "> Read a number n from input", "> Output 2^n ", "The last input is 0 and should not be printed" ]
               , io =
-                    { input = [ 1, 4, 3, 8, 5, 7, 0 ]
+                    let
+                        input =
+                            [ 1, 4, 3, 2, 5, 6 ]
+                    in
+                    { input = input ++ [ 0 ]
                     , output =
-                        [ 2 ^ 1, 2 ^ 4, 2 ^ 3, 2 ^ 8, 2 ^ 5, 2 ^ 7 ]
+                        input
+                            |> List.map ((^) 2)
                     }
               , initialBoard =
                     BoardUtils.empty 8 8
