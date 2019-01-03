@@ -304,6 +304,38 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "b96e6c12476716a3"
+              , name = "Sequence sorter"
+              , description = [ "> Read a sequence from the input", "> Output the sequence sorted from lowest to highest", "The last input is 0 should not be outputed" ]
+              , io =
+                    let
+                        input =
+                            [ 1, 4, 3, 7, 11, 15, 4, 14, 4, 10, 8, 7 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> List.sort
+                    }
+              , initialBoard =
+                    BoardUtils.empty 7 7
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction SendToBottom
+                    , JustInstruction CompareLessThan
+                    , JustInstruction Read
+                    , JustInstruction Print
+                    , JustInstruction (Jump Forward)
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
             , { id = "1fac7ddba473e99d"
               , name = "Less is more"
               , description = [ "> Read two numbers a and b from the input", "> If a < b output a, otherwise output b", "The last input is 0 is not part of the sequence" ]

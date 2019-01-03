@@ -106,6 +106,9 @@ description instruction =
         SendToBottom ->
             "Move the top value of the stack to the bottom of the stack"
 
+        CompareLessThan ->
+            "Pop the top two value a and b from the stack, if a < b push 1 to the stack, otherwize push 0 to the stack"
+
         Exception message ->
             message
 
@@ -314,6 +317,12 @@ view attributes instruction =
         SendToBottom ->
             image attributes
                 { src = "assets/instruction-images/send-to-bottom.svg"
+                , description = description instruction
+                }
+
+        CompareLessThan ->
+            image attributes
+                { src = "assets/instruction-images/compare-less-than.svg"
                 , description = description instruction
                 }
 
