@@ -260,6 +260,26 @@ viewToolSidebar levelProgress =
                                         [ spacing 10 ]
                                 ]
 
+                        Just (PushValueToStack value) ->
+                            Input.text
+                                [ Background.color (rgb 0 0 0)
+                                , Border.width 3
+                                , Border.color (rgb 1 1 1)
+                                , Border.rounded 0
+                                ]
+                                { onChange =
+                                    \string ->
+                                        string
+                                            |> PushValueToStack
+                                            |> replaceToolMessage index
+                                , text = value
+                                , placeholder = Nothing
+                                , label =
+                                    Input.labelAbove
+                                        []
+                                        (text "Enter value")
+                                }
+
                         Just (JustInstruction _) ->
                             none
 
@@ -360,3 +380,9 @@ getInstruction instructionTool =
 
         BranchAnyDirection trueDirection falseDirection ->
             Branch trueDirection falseDirection
+
+        PushValueToStack value ->
+            value
+                |> String.toInt
+                |> Maybe.map PushToStack
+                |> Maybe.withDefault (Exception (value ++ " is not a number"))

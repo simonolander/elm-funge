@@ -1,6 +1,7 @@
 module InstructionView exposing (description, view)
 
 import Element exposing (..)
+import Element.Font as Font
 import Model exposing (..)
 
 
@@ -111,6 +112,9 @@ description instruction =
 
         Exception message ->
             message
+
+        PushToStack value ->
+            "Push " ++ String.fromInt value ++ " to the stack"
 
         _ ->
             Debug.toString instruction
@@ -295,6 +299,11 @@ view attributes instruction =
                 { src = "assets/instruction-images/pop-from-stack.svg"
                 , description = description instruction
                 }
+
+        PushToStack value ->
+            String.fromInt value
+                |> text
+                |> el ([ Font.size 26, centerY ] ++ attributes)
 
         Jump Forward ->
             image attributes

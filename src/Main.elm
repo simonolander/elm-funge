@@ -32,6 +32,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Read
                     , JustInstruction Print
+                    , JustInstruction (PushToStack 15433)
+                    , PushValueToStack "0"
                     , JustInstruction Add
                     , JustInstruction SendToBottom
                     , JustInstruction PopFromStack

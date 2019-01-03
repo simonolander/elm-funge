@@ -105,6 +105,7 @@ type InstructionTool
     = JustInstruction Instruction
     | ChangeAnyDirection Direction
     | BranchAnyDirection Direction Direction
+    | PushValueToStack String
 
 
 type alias Board =

@@ -1,6 +1,7 @@
 module InstructionToolView exposing (description, view)
 
 import Element exposing (..)
+import Element.Font as Font
 import InstructionView
 import Model exposing (..)
 
@@ -16,6 +17,9 @@ description instructionTool =
 
         BranchAnyDirection trueDirection falseDirection ->
             "Branch direction (if 0 go black, else go white)"
+
+        PushValueToStack _ ->
+            "Push a value to the stack"
 
 
 view : List (Attribute msg) -> InstructionTool -> Element msg
@@ -35,3 +39,8 @@ view attributes instructionTool =
                 { src = "assets/instruction-images/four-half-filled-arrows.svg"
                 , description = "Branch"
                 }
+
+        PushValueToStack _ ->
+            "n"
+                |> text
+                |> el ([ Font.size 26, centerY ] ++ attributes)
