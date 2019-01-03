@@ -30,8 +30,8 @@ init windowSize =
                     , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction Add
                     , JustInstruction SendToBottom
                     , BranchAnyDirection Left Right
@@ -53,8 +53,8 @@ init windowSize =
                     , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Add
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction Terminate
                     , BranchAnyDirection Left Right
                     ]
@@ -73,8 +73,8 @@ init windowSize =
                     , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Increment
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction Terminate
                     , BranchAnyDirection Left Right
                     ]
@@ -97,8 +97,8 @@ init windowSize =
                     , ChangeAnyDirection Right
                     , JustInstruction Duplicate
                     , JustInstruction Decrement
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction Terminate
                     , BranchAnyDirection Left Right
                     ]
@@ -120,8 +120,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , BranchAnyDirection Left Right
                     , JustInstruction Terminate
                     ]
@@ -149,8 +149,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction PopFromStack
                     , BranchAnyDirection Left Right
                     , JustInstruction Terminate
@@ -178,8 +178,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , BranchAnyDirection Left Right
                     , JustInstruction Terminate
                     ]
@@ -206,8 +206,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , BranchAnyDirection Left Right
                     , JustInstruction Terminate
                     ]
@@ -234,8 +234,40 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
+                    , JustInstruction (Jump Forward)
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
+            , { id = "bc27b58a0cafb0ba"
+              , name = "Multiplier"
+              , description = [ "> Read two positive numbers x and y from the input", "> Output x * y", "The last input is 0 should not be outputed" ]
+              , io =
+                    let
+                        input =
+                            [ 12, 2, 6, 6, 5, 7, 1, 1, 7, 11, 6, 3 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> listPairs
+                            |> List.map (\( x, y ) -> x * y)
+                    }
+              , initialBoard =
+                    BoardUtils.empty 7 7
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction SendToBottom
+                    , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction (Jump Forward)
                     , JustInstruction PopFromStack
                     , BranchAnyDirection Left Right
@@ -264,8 +296,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction (Jump Forward)
                     , JustInstruction PopFromStack
                     , BranchAnyDirection Left Right
@@ -302,8 +334,8 @@ init windowSize =
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     , JustInstruction Swap
-                    , JustInstruction Print
                     , JustInstruction Read
+                    , JustInstruction Print
                     , JustInstruction (Jump Forward)
                     , JustInstruction PopFromStack
                     , BranchAnyDirection Left Right
