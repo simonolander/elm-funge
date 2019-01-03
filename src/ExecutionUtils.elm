@@ -210,6 +210,14 @@ op2 operation stack =
     operation a b :: stack1
 
 
+op2Peek operation stack =
+    let
+        ( a, b, stack1 ) =
+            pop2 stack
+    in
+    operation a b :: stack
+
+
 stepExecutionStep : ExecutionStep -> ExecutionStep
 stepExecutionStep executionStep =
     let
@@ -414,7 +422,7 @@ stepExecutionStep executionStep =
         CompareLessThan ->
             { movedExecutionStep
                 | stack =
-                    op2
+                    op2Peek
                         (\a b ->
                             if a < b then
                                 1

@@ -107,7 +107,7 @@ description instruction =
             "Move the top value of the stack to the bottom of the stack"
 
         CompareLessThan ->
-            "Pop the top two value a and b from the stack, if a < b push 1 to the stack, otherwize push 0 to the stack"
+            "Peek at the top two values a and b in the stack, if a < b push 1 to the stack, otherwize push 0 to the stack"
 
         Exception message ->
             message
