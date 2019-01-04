@@ -628,7 +628,7 @@ init windowSize =
               }
             , { id = "b4c862e5dcfb82c1"
               , name = "Labyrinth 9"
-              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
               , io =
                     { input = []
                     , output = [ 1 ]
@@ -652,6 +652,34 @@ init windowSize =
                     [ JustInstruction NoOp
                     , ChangeAnyDirection Down
                     , JustInstruction Increment
+                    , JustInstruction Print
+                    ]
+              }
+            , { id = "f8ba39bc9d01ef03"
+              , name = "Labyrinth 10"
+              , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = [ 1 ]
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 2, y = 0 } (Jump Forward)
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 1 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 1 } (Branch Up Right)
+                        |> BoardUtils.set { x = 1, y = 2 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 2 } Terminate
+                        |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 3 } (Branch Down Right)
+                        |> BoardUtils.set { x = 4, y = 3 } (Jump Forward)
+                        |> BoardUtils.set { x = 1, y = 4 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 4 } Increment
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
                     , JustInstruction Print
                     ]
               }
