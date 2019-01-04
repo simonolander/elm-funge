@@ -635,19 +635,19 @@ init windowSize =
                     }
               , initialBoard =
                     BoardUtils.empty 5 5
-                        |> BoardUtils.set { x = 2, y = 0 } (Jump Forward)
-                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-                        |> BoardUtils.set { x = 0, y = 1 } (Jump Forward)
-                        |> BoardUtils.set { x = 2, y = 1 } (Branch Up Right)
-                        |> BoardUtils.set { x = 1, y = 2 } (Jump Forward)
-                        |> BoardUtils.set { x = 2, y = 2 } Terminate
-                        |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 2 } (Jump Forward)
                         |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-                        |> BoardUtils.set { x = 2, y = 3 } (Branch Down Right)
+                        |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 0 } (Jump Forward)
+                        |> BoardUtils.set { x = 1, y = 2 } (Branch Left Up)
+                        |> BoardUtils.set { x = 2, y = 1 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 2 } Terminate
+                        |> BoardUtils.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 2 } (Branch Right Up)
                         |> BoardUtils.set { x = 3, y = 3 } (Exception "Don't hit the exceptions")
-                        |> BoardUtils.set { x = 4, y = 3 } (Jump Forward)
-                        |> BoardUtils.set { x = 1, y = 4 } (Jump Forward)
+                        |> BoardUtils.set { x = 3, y = 4 } (Jump Forward)
+                        |> BoardUtils.set { x = 4, y = 1 } (Jump Forward)
               , instructionTools =
                     [ JustInstruction NoOp
                     , ChangeAnyDirection Down
