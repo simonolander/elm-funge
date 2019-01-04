@@ -63,26 +63,7 @@ view executionState =
             , htmlAttribute (Html.Attributes.style "height" "90%") -- hack
             ]
             [ executionSideBarView
-            , case getExceptionMessage execution of
-                Just message ->
-                    boardView
-                        |> el
-                            [ width (fillPortion 3)
-                            , height fill
-                            , inFront (viewExceptionModal message)
-                            ]
-
-                Nothing ->
-                    if isWon execution then
-                        boardView
-                            |> el
-                                [ width (fillPortion 3)
-                                , height fill
-                                , inFront (viewVictoryModal execution)
-                                ]
-
-                    else
-                        boardView
+            , boardView
             , ioSidebarView
             ]
         ]
@@ -250,18 +231,51 @@ viewBoard execution =
                 |> Array.indexedMap (viewInstruction rowIndex)
                 |> Array.toList
                 |> row [ spacing instructionSpacing ]
+
+        boardView =
+            board
+                |> Array.indexedMap viewRow
+                |> Array.toList
+                |> column
+                    [ spacing instructionSpacing
+                    , scrollbars
+                    , width (fillPortion 3)
+                    , height fill
+                    , Background.color (rgb 0 0 0)
+                    , padding 10
+                    ]
+
+        boardWithModalView =
+            case getExceptionMessage execution of
+                Just message ->
+                    boardView
+                        |> el
+                            [ width (fillPortion 3)
+                            , height fill
+                            , inFront (viewExceptionModal message)
+                            ]
+
+                Nothing ->
+                    if isWon execution then
+                        boardView
+                            |> el
+                                [ width (fillPortion 3)
+                                , height fill
+                                , inFront (viewVictoryModal execution)
+                                ]
+
+                    else if History.current execution.executionHistory |> .terminated then
+                        boardView
+                            |> el
+                                [ width (fillPortion 3)
+                                , height fill
+                                , inFront viewWrongOutputModal
+                                ]
+
+                    else
+                        boardView
     in
-    board
-        |> Array.indexedMap viewRow
-        |> Array.toList
-        |> column
-            [ spacing instructionSpacing
-            , scrollbars
-            , width (fillPortion 3)
-            , height fill
-            , Background.color (rgb 0 0 0)
-            , padding 10
-            ]
+    boardWithModalView
 
 
 viewExceptionModal : String -> Element Msg
@@ -283,6 +297,35 @@ viewExceptionModal exceptionMessage =
         , paragraph
             []
             [ text exceptionMessage ]
+        , ViewComponents.textButton
+            [ Background.color (rgb 0 0 0)
+            , Font.color (rgb 1 1 1)
+            ]
+            (Just (ExecutionMsg ExecutionBackClicked))
+            "Back to editor"
+        ]
+
+
+viewWrongOutputModal : Element Msg
+viewWrongOutputModal =
+    column
+        [ centerX
+        , centerY
+        , Background.color (rgb 0 0 0)
+        , padding 20
+        , Font.family [ Font.monospace ]
+        , Font.color (rgb 1 1 1)
+        , spacing 10
+        , Border.width 3
+        , Border.color (rgb 1 1 1)
+        ]
+        [ el
+            [ Font.size 32
+            ]
+            (text "Wrong output")
+        , paragraph
+            []
+            [ text "The program terminated, but the output is incorrect." ]
         , ViewComponents.textButton
             [ Background.color (rgb 0 0 0)
             , Font.color (rgb 1 1 1)
