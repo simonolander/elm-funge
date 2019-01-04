@@ -44,7 +44,17 @@ view model =
         sidebarView =
             maybeSelectedLevelProgress
                 |> Maybe.map viewSidebar
-                |> Maybe.withDefault none
+                |> Maybe.withDefault
+                    (column
+                        [ width (fillPortion 1)
+                        , height fill
+                        , padding 20
+                        , spacing 20
+                        , alignTop
+                        , Background.color (rgb 0.05 0.05 0.05)
+                        ]
+                        []
+                    )
     in
     layout
         [ Background.color (rgb 0 0 0)
