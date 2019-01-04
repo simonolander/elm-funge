@@ -568,6 +568,37 @@ init windowSize =
                     , JustInstruction (Jump Forward)
                     ]
               }
+            , { id = "36ae04449442c355"
+              , name = "Labyrinth 7"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 1 } Increment
+                        |> BoardUtils.set { x = 2, y = 3 } (Branch Right Left)
+                        |> BoardUtils.set { x = 3, y = 3 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
+                    , BranchAnyDirection Up Up
+                    ]
+              }
             , { id = "572b4066ff5a9bd9"
               , name = "Lab labyrinth"
               , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
