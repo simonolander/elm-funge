@@ -539,6 +539,54 @@ init windowSize =
                     , ChangeAnyDirection Down
                     ]
               }
+            , { id = "81101cdad21a4ed2"
+              , name = "Labyrinth 6"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 1 } (PushToStack 1)
+                        |> BoardUtils.set { x = 2, y = 3 } (Branch Right Up)
+                        |> BoardUtils.set { x = 3, y = 3 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
+                    , JustInstruction (Jump Forward)
+                    ]
+              }
+            , { id = "572b4066ff5a9bd9"
+              , name = "Lab labyrinth"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
+                    , JustInstruction (Exception "")
+                    , JustInstruction Terminate
+                    , BranchAnyDirection Up Left
+                    , PushValueToStack "1"
+                    , JustInstruction (Jump Forward)
+                    ]
+              }
             ]
 
         levelProgresses : List LevelProgress
