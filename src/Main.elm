@@ -283,6 +283,39 @@ init windowSize =
                     , JustInstruction Terminate
                     ]
               }
+            , { id = "9abf854cff37e96b"
+              , name = "Divide and conquer"
+              , description = [ "> Read two positive numbers x and y from the input", "> Output ⌊x / y⌋", "The last input is 0 should not be outputed" ]
+              , io =
+                    let
+                        input =
+                            [ 12, 1, 8, 2, 8, 8, 11, 2, 5, 7, 10, 4 ]
+                    in
+                    { input = input ++ [ 0 ]
+                    , output =
+                        input
+                            |> listPairs
+                            |> List.map (\( x, y ) -> x // y)
+                    }
+              , initialBoard =
+                    BoardUtils.empty 7 7
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Right
+                    , JustInstruction Duplicate
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
+                    , JustInstruction Swap
+                    , JustInstruction SendToBottom
+                    , JustInstruction Read
+                    , JustInstruction Print
+                    , JustInstruction (PushToStack 0)
+                    , JustInstruction (Jump Forward)
+                    , JustInstruction PopFromStack
+                    , BranchAnyDirection Left Right
+                    , JustInstruction Terminate
+                    ]
+              }
             , { id = "407410b1638112a9"
               , name = "Sequence reverser"
               , description = [ "> Read a sequence of numbers from input", "> Output the sequence in reverse", "The last input is 0 is not part of the sequence" ]
