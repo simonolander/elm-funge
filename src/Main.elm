@@ -597,6 +597,7 @@ init windowSize =
                     [ JustInstruction NoOp
                     , ChangeAnyDirection Down
                     , BranchAnyDirection Up Up
+                    , JustInstruction (Jump Forward)
                     ]
               }
             , { id = "572b4066ff5a9bd9"
