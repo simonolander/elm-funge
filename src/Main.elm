@@ -600,6 +600,61 @@ init windowSize =
                     , JustInstruction (Jump Forward)
                     ]
               }
+            , { id = "5ed6d025ab5937e4"
+              , name = "Labyrinth 8"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = []
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 0 } (Jump Forward)
+                        |> BoardUtils.set { x = 0, y = 1 } (Jump Forward)
+                        |> BoardUtils.set { x = 1, y = 2 } (Jump Forward)
+                        |> BoardUtils.set { x = 3, y = 2 } (Jump Forward)
+                        |> BoardUtils.set { x = 4, y = 3 } (Jump Forward)
+                        |> BoardUtils.set { x = 1, y = 4 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 4 } (Jump Forward)
+                        |> BoardUtils.set { x = 3, y = 4 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 2 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
+                    ]
+              }
+            , { id = "b4c862e5dcfb82c1"
+              , name = "Labyrinth 9"
+              , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
+              , io =
+                    { input = []
+                    , output = [ 1 ]
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 2, y = 0 } (Jump Forward)
+                        |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 1 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 1 } (Branch Up Right)
+                        |> BoardUtils.set { x = 1, y = 2 } (Jump Forward)
+                        |> BoardUtils.set { x = 2, y = 2 } Terminate
+                        |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 2, y = 3 } (Branch Down Right)
+                        |> BoardUtils.set { x = 3, y = 3 } (Exception "Don't hit the exceptions")
+                        |> BoardUtils.set { x = 4, y = 3 } (Jump Forward)
+                        |> BoardUtils.set { x = 1, y = 4 } (Jump Forward)
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
+                    , JustInstruction Increment
+                    , JustInstruction Print
+                    ]
+              }
             , { id = "572b4066ff5a9bd9"
               , name = "Lab labyrinth"
               , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
@@ -617,6 +672,8 @@ init windowSize =
                     , BranchAnyDirection Up Left
                     , PushValueToStack "1"
                     , JustInstruction (Jump Forward)
+                    , JustInstruction Increment
+                    , JustInstruction Decrement
                     ]
               }
             ]
