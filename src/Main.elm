@@ -600,6 +600,25 @@ init windowSize =
                     , JustInstruction (Jump Forward)
                     ]
               }
+            , { id = "42cdf083b26bb8ab"
+              , name = "Labyrinth 7.5"
+              , description = [ "> Output 1, 2, 3, 4", "> Terminate the program" ]
+              , io =
+                    { input = []
+                    , output = [ 1, 2, 3, 4 ]
+                    }
+              , initialBoard =
+                    BoardUtils.empty 5 5
+                        |> BoardUtils.set { x = 2, y = 1 } Increment
+                        |> BoardUtils.set { x = 3, y = 1 } Print
+                        |> BoardUtils.set { x = 2, y = 2 } Print
+                        |> BoardUtils.set { x = 3, y = 2 } Increment
+                        |> BoardUtils.set { x = 4, y = 0 } Terminate
+              , instructionTools =
+                    [ JustInstruction NoOp
+                    , ChangeAnyDirection Down
+                    ]
+              }
             , { id = "5ed6d025ab5937e4"
               , name = "Labyrinth 8"
               , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
@@ -700,6 +719,7 @@ init windowSize =
                     , BranchAnyDirection Up Left
                     , PushValueToStack "1"
                     , JustInstruction (Jump Forward)
+                    , JustInstruction Print
                     , JustInstruction Increment
                     , JustInstruction Decrement
                     ]
