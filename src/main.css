@@ -21,13 +21,12 @@ body > div {
 .solved::after {
   content: '';
   position: absolute;
+  height: 0px;
   top: 0;
   right: 0;
   border-color: transparent;
   border-style: solid;
-}
-
-.solved::after {
   border-width: 30px;
+  border-right-color: #fff;
   border-top-color: #fff;
 }
