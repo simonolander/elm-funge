@@ -739,7 +739,7 @@ init windowSize =
                                 , selectedIndex = Nothing
                                 }
                             }
-                        , completed = False
+                        , solved = False
                         }
                     )
 

@@ -76,8 +76,18 @@ view model =
 viewLevels maybeSelectedLevelId levelProgresses =
     let
         viewLevel levelProgress =
+            let
+                buttonAttributes =
+                    if levelProgress.solved then
+                        [ htmlAttribute
+                            (Html.Attributes.class "solved")
+                        ]
+
+                    else
+                        []
+            in
             Input.button
-                []
+                buttonAttributes
                 { onPress =
                     if maybeSelectedLevelId == Just levelProgress.level.id then
                         Just (SketchLevelProgress levelProgress.level.id)
@@ -137,6 +147,21 @@ viewSidebar levelProgress =
                 []
                 levelProgress.level.description
 
+        solvedStatusView =
+            row
+                [ width fill ]
+                [ text "Status: "
+                , el
+                    [ width fill
+                    ]
+                    (if levelProgress.solved then
+                        text "Solved"
+
+                     else
+                        text "Not solved"
+                    )
+                ]
+
         goToSketchView =
             ViewComponents.textButton
                 []
@@ -153,5 +178,6 @@ viewSidebar levelProgress =
         ]
         [ levelNameView
         , descriptionView
+        , solvedStatusView
         , goToSketchView
         ]

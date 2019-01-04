@@ -1,4 +1,9 @@
-module ExecutionUtils exposing (initialExecution, initialExecutionStep, update)
+module ExecutionUtils exposing
+    ( executionIsSolved
+    , initialExecution
+    , initialExecutionStep
+    , update
+    )
 
 import BoardUtils
 import History
@@ -7,13 +12,39 @@ import Model exposing (..)
 
 update : ExecutionMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        setLevelProgressCompleted levelId levelProgresses =
+            levelProgresses
+                |> List.map
+                    (\levelProgress ->
+                        if levelProgress.level.id == levelId then
+                            { levelProgress | solved = True }
+
+                        else
+                            levelProgress
+                    )
+    in
     case model.gameState of
         Executing executionState ->
             case executionState of
                 ExecutionPaused execution ->
                     case msg of
                         ExecutionStepOne ->
-                            ( { model | gameState = Executing (ExecutionPaused (step execution)) }
+                            let
+                                newExecution =
+                                    step execution
+
+                                newLevelProgresses =
+                                    if executionIsSolved newExecution then
+                                        setLevelProgressCompleted execution.level.id model.levelProgresses
+
+                                    else
+                                        model.levelProgresses
+                            in
+                            ( { model
+                                | gameState = Executing (ExecutionPaused newExecution)
+                                , levelProgresses = newLevelProgresses
+                              }
                             , Cmd.none
                             )
 
@@ -51,6 +82,16 @@ update msg model =
                             let
                                 executionStep =
                                     History.current execution.executionHistory
+
+                                newExecution =
+                                    step execution
+
+                                newLevelProgresses =
+                                    if executionIsSolved newExecution then
+                                        setLevelProgressCompleted execution.level.id model.levelProgresses
+
+                                    else
+                                        model.levelProgresses
                             in
                             ( { model
                                 | gameState =
@@ -58,7 +99,8 @@ update msg model =
                                         Executing (ExecutionPaused execution)
 
                                     else
-                                        Executing (ExecutionRunning (step execution) delay)
+                                        Executing (ExecutionRunning newExecution delay)
+                                , levelProgresses = newLevelProgresses
                               }
                             , Cmd.none
                             )
@@ -132,6 +174,22 @@ initialExecution levelProgress =
     { level = level
     , executionHistory = executionHistory
     }
+
+
+executionIsSolved : Execution -> Bool
+executionIsSolved execution =
+    let
+        executionStep =
+            History.current execution.executionHistory
+
+        expectedOutput =
+            execution.level.io.output
+                |> List.reverse
+
+        outputCorrect =
+            executionStep.output == expectedOutput
+    in
+    executionStep.terminated && outputCorrect
 
 
 stepBack : Execution -> Execution

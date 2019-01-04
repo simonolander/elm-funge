@@ -17,3 +17,17 @@ img {
 body > div {
   height: 100%;
 }
+
+.solved::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-color: transparent;
+  border-style: solid;
+}
+
+.solved::after {
+  border-width: 30px;
+  border-top-color: #fff;
+}

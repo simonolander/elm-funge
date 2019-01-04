@@ -165,7 +165,7 @@ type alias Level =
 type alias LevelProgress =
     { level : Level
     , boardSketch : BoardSketch
-    , completed : Bool
+    , solved : Bool
     }
 
 

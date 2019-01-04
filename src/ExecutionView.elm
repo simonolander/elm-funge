@@ -9,6 +9,7 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import ExecutionControlView
+import ExecutionUtils
 import History
 import Html exposing (Html)
 import Html.Attributes
@@ -256,7 +257,7 @@ viewBoard execution =
                             ]
 
                 Nothing ->
-                    if isWon execution then
+                    if ExecutionUtils.executionIsSolved execution then
                         boardView
                             |> el
                                 [ width (fillPortion 3)
@@ -532,22 +533,6 @@ viewIOSidebar execution =
         , padding 5
         ]
         [ inputView, stackView, outputView ]
-
-
-isWon : Execution -> Bool
-isWon execution =
-    let
-        executionStep =
-            History.current execution.executionHistory
-
-        expectedOutput =
-            execution.level.io.output
-                |> List.reverse
-
-        outputCorrect =
-            executionStep.output == expectedOutput
-    in
-    executionStep.terminated && outputCorrect
 
 
 getExceptionMessage : Execution -> Maybe String
