@@ -601,7 +601,7 @@ init windowSize =
                     ]
               }
             , { id = "42cdf083b26bb8ab"
-              , name = "Labyrinth 7.5"
+              , name = "Labyrinth 8"
               , description = [ "> Output 1, 2, 3, 4", "> Terminate the program" ]
               , io =
                     { input = []
@@ -620,7 +620,7 @@ init windowSize =
                     ]
               }
             , { id = "5ed6d025ab5937e4"
-              , name = "Labyrinth 8"
+              , name = "Labyrinth 9"
               , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
               , io =
                     { input = []
@@ -646,7 +646,7 @@ init windowSize =
                     ]
               }
             , { id = "b4c862e5dcfb82c1"
-              , name = "Labyrinth 9"
+              , name = "Labyrinth 10"
               , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
               , io =
                     { input = []
@@ -675,7 +675,7 @@ init windowSize =
                     ]
               }
             , { id = "f8ba39bc9d01ef03"
-              , name = "Labyrinth 10"
+              , name = "Labyrinth 11"
               , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
               , io =
                     { input = []
