@@ -17,6 +17,7 @@ module Model exposing
     , Level
     , LevelId
     , LevelProgress
+    , LocalStorageMsg(..)
     , Model
     , Msg(..)
     , Output
@@ -28,6 +29,8 @@ module Model exposing
 
 import Array exposing (Array)
 import History exposing (History)
+import PortFunnel.LocalStorage as LocalStorage
+import PortFunnels
 
 
 type alias LevelId =
@@ -200,16 +203,23 @@ type ExecutionMsg
     | ExecutionBackToBrowsingLevels
 
 
+type LocalStorageMsg
+    = LocalStorageProcess LocalStorage.Value
+    | Clear
+
+
 type Msg
     = Resize WindowSize
     | SelectLevel LevelId
     | SketchLevelProgress LevelId
     | SketchMsg SketchMsg
     | ExecutionMsg ExecutionMsg
+    | LocalStorageMsg LocalStorageMsg
 
 
 type alias Model =
     { windowSize : WindowSize
     , levelProgresses : List LevelProgress
     , gameState : GameState
+    , funnelState : PortFunnels.State
     }

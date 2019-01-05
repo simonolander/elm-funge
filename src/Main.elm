@@ -4,6 +4,7 @@ import BoardUtils
 import Browser
 import Browser.Events
 import History
+import LocalStorageUtils
 import Model exposing (..)
 import Time
 import Update
@@ -747,16 +748,29 @@ init windowSize =
         gameState =
             BrowsingLevels Nothing
 
+        funnelState =
+            LocalStorageUtils.initialState
+
         model : Model
         model =
             { windowSize = windowSize
             , levelProgresses = levelProgresses
             , gameState = gameState
+            , funnelState = funnelState
             }
 
         cmd : Cmd Msg
         cmd =
-            Cmd.batch []
+            let
+                getLevelProgressSolvedCmd =
+                    levels
+                        |> List.map .id
+                        |> List.map (\id -> LocalStorageUtils.getLevelSolved id funnelState)
+                        |> Cmd.batch
+            in
+            Cmd.batch
+                [ getLevelProgressSolvedCmd
+                ]
     in
     ( model, cmd )
 
@@ -782,16 +796,23 @@ subscriptions model =
                         , height = height
                         }
                 )
+
+        localStorageProcessSubscription =
+            LocalStorageUtils.subscriptions (LocalStorageMsg << LocalStorageProcess) model
     in
     case model.gameState of
         Executing (ExecutionRunning _ delay) ->
             Sub.batch
                 [ windowSizeSubscription
+                , localStorageProcessSubscription
                 , Time.every delay (always (ExecutionMsg ExecutionStepOne))
                 ]
 
         _ ->
-            windowSizeSubscription
+            Sub.batch
+                [ windowSizeSubscription
+                , localStorageProcessSubscription
+                ]
 
 
 listPairs : List a -> List ( a, a )

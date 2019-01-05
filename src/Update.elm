@@ -3,6 +3,7 @@ module Update exposing (update)
 import BoardUtils
 import ExecutionUtils
 import History
+import LocalStorageUtils
 import Model exposing (..)
 
 
@@ -37,6 +38,9 @@ update msg model =
 
         ExecutionMsg executionMsg ->
             ExecutionUtils.update executionMsg model
+
+        LocalStorageMsg localStorageMsg ->
+            LocalStorageUtils.update model localStorageMsg
 
 
 updateSketchMsg levelProgress msg model =

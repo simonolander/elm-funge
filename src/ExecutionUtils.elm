@@ -7,6 +7,7 @@ module ExecutionUtils exposing
 
 import BoardUtils
 import History
+import LocalStorageUtils
 import Model exposing (..)
 
 
@@ -34,18 +35,22 @@ update msg model =
                                 newExecution =
                                     step execution
 
-                                newLevelProgresses =
+                                ( newLevelProgresses, saveCmd ) =
                                     if executionIsSolved newExecution then
-                                        setLevelProgressCompleted execution.level.id model.levelProgresses
+                                        ( setLevelProgressCompleted execution.level.id model.levelProgresses
+                                        , LocalStorageUtils.putLevelSolved execution.level.id model.funnelState
+                                        )
 
                                     else
-                                        model.levelProgresses
+                                        ( model.levelProgresses
+                                        , Cmd.none
+                                        )
                             in
                             ( { model
                                 | gameState = Executing (ExecutionPaused newExecution)
                                 , levelProgresses = newLevelProgresses
                               }
-                            , Cmd.none
+                            , saveCmd
                             )
 
                         ExecutionUndo ->
@@ -86,12 +91,16 @@ update msg model =
                                 newExecution =
                                     step execution
 
-                                newLevelProgresses =
+                                ( newLevelProgresses, saveCmd ) =
                                     if executionIsSolved newExecution then
-                                        setLevelProgressCompleted execution.level.id model.levelProgresses
+                                        ( setLevelProgressCompleted execution.level.id model.levelProgresses
+                                        , LocalStorageUtils.putLevelSolved execution.level.id model.funnelState
+                                        )
 
                                     else
-                                        model.levelProgresses
+                                        ( model.levelProgresses
+                                        , Cmd.none
+                                        )
                             in
                             ( { model
                                 | gameState =
@@ -102,7 +111,7 @@ update msg model =
                                         Executing (ExecutionRunning newExecution delay)
                                 , levelProgresses = newLevelProgresses
                               }
-                            , Cmd.none
+                            , saveCmd
                             )
 
                         ExecutionUndo ->
