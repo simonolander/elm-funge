@@ -32,7 +32,6 @@ If you rename it, you need to change the name in `site/index.html` to match.
 -}
 
 import Dict exposing (Dict)
-import Html exposing (Html, a, button, div, h1, input, p, span, text)
 import Json.Encode as JE exposing (Value)
 import PortFunnel
     exposing
