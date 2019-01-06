@@ -70,8 +70,6 @@ type Direction
 
 type JumpLocation
     = Forward
-    | Absolute Position
-    | Offset Position
 
 
 type Instruction
