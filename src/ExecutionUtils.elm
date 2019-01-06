@@ -593,6 +593,3 @@ stepExecutionStep executionStep =
             { movedExecutionStep
                 | stack = newStack
             }
-
-        _ ->
-            movedExecutionStep

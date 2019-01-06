@@ -2,10 +2,11 @@ module LocalStorageUtils exposing
     ( clear
     , cmdPort
     , funnelDict
-    , getAllSolvedLevelIds
+    , getBoard
     , getLevelSolved
     , initialState
     , prefix
+    , putBoard
     , putLevelSolved
     , send
     , simulate
@@ -14,8 +15,10 @@ module LocalStorageUtils exposing
     , update
     )
 
+import History
 import Json.Decode as Decode
 import Json.Encode as Encode
+import JsonUtils
 import LevelProgressUtils
 import Model exposing (..)
 import PortFunnel.LocalStorage as LocalStorage
@@ -68,7 +71,10 @@ putLevelSolved : LevelId -> PortFunnels.State -> Cmd Msg
 putLevelSolved levelId state =
     send
         (LocalStorage.put (levelId ++ ".solved")
-            (True |> Encode.bool |> Just)
+            (True
+                |> Encode.bool
+                |> Just
+            )
         )
         state.storage
 
@@ -80,9 +86,23 @@ getLevelSolved levelId state =
         state.storage
 
 
-getAllSolvedLevelIds : LocalStorage.State -> Cmd Msg
-getAllSolvedLevelIds =
-    send (LocalStorage.listKeys "")
+putBoard : LevelId -> Board -> PortFunnels.State -> Cmd Msg
+putBoard levelId board state =
+    send
+        (LocalStorage.put (levelId ++ ".boards.0")
+            (board
+                |> JsonUtils.encodeBoard
+                |> Just
+            )
+        )
+        state.storage
+
+
+getBoard : LevelId -> PortFunnels.State -> Cmd Msg
+getBoard levelId state =
+    send
+        (LocalStorage.get (levelId ++ ".boards.0"))
+        state.storage
 
 
 update : Model -> LocalStorageMsg -> ( Model, Cmd Msg )
@@ -120,6 +140,19 @@ storageHandler response state mdl =
                         Ok True ->
                             ( model
                                 |> LevelProgressUtils.setLevelProgressSolvedInModel levelId
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                ( levelId :: "boards" :: "0" :: _, Just v ) ->
+                    case Decode.decodeValue JsonUtils.boardDecoder v of
+                        Ok board ->
+                            ( model
+                                |> LevelProgressUtils.setLevelProgressBoardHistoryInModel
+                                    levelId
+                                    (History.singleton board)
                             , Cmd.none
                             )
 

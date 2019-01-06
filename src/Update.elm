@@ -88,8 +88,13 @@ updateSketchMsg levelProgress msg model =
 
                 newModel =
                     setLevelProgress newLevelProgress model
+
+                cmd =
+                    LocalStorageUtils.putBoard levelProgress.level.id
+                        newBoard
+                        model.funnelState
             in
-            ( newModel, Cmd.none )
+            ( newModel, cmd )
 
         SketchUndo ->
             let

@@ -1,4 +1,13 @@
-module JsonUtils exposing (encodeInstruction)
+module JsonUtils exposing
+    ( boardDecoder
+    , directionDecoder
+    , encodeBoard
+    , encodeDirection
+    , encodeInstruction
+    , encodeJumpLocation
+    , instructionDecoder
+    , jumpLocationDecoder
+    )
 
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
 import Json.Encode exposing (..)

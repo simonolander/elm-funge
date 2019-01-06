@@ -767,9 +767,16 @@ init windowSize =
                         |> List.map .id
                         |> List.map (\id -> LocalStorageUtils.getLevelSolved id funnelState)
                         |> Cmd.batch
+
+                getLevelProgressBoards =
+                    levels
+                        |> List.map .id
+                        |> List.map (\id -> LocalStorageUtils.getBoard id funnelState)
+                        |> Cmd.batch
             in
             Cmd.batch
                 [ getLevelProgressSolvedCmd
+                , getLevelProgressBoards
                 ]
     in
     ( model, cmd )
