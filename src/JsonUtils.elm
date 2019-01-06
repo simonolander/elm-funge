@@ -293,3 +293,13 @@ jumpLocationDecoder =
     in
     Decode.string
         |> andThen stringToJumpLocation
+
+
+encodeBoard : Board -> Value
+encodeBoard =
+    array (array encodeInstruction)
+
+
+boardDecoder : Decoder Board
+boardDecoder =
+    Decode.array (Decode.array instructionDecoder)
