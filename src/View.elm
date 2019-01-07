@@ -32,7 +32,8 @@ view model =
                     SketchingView.view levelProgress
 
                 Nothing ->
-                    Debug.todo "no level"
+                    text "TODO: couldn't find level progress"
+                        |> layout []
 
         Executing executionState ->
             ExecutionView.view executionState

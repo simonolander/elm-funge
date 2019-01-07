@@ -34,7 +34,7 @@ update msg model =
                             ( model, Cmd.none )
 
                 _ ->
-                    Debug.todo (Debug.toString msg)
+                    ( model, Cmd.none )
 
         ExecutionMsg executionMsg ->
             ExecutionUtils.update executionMsg model

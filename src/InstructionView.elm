@@ -116,8 +116,32 @@ description instruction =
         PushToStack value ->
             "Push " ++ String.fromInt value ++ " to the stack"
 
-        _ ->
-            Debug.toString instruction
+        Negate ->
+            "TODO: Negate the top value of the stack"
+
+        Abs ->
+            "TODO: Replace the top value of the stack with it's absolute value"
+
+        Not ->
+            "TODO: If the top value of the stack is 0, replace it with 1, otherwise replace it with 0"
+
+        Multiply ->
+            "TODO: Peek"
+
+        Divide ->
+            "TODO: Divide"
+
+        Equals ->
+            "TODO: Equals"
+
+        And ->
+            "TODO: And"
+
+        Or ->
+            "TODO: Or"
+
+        XOr ->
+            "TODO: XOr"
 
 
 view : List (Attribute msg) -> Instruction -> Element msg
@@ -336,4 +360,6 @@ view attributes instruction =
                 }
 
         _ ->
-            el attributes (text (Debug.toString instruction))
+            "TODO"
+                |> text
+                |> el ([ Font.size 26, centerY ] ++ attributes)
