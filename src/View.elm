@@ -1,5 +1,6 @@
 module View exposing (view)
 
+import AlphaDisclaimerView
 import BrowsingLevelsView
 import Element exposing (..)
 import Element.Background as Background
@@ -37,3 +38,6 @@ view model =
 
         Executing executionState ->
             ExecutionView.view executionState
+
+        AlphaDisclaimer ->
+            AlphaDisclaimerView.view

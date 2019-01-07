@@ -179,6 +179,7 @@ type GameState
     = BrowsingLevels (Maybe LevelId)
     | Sketching LevelId
     | Executing ExecutionState
+    | AlphaDisclaimer
 
 
 type SketchMsg
