@@ -53,7 +53,16 @@ view model =
                         , alignTop
                         , Background.color (rgb 0.05 0.05 0.05)
                         ]
-                        []
+                        [ el
+                            [ centerX
+                            , Font.size 32
+                            ]
+                            (text "EFNG")
+                        , el
+                            [ centerX
+                            ]
+                            (text "Select a level")
+                        ]
                     )
     in
     layout
@@ -149,9 +158,8 @@ viewSidebar levelProgress =
 
         solvedStatusView =
             row
-                [ width fill ]
-                [ text "Status: "
-                , el
+                [ centerX ]
+                [ el
                     [ width fill
                     ]
                     (if levelProgress.solved then
@@ -177,7 +185,7 @@ viewSidebar levelProgress =
         , Background.color (rgb 0.05 0.05 0.05)
         ]
         [ levelNameView
-        , descriptionView
         , solvedStatusView
+        , descriptionView
         , goToSketchView
         ]

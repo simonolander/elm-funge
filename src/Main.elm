@@ -38,7 +38,7 @@ init windowSize =
 
         gameState : GameState
         gameState =
-            BrowsingLevels Nothing
+            AlphaDisclaimer
 
         funnelState =
             LocalStorageUtils.initialState

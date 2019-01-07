@@ -42,6 +42,13 @@ update msg model =
         LocalStorageMsg localStorageMsg ->
             LocalStorageUtils.update model localStorageMsg
 
+        GoToBrowsingLevels maybeLevelId ->
+            ( { model
+                | gameState = BrowsingLevels maybeLevelId
+              }
+            , Cmd.none
+            )
+
 
 updateSketchMsg levelProgress msg model =
     case msg of

@@ -214,6 +214,7 @@ type Msg
     | SketchMsg SketchMsg
     | ExecutionMsg ExecutionMsg
     | LocalStorageMsg LocalStorageMsg
+    | GoToBrowsingLevels (Maybe LevelId)
 
 
 type alias Model =
