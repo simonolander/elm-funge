@@ -211,6 +211,8 @@ viewToolSidebar levelProgress =
                                     )
                                 |> wrappedRow
                                     [ spacing 10
+                                    , width (px 222)
+                                    , centerX
                                     ]
 
                         Just (BranchAnyDirection trueDirection falseDirection) ->
@@ -293,10 +295,13 @@ viewToolSidebar levelProgress =
             instructionTools
                 |> List.indexedMap viewTool
                 |> wrappedRow
-                    [ spacing 10 ]
+                    [ width (px 222)
+                    , spacing 10
+                    , centerX
+                    ]
     in
     column
-        [ fillPortion 1 |> maximum 242 |> width
+        [ width (px 262)
         , height fill
         , Background.color (rgb 0.08 0.08 0.08)
         , spacing 40
