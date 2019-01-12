@@ -97,11 +97,18 @@ create table board_instructions (
     foreign key instruction_id references instructions(id)
 );
 
+create table users (
+    id serial primary key,
+    username varchar(255) not null unique
+);
+
 create table levels (
     id serial primary key,
+    author_id bigint unsigned default null,
     external_id varchar(255) not null unique,
     name varchar(255) not null,
     initial_board_id bigint unsigned not null,
+    foreign key author_id references users(id),
     foreign key initial_board_id references boards(id)
 );
 
