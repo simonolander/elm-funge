@@ -44,15 +44,15 @@ insert into instruction_types values
 create table instructions (
     id serial primary key,
     instruction_type varchar(255) not null,
-    foreign key instruction_type references instruction_types(instruction_type)
+    foreign key (instruction_type) references instruction_types(instruction_type)
 );
 
 create table instructions_change_direction (
     id serial primary key,
     instruction_id bigint unsigned not null unique,
     direction varchar(255) not null unique,
-    foreign key instruction_id references instructions(id),
-    foreign key direction references directions(direction)
+    foreign key (instruction_id) references instructions(id),
+    foreign key (direction) references directions(direction)
 );
 
 create table instructions_branch (
@@ -61,23 +61,23 @@ create table instructions_branch (
     true_direction varchar(255) not null,
     false_direction varchar(255) not null,
     unique (true_direction, false_direction),
-    foreign key instruction_id references instructions(id),
-    foreign key true_direction references directions(direction),
-    foreign key false_direction references directions(direction)
+    foreign key (instruction_id) references instructions(id),
+    foreign key (true_direction) references directions(direction),
+    foreign key (false_direction) references directions(direction)
 );
 
 create table instructions_exception (
     id serial primary key,
     instruction_id bigint unsigned not null unique,
     message varchar(255) not null unique,
-    foreign key instruction_id references instructions(id)
+    foreign key (instruction_id) references instructions(id)
 );
 
 create table instructions_push_to_stack (
     id serial primary key,
     instruction_id bigint unsigned not null unique,
     value int not null unique,
-    foreign key instruction_id references instructions(id)
+    foreign key (instruction_id) references instructions(id)
 );
 
 create table instruction_tool_types (
@@ -93,15 +93,15 @@ insert into instruction_tool_types values
 create table instruction_tools (
     id serial primary key,
     instruction_tool_type varchar(255) not null,
-    foreign key instruction_tool_type references instruction_tool_types(instruction_tool_type)
+    foreign key (instruction_tool_type) references instruction_tool_types(instruction_tool_type)
 );
 
 create table instruction_tools_just_instruction (
     id serial primary key,
     instruction_tool_id bigint unsigned not null unique,
     instruction_id bigint unsigned not null unique,
-    foreign key instruction_tool_id references instruction_tools(id),
-    foreign key instruction_id references instructions(id)
+    foreign key (instruction_tool_id) references instruction_tools(id),
+    foreign key (instruction_id) references instructions(id)
 );
 
 create table boards (
@@ -117,8 +117,8 @@ create table board_instructions (
     x int unsigned not null,
     y int unsigned not null,
     unique (board_id, x, y),
-    foreign key board_id references boards(id),
-    foreign key instruction_id references instructions(id)
+    foreign key (board_id) references boards(id),
+    foreign key (instruction_id) references instructions(id)
 );
 
 create table users (
@@ -132,8 +132,8 @@ create table levels (
     external_id varchar(255) not null unique,
     name varchar(255) not null,
     initial_board_id bigint unsigned not null,
-    foreign key author_id references users(id),
-    foreign key initial_board_id references boards(id)
+    foreign key (author_id) references users(id),
+    foreign key (initial_board_id) references boards(id)
 );
 
 create table level_descriptions (
@@ -142,7 +142,7 @@ create table level_descriptions (
     ordinal int unsigned not null,
     description text not null,
     unique (level_id, ordinal),
-    foreign key level_id references levels(id)
+    foreign key (level_id) references levels(id)
 );
 
 create table level_inputs (
@@ -151,7 +151,7 @@ create table level_inputs (
     ordinal int unsigned not null,
     value int not null,
     unique (level_id, ordinal),
-    foreign key level_id references levels(id)
+    foreign key (level_id) references levels(id)
 );
 
 create table level_outputs (
@@ -160,7 +160,7 @@ create table level_outputs (
     ordinal int unsigned not null,
     value int not null,
     unique (level_id, ordinal),
-    foreign key level_id references levels(id)
+    foreign key (level_id) references levels(id)
 );
 
 create table level_instruction_tools (
@@ -168,6 +168,6 @@ create table level_instruction_tools (
     level_id bigint unsigned not null,
     instruction_tool_id bigint unsigned not null,
     unique (level_id, instruction_tool_id),
-    foreign key instruction_tool_id references instruction_tools(id),
-    foreign key level_id references levels(id)
+    foreign key (instruction_tool_id) references instruction_tools(id),
+    foreign key (level_id) references levels(id)
 );
