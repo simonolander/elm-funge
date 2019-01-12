@@ -80,6 +80,30 @@ create table instructions_push_to_stack (
     foreign key instruction_id references instructions(id)
 );
 
+create table instruction_tool_types (
+    instruction_tool_type varchar(255) primary key not null
+);
+
+insert into instruction_tool_types values
+    ('JustInstruction'),
+    ('ChangeAnyDirection'),
+    ('BranchAnyDirection'),
+    ('PushValueToStack');
+
+create table instruction_tools (
+    id serial primary key,
+    instruction_tool_type varchar(255) not null,
+    foreign key instruction_tool_type references instruction_tool_types(instruction_tool_type)
+);
+
+create table instruction_tools_just_instruction (
+    id serial primary key,
+    instruction_tool_id bigint unsigned not null unique,
+    instruction_id bigint unsigned not null unique,
+    foreign key instruction_tool_id references instruction_tools(id),
+    foreign key instruction_id references instructions(id)
+);
+
 create table boards (
     id serial primary key,
     width int unsigned not null,
@@ -136,5 +160,14 @@ create table level_outputs (
     ordinal int unsigned not null,
     value int not null,
     unique (level_id, ordinal),
+    foreign key level_id references levels(id)
+);
+
+create table level_instruction_tools (
+    id serial primary key,
+    level_id bigint unsigned not null,
+    instruction_tool_id bigint unsigned not null,
+    unique (level_id, instruction_tool_id),
+    foreign key instruction_tool_id references instruction_tools(id),
     foreign key level_id references levels(id)
 );
