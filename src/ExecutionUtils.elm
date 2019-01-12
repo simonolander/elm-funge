@@ -574,7 +574,7 @@ stepExecutionStep executionStep =
         Exception message ->
             { incrementedExecutionStep | exception = Just message }
 
-        Jump Forward ->
+        JumpForward ->
             { incrementedExecutionStep
                 | instructionPointer =
                     instructionPointer

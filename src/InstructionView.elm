@@ -98,7 +98,7 @@ description instruction =
         PopFromStack ->
             "Discard the top value from the stack"
 
-        Jump Forward ->
+        JumpForward ->
             "Move the instruction pointer two steps in the current direction"
 
         Terminate ->
@@ -329,7 +329,7 @@ view attributes instruction =
                 |> text
                 |> el ([ Font.size 26, centerY ] ++ attributes)
 
-        Jump Forward ->
+        JumpForward ->
             image attributes
                 { src = "assets/instruction-images/jump-one-forward.svg"
                 , description = description instruction

@@ -29,7 +29,7 @@ levelTest =
         , JustInstruction SendToBottom
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction (Exception "Some exception")
         ]
     }
@@ -268,7 +268,7 @@ levelSignalAmplifier =
         , JustInstruction Swap
         , JustInstruction Read
         , JustInstruction Print
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
         , JustInstruction Terminate
@@ -304,7 +304,7 @@ levelMultiplier =
         , JustInstruction SendToBottom
         , JustInstruction Read
         , JustInstruction Print
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
         , JustInstruction Terminate
@@ -341,7 +341,7 @@ levelDivideAndConquer =
         , JustInstruction Read
         , JustInstruction Print
         , JustInstruction (PushToStack 0)
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
         , JustInstruction Terminate
@@ -375,7 +375,7 @@ levelSequenceReverser =
         , JustInstruction Swap
         , JustInstruction Read
         , JustInstruction Print
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
         , JustInstruction Terminate
@@ -411,7 +411,7 @@ levelSequenceSorter =
         , JustInstruction CompareLessThan
         , JustInstruction Read
         , JustInstruction Print
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
         , JustInstruction Terminate
@@ -453,7 +453,7 @@ levelLessIsMore =
         , JustInstruction Swap
         , JustInstruction Read
         , JustInstruction Print
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction PopFromStack
         , BranchAnyDirection Left Right
         , JustInstruction Terminate
@@ -536,7 +536,7 @@ levelLabyrinth3 =
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         ]
     }
 
@@ -568,7 +568,7 @@ levelLabyrinth4 =
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         ]
     }
 
@@ -632,7 +632,7 @@ levelLabyrinth6 =
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         ]
     }
 
@@ -668,7 +668,7 @@ levelLabyrinth7 =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
         , BranchAnyDirection Up Up
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         ]
     }
 
@@ -710,14 +710,14 @@ levelLabyrinth9 =
             |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 0 } (Jump Forward)
-            |> BoardUtils.set { x = 0, y = 1 } (Jump Forward)
-            |> BoardUtils.set { x = 1, y = 2 } (Jump Forward)
-            |> BoardUtils.set { x = 3, y = 2 } (Jump Forward)
-            |> BoardUtils.set { x = 4, y = 3 } (Jump Forward)
-            |> BoardUtils.set { x = 1, y = 4 } (Jump Forward)
-            |> BoardUtils.set { x = 2, y = 4 } (Jump Forward)
-            |> BoardUtils.set { x = 3, y = 4 } (Jump Forward)
+            |> BoardUtils.set { x = 4, y = 0 } JumpForward
+            |> BoardUtils.set { x = 0, y = 1 } JumpForward
+            |> BoardUtils.set { x = 1, y = 2 } JumpForward
+            |> BoardUtils.set { x = 3, y = 2 } JumpForward
+            |> BoardUtils.set { x = 4, y = 3 } JumpForward
+            |> BoardUtils.set { x = 1, y = 4 } JumpForward
+            |> BoardUtils.set { x = 2, y = 4 } JumpForward
+            |> BoardUtils.set { x = 3, y = 4 } JumpForward
             |> BoardUtils.set { x = 2, y = 2 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
@@ -737,19 +737,19 @@ levelLabyrinth10 =
         }
     , initialBoard =
         BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 0, y = 2 } (Jump Forward)
+            |> BoardUtils.set { x = 0, y = 2 } JumpForward
             |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 0 } (Jump Forward)
+            |> BoardUtils.set { x = 1, y = 0 } JumpForward
             |> BoardUtils.set { x = 1, y = 2 } (Branch Left Up)
-            |> BoardUtils.set { x = 2, y = 1 } (Jump Forward)
+            |> BoardUtils.set { x = 2, y = 1 } JumpForward
             |> BoardUtils.set { x = 2, y = 2 } Terminate
             |> BoardUtils.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 3, y = 2 } (Branch Right Up)
             |> BoardUtils.set { x = 3, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 4 } (Jump Forward)
-            |> BoardUtils.set { x = 4, y = 1 } (Jump Forward)
+            |> BoardUtils.set { x = 3, y = 4 } JumpForward
+            |> BoardUtils.set { x = 4, y = 1 } JumpForward
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -770,18 +770,18 @@ levelLabyrinth11 =
         }
     , initialBoard =
         BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 2, y = 0 } (Jump Forward)
+            |> BoardUtils.set { x = 2, y = 0 } JumpForward
             |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 1 } (Jump Forward)
+            |> BoardUtils.set { x = 0, y = 1 } JumpForward
             |> BoardUtils.set { x = 2, y = 1 } (Branch Up Right)
-            |> BoardUtils.set { x = 1, y = 2 } (Jump Forward)
+            |> BoardUtils.set { x = 1, y = 2 } JumpForward
             |> BoardUtils.set { x = 2, y = 2 } Terminate
             |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
             |> BoardUtils.set { x = 2, y = 3 } (Branch Down Right)
-            |> BoardUtils.set { x = 4, y = 3 } (Jump Forward)
-            |> BoardUtils.set { x = 1, y = 4 } (Jump Forward)
+            |> BoardUtils.set { x = 4, y = 3 } JumpForward
+            |> BoardUtils.set { x = 1, y = 4 } JumpForward
             |> BoardUtils.set { x = 2, y = 4 } Increment
     , instructionTools =
         [ JustInstruction NoOp
@@ -809,7 +809,7 @@ levelLabyrinthLab =
         , JustInstruction Terminate
         , BranchAnyDirection Up Left
         , PushValueToStack "1"
-        , JustInstruction (Jump Forward)
+        , JustInstruction JumpForward
         , JustInstruction Print
         , JustInstruction Increment
         , JustInstruction Decrement

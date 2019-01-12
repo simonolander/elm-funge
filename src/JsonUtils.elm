@@ -4,9 +4,7 @@ module JsonUtils exposing
     , encodeBoard
     , encodeDirection
     , encodeInstruction
-    , encodeJumpLocation
     , instructionDecoder
-    , jumpLocationDecoder
     )
 
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
@@ -37,11 +35,9 @@ encodeInstruction instruction =
             object
                 [ ( "tag", string "PopFromStack" ) ]
 
-        Jump jumpLocation ->
+        JumpForward ->
             object
-                [ ( "tag", string "Jump" )
-                , ( "jumpLocation", encodeJumpLocation jumpLocation )
-                ]
+                [ ( "tag", string "JumpForward" ) ]
 
         Duplicate ->
             object
@@ -156,9 +152,12 @@ instructionDecoder =
                 "PopFromStack" ->
                     succeed PopFromStack
 
+                "JumpForward" ->
+                    succeed JumpForward
+
+                -- Deprecated, use "JumpForward"
                 "Jump" ->
-                    field "jumpLocation" jumpLocationDecoder
-                        |> Decode.map Jump
+                    succeed JumpForward
 
                 "Duplicate" ->
                     succeed Duplicate
@@ -280,28 +279,6 @@ directionDecoder =
     in
     Decode.string
         |> andThen stringToDirection
-
-
-encodeJumpLocation : JumpLocation -> Value
-encodeJumpLocation jumpLocation =
-    case jumpLocation of
-        Forward ->
-            string "Forward"
-
-
-jumpLocationDecoder : Decoder JumpLocation
-jumpLocationDecoder =
-    let
-        stringToJumpLocation stringValue =
-            case stringValue of
-                "Forward" ->
-                    succeed Forward
-
-                _ ->
-                    fail ("'" ++ stringValue ++ "' could not be mapped to a JumpLocaction")
-    in
-    Decode.string
-        |> andThen stringToJumpLocation
 
 
 encodeBoard : Board -> Value

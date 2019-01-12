@@ -13,7 +13,6 @@ module Model exposing
     , InstructionPointer
     , InstructionTool(..)
     , InstructionToolbox
-    , JumpLocation(..)
     , Level
     , LevelId
     , LevelProgress
@@ -68,16 +67,12 @@ type Direction
     | Down
 
 
-type JumpLocation
-    = Forward
-
-
 type Instruction
     = NoOp
     | ChangeDirection Direction
     | PushToStack Int
     | PopFromStack
-    | Jump JumpLocation
+    | JumpForward
     | Duplicate
     | Swap
     | Negate
