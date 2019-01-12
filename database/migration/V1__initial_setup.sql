@@ -73,6 +73,13 @@ create table instructions_exception (
     foreign key instruction_id references instructions(id)
 );
 
+create table instructions_push_to_stack (
+    id serial primary key,
+    instruction_id bigint unsigned not null unique,
+    value int not null unique,
+    foreign key instruction_id references instructions(id)
+);
+
 create table boards (
     id serial primary key,
     width int unsigned not null,
