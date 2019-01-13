@@ -171,3 +171,17 @@ create table level_instruction_tools (
     foreign key (instruction_tool_id) references instruction_tools(id),
     foreign key (level_id) references levels(id)
 );
+
+create table level_solutions (
+    id serial primary key,
+    level_id bigint unsigned not null,
+    board_id bigint unsigned not null,
+    solver_id bigint unsigned not null,
+    number_of_steps int unsigned not null,
+    number_of_instructions int unsigned not null,
+    area int unsigned not null,
+    unique (level_id, board_id, solver_id),
+    foreign key (level_id) references levels(id),
+    foreign key (board_id) references boards(id),
+    foreign key (solver_id) references users(id)
+);
