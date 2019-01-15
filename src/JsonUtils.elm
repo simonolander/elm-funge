@@ -295,31 +295,37 @@ boardDecoder =
     let
         verifyBoard board =
             let
-                maybeWidthAndHeight =
+                height =
+                    Array.length board
+
+                maybeWidth =
                     board
                         |> Array.toList
                         |> List.map Array.length
-                        |> (\lengths ->
-                                case lengths of
+                        |> (\widths ->
+                                case widths of
                                     [] ->
-                                        Just ( 0, 0 )
+                                        Just 0
 
-                                    length :: tail ->
-                                        if List.all ((==) length) tail then
-                                            Just ( length, List.length lengths )
+                                    width :: tail ->
+                                        if List.all ((==) width) tail then
+                                            Just width
 
                                         else
                                             Nothing
                            )
             in
-            case maybeWidthAndHeight of
-                Nothing ->
+            case ( maybeWidth, height ) of
+                ( Nothing, _ ) ->
                     fail "All rows must have the same length"
 
-                Just ( 0, 0 ) ->
+                ( _, 0 ) ->
                     fail "Board cannot be empty"
 
-                Just ( _, _ ) ->
+                ( Just 0, _ ) ->
+                    fail "Board cannot be empty"
+
+                _ ->
                     succeed board
 
         boardDecoderV0 =
