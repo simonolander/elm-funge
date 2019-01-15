@@ -7,6 +7,7 @@ module JsonUtils exposing
     , instructionDecoder
     )
 
+import Array
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
 import Json.Encode exposing (..)
 import Model exposing (..)
@@ -282,10 +283,62 @@ directionDecoder =
 
 
 encodeBoard : Board -> Value
-encodeBoard =
-    array (array encodeInstruction)
+encodeBoard board =
+    object
+        [ ( "version", int 1 )
+        , ( "board", array (array encodeInstruction) board )
+        ]
 
 
 boardDecoder : Decoder Board
 boardDecoder =
-    Decode.array (Decode.array instructionDecoder)
+    let
+        verifyBoard board =
+            let
+                maybeWidthAndHeight =
+                    board
+                        |> Array.toList
+                        |> List.map Array.length
+                        |> (\lengths ->
+                                case lengths of
+                                    [] ->
+                                        Just ( 0, 0 )
+
+                                    length :: tail ->
+                                        if List.all ((==) length) tail then
+                                            Just ( length, List.length lengths )
+
+                                        else
+                                            Nothing
+                           )
+            in
+            case maybeWidthAndHeight of
+                Nothing ->
+                    fail "All rows must have the same length"
+
+                Just ( 0, 0 ) ->
+                    fail "Board cannot be empty"
+
+                Just ( _, _ ) ->
+                    succeed board
+
+        boardDecoderV0 =
+            Decode.array (Decode.array instructionDecoder)
+                |> andThen verifyBoard
+
+        boardDecoderV1 =
+            field "board" boardDecoderV0
+    in
+    Decode.maybe (field "version" Decode.int)
+        |> andThen
+            (\maybeVersion ->
+                case maybeVersion of
+                    Nothing ->
+                        boardDecoderV0
+
+                    Just 1 ->
+                        boardDecoderV1
+
+                    Just unknownVersion ->
+                        fail ("Unknown version " ++ String.fromInt unknownVersion)
+            )
