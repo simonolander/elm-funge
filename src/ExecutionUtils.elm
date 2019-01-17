@@ -72,7 +72,7 @@ update msg model =
                             )
 
                         ExecutionBackClicked ->
-                            ( { model | gameState = Sketching execution.level.id }
+                            ( { model | gameState = Sketching execution.level.id JustSketching }
                             , Cmd.none
                             )
 
@@ -135,7 +135,7 @@ update msg model =
                             )
 
                         ExecutionBackClicked ->
-                            ( { model | gameState = Sketching execution.level.id }
+                            ( { model | gameState = Sketching execution.level.id JustSketching }
                             , Cmd.none
                             )
 

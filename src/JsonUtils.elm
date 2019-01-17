@@ -4,7 +4,9 @@ module JsonUtils exposing
     , encodeBoard
     , encodeDirection
     , encodeInstruction
+    , fromString
     , instructionDecoder
+    , toString
     )
 
 import Array
@@ -348,3 +350,13 @@ boardDecoder =
                     Just unknownVersion ->
                         fail ("Unknown version " ++ String.fromInt unknownVersion)
             )
+
+
+toString : Value -> String
+toString =
+    encode 2
+
+
+fromString : Decoder a -> String -> Result Decode.Error a
+fromString =
+    Decode.decodeString

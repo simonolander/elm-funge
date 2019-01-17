@@ -20,7 +20,7 @@ view model =
         BrowsingLevels _ ->
             BrowsingLevelsView.view model
 
-        Sketching levelId ->
+        Sketching levelId sketchingState ->
             let
                 maybeLevelProgress : Maybe LevelProgress
                 maybeLevelProgress =
@@ -30,7 +30,7 @@ view model =
             in
             case maybeLevelProgress of
                 Just levelProgress ->
-                    SketchingView.view levelProgress
+                    SketchingView.view levelProgress sketchingState
 
                 Nothing ->
                     text "TODO: couldn't find level progress"

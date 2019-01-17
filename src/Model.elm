@@ -22,6 +22,7 @@ module Model exposing
     , Output
     , Position
     , SketchMsg(..)
+    , SketchingState(..)
     , Stack
     , WindowSize
     )
@@ -170,9 +171,14 @@ type ExecutionState
     | ExecutionRunning Execution Float
 
 
+type SketchingState
+    = JustSketching
+    | Importing String
+
+
 type GameState
     = BrowsingLevels (Maybe LevelId)
-    | Sketching LevelId
+    | Sketching LevelId SketchingState
     | Executing ExecutionState
     | AlphaDisclaimer
 
@@ -185,6 +191,8 @@ type SketchMsg
     | SketchClear
     | SketchExecute
     | SketchBackClicked
+    | ImportExport
+    | Import String
 
 
 type ExecutionMsg

@@ -3,6 +3,7 @@ module Update exposing (update)
 import BoardUtils
 import ExecutionUtils
 import History
+import JsonUtils
 import LocalStorageUtils
 import Model exposing (..)
 
@@ -21,11 +22,11 @@ update msg model =
             ( { model | gameState = BrowsingLevels (Just levelId) }, Cmd.none )
 
         SketchLevelProgress levelId ->
-            ( { model | gameState = Sketching levelId }, Cmd.none )
+            ( { model | gameState = Sketching levelId JustSketching }, Cmd.none )
 
         SketchMsg sketchMsg ->
             case model.gameState of
-                Sketching levelId ->
+                Sketching levelId sketchingState ->
                     case getLevelProgress levelId model of
                         Just levelProgress ->
                             updateSketchMsg levelProgress sketchMsg model
@@ -171,6 +172,44 @@ updateSketchMsg levelProgress msg model =
               }
             , Cmd.none
             )
+
+        ImportExport ->
+            ( { model
+                | gameState =
+                    Sketching levelProgress.level.id
+                        (levelProgress.boardSketch.boardHistory
+                            |> History.current
+                            |> JsonUtils.encodeBoard
+                            |> JsonUtils.toString
+                            |> Importing
+                        )
+              }
+            , Cmd.none
+            )
+
+        Import string ->
+            case JsonUtils.fromString JsonUtils.boardDecoder string of
+                Ok board ->
+                    let
+                        boardSketch =
+                            levelProgress.boardSketch
+
+                        newBoardHistory =
+                            History.push board boardSketch.boardHistory
+
+                        newBoardSketch =
+                            { boardSketch | boardHistory = newBoardHistory }
+
+                        newLevelProgress =
+                            { levelProgress | boardSketch = newBoardSketch }
+
+                        newModel =
+                            setLevelProgress newLevelProgress model
+                    in
+                    ( model, Cmd.none )
+
+                Err message ->
+                    ( model, Cmd.none )
 
 
 

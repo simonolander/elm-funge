@@ -21,8 +21,8 @@ instructionSpacing =
     10
 
 
-view : LevelProgress -> Html Msg
-view levelProgress =
+view : LevelProgress -> SketchingState -> Html Msg
+view levelProgress sketchingState =
     let
         selectedInstructionTool =
             getSelectedInstructionTool levelProgress.boardSketch.instructionToolbox
