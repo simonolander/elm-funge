@@ -41,6 +41,7 @@ view =
                 , text "  - ~20 levels"
                 , text "  - ~16 instructions"
                 , text "  - Save solved levels and last edit to local storage"
+                , text "  - Import and export your boards"
                 ]
 
         sourceCodeView =
