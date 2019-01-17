@@ -173,7 +173,7 @@ type ExecutionState
 
 type SketchingState
     = JustSketching
-    | Importing String
+    | Importing (Maybe String) String
 
 
 type GameState
@@ -193,6 +193,8 @@ type SketchMsg
     | SketchBackClicked
     | ImportExport
     | Import String
+    | ImportChanged String
+    | ImportClose
 
 
 type ExecutionMsg

@@ -40,6 +40,62 @@ view levelProgress sketchingState =
                     , padding instructionSpacing
                     ]
 
+        importExportBoardView =
+            case sketchingState of
+                JustSketching ->
+                    boardView
+
+                Importing maybeError string ->
+                    boardView
+                        |> el
+                            [ width (fillPortion 3)
+                            , height fill
+                            , inFront
+                                (column
+                                    [ centerX
+                                    , centerY
+                                    , Background.color (rgb 0 0 0)
+                                    , padding 20
+                                    , Font.family [ Font.monospace ]
+                                    , Font.color (rgb 1 1 1)
+                                    , spacing 10
+                                    , Border.width 3
+                                    , Border.color (rgb 1 1 1)
+                                    ]
+                                    [ el
+                                        [ Font.size 32
+                                        , centerX
+                                        ]
+                                        (text "Import / Export")
+                                    , Input.multiline
+                                        [ Background.color (rgb 0 0 0)
+                                        , width (px 500)
+                                        , height (px 500)
+                                        ]
+                                        { onChange = SketchMsg << ImportChanged
+                                        , text = string
+                                        , placeholder = Nothing
+                                        , spellcheck = False
+                                        , label =
+                                            Input.labelAbove
+                                                []
+                                                (text "Copy or paste from here")
+                                        }
+                                    , maybeError
+                                        |> Maybe.map text
+                                        |> Maybe.map List.singleton
+                                        |> Maybe.map (paragraph [])
+                                        |> Maybe.withDefault none
+                                    , ViewComponents.textButton []
+                                        (Just (SketchMsg (Import string)))
+                                        "Import"
+                                    , ViewComponents.textButton []
+                                        (Just (SketchMsg ImportClose))
+                                        "Close"
+                                    ]
+                                )
+                            ]
+
         sidebarView =
             viewSidebar levelProgress
 
@@ -51,7 +107,7 @@ view levelProgress sketchingState =
         , height fill
         ]
         [ sidebarView
-        , boardView
+        , importExportBoardView
         , toolSidebarView
         ]
         |> layout
@@ -93,6 +149,11 @@ viewSidebar levelProgress =
                 (Just (SketchMsg SketchClear))
                 "Clear"
 
+        importExportButtonView =
+            textButton []
+                (Just (SketchMsg ImportExport))
+                "Import / Export"
+
         executeButtonView =
             textButton []
                 (Just (SketchMsg SketchExecute))
@@ -125,6 +186,7 @@ viewSidebar levelProgress =
             [ undoButtonView
             , redoButtonView
             , clearButtonView
+            , importExportButtonView
             , el [ alignBottom, width fill ] backButton
             ]
         ]

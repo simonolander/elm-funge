@@ -3,6 +3,7 @@ module Update exposing (update)
 import BoardUtils
 import ExecutionUtils
 import History
+import Json.Decode exposing (errorToString)
 import JsonUtils
 import LocalStorageUtils
 import Model exposing (..)
@@ -181,7 +182,7 @@ updateSketchMsg levelProgress msg model =
                             |> History.current
                             |> JsonUtils.encodeBoard
                             |> JsonUtils.toString
-                            |> Importing
+                            |> Importing Nothing
                         )
               }
             , Cmd.none
@@ -205,11 +206,42 @@ updateSketchMsg levelProgress msg model =
 
                         newModel =
                             setLevelProgress newLevelProgress model
+
+                        cmd =
+                            LocalStorageUtils.putBoard levelProgress.level.id
+                                board
+                                model.funnelState
                     in
-                    ( model, Cmd.none )
+                    ( newModel, cmd )
 
                 Err message ->
-                    ( model, Cmd.none )
+                    case model.gameState of
+                        Sketching id (Importing _ str) ->
+                            ( { model
+                                | gameState =
+                                    Sketching id (Importing (Just (errorToString message)) str)
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+        ImportChanged newString ->
+            ( { model
+                | gameState =
+                    Sketching levelProgress.level.id (Importing Nothing newString)
+              }
+            , Cmd.none
+            )
+
+        ImportClose ->
+            ( { model
+                | gameState =
+                    Sketching levelProgress.level.id JustSketching
+              }
+            , Cmd.none
+            )
 
 
 
