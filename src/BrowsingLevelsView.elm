@@ -99,10 +99,10 @@ viewLevels maybeSelectedLevelId levelProgresses =
                 buttonAttributes
                 { onPress =
                     if maybeSelectedLevelId == Just levelProgress.level.id then
-                        Just (SketchLevelProgress levelProgress.level.id)
+                        Just (NavigationMessage (GoToSketching levelProgress.level.id))
 
                     else
-                        Just (SelectLevel levelProgress.level.id)
+                        Just (BrowsingLevelsMessage (SelectLevel levelProgress.level.id))
                 , label =
                     column
                         [ padding 20
@@ -173,7 +173,7 @@ viewSidebar levelProgress =
         goToSketchView =
             ViewComponents.textButton
                 []
-                (Just (SketchLevelProgress levelProgress.level.id))
+                (Just (NavigationMessage (GoToSketching levelProgress.level.id)))
                 "Open Editor"
     in
     column

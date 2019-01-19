@@ -10,6 +10,7 @@ import Element.Input as Input
 import ExecutionView
 import Html exposing (Html)
 import Html.Attributes
+import LevelProgressUtils
 import Model exposing (..)
 import SketchingView
 
@@ -21,20 +22,12 @@ view model =
             BrowsingLevelsView.view model
 
         Sketching levelId sketchingState ->
-            let
-                maybeLevelProgress : Maybe LevelProgress
-                maybeLevelProgress =
-                    model.levelProgresses
-                        |> List.filter (\progress -> progress.level.id == levelId)
-                        |> List.head
-            in
-            case maybeLevelProgress of
+            case LevelProgressUtils.getLevelProgress levelId model of
                 Just levelProgress ->
                     SketchingView.view levelProgress sketchingState
 
                 Nothing ->
-                    text "TODO: couldn't find level progress"
-                        |> layout []
+                    BrowsingLevelsView.view model
 
         Executing executionState ->
             ExecutionView.view executionState

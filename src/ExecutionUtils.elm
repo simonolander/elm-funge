@@ -71,16 +71,6 @@ update msg model =
                             , Cmd.none
                             )
 
-                        ExecutionBackClicked ->
-                            ( { model | gameState = Sketching execution.level.id JustSketching }
-                            , Cmd.none
-                            )
-
-                        ExecutionBackToBrowsingLevels ->
-                            ( { model | gameState = BrowsingLevels (Just execution.level.id) }
-                            , Cmd.none
-                            )
-
                 ExecutionRunning execution delay ->
                     case msg of
                         ExecutionStepOne ->
@@ -131,16 +121,6 @@ update msg model =
 
                         ExecutionFastForward ->
                             ( { model | gameState = Executing (ExecutionRunning execution 100) }
-                            , Cmd.none
-                            )
-
-                        ExecutionBackClicked ->
-                            ( { model | gameState = Sketching execution.level.id JustSketching }
-                            , Cmd.none
-                            )
-
-                        ExecutionBackToBrowsingLevels ->
-                            ( { model | gameState = BrowsingLevels (Just execution.level.id) }
                             , Cmd.none
                             )
 

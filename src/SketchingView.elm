@@ -90,7 +90,7 @@ view levelProgress sketchingState =
                                         (Just (SketchMsg (Import string)))
                                         "Import"
                                     , ViewComponents.textButton []
-                                        (Just (SketchMsg ImportClose))
+                                        (Just (SketchMsg ImportExportClose))
                                         "Close"
                                     ]
                                 )
@@ -131,7 +131,11 @@ viewSidebar levelProgress =
 
         backButton =
             textButton []
-                (Just (SketchMsg SketchBackClicked))
+                (Just
+                    (NavigationMessage
+                        (GoToBrowsingLevels (Just levelProgress.level.id))
+                    )
+                )
                 "Back"
 
         undoButtonView =
@@ -151,12 +155,12 @@ viewSidebar levelProgress =
 
         importExportButtonView =
             textButton []
-                (Just (SketchMsg ImportExport))
+                (Just (SketchMsg ImportExportOpen))
                 "Import / Export"
 
         executeButtonView =
             textButton []
-                (Just (SketchMsg SketchExecute))
+                (Just (NavigationMessage (GoToExecuting levelProgress.level.id)))
                 "Execute"
     in
     column

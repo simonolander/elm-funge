@@ -64,7 +64,7 @@ view =
                 ]
 
         playButtonView =
-            ViewComponents.textButton [] (Just (GoToBrowsingLevels Nothing)) "I got it, let's play"
+            ViewComponents.textButton [] (Just (NavigationMessage (GoToBrowsingLevels Nothing))) "I got it, let's play"
     in
     column
         [ padding 100

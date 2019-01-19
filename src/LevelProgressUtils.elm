@@ -1,10 +1,18 @@
 module LevelProgressUtils exposing
-    ( setLevelProgressBoardHistoryInModel
+    ( getLevelProgress
+    , setLevelProgressBoardHistoryInModel
     , setLevelProgressSolvedInModel
     )
 
 import History exposing (History)
 import Model exposing (..)
+
+
+getLevelProgress : LevelId -> Model -> Maybe LevelProgress
+getLevelProgress levelId model =
+    model.levelProgresses
+        |> List.filter (\levelProgress -> levelProgress.level.id == levelId)
+        |> List.head
 
 
 setLevelProgressSolvedInModel : LevelId -> Model -> Model

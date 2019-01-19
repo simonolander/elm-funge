@@ -1,6 +1,7 @@
 module Model exposing
     ( Board
     , BoardSketch
+    , BrowsingLevelsMessage(..)
     , Direction(..)
     , Execution
     , ExecutionMsg(..)
@@ -19,6 +20,7 @@ module Model exposing
     , LocalStorageMsg(..)
     , Model
     , Msg(..)
+    , NavigationMessage(..)
     , Output
     , Position
     , SketchMsg(..)
@@ -183,18 +185,26 @@ type GameState
     | AlphaDisclaimer
 
 
+type BrowsingLevelsMessage
+    = SelectLevel LevelId
+
+
+type NavigationMessage
+    = GoToBrowsingLevels (Maybe LevelId)
+    | GoToSketching LevelId
+    | GoToExecuting LevelId
+
+
 type SketchMsg
     = PlaceInstruction Position Instruction
     | NewInstructionToolbox InstructionToolbox
     | SketchUndo
     | SketchRedo
     | SketchClear
-    | SketchExecute
-    | SketchBackClicked
-    | ImportExport
+    | ImportExportOpen
+    | ImportExportClose
     | Import String
     | ImportChanged String
-    | ImportClose
 
 
 type ExecutionMsg
@@ -203,8 +213,6 @@ type ExecutionMsg
     | ExecutionRun
     | ExecutionFastForward
     | ExecutionPause
-    | ExecutionBackClicked
-    | ExecutionBackToBrowsingLevels
 
 
 type LocalStorageMsg
@@ -214,12 +222,11 @@ type LocalStorageMsg
 
 type Msg
     = Resize WindowSize
-    | SelectLevel LevelId
-    | SketchLevelProgress LevelId
+    | BrowsingLevelsMessage BrowsingLevelsMessage
     | SketchMsg SketchMsg
     | ExecutionMsg ExecutionMsg
     | LocalStorageMsg LocalStorageMsg
-    | GoToBrowsingLevels (Maybe LevelId)
+    | NavigationMessage NavigationMessage
 
 
 type alias Model =

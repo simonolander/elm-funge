@@ -77,7 +77,7 @@ view executionState =
 
 
 viewExecutionSidebar : Execution -> Element Msg
-viewExecutionSidebar levelProgress =
+viewExecutionSidebar execution =
     let
         controlSize =
             50
@@ -85,15 +85,15 @@ viewExecutionSidebar levelProgress =
         titleView =
             ViewComponents.viewTitle
                 []
-                levelProgress.level.name
+                execution.level.name
 
         descriptionView =
             ViewComponents.descriptionTextbox []
-                levelProgress.level.description
+                execution.level.description
 
         backButtonView =
             ViewComponents.textButton []
-                (Just (ExecutionMsg ExecutionBackClicked))
+                (Just (NavigationMessage (GoToSketching execution.level.id)))
                 "Back"
 
         viewButton : ExecutionControlView.ExecutionControlInstruction -> Maybe Msg -> Element Msg
@@ -253,7 +253,7 @@ viewBoard execution =
                         |> el
                             [ width (fillPortion 3)
                             , height fill
-                            , inFront (viewExceptionModal message)
+                            , inFront (viewExceptionModal execution message)
                             ]
 
                 Nothing ->
@@ -270,7 +270,7 @@ viewBoard execution =
                             |> el
                                 [ width (fillPortion 3)
                                 , height fill
-                                , inFront viewWrongOutputModal
+                                , inFront (viewWrongOutputModal execution)
                                 ]
 
                     else
@@ -279,8 +279,8 @@ viewBoard execution =
     boardWithModalView
 
 
-viewExceptionModal : String -> Element Msg
-viewExceptionModal exceptionMessage =
+viewExceptionModal : Execution -> String -> Element Msg
+viewExceptionModal execution exceptionMessage =
     column
         [ centerX
         , centerY
@@ -302,13 +302,13 @@ viewExceptionModal exceptionMessage =
             [ Background.color (rgb 0 0 0)
             , Font.color (rgb 1 1 1)
             ]
-            (Just (ExecutionMsg ExecutionBackClicked))
+            (Just (NavigationMessage (GoToSketching execution.level.id)))
             "Back to editor"
         ]
 
 
-viewWrongOutputModal : Element Msg
-viewWrongOutputModal =
+viewWrongOutputModal : Execution -> Element Msg
+viewWrongOutputModal execution =
     column
         [ centerX
         , centerY
@@ -331,7 +331,7 @@ viewWrongOutputModal =
             [ Background.color (rgb 0 0 0)
             , Font.color (rgb 1 1 1)
             ]
-            (Just (ExecutionMsg ExecutionBackClicked))
+            (Just (NavigationMessage (GoToSketching execution.level.id)))
             "Back to editor"
         ]
 
@@ -379,7 +379,7 @@ viewVictoryModal execution =
             , padding 10
             , mouseOver [ Background.color (rgba 1 1 1 0.5) ]
             ]
-            { onPress = Just (ExecutionMsg ExecutionBackToBrowsingLevels)
+            { onPress = Just (NavigationMessage (GoToBrowsingLevels (Just execution.level.id)))
             , label =
                 el [ centerX, centerY ] (text "Back to levels")
             }
