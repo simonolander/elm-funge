@@ -34,17 +34,9 @@ noPadding =
     }
 
 
-view : ExecutionState -> Html Msg
-view executionState =
+view : Execution -> ExecutionState -> Html Msg
+view execution executionState =
     let
-        execution =
-            case executionState of
-                ExecutionPaused exn ->
-                    exn
-
-                ExecutionRunning exn _ ->
-                    exn
-
         boardView =
             viewBoard execution
 

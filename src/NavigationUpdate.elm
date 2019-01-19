@@ -26,7 +26,7 @@ update message model =
             case LevelProgressUtils.getLevelProgress levelId model of
                 Just levelProgress ->
                     ( { model
-                        | gameState = Executing (ExecutionPaused (ExecutionUtils.initialExecution levelProgress))
+                        | gameState = Executing (ExecutionUtils.initialExecution levelProgress) ExecutionPaused
                       }
                     , Cmd.none
                     )

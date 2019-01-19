@@ -26,11 +26,11 @@ update msg model =
                     )
     in
     case model.gameState of
-        Executing executionState ->
-            case executionState of
-                ExecutionPaused execution ->
-                    case msg of
-                        ExecutionStepOne ->
+        Executing execution executionState ->
+            case msg of
+                ExecutionStepOne ->
+                    case executionState of
+                        ExecutionPaused ->
                             let
                                 newExecution =
                                     step execution
@@ -47,33 +47,13 @@ update msg model =
                                         )
                             in
                             ( { model
-                                | gameState = Executing (ExecutionPaused newExecution)
+                                | gameState = Executing newExecution ExecutionPaused
                                 , levelProgresses = newLevelProgresses
                               }
                             , saveCmd
                             )
 
-                        ExecutionUndo ->
-                            ( { model | gameState = Executing (ExecutionPaused (stepBack execution)) }
-                            , Cmd.none
-                            )
-
-                        ExecutionPause ->
-                            ( model, Cmd.none )
-
-                        ExecutionRun ->
-                            ( { model | gameState = Executing (ExecutionRunning execution 250) }
-                            , Cmd.none
-                            )
-
-                        ExecutionFastForward ->
-                            ( { model | gameState = Executing (ExecutionRunning execution 100) }
-                            , Cmd.none
-                            )
-
-                ExecutionRunning execution delay ->
-                    case msg of
-                        ExecutionStepOne ->
+                        ExecutionRunning delay ->
                             let
                                 executionStep =
                                     History.current execution.executionHistory
@@ -95,34 +75,45 @@ update msg model =
                             ( { model
                                 | gameState =
                                     if executionStep.terminated then
-                                        Executing (ExecutionPaused execution)
+                                        Executing execution ExecutionPaused
 
                                     else
-                                        Executing (ExecutionRunning newExecution delay)
+                                        Executing newExecution (ExecutionRunning delay)
                                 , levelProgresses = newLevelProgresses
                               }
                             , saveCmd
                             )
 
-                        ExecutionUndo ->
-                            ( { model | gameState = Executing (ExecutionPaused (stepBack execution)) }
+                ExecutionUndo ->
+                    case executionState of
+                        ExecutionPaused ->
+                            ( { model | gameState = Executing (stepBack execution) ExecutionPaused }
                             , Cmd.none
                             )
 
-                        ExecutionPause ->
-                            ( { model | gameState = Executing (ExecutionPaused execution) }
-                            , Cmd.none
-                            )
+                        ExecutionRunning _ ->
+                            ( model, Cmd.none )
 
-                        ExecutionRun ->
-                            ( { model | gameState = Executing (ExecutionRunning execution 250) }
-                            , Cmd.none
-                            )
+                ExecutionPause ->
+                    ( { model
+                        | gameState = Executing execution ExecutionPaused
+                      }
+                    , Cmd.none
+                    )
 
-                        ExecutionFastForward ->
-                            ( { model | gameState = Executing (ExecutionRunning execution 100) }
-                            , Cmd.none
-                            )
+                ExecutionRun ->
+                    ( { model
+                        | gameState = Executing execution (ExecutionRunning 250)
+                      }
+                    , Cmd.none
+                    )
+
+                ExecutionFastForward ->
+                    ( { model
+                        | gameState = Executing execution (ExecutionRunning 100)
+                      }
+                    , Cmd.none
+                    )
 
         _ ->
             ( model, Cmd.none )

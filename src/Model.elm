@@ -169,8 +169,8 @@ type alias LevelProgress =
 
 
 type ExecutionState
-    = ExecutionPaused Execution
-    | ExecutionRunning Execution Float
+    = ExecutionPaused
+    | ExecutionRunning Float
 
 
 type SketchingState
@@ -181,7 +181,7 @@ type SketchingState
 type GameState
     = BrowsingLevels (Maybe LevelId)
     | Sketching LevelId SketchingState
-    | Executing ExecutionState
+    | Executing Execution ExecutionState
     | AlphaDisclaimer
 
 

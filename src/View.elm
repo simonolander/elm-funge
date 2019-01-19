@@ -29,8 +29,8 @@ view model =
                 Nothing ->
                     BrowsingLevelsView.view model
 
-        Executing executionState ->
-            ExecutionView.view executionState
+        Executing execution executionState ->
+            ExecutionView.view execution executionState
 
         AlphaDisclaimer ->
             AlphaDisclaimerView.view

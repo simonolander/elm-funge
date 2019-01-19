@@ -100,7 +100,7 @@ subscriptions model =
             LocalStorageUtils.subscriptions (LocalStorageMsg << LocalStorageProcess) model
     in
     case model.gameState of
-        Executing (ExecutionRunning _ delay) ->
+        Executing _ (ExecutionRunning delay) ->
             Sub.batch
                 [ windowSizeSubscription
                 , localStorageProcessSubscription
