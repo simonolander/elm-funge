@@ -352,6 +352,145 @@ boardDecoder =
             )
 
 
+encodeInstructionTool : InstructionTool -> Value
+encodeInstructionTool instructionTool =
+    case instructionTool of
+        JustInstruction instruction ->
+            object
+                [ ( "tag", string "JustInstruction" )
+                , ( "instruction", encodeInstruction instruction )
+                ]
+
+        ChangeAnyDirection _ ->
+            object
+                [ ( "tag", string "ChangeAnyDirection" )
+                ]
+
+        BranchAnyDirection _ _ ->
+            object
+                [ ( "tag", string "BranchAnyDirection" )
+                ]
+
+        PushValueToStack _ ->
+            object
+                [ ( "tag", string "PushValueToStack" )
+                ]
+
+
+instructionToolDecoder : Decoder InstructionTool
+instructionToolDecoder =
+    let
+        tagToDecoder tag =
+            case tag of
+                "JustInstruction" ->
+                    field "instruction" instructionDecoder
+                        |> Decode.map JustInstruction
+
+                "ChangeAnyDirection" ->
+                    succeed (ChangeAnyDirection Left)
+
+                "BranchAnyDirection" ->
+                    succeed (BranchAnyDirection Left Right)
+
+                "PushValueToStack" ->
+                    succeed (PushValueToStack "0")
+
+                _ ->
+                    fail ("Unknown instruction tool tag: " ++ tag)
+    in
+    field "tag" Decode.string
+        |> andThen tagToDecoder
+
+
+encodeIO : IO -> Value
+encodeIO io =
+    object
+        [ ( "input", list int io.input )
+        , ( "output", list int io.output )
+        ]
+
+
+ioDecoder : Decoder IO
+ioDecoder =
+    field "input" (Decode.list Decode.int)
+        |> andThen
+            (\input ->
+                field "output" (Decode.list Decode.int)
+                    |> andThen
+                        (\output ->
+                            succeed
+                                { input = input
+                                , output = output
+                                }
+                        )
+            )
+
+
+encodeLevel : Level -> Value
+encodeLevel level =
+    object
+        [ ( "version", int 1 )
+        , ( "id", string level.id )
+        , ( "name", string level.name )
+        , ( "description", list string level.description )
+        , ( "io", encodeIO level.io )
+        , ( "initialBoard", encodeBoard level.initialBoard )
+        , ( "instructionTools", list encodeInstructionTool level.instructionTools )
+        ]
+
+
+levelDecoder : Decoder Level
+levelDecoder =
+    let
+        levelDecoderV1 =
+            field "id" Decode.string
+                |> andThen
+                    (\id ->
+                        field "name" Decode.string
+                            |> andThen
+                                (\name ->
+                                    field "description" (Decode.list Decode.string)
+                                        |> andThen
+                                            (\description ->
+                                                field "io" ioDecoder
+                                                    |> andThen
+                                                        (\io ->
+                                                            field "initialBoard" boardDecoder
+                                                                |> andThen
+                                                                    (\initialBoard ->
+                                                                        field "instructionTools" (Decode.list instructionToolDecoder)
+                                                                            |> andThen
+                                                                                (\instructionTools ->
+                                                                                    succeed
+                                                                                        { id = id
+                                                                                        , name = name
+                                                                                        , description = description
+                                                                                        , io = io
+                                                                                        , initialBoard = initialBoard
+                                                                                        , instructionTools = instructionTools
+                                                                                        }
+                                                                                )
+                                                                    )
+                                                        )
+                                            )
+                                )
+                    )
+    in
+    field "version" Decode.int
+        |> andThen
+            (\version ->
+                case version of
+                    1 ->
+                        levelDecoderV1
+
+                    _ ->
+                        fail
+                            ("Unknown level decoder version: "
+                                ++ String.fromInt version
+                            )
+            )
+
+
 toString : Value -> String
 toString =
     encode 2
