@@ -1,5 +1,6 @@
 # Distribution
 build/
+lambdas/*.zip
 
 # elm-package generated files
 elm-stuff
