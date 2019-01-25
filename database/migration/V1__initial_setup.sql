@@ -71,7 +71,7 @@ create table instructions_exception (
     instruction_id bigint unsigned not null unique,
     message varchar(255) not null unique,
     created_time datetime not null default current_timestamp(),
-    modified_time datetime not null on update current_timestamp(),
+    modified_time datetime on update current_timestamp(),
     foreign key (instruction_id) references instructions(id)
 );
 
@@ -111,7 +111,7 @@ create table boards (
     width int unsigned not null,
     height int unsigned not null,
     created_time datetime not null default current_timestamp(),
-    modified_time datetime not null on update current_timestamp()
+    modified_time datetime on update current_timestamp()
 );
 
 create table board_instructions (
@@ -129,7 +129,7 @@ create table users (
     id serial primary key,
     username varchar(255) not null unique,
     created_time datetime not null default current_timestamp(),
-    modified_time datetime not null on update current_timestamp()
+    modified_time datetime on update current_timestamp()
 );
 
 create table levels (
@@ -139,7 +139,7 @@ create table levels (
     name varchar(255) not null,
     initial_board_id bigint unsigned not null,
     created_time datetime not null default current_timestamp(),
-    modified_time datetime not null on update current_timestamp(),
+    modified_time datetime on update current_timestamp(),
     foreign key (author_id) references users(id),
     foreign key (initial_board_id) references boards(id)
 );
@@ -189,7 +189,7 @@ create table level_solutions (
     number_of_instructions int unsigned not null,
     area int unsigned not null,
     created_time datetime not null default current_timestamp(),
-    modified_time datetime not null on update current_timestamp(),
+    modified_time datetime on update current_timestamp(),
     unique (level_id, board_id, solver_id),
     foreign key (level_id) references levels(id),
     foreign key (board_id) references boards(id),
