@@ -55,6 +55,18 @@ create table instructions_change_direction (
     foreign key (direction) references directions(direction)
 );
 
+insert into instructions (id, instruction_type) values
+    (1, 'ChangeDirection'),
+    (2, 'ChangeDirection'),
+    (3, 'ChangeDirection'),
+    (4, 'ChangeDirection');
+
+insert into instructions_change_direction (id, instruction_id, direction) values 
+    (1, 1, 'Left'),
+    (2, 2, 'Up'),
+    (3, 3, 'Right'),
+    (4, 4, 'Down');
+
 create table instructions_branch (
     id serial primary key,
     instruction_id bigint unsigned not null unique,
@@ -65,6 +77,42 @@ create table instructions_branch (
     foreign key (true_direction) references directions(direction),
     foreign key (false_direction) references directions(direction)
 );
+
+insert into instructions (id, instruction_type) values 
+    (5, 'Branch'),
+    (6, 'Branch'),
+    (7, 'Branch'),
+    (8, 'Branch'),
+    (9, 'Branch'),
+    (10, 'Branch'),
+    (11, 'Branch'),
+    (12, 'Branch'),
+    (13, 'Branch'),
+    (14, 'Branch'),
+    (15, 'Branch'),
+    (16, 'Branch'),
+    (17, 'Branch'),
+    (18, 'Branch'),
+    (19, 'Branch'),
+    (20, 'Branch');
+
+insert into instructions_branch (id, instruction_id, true_direction, false_direction) values
+    (1, 5, 'Left', 'Left'),
+    (2, 6, 'Left', 'Up'),
+    (3, 7, 'Left', 'Right'),
+    (4, 8, 'Left', 'Down'),
+    (5, 9, 'Up', 'Left'),
+    (6, 10, 'Up', 'Up'),
+    (7, 11, 'Up', 'Right'),
+    (8, 12, 'Up', 'Down'),
+    (9, 13, 'Right', 'Left'),
+    (10, 14, 'Right', 'Up'),
+    (11, 15, 'Right', 'Right'),
+    (12, 16, 'Right', 'Down'),
+    (13, 17, 'Down', 'Left'),
+    (14, 18, 'Down', 'Up'),
+    (15, 19, 'Down', 'Right'),
+    (16, 20, 'Down', 'Down');
 
 create table instructions_exception (
     id serial primary key,

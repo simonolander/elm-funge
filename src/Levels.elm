@@ -1,6 +1,8 @@
 module Levels exposing (levels)
 
 import BoardUtils
+import Json.Encode exposing (..)
+import JsonUtils
 import Model exposing (..)
 
 
@@ -819,31 +821,38 @@ levelLabyrinthLab =
 
 levels : List Level
 levels =
-    [ level123
-    , levelDoubleTheFun
-    , levelCountDown
-    , levelSomeSums
-    , levelSignalAmplifier
-    , levelOneMinusTheOther
-    , levelPowersOfTwo
-    , levelTriangularNumbers
-    , levelMultiplier
-    , levelDivideAndConquer
-    , levelSequenceReverser
-    , levelSequenceSorter
-    , levelLessIsMore
-    , levelLabyrinth1
-    , levelLabyrinth2
-    , levelLabyrinth3
-    , levelLabyrinth4
-    , levelLabyrinth5
-    , levelLabyrinth6
-    , levelLabyrinth7
-    , levelLabyrinth8
-    , levelLabyrinth9
-    , levelLabyrinth10
-    , levelLabyrinth11
-    ]
+    let
+        lvls =
+            [ level123
+            , levelDoubleTheFun
+            , levelCountDown
+            , levelSomeSums
+            , levelSignalAmplifier
+            , levelOneMinusTheOther
+            , levelPowersOfTwo
+            , levelTriangularNumbers
+            , levelMultiplier
+            , levelDivideAndConquer
+            , levelSequenceReverser
+            , levelSequenceSorter
+            , levelLessIsMore
+            , levelLabyrinth1
+            , levelLabyrinth2
+            , levelLabyrinth3
+            , levelLabyrinth4
+            , levelLabyrinth5
+            , levelLabyrinth6
+            , levelLabyrinth7
+            , levelLabyrinth8
+            , levelLabyrinth9
+            , levelLabyrinth10
+            , levelLabyrinth11
+            ]
+
+        a =
+            lvls |> list JsonUtils.encodeLevel |> JsonUtils.toString |> Debug.log "levels:"
+    in
+    lvls
 
 
 listPairs : List a -> List ( a, a )

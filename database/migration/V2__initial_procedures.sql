@@ -87,4 +87,44 @@ begin
     deallocate prepare select_stmt;
 end //
 
+create procedure create_instruction_push_to_stack(in value int, out instruction_id bigint)
+begin
+    prepare select_stmt from 'select instruction_id from instructions_push_to_stack where value = ? into @existing_instruction_id';
+    set @value = value;
+    set @existing_instruction_id = null;
+    execute select_stmt 
+        using @value;
+    if @existing_instruction_id is null
+    then 
+        insert into instructions set instruction_type = 'Exception';
+        set @existing_instruction_id = last_insert_id();
+        prepare insert_stmt from 'insert into instructions_push_to_stack (instruction_id, value) values (?, ?)';
+        execute insert_stmt
+            using @existing_instruction_id, @value;
+        deallocate prepare insert_stmt;
+    end if;
+    set instruction_id = @existing_instruction_id;
+    deallocate prepare select_stmt;
+end //
+
+create procedure create_instruction_tool_just_instruction(in instruction_id bigint, out instruction_tool_id bigint)
+begin
+    prepare select_stmt from 'select instruction_tool_id from instruction_tools_just_instruction where instruction_id = ? into @existing_instruction_tool_id';
+    set @instruction_id = instruction_id;
+    set @existing_instruction_tool_id = null;
+    execute select_stmt 
+        using @instruction_id;
+    if @existing_instruction_tool_id is null
+    then 
+        insert into instruction_tools set instruction_tool_type = 'JustInstruction';
+        set @existing_instruction_tool_id = last_insert_id();
+        prepare insert_stmt from 'insert into instruction_tools_just_instruction (instruction_tool_id, instruction_id) values (?, ?)';
+        execute insert_stmt
+            using @existing_instruction_tool_id, @instruction_id;
+        deallocate prepare insert_stmt;
+    end if;
+    set instruction_tool_id = @existing_instruction_tool_id;
+    deallocate prepare select_stmt;
+end //
+
 delimiter ;

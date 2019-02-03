@@ -4,8 +4,10 @@ module JsonUtils exposing
     , encodeBoard
     , encodeDirection
     , encodeInstruction
+    , encodeLevel
     , fromString
     , instructionDecoder
+    , levelDecoder
     , toString
     )
 
