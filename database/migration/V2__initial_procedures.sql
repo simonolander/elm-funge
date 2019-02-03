@@ -96,7 +96,7 @@ begin
         using @value;
     if @existing_instruction_id is null
     then 
-        insert into instructions set instruction_type = 'Exception';
+        insert into instructions set instruction_type = 'PushValueToStack';
         set @existing_instruction_id = last_insert_id();
         prepare insert_stmt from 'insert into instructions_push_to_stack (instruction_id, value) values (?, ?)';
         execute insert_stmt
