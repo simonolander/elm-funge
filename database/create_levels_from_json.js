@@ -40,51 +40,51 @@ function to_insert_statement(level_list) {
                                 return null;
                             case 'Exception':
                                 return `call create_instruction_exception("${instruction.exceptionMessage}", @instruction_id);
-insert into board_instructions set 
+insert into board_instructions set
   board_id = ${id},
   instruction_id = @instruction_id,
-  x = ${column_index}, 
+  x = ${column_index},
   y = ${row_index};`
                             case 'PushToStack':
                                 return `call create_instruction_push_to_stack(${instruction.value}, @instruction_id);
-insert into board_instructions set 
-  board_id = ${id}, 
-  instruction_id = @instruction_id, 
-  x = ${column_index}, 
+insert into board_instructions set
+  board_id = ${id},
+  instruction_id = @instruction_id,
+  x = ${column_index},
   y = ${row_index};`
                             case 'Branch':
-                                return `insert into board_instructions set 
-  board_id = ${id}, 
+                                return `insert into board_instructions set
+  board_id = ${id},
   instruction_id = (
-    select instruction_id from instructions_branch 
-      where true_direction = '${instruction.trueDirection}' 
-        and false_direction = '${instruction.falseDirection}' 
+    select instruction_id from instructions_branch
+      where true_direction = '${instruction.trueDirection}'
+        and false_direction = '${instruction.falseDirection}'
       limit 1
-  ), 
-  x = ${column_index}, 
+  ),
+  x = ${column_index},
   y = ${row_index};`;
                             case 'ChangeDirection':
-                                return `insert into board_instructions set 
-  board_id = ${id}, 
+                                return `insert into board_instructions set
+  board_id = ${id},
   instruction_id = (
-    select instruction_id from instructions_change_direction 
-      where direction = '${instruction.direction}' 
+    select instruction_id from instructions_change_direction
+      where direction = '${instruction.direction}'
       limit 1
-  ), 
-  x = ${column_index}, 
+  ),
+  x = ${column_index},
   y = ${row_index};`;
                             default:
                                 return `call create_instruction('${instruction.tag}', @instruction_id);
-insert into board_instructions set 
-  board_id = ${id}, 
-  instruction_id = @instruction_id, 
-  x = ${column_index}, 
+insert into board_instructions set
+  board_id = ${id},
+  instruction_id = @instruction_id,
+  x = ${column_index},
   y = ${row_index};`
                         }
                     }
-                )
-            ).filter(statement => typeof statement === 'string')
-                .join('\n')
+                ).filter(statement => typeof statement === 'string')
+                    .join('\n')
+            ).join('\n')
 
         const instruction_tool_statement =
             level.instructionTools.map(
@@ -95,45 +95,45 @@ insert into board_instructions set
                                 case 'Exception':
                                     return `call create_instruction_exception("${instructionTool.instruction.exceptionMessage}", @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) 
+insert into level_instruction_tools (level_id, instruction_tool_id)
   values (${id}, @instruction_tool_id);`
                                 case 'PushToStack':
                                     return `call create_instruction_push_to_stack(${instructionTool.instruction.value}, @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) 
+insert into level_instruction_tools (level_id, instruction_tool_id)
   values (${id}, @instruction_tool_id);`
                                 case 'Branch':
-                                    return `insert into board_instructions set 
-  board_id = ${id}, 
+                                    return `insert into board_instructions set
+  board_id = ${id},
   instruction_id = (
-  select instruction_id from instructions_branch 
-    where true_direction = '${instructionTool.instruction.trueDirection}' 
-    and false_direction = '${instructionTool.instruction.falseDirection}' 
+  select instruction_id from instructions_branch
+    where true_direction = '${instructionTool.instruction.trueDirection}'
+    and false_direction = '${instructionTool.instruction.falseDirection}'
     limit 1
-  ), 
-  x = ${column_index}, 
+  ),
+  x = ${column_index},
   y = ${row_index};`;
                                 case 'ChangeDirection':
-                                    return `insert into board_instructions set 
-  board_id = ${id}, 
+                                    return `insert into board_instructions set
+  board_id = ${id},
   instruction_id = (
-  select instruction_id from instructions_change_direction 
-    where direction = '${instructionTool.instruction.direction}' 
+  select instruction_id from instructions_change_direction
+    where direction = '${instructionTool.instruction.direction}'
     limit 1
-  ), 
-  x = ${column_index}, 
+  ),
+  x = ${column_index},
   y = ${row_index};`;
                                 default:
                                     return `call create_instruction('${instructionTool.instruction.tag}', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (${id}, @instruction_tool_id);`
                             }
                         default:
                             return `insert into level_instruction_tools set
   level_id = ${id},
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = '${instructionTool.tag}'
     limit 1
   );`

@@ -15,45 +15,48 @@ call create_output(1, 1);
 call create_output(1, 2);
 call create_output(1, 3);
 
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 1,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (1, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 1,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
@@ -88,45 +91,48 @@ call create_output(2, 10);
 call create_output(2, 62);
 call create_output(2, 18);
 
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 2,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 call create_instruction('Add', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (2, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 2,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
@@ -173,45 +179,51 @@ call create_output(3, 2);
 call create_output(3, 1);
 call create_output(3, 0);
 
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 3,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (3, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 3,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
@@ -244,55 +256,61 @@ call create_output(4, 23);
 call create_output(4, 21);
 call create_output(4, 16);
 
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 4,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 4,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (4, @instruction_tool_id);
 
 insert into boards set
@@ -331,59 +349,63 @@ call create_output(5, 100);
 call create_output(5, 175);
 call create_output(5, 221);
 
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 5,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 5,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (5, @instruction_tool_id);
 
 insert into boards set
@@ -417,55 +439,61 @@ call create_output(6, 0);
 call create_output(6, 11);
 call create_output(6, 14);
 
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 6,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 6,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (6, @instruction_tool_id);
 
 insert into boards set
@@ -496,55 +524,62 @@ call create_output(7, 4);
 call create_output(7, 32);
 call create_output(7, 64);
 
+
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 7,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 7,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (7, @instruction_tool_id);
 
 insert into boards set
@@ -577,55 +612,62 @@ call create_output(8, 1);
 call create_output(8, 55);
 call create_output(8, 6);
 
+
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 8,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 8,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (8, @instruction_tool_id);
 
 insert into boards set
@@ -662,63 +704,69 @@ call create_output(9, 1);
 call create_output(9, 77);
 call create_output(9, 18);
 
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 9,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('SendToBottom', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 9,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (9, @instruction_tool_id);
 
 insert into boards set
@@ -755,67 +803,73 @@ call create_output(10, 5);
 call create_output(10, 0);
 call create_output(10, 2);
 
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 10,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('SendToBottom', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction_push_to_stack(0, @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) 
+insert into level_instruction_tools (level_id, instruction_tool_id)
   values (10, @instruction_tool_id);
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 10,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (10, @instruction_tool_id);
 
 insert into boards set
@@ -854,59 +908,63 @@ call create_output(11, 94);
 call create_output(11, -2);
 call create_output(11, -19);
 
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 11,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 11,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (11, @instruction_tool_id);
 
 insert into boards set
@@ -949,67 +1007,73 @@ call create_output(12, 11);
 call create_output(12, 14);
 call create_output(12, 15);
 
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 12,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('SendToBottom', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('CompareLessThan', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 12,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (12, @instruction_tool_id);
 
 insert into boards set
@@ -1043,59 +1107,66 @@ call create_output(13, 7);
 call create_output(13, 15);
 call create_output(13, 3);
 
+
+
+
+
+
+
+
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 13,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Duplicate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('Decrement', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('Swap', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('Read', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 call create_instruction('PopFromStack', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 13,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('Terminate', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (13, @instruction_tool_id);
 
 insert into boards set
@@ -1113,15 +1184,62 @@ call create_description(14, "> Terminate the program");
 call create_description(14, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 4;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 14,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (14, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 14,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
@@ -1141,15 +1259,56 @@ call create_description(15, "> Terminate the program");
 call create_description(15, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 15,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (15, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 15,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
@@ -1169,21 +1328,80 @@ call create_description(16, "> Terminate the program");
 call create_description(16, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 16,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (16, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 16,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (16, @instruction_tool_id);
 
 insert into boards set
@@ -1201,21 +1419,98 @@ call create_description(17, "> Terminate the program");
 call create_description(17, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 3;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 17,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (17, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 17,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (17, @instruction_tool_id);
 
 insert into boards set
@@ -1233,15 +1528,96 @@ call create_description(18, "> Terminate the program");
 call create_description(18, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction_push_to_stack(1, @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 4;
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Right'
+        and false_direction = 'Up'
+      limit 1
+  ),
+  x = 3,
+  y = 4;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 18,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (18, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 18,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
@@ -1262,20 +1638,108 @@ call create_description(19, "> Don't hit any of the exceptions");
 
 
 
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction_push_to_stack(1, @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Right'
+        and false_direction = 'Up'
+      limit 1
+  ),
+  x = 2,
+  y = 3;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 19,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (19, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 19,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (19, @instruction_tool_id);
 
 insert into boards set
@@ -1293,28 +1757,127 @@ call create_description(20, "> Terminate the program");
 call create_description(20, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 1;
+call create_instruction('Increment', @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 3;
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Right'
+        and false_direction = 'Left'
+      limit 1
+  ),
+  x = 2,
+  y = 3;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 4;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 20,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (20, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 20,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 insert into level_instruction_tools set
   level_id = 20,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'BranchAnyDirection'
     limit 1
   );
 call create_instruction('JumpForward', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (20, @instruction_tool_id);
 
 insert into boards set
@@ -1335,15 +1898,46 @@ call create_output(21, 1);
 call create_output(21, 2);
 call create_output(21, 3);
 call create_output(21, 4);
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 21,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction('Increment', @instruction_id);
+insert into board_instructions set
+  board_id = 21,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction('Print', @instruction_id);
+insert into board_instructions set
+  board_id = 21,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 1;
+call create_instruction('Print', @instruction_id);
+insert into board_instructions set
+  board_id = 21,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction('Increment', @instruction_id);
+insert into board_instructions set
+  board_id = 21,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+
 
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (21, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 21,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
@@ -1363,15 +1957,86 @@ call create_description(22, "> Terminate the program");
 call create_description(22, "> Don't hit any of the exceptions");
 
 
-
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 0;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 1;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 2;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 3;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 4;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 4;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 22,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (22, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 22,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
@@ -1392,25 +2057,110 @@ call create_description(23, "> Terminate the program");
 call create_description(23, "> Don't hit any of the exceptions");
 
 call create_output(23, 1);
-
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 0;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 1;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 1;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 2;
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Left'
+        and false_direction = 'Up'
+      limit 1
+  ),
+  x = 1,
+  y = 2;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Right'
+        and false_direction = 'Up'
+      limit 1
+  ),
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 3;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 4;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 23,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (23, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 23,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Increment', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (23, @instruction_tool_id);
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (23, @instruction_tool_id);
 
 insert into boards set
@@ -1429,19 +2179,104 @@ call create_description(24, "> Terminate the program");
 call create_description(24, "> Don't hit any of the exceptions");
 
 call create_output(24, 1);
-
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 0;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 0;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 1;
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Up'
+        and false_direction = 'Right'
+      limit 1
+  ),
+  x = 2,
+  y = 1;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 2;
+call create_instruction('Terminate', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 3,
+  y = 2;
+call create_instruction_exception("Don't hit the exceptions", @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 0,
+  y = 3;
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = (
+    select instruction_id from instructions_branch
+      where true_direction = 'Down'
+        and false_direction = 'Right'
+      limit 1
+  ),
+  x = 2,
+  y = 3;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 4,
+  y = 3;
+call create_instruction('JumpForward', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 1,
+  y = 4;
+call create_instruction('Increment', @instruction_id);
+insert into board_instructions set
+  board_id = 24,
+  instruction_id = @instruction_id,
+  x = 2,
+  y = 4;
 call create_instruction('NoOp', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (24, @instruction_tool_id);
 insert into level_instruction_tools set
   level_id = 24,
   instruction_tool_id = (
-    select id from instruction_tools 
+    select id from instruction_tools
     where instruction_tool_type = 'ChangeAnyDirection'
     limit 1
   );
 call create_instruction('Print', @instruction_id);
 call create_instruction_tool_just_instruction(@instruction_id, @instruction_tool_id);
-insert into level_instruction_tools (level_id, instruction_tool_id) values 
+insert into level_instruction_tools (level_id, instruction_tool_id) values
   (24, @instruction_tool_id);
