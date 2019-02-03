@@ -146,6 +146,11 @@ create table instruction_tools (
     foreign key (instruction_tool_type) references instruction_tool_types(instruction_tool_type)
 );
 
+insert into instruction_tools (instruction_tool_type) values 
+    ('ChangeAnyDirection'),
+    ('BranchAnyDirection'),
+    ('PushValueToStack');
+
 create table instruction_tools_just_instruction (
     id serial primary key,
     instruction_tool_id bigint unsigned not null unique,
