@@ -17,7 +17,7 @@ insert into instruction_types values
     ('ChangeDirection'),
     ('PushToStack'),
     ('PopFromStack'),
-    ('Jump'),
+    ('JumpForward'),
     ('Duplicate'),
     ('Swap'),
     ('Negate'),
@@ -134,6 +134,7 @@ create table users (
 
 create table levels (
     id serial primary key,
+    uuid char(36) not null unique,
     author_id bigint unsigned default null,
     external_id varchar(255) not null unique,
     name varchar(255) not null,
