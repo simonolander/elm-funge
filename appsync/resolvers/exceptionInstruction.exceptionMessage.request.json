@@ -1,6 +1,0 @@
-{
-    "version": "2018-05-29",
-    "statements": [
-        "select * from instructions_exception where instruction_id = '$ctx.source.id' limit 1"
-    ]
-}
