@@ -1,0 +1,10 @@
+#**
+  Select statement for a relational database data source
+*#
+{
+    "version": "2018-05-29",
+    "statements": [
+        "select value from level_inputs where level_id = '$ctx.source.id' order by ordinal",
+        "select value from level_outputs where level_id = '$ctx.source.id' order by ordinal",
+    ]
+}

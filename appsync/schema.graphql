@@ -89,9 +89,18 @@ type JustInstructionInstructionTool implements InstructionTool {
     instruction: Instruction!
 }
 
+type BoardInstruction {
+    x: Int!
+    y: Int!
+    instruction: Instruction!
+}
+
 type Board {
     version: Int!
-    board: [[Instruction]]!
+    id: Int!
+    width: Int!,
+    height: Int!,
+    instructions: [BoardInstruction!]!
 }
 
 type Level {
@@ -104,7 +113,7 @@ type Level {
 }
 
 type Query {
-    listLevels(): [Level]!
+    listLevels: [Level]!
     getLevel(id: ID!): Level
 }
 

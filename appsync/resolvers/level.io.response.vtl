@@ -1,0 +1,21 @@
+## Raise a GraphQL field error in case of a datasource invocation error
+#if($ctx.error)
+    $utils.error($ctx.error.message, $ctx.error.type)
+#end
+
+#set( $inputs = [] )
+#foreach( $result in $utils.rds.toJsonObject($ctx.result)[0] )
+$util.qr($inputs.add($result.value))
+#end
+
+#set( $outputs = [] )
+#foreach( $result in $utils.rds.toJsonObject($ctx.result)[1] )
+$util.qr($outputs.add($result.value))
+#end
+
+#set( $io = {
+  "input": $inputs,
+  "output": $outputs
+} )
+
+$utils.toJson($io)

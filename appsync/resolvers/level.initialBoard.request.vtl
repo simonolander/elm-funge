@@ -1,0 +1,9 @@
+#**
+  Select statement for a relational database data source
+*#
+{
+    "version": "2018-05-29",
+    "statements": [
+        "select * from boards where boards.id = (select initial_board_id from levels where levels.id = '$ctx.source.id') limit 1"
+    ]
+}
