@@ -36,30 +36,36 @@ enum Direction {
 }
 
 interface Instruction {
+    id: Int!
     tag: InstructionTag!
 }
 
 type GeneralInstruction implements Instruction {
+    id: Int!
     tag: InstructionTag!
 }
 
 type ChangeDirectionInstruction implements Instruction {
+    id: Int!
     tag: InstructionTag!
     direction: Direction!
-
 }
+
 type PushToStackInstruction implements Instruction {
+    id: Int!
     tag: InstructionTag!
     value: Int!
 }
 
 type BranchInstruction implements Instruction {
+    id: Int!
     tag: InstructionTag!
     trueDirection: Direction!
     falseDirection: Direction!
 }
 
 type ExceptionInstruction implements Instruction {
+    id: Int!
     tag: InstructionTag!
     exceptionMessage: String!
 }

@@ -1,0 +1,41 @@
+#if($ctx.error)
+    $utils.error($ctx.error.message, $ctx.error.type)
+#end
+
+#set( $id = $utils.rds.toJsonObject($ctx.result)[0][0].id)
+#set( $tag = $utils.rds.toJsonObject($ctx.result)[0][0].instruction_type)
+
+
+#if( $tag == "Exception" )
+    #set( $instruction = {
+        "__typename": "ExceptionInstruction",
+    	"id": $id,
+        "tag": $tag
+    } )
+#elseif( $tag == "Branch" )
+    #set( $instruction = {
+        "__typename": "BranchInstruction",
+    	"id": $id,
+        "tag": $tag
+    } )
+#elseif( $tag == "PushToStack" )
+    #set( $instruction = {
+        "__typename": "PushToStackInstruction",
+    	"id": $id,
+        "tag": $tag
+    } )
+#elseif( $tag == "ChangeDirection" )
+    #set( $instruction = {
+        "__typename": "ChangeDirectionInstruction",
+    	"id": $id,
+        "tag": $tag
+    } )
+#else 
+    #set( $instruction = {
+        "__typename": "GeneralInstruction",
+    	"id": $id,
+        "tag": $tag
+    } )
+#end
+
+$utils.toJson($instruction)
