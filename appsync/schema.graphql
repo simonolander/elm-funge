@@ -83,14 +83,17 @@ enum InstructionToolTag {
 }
 
 interface InstructionTool {
+    id: Int!
     tag: InstructionToolTag! 
 }
 
 type GeneralInstructionTool implements InstructionTool {
+    id: Int!
     tag: InstructionToolTag! 
 }
 
 type JustInstructionInstructionTool implements InstructionTool {
+    id: Int!
     tag: InstructionToolTag!
     instruction: Instruction!
 }
@@ -104,8 +107,8 @@ type BoardInstruction {
 type Board {
     version: Int!
     id: Int!
-    width: Int!,
-    height: Int!,
+    width: Int!
+    height: Int!
     instructions: [BoardInstruction!]!
 }
 

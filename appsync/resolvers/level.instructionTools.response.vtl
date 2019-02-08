@@ -1,0 +1,27 @@
+#if($ctx.error)
+    $utils.error($ctx.error.message, $ctx.error.type)
+#end
+
+#set( $instructionTools = [] )
+
+#foreach( $result in $utils.rds.toJsonObject($ctx.result)[0] )
+    #set( $tag = $result.instruction_tool_type )
+
+    #if( $tag == "JustInstruction" )
+        #set( $instructionTool = {
+            "__typename": "JustInstructionInstructionTool",
+            "id": $result.id,
+            "tag": $tag
+        } )
+    #else 
+        #set( $instructionTool = {
+            "__typename": "GeneralInstructionTool",
+            "id": $result.id,
+            "tag": $tag
+        } )
+    #end
+
+    $util.qr($instructionTools.add($instructionTool))
+#end
+
+$utils.toJson($instructionTools)

@@ -1,0 +1,6 @@
+{
+    "version": "2018-05-29",
+    "statements": [
+        "select instruction_tools.* from level_instruction_tools join instruction_tools on level_instruction_tools.instruction_tool_id = instruction_tools.id where level_id = '$ctx.source.id'"
+    ]
+}
