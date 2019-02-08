@@ -1,0 +1,6 @@
+{
+    "version": "2018-05-29",
+    "statements": [
+        "select instructions.* from instruction_tools_just_instruction join instructions on instruction_tools_just_instruction.instruction_id = instructions.id where instruction_tools_just_instruction.instruction_tool_id = '$ctx.source.id' limit 1"
+    ]
+}
