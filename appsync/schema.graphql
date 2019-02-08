@@ -1,0 +1,141 @@
+enum InstructionTag {
+    NoOp
+    ChangeDirection
+    PushToStack
+    PopFromStack
+    JumpForward
+    Duplicate
+    Swap
+    Negate
+    Abs
+    Not
+    Increment
+    Decrement
+    Add
+    Subtract
+    Multiply
+    Divide
+    Equals
+    CompareLessThan
+    And
+    Or
+    XOr
+    Read
+    Print
+    Branch
+    Terminate
+    SendToBottom
+    Exception
+}
+
+enum Direction {
+    Left
+    Up
+    Right
+    Down
+}
+
+interface Instruction {
+    tag: InstructionTag!
+}
+
+type GeneralInstruction implements Instruction {
+    tag: InstructionTag!
+}
+
+type ChangeDirectionInstruction implements Instruction {
+    tag: InstructionTag!
+    direction: Direction!
+
+}
+type PushToStackInstruction implements Instruction {
+    tag: InstructionTag!
+    value: Int!
+}
+
+type BranchInstruction implements Instruction {
+    tag: InstructionTag!
+    trueDirection: Direction!
+    falseDirection: Direction!
+}
+
+type ExceptionInstruction implements Instruction {
+    tag: InstructionTag!
+    exceptionMessage: String!
+}
+
+type IO {
+    input: [Int]!
+    output: [Int]!
+}
+
+enum InstructionToolTag {
+    JustInstruction
+    ChangeAnyDirection
+    BranchAnyDirection
+    PushValueToStack
+}
+
+interface InstructionTool {
+    tag: InstructionToolTag! 
+}
+
+type GeneralInstructionTool implements InstructionTool {
+    tag: InstructionToolTag! 
+}
+
+type JustInstructionInstructionTool implements InstructionTool {
+    tag: InstructionToolTag!
+    instruction: Instruction!
+}
+
+type Board {
+    version: Int!
+    board: [[Instruction]]!
+}
+
+type Level {
+    id: String!
+    name: String!
+    description: [String]!
+    io: IO!
+    initialBoard: Board!
+    instructionTools: [InstructionTool]!
+}
+
+type Query {
+    listLevels(): [Level]!
+    getLevel(id: ID!): Level
+}
+
+type Mutation {
+    createPet(input: CreateLevelInput!): Level
+    updatePet(input: UpdatePetInput!): Pet
+    deletePet(input: DeletePetInput!): Pet
+}
+
+input CreatePetInput {
+    type: PetType
+    price: Float!
+}
+
+input UpdatePetInput {
+id: ID!
+    type: PetType
+    price: Float!
+}
+
+input DeletePetInput {
+    id: ID!
+}
+
+type Query {
+    getPet(id: ID!): Pet
+    listPets: [Pet]
+    listPetsByPriceRange(min: Float, max: Float): [Pet]
+}
+
+schema {
+    query: Query
+    mutation: Mutation
+}

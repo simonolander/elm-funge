@@ -1,5 +1,3 @@
-delimiter //
-
 create procedure create_description(in level_id bigint, in description text)
 begin
     prepare stmt from 'insert into level_descriptions (level_id, ordinal, description) values (?, ?, ?)';
@@ -14,7 +12,7 @@ begin
     execute stmt 
         using @level_id, @ordinal, @description;
     deallocate prepare stmt;
-end //
+end ;
 
 create procedure create_input(in level_id bigint, in value int)
 begin
@@ -30,7 +28,7 @@ begin
     execute stmt 
         using @level_id, @ordinal, @value;
     deallocate prepare stmt;
-end //
+end ;
 
 create procedure create_output(in level_id bigint, in value int)
 begin
@@ -46,7 +44,7 @@ begin
     execute stmt 
         using @level_id, @ordinal, @value;
     deallocate prepare stmt;
-end //
+end ;
 
 create procedure create_instruction(in instruction_type varchar(255), out instruction_id bigint)
 begin
@@ -65,7 +63,7 @@ begin
     end if;
     set instruction_id = @existing_instruction_id;
     deallocate prepare select_stmt;
-end //
+end ;
 
 create procedure create_instruction_exception(in exception_message varchar(255), out instruction_id bigint)
 begin
@@ -85,7 +83,7 @@ begin
     end if;
     set instruction_id = @existing_instruction_id;
     deallocate prepare select_stmt;
-end //
+end ;
 
 create procedure create_instruction_push_to_stack(in value int, out instruction_id bigint)
 begin
@@ -105,7 +103,7 @@ begin
     end if;
     set instruction_id = @existing_instruction_id;
     deallocate prepare select_stmt;
-end //
+end ;
 
 create procedure create_instruction_tool_just_instruction(in instruction_id bigint, out instruction_tool_id bigint)
 begin
@@ -125,6 +123,4 @@ begin
     end if;
     set instruction_tool_id = @existing_instruction_tool_id;
     deallocate prepare select_stmt;
-end //
-
-delimiter ;
+end ;
