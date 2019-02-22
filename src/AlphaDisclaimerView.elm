@@ -65,6 +65,13 @@ view =
 
         playButtonView =
             ViewComponents.textButton [] (Just (NavigationMessage (GoToBrowsingLevels Nothing))) "I got it, let's play"
+
+        loginButtonView =
+            link
+                []
+                { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=https://efng.simonolander.com"
+                , label = ViewComponents.textButton [] Nothing "Login"
+                }
     in
     column
         [ padding 100
@@ -76,6 +83,7 @@ view =
         , featureListView
         , sourceCodeView
         , playButtonView
+        , loginButtonView
         ]
         |> layout
             [ Background.color (rgb 0 0 0)
