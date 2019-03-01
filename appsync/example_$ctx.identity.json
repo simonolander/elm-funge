@@ -1,0 +1,23 @@
+{
+  "sub": "7848860f-7f41-492a-aee4-e5893af0c8d0",
+  "issuer": "https;//cognito-idp.us-east-1.amazonaws.com/us-east-1_BbVWFzVcU",
+  "username": "sios",
+  "claims": {
+    "sub": "7848860f-7f41-492a-aee4-e5893af0c8d0",
+    "aud": "7qdimlr2m57is83jo44cj9j86i",
+    "email_verified": true,
+    "event_id": "8fad7532-36b9-11e9-aa79-915893d82505",
+    "token_use": "id",
+    "auth_time": 1550850621,
+    "iss": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_BbVWFzVcU",
+    "cognito": "username=sios",
+    "exp": 1550854221,
+    "iat": 1550850622,
+    "email": "simon.olander@gmail.com"
+  },
+  "sourceIp": [
+    "212.105.80.188"
+  ],
+  "defaultAuthStrategy": "ALLOW",
+  "groups": null
+}
