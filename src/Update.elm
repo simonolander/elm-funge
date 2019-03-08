@@ -1,6 +1,9 @@
 module Update exposing (update)
 
+import Api.AppSync
 import BoardUtils
+import Browser
+import Browser.Navigation
 import BrowsingLevelsUpdate
 import ExecutionUtils
 import History
@@ -39,5 +42,13 @@ update msg model =
         ChangedUrl _ ->
             ( model, Cmd.none )
 
-        UrlRequested _ ->
+        UrlRequested urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Cmd.none )
+
+                Browser.External href ->
+                    ( model, Browser.Navigation.load href )
+
+        ApiMsg _ ->
             ( model, Cmd.none )

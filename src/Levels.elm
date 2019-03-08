@@ -849,8 +849,8 @@ levels =
             , levelLabyrinth11
             ]
 
-        a =
-            lvls |> list JsonUtils.encodeLevel |> JsonUtils.toString |> Debug.log "levels:"
+        -- a =
+        --     lvls |> list JsonUtils.encodeLevel |> JsonUtils.toString |> Debug.log "levels:"
     in
     lvls
 

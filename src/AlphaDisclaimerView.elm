@@ -69,7 +69,8 @@ view =
         loginButtonView =
             link
                 []
-                { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=https://efng.simonolander.com"
+                -- { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=https://efng.simonolander.com"
+                { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=http://localhost:3000"
                 , label = ViewComponents.textButton [] Nothing "Login"
                 }
     in

@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Api.AppSync
 import BoardUtils
 import Browser
 import Browser.Events
@@ -7,6 +8,7 @@ import Browser.Navigation
 import History
 import Levels
 import LocalStorageUtils
+import Maybe.Extra
 import Model exposing (..)
 import Time
 import Update
@@ -45,6 +47,27 @@ init windowSize url navigationKey =
         funnelState =
             LocalStorageUtils.initialState
 
+        getTokenFromFragment : String -> Maybe String
+        getTokenFromFragment fragment =
+            fragment
+                |> String.split "&"
+                |> List.map
+                    (\pair ->
+                        case String.split "=" pair of
+                            [ key, value ] ->
+                                Just ( key, value )
+
+                            _ ->
+                                Nothing
+                    )
+                |> Maybe.Extra.values
+                |> List.filter (Tuple.first >> (==) "id_token")
+                |> List.head
+                |> Maybe.map Tuple.second
+
+        token =
+            Maybe.andThen getTokenFromFragment url.fragment
+
         model : Model
         model =
             { windowSize = windowSize
@@ -71,6 +94,9 @@ init windowSize url navigationKey =
             Cmd.batch
                 [ getLevelProgressSolvedCmd
                 , getLevelProgressBoards
+                , token
+                    |> Maybe.map (Api.AppSync.getLevels (always (ApiMsg GetLevelsMsg)))
+                    |> Maybe.withDefault Cmd.none
                 ]
     in
     ( model, cmd )

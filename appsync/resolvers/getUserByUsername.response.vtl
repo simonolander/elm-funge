@@ -1,0 +1,10 @@
+#if($ctx.error)
+    $utils.error($ctx.error.message, $ctx.error.type)
+#end
+
+#set( $jsonObject = $utils.rds.toJsonObject($ctx.result)[0] )
+#if( $jsonObject.size() == 0 )
+$utils.toJson(null)
+#else
+$utils.toJson($jsonObject[0])
+#end

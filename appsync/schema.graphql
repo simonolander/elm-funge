@@ -114,6 +114,7 @@ type Board {
 
 type Level {
     id: String!
+    external_id: String!
     name: String!
     description: [String]!
     io: IO!
@@ -121,9 +122,17 @@ type Level {
     instructionTools: [InstructionTool]!
 }
 
+type User {
+    id: Int! 
+    username: String!
+    completedLevels: [Level]!
+    authoredLevels: [Level]!
+}
+
 type Query {
     listLevels: [Level]!
     getLevel(id: ID!): Level
+    getUserByUsername(username: String!): User
 }
 
 type Mutation {

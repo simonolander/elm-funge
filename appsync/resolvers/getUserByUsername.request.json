@@ -1,0 +1,6 @@
+{
+    "version": "2018-05-29",
+    "statements": [
+        "select * from users where username = '$ctx.arguments.username' limit 1"
+    ]
+}

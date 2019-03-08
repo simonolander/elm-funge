@@ -1,5 +1,6 @@
 module Model exposing
-    ( Board
+    ( ApiMsg(..)
+    , Board
     , BoardSketch
     , BrowsingLevelsMessage(..)
     , Direction(..)
@@ -29,6 +30,7 @@ module Model exposing
     , WindowSize
     )
 
+import Api.AppSync
 import Array exposing (Array)
 import Browser
 import History exposing (History)
@@ -222,6 +224,10 @@ type LocalStorageMsg
     | Clear
 
 
+type ApiMsg
+    = GetLevelsMsg
+
+
 type Msg
     = Resize WindowSize
     | BrowsingLevelsMessage BrowsingLevelsMessage
@@ -231,6 +237,7 @@ type Msg
     | NavigationMessage NavigationMessage
     | ChangedUrl Url
     | UrlRequested Browser.UrlRequest
+    | ApiMsg ApiMsg
 
 
 type alias Model =
