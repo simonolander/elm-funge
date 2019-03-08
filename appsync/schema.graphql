@@ -122,10 +122,21 @@ type Level {
     instructionTools: [InstructionTool]!
 }
 
+type LevelSolution {
+    id: String!
+    level: Level!
+    board: Board!
+    solver: User!
+    number_of_steps: Int!
+    number_of_instructions: Int!
+    area: Int!
+    created_time: Int!
+}
+
 type User {
     id: Int! 
     username: String!
-    completedLevels: [Level]!
+    levelSolutions: [LevelSolution]!
     authoredLevels: [Level]!
 }
 
