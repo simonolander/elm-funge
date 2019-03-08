@@ -3,17 +3,19 @@ module Main exposing (main)
 import BoardUtils
 import Browser
 import Browser.Events
+import Browser.Navigation
 import History
 import Levels
 import LocalStorageUtils
 import Model exposing (..)
 import Time
 import Update
+import Url
 import View
 
 
-init : WindowSize -> ( Model, Cmd Msg )
-init windowSize =
+init : WindowSize -> Url.Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init windowSize url navigationKey =
     let
         levels : List Level
         levels =
@@ -76,11 +78,13 @@ init windowSize =
 
 main : Program WindowSize Model Msg
 main =
-    Browser.element
+    Browser.application
         { view = View.view
         , init = init
         , update = Update.update
         , subscriptions = subscriptions
+        , onUrlChange = ChangedUrl
+        , onUrlRequest = UrlRequested
         }
 
 

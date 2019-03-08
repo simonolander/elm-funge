@@ -35,3 +35,9 @@ update msg model =
 
         LocalStorageMsg localStorageMsg ->
             LocalStorageUtils.update model localStorageMsg
+
+        ChangedUrl _ ->
+            ( model, Cmd.none )
+
+        UrlRequested _ ->
+            ( model, Cmd.none )

@@ -1,6 +1,7 @@
 module View exposing (view)
 
 import AlphaDisclaimerView
+import Browser
 import BrowsingLevelsView
 import Element exposing (..)
 import Element.Background as Background
@@ -15,22 +16,28 @@ import Model exposing (..)
 import SketchingView
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
-    case model.gameState of
-        BrowsingLevels _ ->
-            BrowsingLevelsView.view model
-
-        Sketching levelId sketchingState ->
-            case LevelProgressUtils.getLevelProgress levelId model of
-                Just levelProgress ->
-                    SketchingView.view levelProgress sketchingState
-
-                Nothing ->
+    let
+        html =
+            case model.gameState of
+                BrowsingLevels _ ->
                     BrowsingLevelsView.view model
 
-        Executing execution executionState ->
-            ExecutionView.view execution executionState
+                Sketching levelId sketchingState ->
+                    case LevelProgressUtils.getLevelProgress levelId model of
+                        Just levelProgress ->
+                            SketchingView.view levelProgress sketchingState
 
-        AlphaDisclaimer ->
-            AlphaDisclaimerView.view
+                        Nothing ->
+                            BrowsingLevelsView.view model
+
+                Executing execution executionState ->
+                    ExecutionView.view execution executionState
+
+                AlphaDisclaimer ->
+                    AlphaDisclaimerView.view
+    in
+    { title = "EFNG"
+    , body = [ html ]
+    }

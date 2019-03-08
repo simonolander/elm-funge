@@ -30,9 +30,11 @@ module Model exposing
     )
 
 import Array exposing (Array)
+import Browser
 import History exposing (History)
 import PortFunnel.LocalStorage as LocalStorage
 import PortFunnels
+import Url exposing (Url)
 
 
 type alias LevelId =
@@ -227,6 +229,8 @@ type Msg
     | ExecutionMsg ExecutionMsg
     | LocalStorageMsg LocalStorageMsg
     | NavigationMessage NavigationMessage
+    | ChangedUrl Url
+    | UrlRequested Browser.UrlRequest
 
 
 type alias Model =
