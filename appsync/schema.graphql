@@ -71,8 +71,8 @@ type ExceptionInstruction implements Instruction {
 }
 
 type IO {
-    input: [Int]!
-    output: [Int]!
+    input: [Int!]!
+    output: [Int!]!
 }
 
 enum InstructionToolTag {
@@ -116,10 +116,10 @@ type Level {
     id: String!
     external_id: String!
     name: String!
-    description: [String]!
+    description: [String!]!
     io: IO!
     initialBoard: Board!
-    instructionTools: [InstructionTool]!
+    instructionTools: [InstructionTool!]!
 }
 
 type LevelSolution {
@@ -136,41 +136,25 @@ type LevelSolution {
 type User {
     id: Int! 
     username: String!
-    levelSolutions: [LevelSolution]!
-    authoredLevels: [Level]!
+    levelSolutions: [LevelSolution!]!
+    authoredLevels: [Level!]!
 }
 
 type Query {
-    listLevels: [Level]!
+    listLevels: [Level!]!
     getLevel(id: ID!): Level
     getUserByUsername(username: String!): User
 }
 
 type Mutation {
-    createPet(input: CreateLevelInput!): Level
-    updatePet(input: UpdatePetInput!): Pet
-    deletePet(input: DeletePetInput!): Pet
+    createUser(username: String!): User!
+    createLevelSolution(input: CreateLevelSolutionInput!): LevelSolution!
 }
 
-input CreatePetInput {
-    type: PetType
-    price: Float!
-}
-
-input UpdatePetInput {
-id: ID!
-    type: PetType
-    price: Float!
-}
-
-input DeletePetInput {
-    id: ID!
-}
-
-type Query {
-    getPet(id: ID!): Pet
-    listPets: [Pet]
-    listPetsByPriceRange(min: Float, max: Float): [Pet]
+input CreateLevelSolutionInput {
+    username: String!
+    levelId: Int!
+    board: String!
 }
 
 schema {

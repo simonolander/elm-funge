@@ -1,0 +1,7 @@
+{
+    "version": "2018-05-29",
+    "statements": [
+        "insert into users (username) values ('$context.arguments.username')",
+        "select * from users where username = '$context.arguments.username' limit 1"
+    ]
+}
