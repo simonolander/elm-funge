@@ -24,7 +24,7 @@ exports.levels = (req, res) => {
         return res.status(400)
           .send({
             status: 400,
-            messages: error.map(error => error.message)
+            messages: errors
           });
       }
 
@@ -39,7 +39,7 @@ exports.levels = (req, res) => {
           return res.status(500)
             .send({
               status: 500,
-              message: "An error occured when saving the level to the database",
+              messages: ["An error occured when saving the level to the database"],
               error
             })
         });
@@ -48,7 +48,7 @@ exports.levels = (req, res) => {
       return res.status(400)
         .send({
           status: 400,
-          message: "Method not allowed: " + req.method,
+          messages: [`Method not allowed: ${req.method}`],
         });
     }
   }
@@ -57,7 +57,7 @@ exports.levels = (req, res) => {
     return res.status(500)
       .send({
         status: 500,
-        message: "An error occured when performing the request",
+        messages: ["An error occured when performing the request"],
         error
       });
   }

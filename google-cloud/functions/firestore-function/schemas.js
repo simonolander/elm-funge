@@ -4,7 +4,6 @@ class AnySchema {
     }
 }
 
-
 class ObjectSchema {
     constructor(schema = {}) {
         this.schema = Object.entries(schema);
@@ -12,7 +11,7 @@ class ObjectSchema {
 
     validate(test, path = '') {
         if (typeof test !== 'object') {
-            return [`${path} must be an object but was ${typeof test}`]
+            return [`${path} must be an object but had the type ${typeof test}`]
         }
         else {
             return [].concat(...this.schema.map(([key, value]) => value.validate(test[key], `${path}.${key}`)))
@@ -36,11 +35,11 @@ class ExactSchema {
     }
 
     validate(test, path = '') {
-        if (test === value) {
+        if (test === this.value) {
             return []
         }
         else {
-            return [`${path} must be exactly ${value} but was ${test}`]
+            return [`${path} must be exactly ${this.value} but was ${test}`]
         }
     }
 }
@@ -53,7 +52,7 @@ class StringSchema {
 
     validate(test, path = '') {
         if (typeof test !== 'string') {
-            return [`${path} must be a string but was ${typeof test}`]
+            return [`${path} must be a string but had the type ${typeof test}`]
         }
         else if (typeof this.minLength === 'number' && test.length < this.minLength) {
             return [`${path} must be at least ${this.minLength} characters long`]
@@ -75,7 +74,7 @@ class IntegerSchema {
 
     validate(test, path = '') {
         if (typeof test !== 'number') {
-            return [`${path} must be a number but was ${typeof test}`]
+            return [`${path} must be a number but had the type ${typeof test}`]
         }
         else if (!Number.isInteger(test)) {
             return [`${path} must be an integer but was ${test}`]
@@ -102,7 +101,7 @@ class ArraySchema {
             return [`${path} must be an array`]
         }
         else {
-            return [].concat(testArray.map((test, index) => this.each.validate(test, `${path}[${index}]`)))
+            return [].concat(...testArray.map((test, index) => this.each.validate(test, `${path}[${index}]`)))
         }
     }
 }
@@ -145,7 +144,7 @@ class EnumSchema extends StringSchema {
             return validateSuper;
         }
         else if (!this.enums.some(enumValue => enumValue === test)) {
-            return [`${path} is ${enumValue} but must be one of [${this.enums.join(', ')}]`];
+            return [`${path} is ${test} but must be one of [${this.enums.join(', ')}]`];
         }
         else {
             return [];
