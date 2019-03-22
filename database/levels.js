@@ -4609,4 +4609,4 @@ const levels = [
     }
 ];
 
-export levels;
+exports.levels = levels

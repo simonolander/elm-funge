@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -ex
+cd "$(dirname "$0")"
+
+gcloud functions deploy levels --runtime nodejs8 --trigger-http --source functions/firestore-function

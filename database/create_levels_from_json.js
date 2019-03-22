@@ -1,4 +1,4 @@
-import { levels } from levels;
+const levels = require('./levels').levels
 
 function to_insert_statement(level, id) {
     const board_height = level.initialBoard.board.length;
@@ -157,4 +157,26 @@ function to_insert_statement_list(level_list) {
         .join('\n\n')
 }
 
-console.log(to_insert_statement(levels));
+function toJson(levels) {
+    return levels.map(level => ({
+        ...level,
+        version: 2,
+        initialBoard: {
+            version: 2,
+            width: level.initialBoard.board[0].length,
+            height: level.initialBoard.board.length,
+            instructions: [].concat(...level.initialBoard.board.map(
+                (row, rowIndex) =>
+                    row.filter(instruction => instruction.tag !== "NoOp")
+                        .map(
+                            (instruction, columnIndex) => ({
+                                instruction,
+                                x: columnIndex,
+                                y: rowIndex,
+                            })))),
+        }
+    }))
+}
+
+console.log(JSON.stringify(toJson(levels), null, 2));
+// console.log(to_insert_statement(levels));
