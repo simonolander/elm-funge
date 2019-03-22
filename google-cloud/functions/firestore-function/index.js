@@ -15,7 +15,9 @@ exports.levels = (req, res) => {
         .offset(offset)
         .limit(limit)
         .get()
-        .then(collection => res.status(200).send(collection.docs))
+        .then(collection =>
+          res.status(200)
+            .send(collection.docs.map(doc => doc.data())))
     }
     else if (req.method === 'POST') {
       const level = req.body;

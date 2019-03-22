@@ -269,5 +269,5 @@ exports.levelSchema = new ObjectSchema({
     }),
     index: new IntegerSchema({ minLength: 0 }),
     chapter: new StringSchema,
-    authorId: new NullableSchema(new StringSchema)
+    authorId: new StringSchema
 });
