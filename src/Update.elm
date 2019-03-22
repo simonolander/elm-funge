@@ -1,6 +1,5 @@
 module Update exposing (update)
 
-import Api.AppSync
 import BoardUtils
 import Browser
 import Browser.Navigation

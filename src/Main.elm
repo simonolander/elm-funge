@@ -1,6 +1,5 @@
 module Main exposing (main)
 
-import Api.AppSync
 import BoardUtils
 import Browser
 import Browser.Events
@@ -94,9 +93,6 @@ init windowSize url navigationKey =
             Cmd.batch
                 [ getLevelProgressSolvedCmd
                 , getLevelProgressBoards
-                , token
-                    |> Maybe.map (Api.AppSync.getLevels (always (ApiMsg GetLevelsMsg)))
-                    |> Maybe.withDefault Cmd.none
                 ]
     in
     ( model, cmd )

@@ -30,7 +30,6 @@ module Model exposing
     , WindowSize
     )
 
-import Api.AppSync
 import Array exposing (Array)
 import Browser
 import History exposing (History)
