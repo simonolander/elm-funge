@@ -1,10 +1,96 @@
 const Firestore = require('@google-cloud/firestore');
+const jwt = require('jsonwebtoken');
 const schemas = require('./schemas');
+
+
 const PROJECT_ID = 'luminous-cubist-234816';
 const COLLECTION_NAME = 'numbers';
 const firestore = new Firestore({
   projectId: PROJECT_ID
 });
+
+const AMAZON_COGNITO_PEM =
+  `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnw9jJN1VszovM0H9M0SA
+QB2MvXCGRsdz0WaApl5VYOrCrXOcHsvDzZ4CDup+NJvRMLFbLK8fUMqrZPnY5Qnp
+keF6ZSiX+axHF8531+puvsDeDyYOeX/Ysjaftw5aq9bHcSkEbH5zqKWifClfbFvO
+0cS/bY9T5+astotPH8n87KMG/KMcZOVtOcOhYusb/oIrct40t3z18VfPB+kMQtUK
+4ekt0yf1J543kAY+nBjkyie9/bMyBhjGXJZcly4fRimhatrUgSn/S4BWgPyIzVWP
+6ywgwfDPVQzVgyWQrz5tSLRX5dPLe2zZYkdnTVFWBxynebpg5ZPUoQk+J08/lPLy
+0wIDAQAB
+-----END PUBLIC KEY-----`;
+
+const AMAZON_COGNITO_AUD = '1mu4rr1moo02tobp2m4oe80pn8';
+const AMAZON_COGNITO_ISS = 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_BbVWFzVcU';
+
+const verifyJwt = (req) => {
+  try {
+    const authorizationHeader = req.get('Authorization');
+    if (typeof authorizationHeader !== 'string') {
+      return {
+        success: false,
+        message: `Failed failed to extract authorization header, malformed header: ${authorizationHeader}`
+      };
+    }
+    const splits = authorizationHeader.split(' ');
+    if (splits.length !== 2) {
+      return {
+        success: false,
+        message: `Failed failed to extract authorization header, malformed header: ${authorizationHeader}`
+      };
+    }
+    const [type, token] = splits;
+    if (type !== 'Bearer') {
+      return {
+        success: false,
+        message: `Failed failed to extract authorization header, invalid type: ${type}`
+      };
+    }
+    const tokenObject = jwt.verify(token, AMAZON_COGNITO_PEM, { algorithm: 'RS256' });
+    if (tokenObject.token_use !== 'id') {
+      return {
+        success: false,
+        message: `Failed to verify jwt, invalid token use: ${tokenObject.token_use}`
+      };
+    }
+    if (tokenObject.aud !== AMAZON_COGNITO_AUD) {
+      return {
+        success: false,
+        message: `Failed to verify jwt, invalid audience: ${tokenObject.aud}`
+      };
+    }
+    if (tokenObject.iss !== AMAZON_COGNITO_ISS) {
+      return {
+        success: false,
+        message: `Failed to verify jwt, invalid issuer: ${tokenObject.iss}`
+      };
+    }
+    const username = tokenObject['cognito:username'];
+    if (typeof username !== 'string') {
+      return {
+        success: false,
+        message: `Failed to verify jwt, invalid cognito:username: ${username}`
+      };
+    }
+    if (typeof username.length === 0) {
+      return {
+        success: false,
+        message: `Failed to verify jwt, invalid cognito:username: ${username}`
+      };
+    }
+    return {
+      success: true,
+      username
+    };
+  }
+  catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: e.message
+    };
+  }
+};
 
 exports.levels = (req, res) => {
   try {
