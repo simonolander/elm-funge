@@ -106,6 +106,14 @@ exports.levels = (req, res) => {
             .send(collection.docs.map(doc => doc.data())))
     }
     else if (req.method === 'POST') {
+      const { success, message, username } = verifyJwt(req);
+      if (!success) {
+        return res.status(403)
+          .send({
+            status: 403,
+            messages: [message]
+          })
+      }
       const level = req.body;
       const errors = schemas.levelSchema.validate(level);
       if (errors.length > 0) {
@@ -119,7 +127,8 @@ exports.levels = (req, res) => {
       return firestore.collection("levels")
         .add({
           ...level,
-          createdTime: new Date().getTime()
+          createdTime: new Date().getTime(),
+          authorId: username
         })
         .then(doc => res.status(200).send(doc))
         .catch(error => {

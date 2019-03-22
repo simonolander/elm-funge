@@ -6,7 +6,7 @@ class AnySchema {
 
 class ObjectSchema {
     constructor(schema = {}) {
-        this.schema = Object.entries(schema);
+        this.schema = schema;
     }
 
     validate(test, path = '') {
@@ -14,7 +14,13 @@ class ObjectSchema {
             return [`${path} must be an object but had the type ${typeof test}`]
         }
         else {
-            return [].concat(...this.schema.map(([key, value]) => value.validate(test[key], `${path}.${key}`)))
+            return [].concat(
+                ...Object.entries(this.schema)
+                    .map(([key, value]) => value.validate(test[key], `${path}.${key}`)),
+                ...Object.keys(test)
+                    .filter(key => !this.schema.hasOwnProperty(key))
+                    .map(key => `Unknown property ${path}.${key}`)
+            );
         }
     }
 }
@@ -268,6 +274,5 @@ exports.levelSchema = new ObjectSchema({
         each: new InstructionToolSchema
     }),
     index: new IntegerSchema({ minLength: 0 }),
-    chapter: new StringSchema,
-    authorId: new StringSchema
+    chapter: new StringSchema
 });
