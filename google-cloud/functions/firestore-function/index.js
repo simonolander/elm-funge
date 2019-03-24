@@ -80,7 +80,8 @@ const verifyJwt = (req) => {
     }
     return {
       success: true,
-      username
+      username,
+      email: tokenObject.email
     };
   }
   catch (e) {
