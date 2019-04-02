@@ -1,29 +1,135 @@
-module SketchingView exposing (view)
+module Page.Draft exposing (view)
 
 import Array exposing (Array)
-import BoardUtils
+import Browser exposing (Document)
+import Data.Board as Board exposing (Board)
+import Data.Direction exposing (Direction(..))
+import Data.DraftId exposing (DraftId)
+import Data.History as History
+import Data.Instruction exposing (Instruction(..))
+import Data.InstructionTool exposing (InstructionTool(..))
+import Data.InstructionToolbox exposing (InstructionToolbox)
+import Data.LevelProgress exposing (LevelProgress)
+import Data.Position exposing (Position)
+import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
-import History
-import Html exposing (Html)
 import Html.Attributes
 import InstructionToolView
-import InstructionView
-import Model exposing (..)
+import Route
 import ViewComponents exposing (..)
 
 
+
+-- CONSTANTS
+
+
+instructionSpacing : Int
 instructionSpacing =
     10
 
 
-view : LevelProgress -> SketchingState -> Html Msg
-view levelProgress sketchingState =
+
+-- MODEL
+
+
+type State
+    = Editing
+    | Importing
+        { importData : String
+        , errorMessage : Maybe String
+        }
+
+
+type alias Model =
+    { session : Session
+    , draft : LevelProgress
+    , draftId : DraftId
+    , state : State
+    }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = ImportDataChanged String
+    | Import String
+    | ImportOpen
+    | ImportClosed
+    | EditUndo
+    | EditRedo
+    | EditClear
+    | ClickedBack
+    | ClickedExecute
+    | ToolboxReplaced InstructionToolbox
+    | InstructionPlaced Position Instruction
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        ImportDataChanged importData ->
+            case model.state of
+                Importing _ ->
+                    {model |
+                    state = Importing {
+                    importData = importData
+                    , errorMessage = Nothing}
+                    }
+
+                Editing ->
+                    (model, Cmd.none)
+
+        Import importData ->
+
+
+        ImportOpen ->
+            {model |
+            state = Importing {
+                                        importData = importData
+                                        , errorMessage = Nothing}
+                                        }
+
+        ImportClosed ->
+
+
+        EditUndo ->
+
+
+        EditRedo ->
+
+
+        EditClear ->
+
+
+        ClickedBack ->
+
+
+        ClickedExecute ->
+
+
+        ToolboxReplaced instructionToolbox ->
+
+
+        InstructionPlaced position instruction ->
+
+
+
+
+-- VIEW
+
+
+view : Model -> Document Msg
+view model =
     let
+        levelProgress =
+            model.draft
+
         selectedInstructionTool =
             getSelectedInstructionTool levelProgress.boardSketch.instructionToolbox
 
@@ -41,11 +147,11 @@ view levelProgress sketchingState =
                     ]
 
         importExportBoardView =
-            case sketchingState of
-                JustSketching ->
+            case model.state of
+                Editing ->
                     boardView
 
-                Importing maybeError string ->
+                Importing { importData, errorMessage } ->
                     boardView
                         |> el
                             [ width (fillPortion 3)
@@ -72,8 +178,8 @@ view levelProgress sketchingState =
                                         , width (px 500)
                                         , height (px 500)
                                         ]
-                                        { onChange = SketchMsg << ImportChanged
-                                        , text = string
+                                        { onChange = ImportDataChanged
+                                        , text = importData
                                         , placeholder = Nothing
                                         , spellcheck = False
                                         , label =
@@ -81,16 +187,16 @@ view levelProgress sketchingState =
                                                 []
                                                 (text "Copy or paste from here")
                                         }
-                                    , maybeError
+                                    , errorMessage
                                         |> Maybe.map text
                                         |> Maybe.map List.singleton
                                         |> Maybe.map (paragraph [])
                                         |> Maybe.withDefault none
                                     , ViewComponents.textButton []
-                                        (Just (SketchMsg (Import string)))
+                                        (Just (Import importData))
                                         "Import"
                                     , ViewComponents.textButton []
-                                        (Just (SketchMsg ImportExportClose))
+                                        (Just ImportClosed)
                                         "Close"
                                     ]
                                 )
@@ -118,8 +224,11 @@ view levelProgress sketchingState =
             ]
 
 
-viewSidebar levelProgress =
+viewSidebar model =
     let
+        levelProgress =
+            model.draft
+
         titleView =
             viewTitle
                 []
@@ -131,36 +240,32 @@ viewSidebar levelProgress =
 
         backButton =
             textButton []
-                (Just
-                    (NavigationMessage
-                        (GoToBrowsingLevels (Just levelProgress.level.id))
-                    )
-                )
+                (Just ClickedBack)
                 "Back"
 
         undoButtonView =
             textButton []
-                (Just (SketchMsg SketchUndo))
+                (Just EditUndo)
                 "Undo"
 
         redoButtonView =
             textButton []
-                (Just (SketchMsg SketchRedo))
+                (Just EditRedo)
                 "Redo"
 
         clearButtonView =
             textButton []
-                (Just (SketchMsg SketchClear))
+                (Just EditClear)
                 "Clear"
 
         importExportButtonView =
             textButton []
-                (Just (SketchMsg ImportExportOpen))
+                (Just ImportOpen)
                 "Import / Export"
 
         executeButtonView =
             textButton []
-                (Just (NavigationMessage (GoToExecuting levelProgress.level.id)))
+                (Just ClickedExecute)
                 "Execute"
     in
     column
@@ -231,23 +336,20 @@ viewToolSidebar levelProgress =
 
                 onPress =
                     { instructionToolbox | selectedIndex = Just index }
-                        |> NewInstructionToolbox
-                        |> SketchMsg
+                        |> ToolboxReplaced
                         |> Just
             in
             instructionToolButton attributes onPress instructionTool
 
         replaceToolMessage index instructionTool =
-            SketchMsg
-                (NewInstructionToolbox
-                    { instructionToolbox
-                        | instructionTools =
-                            instructionTools
-                                |> Array.fromList
-                                |> Array.set index instructionTool
-                                |> Array.toList
-                    }
-                )
+            ToolboxReplaced
+                { instructionToolbox
+                    | instructionTools =
+                        instructionTools
+                            |> Array.fromList
+                            |> Array.set index instructionTool
+                            |> Array.toList
+                }
 
         toolExtraView =
             case instructionToolbox.selectedIndex of
@@ -391,7 +493,7 @@ viewInstruction : Board -> Maybe InstructionTool -> Int -> Int -> Instruction ->
 viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instruction =
     let
         initialInstruction =
-            BoardUtils.get { x = columnIndex, y = rowIndex } initialBoard
+            Board.get { x = columnIndex, y = rowIndex } initialBoard
                 |> Maybe.withDefault NoOp
 
         editable =
@@ -420,8 +522,7 @@ viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instru
             if editable then
                 selectedInstructionTool
                     |> Maybe.map getInstruction
-                    |> Maybe.map (PlaceInstruction { x = columnIndex, y = rowIndex })
-                    |> Maybe.map SketchMsg
+                    |> Maybe.map (InstructionPlaced { x = columnIndex, y = rowIndex })
 
             else
                 Nothing

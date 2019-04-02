@@ -1,48 +1,96 @@
-module BrowsingLevelsView exposing (view)
+module Page.Levels exposing (view)
 
-import Array exposing (Array)
-import BoardUtils
+import Browser exposing (Document)
+import Data.LevelProgress exposing (LevelProgress)
+import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
-import History
-import Html exposing (Html)
 import Html.Attributes
-import Model exposing (..)
+import RemoteData exposing (RemoteData(..), WebData)
+import Route
 import ViewComponents
 
 
-view : Model -> Html Msg
+
+-- MODEL
+
+
+type alias Model =
+    { session : Session
+    , levels : WebData (List LevelProgress)
+    , selectedLevel : Maybe LevelProgress
+    }
+
+
+
+-- VIEW
+
+
+view : Model -> Document Msg
 view model =
     let
-        levelProgresses =
-            model.levelProgresses
+        content =
+            case model.levels of
+                NotAsked ->
+                    viewNotAsked
 
-        maybeSelectedLevelProgress =
-            case model.gameState of
-                BrowsingLevels maybeLevelId ->
-                    maybeLevelId
-                        |> Maybe.andThen
-                            (\levelId ->
-                                levelProgresses
-                                    |> List.filter (\levelProgress -> levelProgress.level.id == levelId)
-                                    |> List.head
-                            )
+                Loading ->
+                    viewLoading
 
-                _ ->
-                    Nothing
+                Failure error ->
+                    viewFailure error
 
-        maybeSelectedLevelId =
-            Maybe.map (.level >> .id) maybeSelectedLevelProgress
+                Success levels ->
+                    viewSuccess
+                        { session = model.session
+                        , levels = levels
+                        , selectedLevel = model.selectedLevel
+                        }
+    in
+    { title = "Levels"
+    , body =
+        layout
+            [ Background.color (rgb 0 0 0)
+            , width fill
+            , height fill
+            , Font.family
+                [ Font.monospace
+                ]
+            , Font.color (rgb 1 1 1)
+            ]
+            content
+            |> List.singleton
+    }
 
+
+viewNotAsked =
+    text "NotAsked"
+
+
+viewLoading =
+    text "Loading"
+
+
+viewFailure error =
+    text "Failure"
+
+
+viewSuccess :
+    { session : Session
+    , levels : List LevelProgress
+    , selectedLevel : Maybe LevelProgress
+    }
+    -> Element Msg
+viewSuccess { session, levels, selectedLevel } =
+    let
         levelsView =
-            viewLevels maybeSelectedLevelId levelProgresses
+            viewLevels selectedLevel levels
 
         sidebarView =
-            maybeSelectedLevelProgress
+            selectedLevel
                 |> Maybe.map viewSidebar
                 |> Maybe.withDefault
                     (column
@@ -65,27 +113,23 @@ view model =
                         ]
                     )
     in
-    layout
-        [ Background.color (rgb 0 0 0)
-        , width fill
+    row
+        [ width fill
         , height fill
-        , Font.family
-            [ Font.monospace
-            ]
-        , Font.color (rgb 1 1 1)
         ]
-        (row
-            [ width fill
-            , height fill
-            ]
-            [ sidebarView, levelsView ]
-        )
+        [ sidebarView, levelsView ]
 
 
-viewLevels maybeSelectedLevelId levelProgresses =
+viewLevels : Maybe LevelProgress -> List LevelProgress -> Element Msg
+viewLevels maybeSelectedLevel levelProgresses =
     let
         viewLevel levelProgress =
             let
+                selected =
+                    maybeSelectedLevel
+                        |> Maybe.map (.level >> .id >> (==) levelProgress.level.id)
+                        |> Maybe.withDefault False
+
                 buttonAttributes =
                     if levelProgress.solved then
                         [ htmlAttribute
@@ -98,11 +142,11 @@ viewLevels maybeSelectedLevelId levelProgresses =
             Input.button
                 buttonAttributes
                 { onPress =
-                    if maybeSelectedLevelId == Just levelProgress.level.id then
-                        Just (NavigationMessage (GoToSketching levelProgress.level.id))
+                    if selected then
+                        Just OpenDraftClicked
 
                     else
-                        Just (BrowsingLevelsMessage (SelectLevel levelProgress.level.id))
+                        Just (SelectLevel levelProgress)
                 , label =
                     column
                         [ padding 20
@@ -114,7 +158,7 @@ viewLevels maybeSelectedLevelId levelProgresses =
                             [ Background.color (rgba 1 1 1 0.5)
                             ]
                         , Background.color
-                            (if maybeSelectedLevelId == Just levelProgress.level.id then
+                            (if selected then
                                 rgba 1 1 1 0.4
 
                              else
@@ -173,7 +217,7 @@ viewSidebar levelProgress =
         goToSketchView =
             ViewComponents.textButton
                 []
-                (Just (NavigationMessage (GoToSketching levelProgress.level.id)))
+                (Just OpenDraftClicked)
                 "Open Editor"
     in
     column
@@ -189,3 +233,28 @@ viewSidebar levelProgress =
         , descriptionView
         , goToSketchView
         ]
+
+
+
+-- UPDATE
+
+
+type Msg
+    = SelectLevel LevelProgress
+    | OpenDraftClicked
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        SelectLevel selectedLevel ->
+            ( { model
+                | selectedLevel = Just selectedLevel
+              }
+            , Cmd.none
+            )
+
+        OpenDraftClicked ->
+            ( model
+            , Route.replaceUrl model.session.key Route.Home
+            )

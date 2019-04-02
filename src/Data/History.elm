@@ -1,4 +1,4 @@
-module History exposing
+module Data.History exposing
     ( History
     , back
     , current

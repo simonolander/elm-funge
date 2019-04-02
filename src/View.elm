@@ -2,7 +2,7 @@ module View exposing (view)
 
 import AlphaDisclaimerView
 import Browser
-import BrowsingLevelsView
+import Draft
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -12,8 +12,8 @@ import ExecutionView
 import Html exposing (Html)
 import Html.Attributes
 import LevelProgressUtils
+import Levels
 import Model exposing (..)
-import SketchingView
 
 
 view : Model -> Browser.Document Msg
@@ -22,15 +22,15 @@ view model =
         html =
             case model.gameState of
                 BrowsingLevels _ ->
-                    BrowsingLevelsView.view model
+                    Levels.view model
 
                 Sketching levelId sketchingState ->
                     case LevelProgressUtils.getLevelProgress levelId model of
                         Just levelProgress ->
-                            SketchingView.view levelProgress sketchingState
+                            Draft.view levelProgress sketchingState
 
                         Nothing ->
-                            BrowsingLevelsView.view model
+                            Levels.view model
 
                 Executing execution executionState ->
                     ExecutionView.view execution executionState

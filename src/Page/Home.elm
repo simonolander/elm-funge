@@ -1,19 +1,30 @@
-module AlphaDisclaimerView exposing (view)
+module Page.Home exposing (Model, view)
 
+import Browser exposing (Document)
+import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
-import Element.Input as Input
-import Html exposing (Html)
-import Html.Attributes
 import Model exposing (..)
+import Route exposing (Route)
 import ViewComponents
 
 
-view : Html Msg
-view =
+
+-- MODEL
+
+
+type alias Model =
+    { session : Session
+    }
+
+
+
+-- VIEW
+
+
+view : Model -> Document Msg
+view model =
     let
         titleView =
             text "EFNG"
@@ -64,7 +75,11 @@ view =
                 ]
 
         playButtonView =
-            ViewComponents.textButton [] (Just (NavigationMessage (GoToBrowsingLevels Nothing))) "I got it, let's play"
+            link
+                []
+                { url = Route.toString Route.Levels
+                , label = text "I got it, let's play"
+                }
 
         loginButtonView =
             link
@@ -73,25 +88,30 @@ view =
                 { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=http://localhost:3000"
                 , label = ViewComponents.textButton [] Nothing "Login"
                 }
-    in
-    column
-        [ padding 100
-        , spacing 20
-        ]
-        [ titleView
-        , alphaDisclaimerView
-        , tinyInstructionsView
-        , featureListView
-        , sourceCodeView
-        , playButtonView
-        , loginButtonView
-        ]
-        |> layout
-            [ Background.color (rgb 0 0 0)
-            , width fill
-            , height fill
-            , Font.family
-                [ Font.monospace
+
+        body =
+            column
+                [ padding 100
+                , spacing 20
                 ]
-            , Font.color (rgb 1 1 1)
-            ]
+                [ titleView
+                , alphaDisclaimerView
+                , tinyInstructionsView
+                , featureListView
+                , sourceCodeView
+                , playButtonView
+                , loginButtonView
+                ]
+                |> layout
+                    [ Background.color (rgb 0 0 0)
+                    , width fill
+                    , height fill
+                    , Font.family
+                        [ Font.monospace
+                        ]
+                    , Font.color (rgb 1 1 1)
+                    ]
+    in
+    { title = "Home"
+    , body = body
+    }
