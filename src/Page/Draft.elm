@@ -2,13 +2,16 @@ module Page.Draft exposing (view)
 
 import Array exposing (Array)
 import Browser exposing (Document)
+import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
 import Data.Direction exposing (Direction(..))
+import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.History as History
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool exposing (InstructionTool(..))
-import Data.InstructionToolbox exposing (InstructionToolbox)
+import Data.InstructionToolbox as InstructionToolbox exposing (InstructionToolbox)
+import Data.Level exposing (Level)
 import Data.LevelProgress exposing (LevelProgress)
 import Data.Position exposing (Position)
 import Data.Session exposing (Session)
@@ -19,6 +22,8 @@ import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
 import InstructionToolView
+import Json.Decode as Decode exposing (Error)
+import Json.Encode as Encode
 import Route
 import ViewComponents exposing (..)
 
@@ -46,9 +51,11 @@ type State
 
 type alias Model =
     { session : Session
-    , draft : LevelProgress
+    , draft : Draft
+    , level : Level
     , draftId : DraftId
     , state : State
+    , toolbox : InstructionToolbox
     }
 
 
@@ -76,48 +83,104 @@ update msg model =
         ImportDataChanged importData ->
             case model.state of
                 Importing _ ->
-                    {model |
-                    state = Importing {
-                    importData = importData
-                    , errorMessage = Nothing}
-                    }
+                    ( { model
+                        | state =
+                            Importing
+                                { importData = importData
+                                , errorMessage = Nothing
+                                }
+                      }
+                    , Cmd.none
+                    )
 
                 Editing ->
-                    (model, Cmd.none)
+                    ( model, Cmd.none )
 
         Import importData ->
+            case Decode.decodeString Board.decoder importData of
+                Ok board ->
+                    ( { model
+                        | draft = Draft.pushBoard board model.draft
+                        , state = Editing
+                      }
+                    , Cmd.none
+                    )
 
+                Err error ->
+                    ( { model
+                        | state = Importing { importData = importData, errorMessage = Just (Decode.errorToString error) }
+                      }
+                    , Cmd.none
+                    )
 
         ImportOpen ->
-            {model |
-            state = Importing {
-                                        importData = importData
-                                        , errorMessage = Nothing}
-                                        }
+            ( { model
+                | state =
+                    Importing
+                        { importData =
+                            History.current model.draft.boardHistory
+                                |> Board.encode
+                                |> Encode.encode 2
+                        , errorMessage = Nothing
+                        }
+              }
+            , Cmd.none
+            )
 
         ImportClosed ->
-
+            ( { model | state = Editing }
+            , Cmd.none
+            )
 
         EditUndo ->
-
+            ( { model
+                | draft = Draft.undo model.draft
+              }
+            , Cmd.none
+            )
 
         EditRedo ->
-
+            ( { model
+                | draft = Draft.redo model.draft
+              }
+            , Cmd.none
+            )
 
         EditClear ->
-
+            ( { model
+                | draft = Draft.pushBoard model.level.initialBoard model.draft
+              }
+            , Cmd.none
+            )
 
         ClickedBack ->
-
+            ( model
+            , Navigation.back model.session.key 1
+            )
 
         ClickedExecute ->
+            ( model, Cmd.none )
 
-
-        ToolboxReplaced instructionToolbox ->
-
+        ToolboxReplaced toolbox ->
+            ( { model
+                | toolbox = toolbox
+              }
+            , Cmd.none
+            )
 
         InstructionPlaced position instruction ->
-
+            ( { model
+                | draft =
+                    let
+                        board =
+                            model.draft.boardHistory
+                                |> History.current
+                                |> Board.set position instruction
+                    in
+                    Draft.pushBoard board model.draft
+              }
+            , Cmd.none
+            )
 
 
 
@@ -127,16 +190,13 @@ update msg model =
 view : Model -> Document Msg
 view model =
     let
-        levelProgress =
-            model.draft
-
         selectedInstructionTool =
-            getSelectedInstructionTool levelProgress.boardSketch.instructionToolbox
+            InstructionToolbox.getSelected model.toolbox
 
         boardView =
-            levelProgress.boardSketch.boardHistory
+            model.draft.boardHistory
                 |> History.current
-                |> Array.indexedMap (viewRow levelProgress.level.initialBoard selectedInstructionTool)
+                |> Array.indexedMap (viewRow model.level.initialBoard selectedInstructionTool)
                 |> Array.toList
                 |> column
                     [ spacing instructionSpacing
@@ -203,10 +263,10 @@ view model =
                             ]
 
         sidebarView =
-            viewSidebar levelProgress
+            viewSidebar model
 
         toolSidebarView =
-            viewToolSidebar levelProgress
+            viewToolSidebar model
     in
     row
         [ width fill
@@ -301,11 +361,11 @@ viewSidebar model =
         ]
 
 
-viewToolSidebar : LevelProgress -> Element Msg
-viewToolSidebar levelProgress =
+viewToolSidebar : Model -> Element Msg
+viewToolSidebar model =
     let
         instructionToolbox =
-            levelProgress.boardSketch.instructionToolbox
+            model.toolbox
 
         instructionTools =
             instructionToolbox.instructionTools
@@ -342,19 +402,12 @@ viewToolSidebar levelProgress =
             instructionToolButton attributes onPress instructionTool
 
         replaceToolMessage index instructionTool =
-            ToolboxReplaced
-                { instructionToolbox
-                    | instructionTools =
-                        instructionTools
-                            |> Array.fromList
-                            |> Array.set index instructionTool
-                            |> Array.toList
-                }
+            ToolboxReplaced (InstructionToolbox.set index instructionTool instructionToolbox)
 
         toolExtraView =
             case instructionToolbox.selectedIndex of
                 Just index ->
-                    case getSelectedInstructionTool instructionToolbox of
+                    case InstructionToolbox.getSelected instructionToolbox of
                         Just (ChangeAnyDirection selectedDirection) ->
                             [ Left, Up, Down, Right ]
                                 |> List.map
@@ -461,7 +514,8 @@ viewToolSidebar levelProgress =
 
         toolsView =
             instructionTools
-                |> List.indexedMap viewTool
+                |> Array.indexedMap viewTool
+                |> Array.toList
                 |> wrappedRow
                     [ width (px 222)
                     , spacing 10
@@ -528,17 +582,6 @@ viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instru
                 Nothing
     in
     instructionButton attributes onPress instruction
-
-
-getSelectedInstructionTool : InstructionToolbox -> Maybe InstructionTool
-getSelectedInstructionTool instructionToolbox =
-    instructionToolbox.selectedIndex
-        |> Maybe.andThen
-            (\index ->
-                instructionToolbox.instructionTools
-                    |> Array.fromList
-                    |> Array.get index
-            )
 
 
 getInstruction : InstructionTool -> Instruction

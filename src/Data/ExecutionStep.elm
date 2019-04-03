@@ -1,6 +1,6 @@
 module Data.ExecutionStep exposing (ExecutionStep)
 
-import Board exposing (Board)
+import Data.Board exposing (Board)
 import Data.Input exposing (Input)
 import Data.InstructionPointer exposing (InstructionPointer)
 import Data.Output exposing (Output)
