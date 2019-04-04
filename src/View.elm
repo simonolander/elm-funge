@@ -8,7 +8,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Input as Input
-import ExecutionView
+import Execution
 import Html exposing (Html)
 import Html.Attributes
 import LevelProgressUtils
@@ -33,7 +33,7 @@ view model =
                             Levels.view model
 
                 Executing execution executionState ->
-                    ExecutionView.view execution executionState
+                    Execution.view execution executionState
 
                 AlphaDisclaimer ->
                     AlphaDisclaimerView.view

@@ -29,20 +29,6 @@ type BrowsingLevelsMessage
     = SelectLevel LevelId
 
 
-type NavigationMessage
-    = GoToBrowsingLevels (Maybe LevelId)
-    | GoToSketching LevelId
-    | GoToExecuting LevelId
-
-
-type ExecutionMsg
-    = ExecutionStepOne
-    | ExecutionUndo
-    | ExecutionRun
-    | ExecutionFastForward
-    | ExecutionPause
-
-
 type LocalStorageMsg
     = LocalStorageProcess LocalStorage.Value
     | Clear

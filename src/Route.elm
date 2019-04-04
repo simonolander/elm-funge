@@ -1,4 +1,4 @@
-module Route exposing (Route(..), back, fromUrl, replaceUrl, toString)
+module Route exposing (Route(..), back, fromUrl, pushUrl, replaceUrl, toString)
 
 import Browser.Navigation as Navigation
 import Data.DraftId as DraftId
@@ -47,6 +47,11 @@ toString route =
                     [ "drafts", DraftId.toString draftId, "execute" ]
     in
     "/#" ++ String.join "/" pieces
+
+
+pushUrl : Navigation.Key -> Route -> Cmd msg
+pushUrl key route =
+    Navigation.pushUrl key (toString route)
 
 
 replaceUrl : Navigation.Key -> Route -> Cmd msg

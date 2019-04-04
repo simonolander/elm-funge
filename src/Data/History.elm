@@ -7,6 +7,7 @@ module Data.History exposing
     , hasFuture
     , hasPast
     , push
+    , pushflip
     , singleton
     , size
     )
@@ -65,18 +66,17 @@ forward history =
             }
 
 
-
--- push : a -> History a -> History a
--- push a history =
---     singleton a
-
-
 push : a -> History a -> History a
 push a history =
     { past = history.current :: history.past
     , current = a
     , future = []
     }
+
+
+pushflip : History a -> a -> History a
+pushflip history a =
+    push a history
 
 
 size : History a -> Int

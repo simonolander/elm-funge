@@ -159,7 +159,7 @@ update msg model =
             )
 
         ClickedExecute ->
-            ( model, Cmd.none )
+            ( model, Route.pushUrl model.session.key (Route.ExecuteDraft model.draft.id) )
 
         ToolboxReplaced toolbox ->
             ( { model
