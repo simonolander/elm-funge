@@ -1,7 +1,7 @@
-module Page.Levels exposing (view)
+module Page.Levels exposing (Model, Msg, update, view)
 
 import Browser exposing (Document)
-import Data.LevelProgress exposing (LevelProgress)
+import Data.LevelProgress as LevelProgress exposing (LevelProgress)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
@@ -131,7 +131,7 @@ viewLevels maybeSelectedLevel levelProgresses =
                         |> Maybe.withDefault False
 
                 buttonAttributes =
-                    if levelProgress.solved then
+                    if LevelProgress.isSolved levelProgress then
                         [ htmlAttribute
                             (Html.Attributes.class "solved")
                         ]
@@ -206,7 +206,7 @@ viewSidebar levelProgress =
                 [ el
                     [ width fill
                     ]
-                    (if levelProgress.solved then
+                    (if LevelProgress.isSolved levelProgress then
                         text "Solved"
 
                      else

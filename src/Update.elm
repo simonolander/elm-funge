@@ -7,7 +7,7 @@ import BrowsingLevelsUpdate
 import ExecutionUtils
 import History
 import JsonUtils
-import LocalStorageUtils
+import LocalStorage
 import Model exposing (..)
 import NavigationUpdate
 import SketchUpdate
@@ -36,7 +36,7 @@ update msg model =
             ExecutionUtils.update executionMsg model
 
         LocalStorageMsg localStorageMsg ->
-            LocalStorageUtils.update model localStorageMsg
+            LocalStorage.update model localStorageMsg
 
         ChangedUrl _ ->
             ( model, Cmd.none )

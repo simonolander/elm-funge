@@ -1,9 +1,10 @@
 module Levels exposing (levels)
 
-import BoardUtils
-import Json.Encode exposing (..)
-import JsonUtils
-import Model exposing (..)
+import Data.Board as Board
+import Data.Direction exposing (Direction(..))
+import Data.Instruction exposing (Instruction(..))
+import Data.InstructionTool exposing (InstructionTool(..))
+import Data.Level exposing (Level)
 
 
 levelTest : Level
@@ -16,8 +17,8 @@ levelTest =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 3 3
-            |> BoardUtils.set { x = 2, y = 2 } Terminate
+        Board.empty 3 3
+            |> Board.set { x = 2, y = 2 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -47,7 +48,7 @@ levelDoubleTheFun =
         , output = [ 2, 16, 38, 6, 10, 62, 18 ]
         }
     , initialBoard =
-        BoardUtils.empty 4 4
+        Board.empty 4 4
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -72,7 +73,7 @@ level123 =
         , output = [ 1, 2, 3 ]
         }
     , initialBoard =
-        BoardUtils.empty 4 4
+        Board.empty 4 4
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -101,7 +102,7 @@ levelCountDown =
                 |> List.concat
         }
     , initialBoard =
-        BoardUtils.empty 7 7
+        Board.empty 7 7
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -127,7 +128,7 @@ levelSomeSums =
             [ 6, 23, 21, 16 ]
         }
     , initialBoard =
-        BoardUtils.empty 7 7
+        Board.empty 7 7
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -161,7 +162,7 @@ levelOneMinusTheOther =
                 |> List.map (\( a, b ) -> a - b)
         }
     , initialBoard =
-        BoardUtils.empty 7 7
+        Board.empty 7 7
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -194,7 +195,7 @@ levelPowersOfTwo =
                 |> List.map ((^) 2)
         }
     , initialBoard =
-        BoardUtils.empty 8 8
+        Board.empty 8 8
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -227,7 +228,7 @@ levelTriangularNumbers =
                 |> List.map (\n -> n * (n + 1) // 2)
         }
     , initialBoard =
-        BoardUtils.empty 8 8
+        Board.empty 8 8
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -260,7 +261,7 @@ levelSignalAmplifier =
                 |> List.map ((+) 10)
         }
     , initialBoard =
-        BoardUtils.empty 5 5
+        Board.empty 5 5
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -295,7 +296,7 @@ levelMultiplier =
                 |> List.map (\( x, y ) -> x * y)
         }
     , initialBoard =
-        BoardUtils.empty 7 7
+        Board.empty 7 7
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -331,7 +332,7 @@ levelDivideAndConquer =
                 |> List.map (\( x, y ) -> x // y)
         }
     , initialBoard =
-        BoardUtils.empty 7 7
+        Board.empty 7 7
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -367,7 +368,7 @@ levelSequenceReverser =
                 |> List.reverse
         }
     , initialBoard =
-        BoardUtils.empty 5 5
+        Board.empty 5 5
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -401,7 +402,7 @@ levelSequenceSorter =
                 |> List.sort
         }
     , initialBoard =
-        BoardUtils.empty 7 7
+        Board.empty 7 7
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -445,7 +446,7 @@ levelLessIsMore =
                     )
         }
     , initialBoard =
-        BoardUtils.empty 8 8
+        Board.empty 8 8
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -473,15 +474,15 @@ levelLabyrinth1 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 2, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 4 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 2, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -499,14 +500,14 @@ levelLabyrinth2 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 2 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -524,17 +525,17 @@ levelLabyrinth3 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 2 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -553,20 +554,20 @@ levelLabyrinth4 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 1, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 3 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 1, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Right
@@ -585,20 +586,20 @@ levelLabyrinth5 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 2 } (PushToStack 1)
-            |> BoardUtils.set { x = 3, y = 4 } (Branch Right Up)
-            |> BoardUtils.set { x = 4, y = 4 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (PushToStack 1)
+            |> Board.set { x = 3, y = 4 } (Branch Right Up)
+            |> Board.set { x = 4, y = 4 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -616,21 +617,21 @@ levelLabyrinth6 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 1 } (PushToStack 1)
-            |> BoardUtils.set { x = 2, y = 3 } (Branch Right Up)
-            |> BoardUtils.set { x = 3, y = 3 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (PushToStack 1)
+            |> Board.set { x = 2, y = 3 } (Branch Right Up)
+            |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -649,23 +650,23 @@ levelLabyrinth7 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 1 } Increment
-            |> BoardUtils.set { x = 2, y = 3 } (Branch Right Left)
-            |> BoardUtils.set { x = 3, y = 3 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } Increment
+            |> Board.set { x = 2, y = 3 } (Branch Right Left)
+            |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -685,12 +686,12 @@ levelLabyrinth8 =
         , output = [ 1, 2, 3, 4 ]
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 2, y = 1 } Increment
-            |> BoardUtils.set { x = 3, y = 1 } Print
-            |> BoardUtils.set { x = 2, y = 2 } Print
-            |> BoardUtils.set { x = 3, y = 2 } Increment
-            |> BoardUtils.set { x = 4, y = 0 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 2, y = 1 } Increment
+            |> Board.set { x = 3, y = 1 } Print
+            |> Board.set { x = 2, y = 2 } Print
+            |> Board.set { x = 3, y = 2 } Increment
+            |> Board.set { x = 4, y = 0 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -708,19 +709,19 @@ levelLabyrinth9 =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 0 } JumpForward
-            |> BoardUtils.set { x = 0, y = 1 } JumpForward
-            |> BoardUtils.set { x = 1, y = 2 } JumpForward
-            |> BoardUtils.set { x = 3, y = 2 } JumpForward
-            |> BoardUtils.set { x = 4, y = 3 } JumpForward
-            |> BoardUtils.set { x = 1, y = 4 } JumpForward
-            |> BoardUtils.set { x = 2, y = 4 } JumpForward
-            |> BoardUtils.set { x = 3, y = 4 } JumpForward
-            |> BoardUtils.set { x = 2, y = 2 } Terminate
+        Board.empty 5 5
+            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } JumpForward
+            |> Board.set { x = 0, y = 1 } JumpForward
+            |> Board.set { x = 1, y = 2 } JumpForward
+            |> Board.set { x = 3, y = 2 } JumpForward
+            |> Board.set { x = 4, y = 3 } JumpForward
+            |> Board.set { x = 1, y = 4 } JumpForward
+            |> Board.set { x = 2, y = 4 } JumpForward
+            |> Board.set { x = 3, y = 4 } JumpForward
+            |> Board.set { x = 2, y = 2 } Terminate
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -738,20 +739,20 @@ levelLabyrinth10 =
         , output = [ 1 ]
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 0, y = 2 } JumpForward
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 1, y = 0 } JumpForward
-            |> BoardUtils.set { x = 1, y = 2 } (Branch Left Up)
-            |> BoardUtils.set { x = 2, y = 1 } JumpForward
-            |> BoardUtils.set { x = 2, y = 2 } Terminate
-            |> BoardUtils.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 2 } (Branch Right Up)
-            |> BoardUtils.set { x = 3, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 3, y = 4 } JumpForward
-            |> BoardUtils.set { x = 4, y = 1 } JumpForward
+        Board.empty 5 5
+            |> Board.set { x = 0, y = 2 } JumpForward
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 0 } JumpForward
+            |> Board.set { x = 1, y = 2 } (Branch Left Up)
+            |> Board.set { x = 2, y = 1 } JumpForward
+            |> Board.set { x = 2, y = 2 } Terminate
+            |> Board.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Branch Right Up)
+            |> Board.set { x = 3, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } JumpForward
+            |> Board.set { x = 4, y = 1 } JumpForward
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -771,20 +772,20 @@ levelLabyrinth11 =
         , output = [ 1 ]
         }
     , initialBoard =
-        BoardUtils.empty 5 5
-            |> BoardUtils.set { x = 2, y = 0 } JumpForward
-            |> BoardUtils.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 1 } JumpForward
-            |> BoardUtils.set { x = 2, y = 1 } (Branch Up Right)
-            |> BoardUtils.set { x = 1, y = 2 } JumpForward
-            |> BoardUtils.set { x = 2, y = 2 } Terminate
-            |> BoardUtils.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> BoardUtils.set { x = 2, y = 3 } (Branch Down Right)
-            |> BoardUtils.set { x = 4, y = 3 } JumpForward
-            |> BoardUtils.set { x = 1, y = 4 } JumpForward
-            |> BoardUtils.set { x = 2, y = 4 } Increment
+        Board.empty 5 5
+            |> Board.set { x = 2, y = 0 } JumpForward
+            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 1 } JumpForward
+            |> Board.set { x = 2, y = 1 } (Branch Up Right)
+            |> Board.set { x = 1, y = 2 } JumpForward
+            |> Board.set { x = 2, y = 2 } Terminate
+            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 3 } (Branch Down Right)
+            |> Board.set { x = 4, y = 3 } JumpForward
+            |> Board.set { x = 1, y = 4 } JumpForward
+            |> Board.set { x = 2, y = 4 } Increment
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down
@@ -803,7 +804,7 @@ levelLabyrinthLab =
         , output = []
         }
     , initialBoard =
-        BoardUtils.empty 5 5
+        Board.empty 5 5
     , instructionTools =
         [ JustInstruction NoOp
         , ChangeAnyDirection Down

@@ -1,8 +1,9 @@
 module InstructionView exposing (description, view)
 
+import Data.Direction exposing (Direction(..))
+import Data.Instruction exposing (Instruction(..))
 import Element exposing (..)
 import Element.Font as Font
-import Model exposing (..)
 
 
 description : Instruction -> String

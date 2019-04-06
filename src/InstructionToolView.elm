@@ -1,9 +1,9 @@
 module InstructionToolView exposing (description, view)
 
+import Data.InstructionTool exposing (InstructionTool(..))
 import Element exposing (..)
 import Element.Font as Font
 import InstructionView
-import Model exposing (..)
 
 
 description : InstructionTool -> String

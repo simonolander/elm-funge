@@ -1,9 +1,10 @@
-module Execution exposing (view)
+module Page.Execution exposing (Model, Msg, subscriptions, update, view)
 
 import Array exposing (Array)
 import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
 import Data.Direction exposing (Direction(..))
+import Data.Draft exposing (Draft)
 import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
@@ -18,12 +19,11 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import ExecutionControlView
-import ExecutionUtils
 import Html.Attributes
 import InstructionView
 import Maybe.Extra
 import Route
-import Time exposing (every)
+import Time
 import ViewComponents
 
 
@@ -58,8 +58,61 @@ type ExecutionState
 type alias Model =
     { execution : Execution
     , state : ExecutionState
+    , draft : Draft
     , session : Session
     }
+
+
+initialExecutionStep : Board -> Input -> ExecutionStep
+initialExecutionStep board input =
+    { board = board
+    , instructionPointer =
+        { position = { x = 0, y = 0 }
+        , direction = Right
+        }
+    , stack = []
+    , input = input
+    , output = []
+    , terminated = False
+    , exception = Nothing
+    , stepCount = 0
+    }
+
+
+initialExecution : Level -> Draft -> Execution
+initialExecution level draft =
+    let
+        board =
+            History.current draft.boardHistory
+
+        input =
+            level.io.input
+
+        executionHistory =
+            initialExecutionStep board input
+                |> History.singleton
+    in
+    { level = level
+    , executionHistory = executionHistory
+    }
+
+
+isSolved : Execution -> Bool
+isSolved execution =
+    let
+        executionStep =
+            History.current execution.executionHistory
+
+        hasException =
+            Maybe.Extra.isJust executionStep.exception
+
+        isTerminated =
+            executionStep.terminated
+
+        isOutputCorrect =
+            List.reverse executionStep.output == execution.level.io.output
+    in
+    isTerminated && not hasException && isOutputCorrect
 
 
 
@@ -125,6 +178,34 @@ stepModel model =
 
             else
                 Paused
+
+        maybeScore =
+            let
+                executionStep =
+                    History.current execution.executionHistory
+            in
+            if isSolved execution then
+                let
+                    numberOfSteps =
+                        executionStep.stepCount
+
+                    initialNumberOfInstructions =
+                        Board.count ((/=) NoOp) execution.level.initialBoard
+
+                    totalNumberOfInstructions =
+                        History.current model.draft.boardHistory
+                            |> Board.count ((/=) NoOp)
+
+                    numberOfInstructions =
+                        totalNumberOfInstructions - initialNumberOfInstructions
+                in
+                Just
+                    { numberOfSteps = numberOfSteps
+                    , numberOfInstructions = numberOfInstructions
+                    }
+
+            else
+                Nothing
 
         cmd =
             Cmd.batch []
@@ -538,10 +619,10 @@ subscriptions model =
             Sub.none
 
         Running ->
-            Sub.map (Time.every 250 Tick)
+            Time.every 250 (always Tick)
 
         FastForwarding ->
-            Sub.map (Time.every 100 Tick)
+            Time.every 100 (always Tick)
 
 
 
@@ -785,7 +866,7 @@ viewBoard model =
                             ]
 
                 Nothing ->
-                    if ExecutionUtils.executionIsSolved model.execution then
+                    if isSolved model.execution then
                         boardView
                             |> el
                                 [ width (fillPortion 3)

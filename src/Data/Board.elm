@@ -70,7 +70,7 @@ decoder =
     let
         verifyBoard board =
             let
-                height =
+                boardHeight =
                     Array.length board
 
                 maybeWidth =
@@ -90,7 +90,7 @@ decoder =
                                             Nothing
                            )
             in
-            case ( maybeWidth, height ) of
+            case ( maybeWidth, boardHeight ) of
                 ( Nothing, _ ) ->
                     fail "All rows must have the same length"
 

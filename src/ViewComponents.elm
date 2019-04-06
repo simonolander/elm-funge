@@ -1,13 +1,16 @@
 module ViewComponents exposing
-    ( descriptionTextbox
+    ( branchDirectionExtraButton
+    , descriptionTextbox
     , imageButton
     , instructionButton
     , instructionToolButton
     , textButton
     , viewTitle
-    , branchDirectionExtraButton
     )
 
+import Data.Direction exposing (Direction(..))
+import Data.Instruction exposing (Instruction(..))
+import Data.InstructionTool exposing (InstructionTool(..))
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -15,7 +18,6 @@ import Element.Font as Font
 import Element.Input as Input
 import InstructionToolView
 import InstructionView
-import Model exposing (..)
 
 
 textButton : List (Attribute msg) -> Maybe msg -> String -> Element msg

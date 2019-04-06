@@ -1,15 +1,21 @@
-module Data.LevelProgress exposing (LevelProgress)
+module Data.LevelProgress exposing (LevelProgress, isSolved)
 
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Maybe.Extra
 
 
 type alias LevelProgress =
     { level : Level
     , drafts : List Draft
     }
+
+
+isSolved : LevelProgress -> Bool
+isSolved levelProgress =
+    List.any (\draft -> Maybe.Extra.isJust draft.maybeScore) levelProgress.drafts
 
 
 

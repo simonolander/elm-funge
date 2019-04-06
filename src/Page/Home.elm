@@ -5,7 +5,6 @@ import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
-import Model exposing (..)
 import Route exposing (Route)
 import ViewComponents
 
@@ -20,10 +19,11 @@ type alias Model =
 
 
 
+-- UPDATE
 -- VIEW
 
 
-view : Model -> Document Msg
+view : Model -> Document msg
 view model =
     let
         titleView =
@@ -76,14 +76,14 @@ view model =
 
         playButtonView =
             link
-                []
+                [ width fill ]
                 { url = Route.toString Route.Levels
-                , label = text "I got it, let's play"
+                , label = ViewComponents.textButton [] Nothing "I got it, let's play"
                 }
 
         loginButtonView =
             link
-                []
+                [ width fill ]
                 -- { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=https://efng.simonolander.com"
                 { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=http://localhost:3000"
                 , label = ViewComponents.textButton [] Nothing "Login"
@@ -111,6 +111,7 @@ view model =
                         ]
                     , Font.color (rgb 1 1 1)
                     ]
+                |> List.singleton
     in
     { title = "Home"
     , body = body

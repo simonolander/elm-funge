@@ -1,4 +1,4 @@
-module Page.Draft exposing (view)
+module Page.Draft exposing (Model, Msg, subscriptions, update, view)
 
 import Array exposing (Array)
 import Browser exposing (Document)
@@ -12,7 +12,6 @@ import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool exposing (InstructionTool(..))
 import Data.InstructionToolbox as InstructionToolbox exposing (InstructionToolbox)
 import Data.Level exposing (Level)
-import Data.LevelProgress exposing (LevelProgress)
 import Data.Position exposing (Position)
 import Data.Session exposing (Session)
 import Element exposing (..)
@@ -24,17 +23,9 @@ import Html.Attributes
 import InstructionToolView
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
+import Ports.LocalStorage
 import Route
 import ViewComponents exposing (..)
-
-
-
--- CONSTANTS
-
-
-instructionSpacing : Int
-instructionSpacing =
-    10
 
 
 
@@ -75,6 +66,7 @@ type Msg
     | ClickedExecute
     | ToolboxReplaced InstructionToolbox
     | InstructionPlaced Position Instruction
+    | LoadedDraft (Result Decode.Error (Maybe Draft))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,12 +91,8 @@ update msg model =
         Import importData ->
             case Decode.decodeString Board.decoder importData of
                 Ok board ->
-                    ( { model
-                        | draft = Draft.pushBoard board model.draft
-                        , state = Editing
-                      }
-                    , Cmd.none
-                    )
+                    { model | state = Editing }
+                        |> updateDraft (Draft.pushBoard board model.draft)
 
                 Err error ->
                     ( { model
@@ -133,25 +121,19 @@ update msg model =
             )
 
         EditUndo ->
-            ( { model
-                | draft = Draft.undo model.draft
-              }
-            , Cmd.none
-            )
+            updateDraft
+                (Draft.undo model.draft)
+                model
 
         EditRedo ->
-            ( { model
-                | draft = Draft.redo model.draft
-              }
-            , Cmd.none
-            )
+            updateDraft
+                (Draft.redo model.draft)
+                model
 
         EditClear ->
-            ( { model
-                | draft = Draft.pushBoard model.level.initialBoard model.draft
-              }
-            , Cmd.none
-            )
+            updateDraft
+                (Draft.pushBoard model.level.initialBoard model.draft)
+                model
 
         ClickedBack ->
             ( model
@@ -169,22 +151,55 @@ update msg model =
             )
 
         InstructionPlaced position instruction ->
-            ( { model
-                | draft =
-                    let
-                        board =
-                            model.draft.boardHistory
-                                |> History.current
-                                |> Board.set position instruction
-                    in
+            let
+                board =
+                    model.draft.boardHistory
+                        |> History.current
+                        |> Board.set position instruction
+
+                draft =
                     Draft.pushBoard board model.draft
-              }
-            , Cmd.none
-            )
+            in
+            updateDraft draft model
+
+        LoadedDraft result ->
+            ( model, Cmd.none )
+
+
+updateDraft : Draft -> Model -> ( Model, Cmd Msg )
+updateDraft draft model =
+    let
+        cmd =
+            Draft.saveToLocalStorage draft
+    in
+    ( { model | draft = draft }, cmd )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Sub Msg
+subscriptions =
+    let
+        loadedDraftSub =
+            Ports.LocalStorage.storageGetItemResponse
+                (\( key, value ) ->
+                    LoadedDraft (Decode.decodeString (Decode.nullable Draft.decoder) value)
+                )
+    in
+    Sub.batch
+        [ loadedDraftSub
+        ]
 
 
 
 -- VIEW
+
+
+instructionSpacing : Int
+instructionSpacing =
+    10
 
 
 view : Model -> Document Msg
@@ -267,36 +282,43 @@ view model =
 
         toolSidebarView =
             viewToolSidebar model
+
+        body =
+            row
+                [ width fill
+                , height fill
+                ]
+                [ sidebarView
+                , importExportBoardView
+                , toolSidebarView
+                ]
+                |> layout
+                    [ Background.color (rgb 0 0 0)
+                    , Font.family [ Font.monospace ]
+                    , Font.color (rgb 1 1 1)
+                    , height fill
+                    ]
+                |> List.singleton
     in
-    row
-        [ width fill
-        , height fill
-        ]
-        [ sidebarView
-        , importExportBoardView
-        , toolSidebarView
-        ]
-        |> layout
-            [ Background.color (rgb 0 0 0)
-            , Font.family [ Font.monospace ]
-            , Font.color (rgb 1 1 1)
-            , height fill
-            ]
+    { title = "Draft"
+    , body = body
+    }
 
 
+viewSidebar : Model -> Element Msg
 viewSidebar model =
     let
-        levelProgress =
-            model.draft
+        level =
+            model.level
 
         titleView =
             viewTitle
                 []
-                levelProgress.level.name
+                level.name
 
         descriptionView =
             descriptionTextbox []
-                levelProgress.level.description
+                level.description
 
         backButton =
             textButton []
