@@ -78,6 +78,40 @@ decoder =
                                             )
                                 )
                     )
+
+        levelDecoderV2 =
+            field "id" Decode.string
+                |> andThen
+                    (\id ->
+                        field "name" Decode.string
+                            |> andThen
+                                (\name ->
+                                    field "description" (Decode.list Decode.string)
+                                        |> andThen
+                                            (\description ->
+                                                field "io" IO.decoder
+                                                    |> andThen
+                                                        (\io ->
+                                                            field "initialBoard" Board.decoder
+                                                                |> andThen
+                                                                    (\initialBoard ->
+                                                                        field "instructionTools" (Decode.list InstructionTool.decoder)
+                                                                            |> andThen
+                                                                                (\instructionTools ->
+                                                                                    succeed
+                                                                                        { id = id
+                                                                                        , name = name
+                                                                                        , description = description
+                                                                                        , io = io
+                                                                                        , initialBoard = initialBoard
+                                                                                        , instructionTools = instructionTools
+                                                                                        }
+                                                                                )
+                                                                    )
+                                                        )
+                                            )
+                                )
+                    )
     in
     field "version" Decode.int
         |> andThen
@@ -85,6 +119,9 @@ decoder =
                 case version of
                     1 ->
                         levelDecoderV1
+
+                    2 ->
+                        levelDecoderV2
 
                     _ ->
                         fail

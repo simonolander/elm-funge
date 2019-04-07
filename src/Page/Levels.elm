@@ -1,6 +1,8 @@
-module Page.Levels exposing (Model, Msg, update, view)
+module Page.Levels exposing (Model, Msg, init, update, view)
 
+import Api
 import Browser exposing (Document)
+import Data.Level exposing (Level)
 import Data.LevelProgress as LevelProgress exposing (LevelProgress)
 import Data.Session exposing (Session)
 import Element exposing (..)
@@ -9,7 +11,10 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
+import Http
+import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
+import Result exposing (Result)
 import Route
 import ViewComponents
 
@@ -23,6 +28,16 @@ type alias Model =
     , levels : WebData (List LevelProgress)
     , selectedLevel : Maybe LevelProgress
     }
+
+
+init : Session -> ( Model, Cmd Msg )
+init session =
+    ( { session = session
+      , levels = Loading
+      , selectedLevel = Nothing
+      }
+    , Api.getLevels LoadedLevels
+    )
 
 
 
@@ -74,8 +89,31 @@ viewLoading =
     text "Loading"
 
 
+viewFailure : Http.Error -> Element Msg
 viewFailure error =
-    text "Failure"
+    case error of
+        Http.BadUrl string ->
+            "Bad url: "
+                ++ string
+                |> text
+
+        Http.Timeout ->
+            "Timeout"
+                |> text
+
+        Http.NetworkError ->
+            "Network error"
+                |> text
+
+        Http.BadStatus int ->
+            "Bad status: "
+                ++ String.fromInt int
+                |> text
+
+        Http.BadBody string ->
+            "Bad body: "
+                ++ string
+                |> text
 
 
 viewSuccess :
@@ -241,6 +279,7 @@ viewSidebar levelProgress =
 
 type Msg
     = SelectLevel LevelProgress
+    | LoadedLevels (Result Http.Error (List Level))
     | OpenDraftClicked
 
 
@@ -258,3 +297,21 @@ update msg model =
             ( model
             , Route.replaceUrl model.session.key Route.Home
             )
+
+        LoadedLevels result ->
+            case result of
+                Ok levels ->
+                    ( { model
+                        | levels =
+                            levels
+                                |> List.map
+                                    (\level ->
+                                        { level = level, drafts = [] }
+                                    )
+                                |> Success
+                      }
+                    , Cmd.none
+                    )
+
+                Err error ->
+                    ( { model | levels = Failure error }, Cmd.none )

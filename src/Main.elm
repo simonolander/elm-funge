@@ -180,13 +180,8 @@ update msg model =
                     ( Home { session = session }, Cmd.none )
 
                 Just Route.Levels ->
-                    ( Levels
-                        { session = session
-                        , levels = RemoteData.NotAsked
-                        , selectedLevel = Nothing
-                        }
-                    , Cmd.none
-                    )
+                    Levels.init session
+                        |> updateWith Levels LevelsMsg
 
                 Just (Route.EditDraft draftId) ->
                     ( Levels

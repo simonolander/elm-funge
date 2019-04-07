@@ -4,11 +4,18 @@ import Array exposing (Array)
 import Data.Instruction as Instruction exposing (Instruction)
 import Data.Position exposing (Position)
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
-import Json.Encode exposing (Value, array, int, object)
+import Json.Encode exposing (Value, array, int, list, object)
 
 
 type alias Board =
     Array (Array Instruction)
+
+
+type alias BoardInstruction =
+    { x : Int
+    , y : Int
+    , instruction : Instruction
+    }
 
 
 empty : Int -> Int -> Board
@@ -33,6 +40,22 @@ set { x, y } instruction board =
             board
 
 
+instructions : Board -> List BoardInstruction
+instructions board =
+    board
+        |> Array.indexedMap
+            (\y row ->
+                row
+                    |> Array.indexedMap
+                        (\x instruction ->
+                            { x = x, y = y, instruction = instruction }
+                        )
+                    |> Array.toList
+            )
+        |> Array.toList
+        |> List.concat
+
+
 width : Board -> Int
 width board =
     Array.get 0 board
@@ -53,15 +76,59 @@ count predicate board =
         |> List.sum
 
 
+withInstructions : List BoardInstruction -> Board -> Board
+withInstructions boardInstructions board =
+    let
+        setInstruction { x, y, instruction } =
+            set { x = x, y = y } instruction
+    in
+    List.foldl setInstruction board boardInstructions
+
+
 
 -- JSON
+
+
+encodeBoardInstruction : BoardInstruction -> Value
+encodeBoardInstruction boardInstruction =
+    object
+        [ ( "x", int boardInstruction.x )
+        , ( "y", int boardInstruction.y )
+        , ( "instruction", Instruction.encode boardInstruction.instruction )
+        ]
+
+
+boardInstructionDecoder : Decoder BoardInstruction
+boardInstructionDecoder =
+    Decode.field "x" Decode.int
+        |> Decode.andThen
+            (\x ->
+                Decode.field "y" Decode.int
+                    |> Decode.andThen
+                        (\y ->
+                            Decode.field "instruction" Instruction.decoder
+                                |> andThen
+                                    (\instruction ->
+                                        Decode.succeed
+                                            { x = x
+                                            , y = y
+                                            , instruction = instruction
+                                            }
+                                    )
+                        )
+            )
 
 
 encode : Board -> Value
 encode board =
     object
-        [ ( "version", int 1 )
-        , ( "board", array (array Instruction.encode) board )
+        [ ( "width", int (width board) )
+        , ( "height", int (height board) )
+        , ( "instructions"
+          , board
+                |> instructions
+                |> list encodeBoardInstruction
+          )
         ]
 
 
@@ -102,24 +169,19 @@ decoder =
 
                 _ ->
                     succeed board
-
-        boardDecoderV0 =
-            Decode.array (Decode.array Instruction.decoder)
-                |> andThen verifyBoard
-
-        boardDecoderV1 =
-            field "board" boardDecoderV0
     in
-    Decode.maybe (field "version" Decode.int)
-        |> andThen
-            (\maybeVersion ->
-                case maybeVersion of
-                    Nothing ->
-                        boardDecoderV0
-
-                    Just 1 ->
-                        boardDecoderV1
-
-                    Just unknownVersion ->
-                        fail ("Unknown version " ++ String.fromInt unknownVersion)
+    Decode.field "width" Decode.int
+        |> Decode.andThen
+            (\decodedWidth ->
+                Decode.field "height" Decode.int
+                    |> Decode.andThen
+                        (\decodedHeight ->
+                            Decode.field "instructions" (Decode.list boardInstructionDecoder)
+                                |> Decode.andThen
+                                    (\decodedBoardInstructions ->
+                                        empty decodedWidth decodedHeight
+                                            |> withInstructions decodedBoardInstructions
+                                            |> verifyBoard
+                                    )
+                        )
             )
