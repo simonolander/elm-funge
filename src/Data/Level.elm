@@ -17,6 +17,7 @@ import Json.Encode
 
 type alias Level =
     { id : LevelId
+    , index : Int
     , name : String
     , description : List String
     , io : IO
@@ -34,6 +35,7 @@ encode level =
     object
         [ ( "version", int 1 )
         , ( "id", string level.id )
+        , ( "index", int level.index )
         , ( "name", string level.name )
         , ( "description", list string level.description )
         , ( "io", IO.encode level.io )
@@ -49,29 +51,34 @@ decoder =
             field "id" Decode.string
                 |> andThen
                     (\id ->
-                        field "name" Decode.string
+                        field "index" Decode.int
                             |> andThen
-                                (\name ->
-                                    field "description" (Decode.list Decode.string)
+                                (\index ->
+                                    field "name" Decode.string
                                         |> andThen
-                                            (\description ->
-                                                field "io" IO.decoder
+                                            (\name ->
+                                                field "description" (Decode.list Decode.string)
                                                     |> andThen
-                                                        (\io ->
-                                                            field "initialBoard" Board.decoder
+                                                        (\description ->
+                                                            field "io" IO.decoder
                                                                 |> andThen
-                                                                    (\initialBoard ->
-                                                                        field "instructionTools" (Decode.list InstructionTool.decoder)
+                                                                    (\io ->
+                                                                        field "initialBoard" Board.decoder
                                                                             |> andThen
-                                                                                (\instructionTools ->
-                                                                                    succeed
-                                                                                        { id = id
-                                                                                        , name = name
-                                                                                        , description = description
-                                                                                        , io = io
-                                                                                        , initialBoard = initialBoard
-                                                                                        , instructionTools = instructionTools
-                                                                                        }
+                                                                                (\initialBoard ->
+                                                                                    field "instructionTools" (Decode.list InstructionTool.decoder)
+                                                                                        |> andThen
+                                                                                            (\instructionTools ->
+                                                                                                succeed
+                                                                                                    { id = id
+                                                                                                    , name = name
+                                                                                                    , index = index
+                                                                                                    , description = description
+                                                                                                    , io = io
+                                                                                                    , initialBoard = initialBoard
+                                                                                                    , instructionTools = instructionTools
+                                                                                                    }
+                                                                                            )
                                                                                 )
                                                                     )
                                                         )
@@ -83,29 +90,34 @@ decoder =
             field "id" Decode.string
                 |> andThen
                     (\id ->
-                        field "name" Decode.string
+                        field "index" Decode.int
                             |> andThen
-                                (\name ->
-                                    field "description" (Decode.list Decode.string)
+                                (\index ->
+                                    field "name" Decode.string
                                         |> andThen
-                                            (\description ->
-                                                field "io" IO.decoder
+                                            (\name ->
+                                                field "description" (Decode.list Decode.string)
                                                     |> andThen
-                                                        (\io ->
-                                                            field "initialBoard" Board.decoder
+                                                        (\description ->
+                                                            field "io" IO.decoder
                                                                 |> andThen
-                                                                    (\initialBoard ->
-                                                                        field "instructionTools" (Decode.list InstructionTool.decoder)
+                                                                    (\io ->
+                                                                        field "initialBoard" Board.decoder
                                                                             |> andThen
-                                                                                (\instructionTools ->
-                                                                                    succeed
-                                                                                        { id = id
-                                                                                        , name = name
-                                                                                        , description = description
-                                                                                        , io = io
-                                                                                        , initialBoard = initialBoard
-                                                                                        , instructionTools = instructionTools
-                                                                                        }
+                                                                                (\initialBoard ->
+                                                                                    field "instructionTools" (Decode.list InstructionTool.decoder)
+                                                                                        |> andThen
+                                                                                            (\instructionTools ->
+                                                                                                succeed
+                                                                                                    { id = id
+                                                                                                    , index = index
+                                                                                                    , name = name
+                                                                                                    , description = description
+                                                                                                    , io = io
+                                                                                                    , initialBoard = initialBoard
+                                                                                                    , instructionTools = instructionTools
+                                                                                                    }
+                                                                                            )
                                                                                 )
                                                                     )
                                                         )

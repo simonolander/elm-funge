@@ -12,7 +12,6 @@ import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
 import Http
-import Json.Decode as Decode
 import RemoteData exposing (RemoteData(..), WebData)
 import Result exposing (Result)
 import Route
@@ -304,6 +303,7 @@ update msg model =
                     ( { model
                         | levels =
                             levels
+                                |> List.sortBy .index
                                 |> List.map
                                     (\level ->
                                         { level = level, drafts = [] }
