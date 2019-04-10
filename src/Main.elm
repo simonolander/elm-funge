@@ -145,7 +145,7 @@ update msg model =
                     homeModel.session
 
                 Levels levelsModel ->
-                    levelsModel.session
+                    Levels.getSession levelsModel
 
                 Execution executionModel ->
                     executionModel.session
@@ -184,20 +184,12 @@ update msg model =
                         |> updateWith Levels LevelsMsg
 
                 Just (Route.EditDraft draftId) ->
-                    ( Levels
-                        { session = session
-                        , levels = RemoteData.NotAsked
-                        , selectedLevel = Nothing
-                        }
+                    ( model
                     , Cmd.none
                     )
 
                 Just (Route.ExecuteDraft draftId) ->
-                    ( Levels
-                        { session = session
-                        , levels = RemoteData.NotAsked
-                        , selectedLevel = Nothing
-                        }
+                    ( model
                     , Cmd.none
                     )
 
@@ -244,8 +236,8 @@ subscriptions model =
         Home _ ->
             Sub.none
 
-        Levels _ ->
-            Sub.none
+        Levels m ->
+            Sub.map LevelsMsg (Levels.subscriptions m)
 
         Execution m ->
             Sub.map ExecutionMsg (Execution.subscriptions m)

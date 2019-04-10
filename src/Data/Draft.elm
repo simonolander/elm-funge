@@ -1,18 +1,22 @@
-module Data.Draft exposing (Draft, decoder, encode, fromKey, loadFromLocalStorage, loadedFromLocalStorage, pushBoard, redo, saveToLocalStorage, undo, withScore)
+module Data.Draft exposing (Draft, decoder, encode, fromKey, generator, getDraftsFromLocalStorage, loadFromLocalStorage, loadedFromLocalStorage, pushBoard, redo, saveToLocalStorage, undo, withScore)
 
 import Data.Board as Board exposing (Board)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.History as History exposing (History)
+import Data.Level exposing (Level)
+import Data.LevelId as LevelId exposing (LevelId)
 import Data.Score as Score exposing (Score)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
+import Random
 
 
 type alias Draft =
     { id : DraftId
     , boardHistory : History Board
     , maybeScore : Maybe Score
+    , levelId : LevelId
     }
 
 
@@ -46,6 +50,23 @@ redo draft =
 
 
 
+-- RANDOM
+
+
+generator : Level -> Random.Generator Draft
+generator level =
+    DraftId.generate
+        |> Random.map
+            (\id ->
+                { id = id
+                , boardHistory = History.singleton level.initialBoard
+                , maybeScore = Nothing
+                , levelId = level.id
+                }
+            )
+
+
+
 -- JSON
 
 
@@ -53,6 +74,7 @@ encode : Draft -> Encode.Value
 encode draft =
     Encode.object
         [ ( "id", DraftId.encode draft.id )
+        , ( "LevelId", LevelId.encode draft.levelId )
         , ( "board", Board.encode (History.current draft.boardHistory) )
         , ( "maybeScore"
           , draft.maybeScore
@@ -67,17 +89,22 @@ decoder =
     Decode.field "id" DraftId.decoder
         |> Decode.andThen
             (\id ->
-                Decode.field "board" Board.decoder
+                Decode.field "levelId" LevelId.decoder
                     |> Decode.andThen
-                        (\board ->
-                            Decode.field "score" (Decode.nullable Score.decoder)
+                        (\levelId ->
+                            Decode.field "board" Board.decoder
                                 |> Decode.andThen
-                                    (\maybeScore ->
-                                        Decode.succeed
-                                            { id = id
-                                            , boardHistory = History.singleton board
-                                            , maybeScore = maybeScore
-                                            }
+                                    (\board ->
+                                        Decode.field "score" (Decode.nullable Score.decoder)
+                                            |> Decode.andThen
+                                                (\maybeScore ->
+                                                    Decode.succeed
+                                                        { id = id
+                                                        , boardHistory = History.singleton board
+                                                        , maybeScore = maybeScore
+                                                        , levelId = levelId
+                                                        }
+                                                )
                                     )
                         )
             )
@@ -147,3 +174,23 @@ loadedFromLocalStorage ( key, value ) =
 
         Nothing ->
             Err ("Malformed key: " ++ key)
+
+
+getDraftsFromLocalStorage : Ports.LocalStorage.Key -> List LevelId -> Cmd msg
+getDraftsFromLocalStorage tag levelIds =
+    let
+        toDraftsKey levelId =
+            String.join "." [ "levels", levelId, "draftIds" ]
+    in
+    Ports.LocalStorage.storageGetAndThen
+        ( tag
+        , levelIds
+            |> List.map toDraftsKey
+        , [ { prefix = Nothing
+            , concat = True
+            }
+          , { prefix = Just "drafts"
+            , concat = False
+            }
+          ]
+        )

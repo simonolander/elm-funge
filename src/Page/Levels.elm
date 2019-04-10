@@ -1,10 +1,14 @@
-module Page.Levels exposing (Model, Msg, init, update, view)
+module Page.Levels exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Api
 import Browser exposing (Document)
+import Data.Draft as Draft exposing (Draft)
+import Data.DraftId exposing (DraftId)
 import Data.Level exposing (Level)
+import Data.LevelId exposing (LevelId)
 import Data.LevelProgress as LevelProgress exposing (LevelProgress)
-import Data.Session exposing (Session)
+import Data.Session as Session exposing (Session)
+import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -12,7 +16,9 @@ import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
 import Http
-import RemoteData exposing (RemoteData(..), WebData)
+import Json.Decode as Decode
+import Ports.LocalStorage as LocalStorage exposing (Key)
+import Random
 import Result exposing (Result)
 import Route
 import ViewComponents
@@ -22,21 +28,60 @@ import ViewComponents
 -- MODEL
 
 
-type alias Model =
+type alias LoadingLevelsModel =
     { session : Session
-    , levels : WebData (List LevelProgress)
+    }
+
+
+type alias LoadingDraftsModel =
+    { session : Session
+    , levels : List Level
+    }
+
+
+type alias LoadedModel =
+    { session : Session
+    , levels : Dict LevelId LevelProgress
     , selectedLevel : Maybe LevelProgress
     }
 
 
+type alias ErrorModel =
+    { session : Session
+    , error : Http.Error
+    }
+
+
+type Model
+    = LoadingLevels LoadingLevelsModel
+    | LoadingDrafts LoadingDraftsModel
+    | Loaded LoadedModel
+    | Error ErrorModel
+
+
 init : Session -> ( Model, Cmd Msg )
 init session =
-    ( { session = session
-      , levels = Loading
-      , selectedLevel = Nothing
-      }
+    ( LoadingLevels
+        { session = session
+        }
     , Api.getLevels LoadedLevels
     )
+
+
+getSession : Model -> Session
+getSession model =
+    case model of
+        LoadingLevels { session } ->
+            session
+
+        LoadingDrafts { session } ->
+            session
+
+        Loaded { session } ->
+            session
+
+        Error { session } ->
+            session
 
 
 
@@ -47,22 +92,18 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            case model.levels of
-                NotAsked ->
-                    viewNotAsked
+            case model of
+                LoadingLevels loadingLevels ->
+                    viewLoadingLevels loadingLevels
 
-                Loading ->
-                    viewLoading
+                LoadingDrafts loadingDrafts ->
+                    viewLoadingDrafts loadingDrafts
 
-                Failure error ->
-                    viewFailure error
+                Error error ->
+                    viewError error
 
-                Success levels ->
-                    viewSuccess
-                        { session = model.session
-                        , levels = levels
-                        , selectedLevel = model.selectedLevel
-                        }
+                Loaded loaded ->
+                    viewSuccess loaded
     in
     { title = "Levels"
     , body =
@@ -80,16 +121,18 @@ view model =
     }
 
 
-viewNotAsked =
-    text "NotAsked"
+viewLoadingLevels : LoadingLevelsModel -> Element Msg
+viewLoadingLevels model =
+    text "Loading levels"
 
 
-viewLoading =
-    text "Loading"
+viewLoadingDrafts : LoadingDraftsModel -> Element Msg
+viewLoadingDrafts model =
+    text "Loading drafts"
 
 
-viewFailure : Http.Error -> Element Msg
-viewFailure error =
+viewError : ErrorModel -> Element Msg
+viewError { error } =
     case error of
         Http.BadUrl string ->
             "Bad url: "
@@ -115,16 +158,11 @@ viewFailure error =
                 |> text
 
 
-viewSuccess :
-    { session : Session
-    , levels : List LevelProgress
-    , selectedLevel : Maybe LevelProgress
-    }
-    -> Element Msg
+viewSuccess : LoadedModel -> Element Msg
 viewSuccess { session, levels, selectedLevel } =
     let
         levelsView =
-            viewLevels selectedLevel levels
+            viewLevels selectedLevel (Dict.values levels)
 
         sidebarView =
             selectedLevel
@@ -179,11 +217,7 @@ viewLevels maybeSelectedLevel levelProgresses =
             Input.button
                 buttonAttributes
                 { onPress =
-                    if selected then
-                        Just OpenDraftClicked
-
-                    else
-                        Just (SelectLevel levelProgress)
+                    Just (SelectLevel levelProgress)
                 , label =
                     column
                         [ padding 20
@@ -254,7 +288,7 @@ viewSidebar levelProgress =
         goToSketchView =
             ViewComponents.textButton
                 []
-                (Just OpenDraftClicked)
+                Nothing
                 "Open Editor"
     in
     column
@@ -279,39 +313,135 @@ viewSidebar levelProgress =
 type Msg
     = SelectLevel LevelProgress
     | LoadedLevels (Result Http.Error (List Level))
-    | OpenDraftClicked
+    | LoadedDrafts (Result Http.Error (List Draft))
+    | GotLocalStorageResponse ( LocalStorage.Key, LocalStorage.Value )
+    | OpenDraftClicked DraftId
+    | GeneratedDraft Draft
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        SelectLevel selectedLevel ->
-            ( { model
-                | selectedLevel = Just selectedLevel
-              }
+    let
+        session =
+            getSession model
+    in
+    case ( msg, model ) of
+        ( SelectLevel selectedLevel, Loaded loadedModel ) ->
+            let
+                cmd =
+                    if List.isEmpty selectedLevel.drafts then
+                        Random.generate GeneratedDraft (Draft.generator selectedLevel.level)
+
+                    else
+                        Cmd.none
+            in
+            ( Loaded
+                { loadedModel
+                    | selectedLevel = Just selectedLevel
+                }
             , Cmd.none
             )
 
-        OpenDraftClicked ->
+        ( OpenDraftClicked draftId, Loaded loadedModel ) ->
             ( model
-            , Route.replaceUrl model.session.key Route.Home
+            , Route.pushUrl loadedModel.session.key (Route.EditDraft draftId)
             )
 
-        LoadedLevels result ->
+        ( LoadedLevels result, LoadingLevels _ ) ->
             case result of
                 Ok levels ->
-                    ( { model
-                        | levels =
+                    let
+                        levelIds =
                             levels
-                                |> List.sortBy .index
-                                |> List.map
-                                    (\level ->
-                                        { level = level, drafts = [] }
-                                    )
-                                |> Success
-                      }
+                                |> List.map .id
+
+                        cmd =
+                            case Session.getToken session of
+                                Just token ->
+                                    Api.getDrafts token levelIds LoadedDrafts
+
+                                Nothing ->
+                                    Draft.getDraftsFromLocalStorage "drafts" levelIds
+                    in
+                    ( LoadingDrafts
+                        { session = session
+                        , levels = List.sortBy .index levels
+                        }
+                    , cmd
+                    )
+
+                Err error ->
+                    ( Error
+                        { session = session
+                        , error = error
+                        }
+                    , Cmd.none
+                    )
+
+        ( LoadedDrafts drafts, LoadingDrafts loadingDraftsModel ) ->
+            ( model, Cmd.none )
+
+        ( GotLocalStorageResponse ( "drafts", value ), LoadingDrafts loadingDraftsModel ) ->
+            case Decode.decodeString (Decode.list Draft.decoder) value of
+                Ok drafts ->
+                    let
+                        toLevelProgress level =
+                            let
+                                levelDrafts =
+                                    drafts
+                                        |> List.filter (\draft -> draft.levelId == level.id)
+                            in
+                            { level = level
+                            , drafts = levelDrafts
+                            }
+
+                        levelProgresses =
+                            loadingDraftsModel.levels
+                                |> List.map toLevelProgress
+                                |> List.map (\progress -> ( progress.level.id, progress ))
+                                |> Dict.fromList
+                    in
+                    ( Loaded
+                        { session = session
+                        , levels = levelProgresses
+                        , selectedLevel = Nothing
+                        }
                     , Cmd.none
                     )
 
                 Err error ->
-                    ( { model | levels = Failure error }, Cmd.none )
+                    ( Error
+                        { session = session
+                        , error = Http.BadBody (Decode.errorToString error)
+                        }
+                    , Cmd.none
+                    )
+
+        ( GeneratedDraft draft, Loaded loadedModel ) ->
+            let
+                levels =
+                    case Dict.get draft.levelId loadedModel.levels of
+                        Just levelProgress ->
+                            Dict.insert draft.levelId { levelProgress | drafts = draft :: levelProgress.drafts } loadedModel.levels
+
+                        Nothing ->
+                            loadedModel.levels
+            in
+            ( Loaded { loadedModel | levels = levels }, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model of
+        LoadingDrafts _ ->
+            LocalStorage.storageGetItemResponse GotLocalStorageResponse
+
+        _ ->
+            Sub.none
