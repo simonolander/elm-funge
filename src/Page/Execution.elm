@@ -1,10 +1,10 @@
-module Page.Execution exposing (Model, Msg, subscriptions, update, view)
+module Page.Execution exposing (Model, Msg, init, subscriptions, update, view)
 
 import Array exposing (Array)
 import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
 import Data.Direction exposing (Direction(..))
-import Data.Draft exposing (Draft)
+import Data.Draft as Draft exposing (Draft)
 import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
@@ -60,6 +60,15 @@ type alias Model =
     , state : ExecutionState
     , draft : Draft
     , session : Session
+    }
+
+
+init : Level -> Draft -> Session -> Model
+init level draft session =
+    { execution = initialExecution level draft
+    , state = Paused
+    , draft = draft
+    , session = session
     }
 
 
@@ -169,6 +178,9 @@ update msg model =
 stepModel : Model -> ( Model, Cmd Msg )
 stepModel model =
     let
+        draft =
+            model.draft
+
         execution =
             stepExecution model.execution
 
@@ -207,13 +219,24 @@ stepModel model =
             else
                 Nothing
 
+        newModel =
+            { model
+                | execution = execution
+                , state = state
+                , draft =
+                    { draft
+                        | maybeScore = maybeScore
+                    }
+            }
+
         cmd =
-            Cmd.batch []
+            if Maybe.Extra.isJust maybeScore |> Debug.log "maybeScore" then
+                Draft.saveToLocalStorage { draft | maybeScore = maybeScore }
+
+            else
+                Cmd.none
     in
-    ( { model
-        | execution = execution
-        , state = state
-      }
+    ( newModel
     , cmd
     )
 

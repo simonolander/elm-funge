@@ -215,9 +215,14 @@ update msg model =
                             )
 
                 Just (Route.ExecuteDraft draftId) ->
-                    ( model
-                    , Cmd.none
-                    )
+                    case model of
+                        Draft draftModel ->
+                            ( Execution (Execution.init draftModel.level draftModel.draft session), Cmd.none )
+
+                        _ ->
+                            ( model
+                            , Cmd.none
+                            )
 
         ExecutionMsg executionMsg ->
             case model of
