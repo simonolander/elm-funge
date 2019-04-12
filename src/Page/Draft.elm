@@ -1,4 +1,4 @@
-module Page.Draft exposing (Model, Msg, subscriptions, update, view)
+module Page.Draft exposing (Model, Msg, initWithData, subscriptions, update, view)
 
 import Array exposing (Array)
 import Browser exposing (Document)
@@ -44,9 +44,18 @@ type alias Model =
     { session : Session
     , draft : Draft
     , level : Level
-    , draftId : DraftId
     , state : State
     , toolbox : InstructionToolbox
+    }
+
+
+initWithData : Draft -> Level -> Session -> Model
+initWithData draft level session =
+    { session = session
+    , draft = draft
+    , level = level
+    , state = Editing
+    , toolbox = InstructionToolbox.init level.instructionTools
     }
 
 

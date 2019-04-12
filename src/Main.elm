@@ -6,13 +6,13 @@ import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.User as User exposing (User)
+import Dict
 import Html
 import Maybe.Extra
 import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
 import Page.Levels as Levels
-import RemoteData
 import Route
 import Url exposing (Url)
 
@@ -184,9 +184,35 @@ update msg model =
                         |> updateWith Levels LevelsMsg
 
                 Just (Route.EditDraft draftId) ->
-                    ( model
-                    , Cmd.none
-                    )
+                    case model of
+                        Levels (Levels.Loaded loadedModel) ->
+                            case
+                                loadedModel.levels
+                                    |> Dict.values
+                                    |> List.map .drafts
+                                    |> List.concat
+                                    |> List.filter (.id >> (==) draftId)
+                                    |> List.head
+                            of
+                                Just draft ->
+                                    case Dict.get draft.levelId loadedModel.levels of
+                                        Just levelProgress ->
+                                            let
+                                                level =
+                                                    levelProgress.level
+                                            in
+                                            ( Draft (Draft.initWithData draft level session), Cmd.none )
+
+                                        Nothing ->
+                                            ( model, Cmd.none )
+
+                                Nothing ->
+                                    ( model, Cmd.none )
+
+                        _ ->
+                            ( model
+                            , Cmd.none
+                            )
 
                 Just (Route.ExecuteDraft draftId) ->
                     ( model

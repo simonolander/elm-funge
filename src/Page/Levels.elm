@@ -1,4 +1,4 @@
-module Page.Levels exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Levels exposing (Model(..), Msg, getSession, init, subscriptions, update, view)
 
 import Api
 import Basics.Extra exposing (flip)

@@ -1,6 +1,7 @@
-module Data.InstructionToolbox exposing (InstructionToolbox, getSelected, set)
+module Data.InstructionToolbox exposing (InstructionToolbox, getSelected, init, set)
 
 import Array exposing (Array)
+import Basics.Extra exposing (flip)
 import Data.InstructionTool exposing (InstructionTool)
 
 
@@ -12,9 +13,7 @@ type alias InstructionToolbox =
 
 getSelected : InstructionToolbox -> Maybe InstructionTool
 getSelected toolbox =
-    Maybe.andThen
-        (\index -> Array.get index toolbox.instructionTools)
-        toolbox.selectedIndex
+    Maybe.andThen (flip Array.get toolbox.instructionTools) toolbox.selectedIndex
 
 
 set : Int -> InstructionTool -> InstructionToolbox -> InstructionToolbox
@@ -25,4 +24,11 @@ set index tool toolbox =
                 index
                 tool
                 toolbox.instructionTools
+    }
+
+
+init : List InstructionTool -> InstructionToolbox
+init instructionToolList =
+    { instructionTools = Array.fromList instructionToolList
+    , selectedIndex = Nothing
     }
