@@ -1,9 +1,8 @@
-module Route exposing (Route(..), back, fromUrl, pushUrl, replaceUrl, toString)
+module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl)
 
 import Browser.Navigation as Navigation
 import Data.DraftId as DraftId
-import Html exposing (Attribute)
-import Html.Attributes
+import Element
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, oneOf, s)
 
@@ -24,9 +23,13 @@ fromUrl url =
         |> Parser.parse parser
 
 
-href : Route -> Attribute msg
-href route =
-    Html.Attributes.href (toString route)
+link : List (Element.Attribute msg) -> Element.Element msg -> Route -> Element.Element msg
+link attributes label route =
+    Element.link
+        attributes
+        { url = toString route
+        , label = label
+        }
 
 
 toString : Route -> String

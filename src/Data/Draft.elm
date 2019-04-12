@@ -74,7 +74,7 @@ encode : Draft -> Encode.Value
 encode draft =
     Encode.object
         [ ( "id", DraftId.encode draft.id )
-        , ( "LevelId", LevelId.encode draft.levelId )
+        , ( "levelId", LevelId.encode draft.levelId )
         , ( "board", Board.encode (History.current draft.boardHistory) )
         , ( "maybeScore"
           , draft.maybeScore
@@ -95,7 +95,7 @@ decoder =
                             Decode.field "board" Board.decoder
                                 |> Decode.andThen
                                     (\board ->
-                                        Decode.field "score" (Decode.nullable Score.decoder)
+                                        Decode.field "maybeScore" (Decode.nullable Score.decoder)
                                             |> Decode.andThen
                                                 (\maybeScore ->
                                                     Decode.succeed
@@ -140,9 +140,11 @@ saveToLocalStorage draft =
 
         value =
             encode draft
-                |> Encode.encode 0
     in
-    Ports.LocalStorage.storageSetItem ( key, value )
+    Cmd.batch
+        [ Ports.LocalStorage.storageSetItem ( key, value )
+        , Ports.LocalStorage.storagePushToSet ( String.join "." [ "levels", draft.levelId, "draftIds" ], DraftId.encode draft.id )
+        ]
 
 
 loadFromLocalStorage : DraftId -> Cmd msg
@@ -158,7 +160,7 @@ loadedFromLocalStorage : ( Ports.LocalStorage.Key, Ports.LocalStorage.Value ) ->
 loadedFromLocalStorage ( key, value ) =
     case fromKey key of
         Just (DraftId.DraftId draftId) ->
-            case Decode.decodeString (Decode.nullable decoder) value of
+            case Decode.decodeValue (Decode.nullable decoder) value of
                 Ok (Just draft) ->
                     if DraftId.toString draft.id == draftId then
                         Ok (Just draft)
@@ -186,11 +188,7 @@ getDraftsFromLocalStorage tag levelIds =
         ( tag
         , levelIds
             |> List.map toDraftsKey
-        , [ { prefix = Nothing
-            , concat = True
-            }
-          , { prefix = Just "drafts"
-            , concat = False
-            }
+        , [ Nothing
+          , Just "drafts"
           ]
         )

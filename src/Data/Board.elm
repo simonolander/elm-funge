@@ -127,6 +127,7 @@ encode board =
         , ( "instructions"
           , board
                 |> instructions
+                |> List.filter (.instruction >> (/=) Instruction.NoOp)
                 |> list encodeBoardInstruction
           )
         ]

@@ -10,6 +10,7 @@ import Data.Level exposing (Level)
 levelTest : Level
 levelTest =
     { id = "e182f31307fecaac"
+    , index = 0
     , name = "test"
     , description = [ "For testing purposes" ]
     , io =
@@ -41,6 +42,7 @@ levelTest =
 levelDoubleTheFun : Level
 levelDoubleTheFun =
     { id = "42fe70779bd30656"
+    , index = 1
     , name = "Double the fun"
     , description = [ "> Read a number n from input", "> Output n * 2", "The last input is 0 and should not be printed" ]
     , io =
@@ -66,6 +68,7 @@ levelDoubleTheFun =
 level123 : Level
 level123 =
     { id = "88c653c6c3a5b5e7"
+    , index = 2
     , name = "One, two, three"
     , description = [ "> Output the numbers 1, 2, and 3" ]
     , io =
@@ -91,6 +94,7 @@ level123 =
 levelCountDown : Level
 levelCountDown =
     { id = "e2f96c5345e5f1f6"
+    , index = 3
     , name = "Count down"
     , description = [ "> Read a number n from input", "> Output all the numbers from n to 0", "The last input is 0 and should not be printed" ]
     , io =
@@ -120,6 +124,7 @@ levelCountDown =
 levelSomeSums : Level
 levelSomeSums =
     { id = "c2003520d988f8d0"
+    , index = 4
     , name = "Some sums"
     , description = [ "> Read two numbers a and b from input", "> Output a + b", "The last input is 0 and should not be printed" ]
     , io =
@@ -148,6 +153,7 @@ levelSomeSums =
 levelOneMinusTheOther : Level
 levelOneMinusTheOther =
     { id = "1a3c6d6a80769a07"
+    , index = 5
     , name = "One minus the other"
     , description = [ "> Read two numbers a and b from input", "> Output a - b", "The last input is 0 and should not be printed" ]
     , io =
@@ -182,6 +188,7 @@ levelOneMinusTheOther =
 levelPowersOfTwo : Level
 levelPowersOfTwo =
     { id = "3ee1f15ae601fc94"
+    , index = 6
     , name = "Powers of two"
     , description = [ "> Read a number n from input", "> Output 2^n ", "The last input is 0 and should not be printed" ]
     , io =
@@ -215,6 +222,7 @@ levelPowersOfTwo =
 levelTriangularNumbers : Level
 levelTriangularNumbers =
     { id = "24c7efb5c41f8f8f"
+    , index = 7
     , name = "Triangular numbers"
     , description = [ "> Read a number n from input", "> Output n*(n+1)/2 ", "The last input is 0 and should not be printed" ]
     , io =
@@ -248,6 +256,7 @@ levelTriangularNumbers =
 levelSignalAmplifier : Level
 levelSignalAmplifier =
     { id = "d3c077ea5033222c"
+    , index = 8
     , name = "Signal amplifier"
     , description = [ "> Read a number x from the input", "> Output x + 10", "The last input is 0 should not be outputed" ]
     , io =
@@ -282,6 +291,7 @@ levelSignalAmplifier =
 levelMultiplier : Level
 levelMultiplier =
     { id = "bc27b58a0cafb0ba"
+    , index = 9
     , name = "Multiplier"
     , description = [ "> Read two positive numbers x and y from the input", "> Output x * y", "The last input is 0 should not be outputed" ]
     , io =
@@ -318,6 +328,7 @@ levelMultiplier =
 levelDivideAndConquer : Level
 levelDivideAndConquer =
     { id = "9abf854cff37e96b"
+    , index = 10
     , name = "Divide and conquer"
     , description = [ "> Read two positive numbers x and y from the input", "> Output ⌊x / y⌋", "The last input is 0 should not be outputed" ]
     , io =
@@ -355,6 +366,7 @@ levelDivideAndConquer =
 levelSequenceReverser : Level
 levelSequenceReverser =
     { id = "407410b1638112a9"
+    , index = 11
     , name = "Sequence reverser"
     , description = [ "> Read a sequence of numbers from input", "> Output the sequence in reverse", "The last input is 0 is not part of the sequence" ]
     , io =
@@ -389,6 +401,7 @@ levelSequenceReverser =
 levelSequenceSorter : Level
 levelSequenceSorter =
     { id = "b96e6c12476716a3"
+    , index = 12
     , name = "Sequence sorter"
     , description = [ "> Read a sequence from the input", "> Output the sequence sorted from lowest to highest", "The last input is 0 should not be outputed" ]
     , io =
@@ -425,6 +438,7 @@ levelSequenceSorter =
 levelLessIsMore : Level
 levelLessIsMore =
     { id = "1fac7ddba473e99d"
+    , index = 13
     , name = "Less is more"
     , description = [ "> Read two numbers a and b from the input", "> If a < b output a, otherwise output b", "The last input is 0 is not part of the sequence" ]
     , io =
@@ -467,6 +481,7 @@ levelLessIsMore =
 levelLabyrinth1 : Level
 levelLabyrinth1 =
     { id = "be13bbdd076a586c"
+    , index = 14
     , name = "Labyrinth 1"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -493,6 +508,7 @@ levelLabyrinth1 =
 levelLabyrinth2 : Level
 levelLabyrinth2 =
     { id = "e6d9465e4aacaa0f"
+    , index = 15
     , name = "Labyrinth 2"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -518,6 +534,7 @@ levelLabyrinth2 =
 levelLabyrinth3 : Level
 levelLabyrinth3 =
     { id = "e81d1f82a8a37103"
+    , index = 16
     , name = "Labyrinth 3"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -547,6 +564,7 @@ levelLabyrinth3 =
 levelLabyrinth4 : Level
 levelLabyrinth4 =
     { id = "e7d5826a6db19981"
+    , index = 17
     , name = "Labyrinth 4"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -579,6 +597,7 @@ levelLabyrinth4 =
 levelLabyrinth5 : Level
 levelLabyrinth5 =
     { id = "519983570eefe19c"
+    , index = 18
     , name = "Labyrinth 5"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -610,6 +629,7 @@ levelLabyrinth5 =
 levelLabyrinth6 : Level
 levelLabyrinth6 =
     { id = "81101cdad21a4ed2"
+    , index = 19
     , name = "Labyrinth 6"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -643,6 +663,7 @@ levelLabyrinth6 =
 levelLabyrinth7 : Level
 levelLabyrinth7 =
     { id = "36ae04449442c355"
+    , index = 20
     , name = "Labyrinth 7"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -679,6 +700,7 @@ levelLabyrinth7 =
 levelLabyrinth8 : Level
 levelLabyrinth8 =
     { id = "42cdf083b26bb8ab"
+    , index = 21
     , name = "Labyrinth 8"
     , description = [ "> Output 1, 2, 3, 4", "> Terminate the program" ]
     , io =
@@ -702,6 +724,7 @@ levelLabyrinth8 =
 levelLabyrinth9 : Level
 levelLabyrinth9 =
     { id = "5ed6d025ab5937e4"
+    , index = 22
     , name = "Labyrinth 9"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -732,6 +755,7 @@ levelLabyrinth9 =
 levelLabyrinth10 : Level
 levelLabyrinth10 =
     { id = "b4c862e5dcfb82c1"
+    , index = 23
     , name = "Labyrinth 10"
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -765,6 +789,7 @@ levelLabyrinth10 =
 levelLabyrinth11 : Level
 levelLabyrinth11 =
     { id = "f8ba39bc9d01ef03"
+    , index = 24
     , name = "Labyrinth 11"
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -797,6 +822,7 @@ levelLabyrinth11 =
 levelLabyrinthLab : Level
 levelLabyrinthLab =
     { id = "572b4066ff5a9bd9"
+    , index = 25
     , name = "Labyrinth lab"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =

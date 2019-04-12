@@ -45,11 +45,11 @@ var storageEventListenerPorts = [];
 window.addEventListener('storage', function (storageEvent) {
     if (storageEvent.newValue === null) {
         storageEventListenerPorts.forEach(function (ports) {
-            ports.storageOnKeyRemoved.send([storageEvent.key, storageEvent.oldValue]);
+            ports.storageOnKeyRemoved.send([storageEvent.key, (storageEvent.oldValue)]);
         });
     } else if (storageEvent.oldValue === null) {
         storageEventListenerPorts.forEach(function (ports) {
-            ports.storageOnKeyAdded.send([storageEvent.key, storageEvent.newValue]);
+            ports.storageOnKeyAdded.send([storageEvent.key, (storageEvent.newValue)]);
         });
     } else {
         storageEventListenerPorts.forEach(function (ports) {
@@ -179,7 +179,7 @@ function register(ports, log) {
     function storageGetAndThen([key, keys, andThens]) {
         log('storageGetAndThen', key, keys, andThens);
         let response = getAndThen(keys, andThens);
-        ports.storageGetItemResponse.send([key, JSON.stringify(response)]);
+        ports.storageGetItemResponse.send([key, response]);
     }
 }
 
@@ -211,6 +211,7 @@ function setLocalStorageItem(key, value) {
 function getAndThen(keys = [], prefixes = []) {
     try {
         for (let i = 0; i < prefixes.length; ++i) {
+            keys = keys.filter(key => key !== null);
             if (keys.every(Array.isArray)) {
                 keys = [].concat(...keys);
             }
@@ -223,6 +224,7 @@ function getAndThen(keys = [], prefixes = []) {
         }
         return keys;
     } catch (e) {
+        console.error(e);
         return null;
     }
 }

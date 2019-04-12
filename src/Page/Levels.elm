@@ -1,9 +1,10 @@
 module Page.Levels exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Api
+import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Draft as Draft exposing (Draft)
-import Data.DraftId exposing (DraftId)
+import Data.DraftId as DraftId exposing (DraftId)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.LevelProgress as LevelProgress exposing (LevelProgress)
@@ -17,10 +18,11 @@ import Element.Input as Input
 import Html.Attributes
 import Http
 import Json.Decode as Decode
+import Levels
 import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import Result exposing (Result)
-import Route
+import Route exposing (Route)
 import ViewComponents
 
 
@@ -42,7 +44,7 @@ type alias LoadingDraftsModel =
 type alias LoadedModel =
     { session : Session
     , levels : Dict LevelId LevelProgress
-    , selectedLevel : Maybe LevelProgress
+    , selectedLevelId : Maybe LevelId
     }
 
 
@@ -61,11 +63,33 @@ type Model
 
 init : Session -> ( Model, Cmd Msg )
 init session =
-    ( LoadingLevels
-        { session = session
-        }
-    , Api.getLevels LoadedLevels
-    )
+    let
+        offline =
+            True
+    in
+    if offline then
+        let
+            levels =
+                Levels.levels
+
+            cmd =
+                levels
+                    |> List.map .id
+                    |> Draft.getDraftsFromLocalStorage "drafts"
+        in
+        ( LoadingDrafts
+            { session = session
+            , levels = levels
+            }
+        , cmd
+        )
+
+    else
+        ( LoadingLevels
+            { session = session
+            }
+        , Api.getLevels LoadedLevels
+        )
 
 
 getSession : Model -> Session
@@ -159,13 +183,14 @@ viewError { error } =
 
 
 viewSuccess : LoadedModel -> Element Msg
-viewSuccess { session, levels, selectedLevel } =
+viewSuccess { session, levels, selectedLevelId } =
     let
         levelsView =
-            viewLevels selectedLevel (Dict.values levels)
+            viewLevels selectedLevelId (Dict.values levels)
 
         sidebarView =
-            selectedLevel
+            selectedLevelId
+                |> Maybe.andThen (flip Dict.get levels)
                 |> Maybe.map viewSidebar
                 |> Maybe.withDefault
                     (column
@@ -195,14 +220,14 @@ viewSuccess { session, levels, selectedLevel } =
         [ sidebarView, levelsView ]
 
 
-viewLevels : Maybe LevelProgress -> List LevelProgress -> Element Msg
-viewLevels maybeSelectedLevel levelProgresses =
+viewLevels : Maybe LevelId -> List LevelProgress -> Element Msg
+viewLevels maybeSelectedLevelId levelProgresses =
     let
         viewLevel levelProgress =
             let
                 selected =
-                    maybeSelectedLevel
-                        |> Maybe.map (.level >> .id >> (==) levelProgress.level.id)
+                    maybeSelectedLevelId
+                        |> Maybe.map ((==) levelProgress.level.id)
                         |> Maybe.withDefault False
 
                 buttonAttributes =
@@ -217,7 +242,7 @@ viewLevels maybeSelectedLevel levelProgresses =
             Input.button
                 buttonAttributes
                 { onPress =
-                    Just (SelectLevel levelProgress)
+                    Just (SelectLevel levelProgress.level.id)
                 , label =
                     column
                         [ padding 20
@@ -285,11 +310,52 @@ viewSidebar levelProgress =
                     )
                 ]
 
-        goToSketchView =
-            ViewComponents.textButton
-                []
-                Nothing
-                "Open Editor"
+        viewDraft draft =
+            let
+                attrs =
+                    [ width fill
+                    , padding 10
+                    , spacing 15
+                    , Border.width 3
+                    , Border.color (rgb 1 1 1)
+                    , centerX
+                    , mouseOver
+                        [ Background.color (rgb 0.5 0.5 0.5)
+                        ]
+                    ]
+
+                label =
+                    [ "Draft "
+                        ++ DraftId.toString draft.id
+                        |> text
+                        |> el [ centerX ]
+                    , case draft.maybeScore of
+                        Just score ->
+                            String.join " / "
+                                [ String.fromInt score.numberOfSteps
+                                , String.fromInt score.numberOfInstructions
+                                ]
+                                |> text
+                                |> el [ centerX ]
+
+                        Nothing ->
+                            "Not solved"
+                                |> text
+                                |> el [ centerX ]
+                    ]
+                        |> column
+                            attrs
+            in
+            Route.link
+                [ width fill ]
+                label
+                (Route.EditDraft draft.id)
+
+        draftsView =
+            levelProgress.drafts
+                |> List.map viewDraft
+                |> column
+                    [ width fill ]
     in
     column
         [ width (fillPortion 1)
@@ -302,7 +368,7 @@ viewSidebar levelProgress =
         [ levelNameView
         , solvedStatusView
         , descriptionView
-        , goToSketchView
+        , draftsView
         ]
 
 
@@ -311,7 +377,7 @@ viewSidebar levelProgress =
 
 
 type Msg
-    = SelectLevel LevelProgress
+    = SelectLevel LevelId
     | LoadedLevels (Result Http.Error (List Level))
     | LoadedDrafts (Result Http.Error (List Draft))
     | GotLocalStorageResponse ( LocalStorage.Key, LocalStorage.Value )
@@ -326,20 +392,25 @@ update msg model =
             getSession model
     in
     case ( msg, model ) of
-        ( SelectLevel selectedLevel, Loaded loadedModel ) ->
+        ( SelectLevel selectedLevelId, Loaded loadedModel ) ->
             let
                 cmd =
-                    if List.isEmpty selectedLevel.drafts then
-                        Random.generate GeneratedDraft (Draft.generator selectedLevel.level)
+                    case Dict.get selectedLevelId loadedModel.levels of
+                        Just selectedLevel ->
+                            if List.isEmpty selectedLevel.drafts then
+                                Random.generate GeneratedDraft (Draft.generator selectedLevel.level)
 
-                    else
-                        Cmd.none
+                            else
+                                Cmd.none
+
+                        Nothing ->
+                            Cmd.none
             in
             ( Loaded
                 { loadedModel
-                    | selectedLevel = Just selectedLevel
+                    | selectedLevelId = Just selectedLevelId
                 }
-            , Cmd.none
+            , cmd
             )
 
         ( OpenDraftClicked draftId, Loaded loadedModel ) ->
@@ -382,7 +453,7 @@ update msg model =
             ( model, Cmd.none )
 
         ( GotLocalStorageResponse ( "drafts", value ), LoadingDrafts loadingDraftsModel ) ->
-            case Decode.decodeString (Decode.list Draft.decoder) value of
+            case Decode.decodeValue (Decode.list Draft.decoder) value of
                 Ok drafts ->
                     let
                         toLevelProgress level =
@@ -404,7 +475,7 @@ update msg model =
                     ( Loaded
                         { session = session
                         , levels = levelProgresses
-                        , selectedLevel = Nothing
+                        , selectedLevelId = Nothing
                         }
                     , Cmd.none
                     )
@@ -427,7 +498,7 @@ update msg model =
                         Nothing ->
                             loadedModel.levels
             in
-            ( Loaded { loadedModel | levels = levels }, Cmd.none )
+            ( Loaded { loadedModel | levels = levels }, Draft.saveToLocalStorage draft )
 
         _ ->
             ( model, Cmd.none )

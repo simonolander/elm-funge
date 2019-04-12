@@ -1,4 +1,6 @@
-port module Ports.LocalStorage exposing (AndThen, Key, NewValue, OldValue, Value, storageClear, storageGetAndThen, storageGetItem, storageGetItemResponse, storageOnKeyAdded, storageOnKeyChanged, storageOnKeyRemoved, storagePushToSet, storageRemoveFromSet, storageRemoveItem, storageSetItem)
+port module Ports.LocalStorage exposing (Key, NewValue, OldValue, Value, storageClear, storageGetAndThen, storageGetItem, storageGetItemResponse, storageOnKeyAdded, storageOnKeyChanged, storageOnKeyRemoved, storagePushToSet, storageRemoveFromSet, storageRemoveItem, storageSetItem)
+
+import Json.Encode as Encode
 
 
 type alias Key =
@@ -6,7 +8,7 @@ type alias Key =
 
 
 type alias Value =
-    String
+    Encode.Value
 
 
 type alias NewValue =
@@ -61,10 +63,4 @@ port storagePushToSet : ( Key, Value ) -> Cmd msg
 port storageRemoveFromSet : ( Key, Value ) -> Cmd msg
 
 
-type alias AndThen =
-    { prefix : Maybe String
-    , concat : Bool
-    }
-
-
-port storageGetAndThen : ( Key, List Key, List AndThen ) -> Cmd msg
+port storageGetAndThen : ( Key, List Key, List (Maybe String) ) -> Cmd msg

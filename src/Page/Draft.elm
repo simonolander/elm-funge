@@ -185,7 +185,7 @@ subscriptions =
         loadedDraftSub =
             Ports.LocalStorage.storageGetItemResponse
                 (\( key, value ) ->
-                    LoadedDraft (Decode.decodeString (Decode.nullable Draft.decoder) value)
+                    LoadedDraft (Decode.decodeValue (Decode.nullable Draft.decoder) value)
                 )
     in
     Sub.batch

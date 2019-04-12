@@ -75,11 +75,10 @@ view model =
                 ]
 
         playButtonView =
-            link
+            Route.link
                 [ width fill ]
-                { url = Route.toString Route.Levels
-                , label = ViewComponents.textButton [] Nothing "I got it, let's play"
-                }
+                (ViewComponents.textButton [] Nothing "I got it, let's play")
+                Route.Levels
 
         loginButtonView =
             link
