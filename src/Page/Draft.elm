@@ -1,6 +1,8 @@
-module Page.Draft exposing (Model, Msg, initWithData, subscriptions, update, view)
+module Page.Draft exposing (Model, Msg, init, subscriptions, update, view)
 
+import Api
 import Array exposing (Array)
+import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
@@ -10,19 +12,22 @@ import Data.DraftId exposing (DraftId)
 import Data.History as History
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool exposing (InstructionTool(..))
-import Data.InstructionToolbox as InstructionToolbox exposing (InstructionToolbox)
-import Data.Level exposing (Level)
+import Data.Level as Level exposing (Level)
 import Data.Position exposing (Position)
-import Data.Session exposing (Session)
+import Data.Session as Session exposing (Session)
+import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
+import Http
 import InstructionToolView
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
+import Levels
+import Maybe.Extra
 import Ports.LocalStorage
 import Route
 import ViewComponents exposing (..)
@@ -42,21 +47,89 @@ type State
 
 type alias Model =
     { session : Session
-    , draft : Draft
-    , level : Level
+    , draftId : DraftId
     , state : State
-    , toolbox : InstructionToolbox
+    , error : Maybe String
+    , selectedInstructionToolIndex : Maybe Int
     }
 
 
-initWithData : Draft -> Level -> Session -> Model
-initWithData draft level session =
-    { session = session
-    , draft = draft
-    , level = level
-    , state = Editing
-    , toolbox = InstructionToolbox.init level.instructionTools
+type alias LoadedModel =
+    { draft : Draft
+    , level : Level
+    , selectedInstructionToolIndex : Maybe Int
+    , state : State
     }
+
+
+type alias ErrorModel =
+    { error : String
+    }
+
+
+getLevel : Model -> Maybe Level
+getLevel model =
+    model.session.drafts
+        |> Maybe.andThen (Dict.get model.draftId)
+        |> Maybe.map .levelId
+        |> Maybe.andThen (flip Dict.get (Maybe.withDefault Dict.empty model.session.levels))
+
+
+init : DraftId -> Session -> ( Model, Cmd Msg )
+init draftId session =
+    let
+        model =
+            { session = session
+            , draftId = draftId
+            , state = Editing
+            , error = Nothing
+            , selectedInstructionToolIndex = Nothing
+            }
+
+        maybeLevelDict =
+            if Maybe.Extra.isJust session.levels then
+                session.levels
+
+            else
+                Levels.levels
+                    |> List.map (\level -> ( level.id, level ))
+                    |> Dict.fromList
+                    |> Just
+    in
+    case maybeLevelDict of
+        Just levelDict ->
+            case session.drafts of
+                Just draftDict ->
+                    case Dict.get draftId draftDict of
+                        Just draft ->
+                            case Dict.get draft.levelId levelDict of
+                                Just _ ->
+                                    ( model, Cmd.none )
+
+                                Nothing ->
+                                    ( { model | error = Just ("Level " ++ draft.levelId ++ " not found") }, Cmd.none )
+
+                        Nothing ->
+                            ( { model | error = Just ("Draft " ++ draftId ++ " not found") }, Cmd.none )
+
+                Nothing ->
+                    let
+                        levelIds =
+                            Dict.values levelDict
+                                |> List.map .id
+
+                        cmd =
+                            case Session.getToken session of
+                                Just token ->
+                                    Api.getDrafts token levelIds LoadedDrafts
+
+                                Nothing ->
+                                    Draft.getDraftsFromLocalStorage "drafts" levelIds
+                    in
+                    ( model, cmd )
+
+        Nothing ->
+            ( model, Api.getLevels LoadedLevels )
 
 
 
@@ -73,13 +146,33 @@ type Msg
     | EditClear
     | ClickedBack
     | ClickedExecute
-    | ToolboxReplaced InstructionToolbox
+    | InstructionToolReplaced Int InstructionTool
+    | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
-    | LoadedDraft (Result Decode.Error (Maybe Draft))
+    | LoadedDrafts (Result Http.Error (List Draft))
+    | LoadedLevels (Result Http.Error (List Level))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        session =
+            model.session
+
+        maybeDraft =
+            Maybe.andThen (Dict.get model.draftId) session.drafts
+
+        maybeLevel =
+            case ( maybeDraft, session.levels ) of
+                ( Just draft, Just dict ) ->
+                    Dict.get draft.levelId dict
+
+                _ ->
+                    Nothing
+
+        unchanged =
+            ( model, Cmd.none )
+    in
     case msg of
         ImportDataChanged importData ->
             case model.state of
@@ -95,34 +188,48 @@ update msg model =
                     )
 
                 Editing ->
-                    ( model, Cmd.none )
+                    unchanged
 
         Import importData ->
-            case Decode.decodeString Board.decoder importData of
-                Ok board ->
-                    { model | state = Editing }
-                        |> updateDraft (Draft.pushBoard board model.draft)
+            case maybeDraft of
+                Just draft ->
+                    case Decode.decodeString Board.decoder importData of
+                        Ok board ->
+                            { model | state = Editing }
+                                |> updateDraft (Draft.pushBoard board draft)
 
-                Err error ->
+                        Err error ->
+                            ( { model
+                                | state =
+                                    Importing
+                                        { importData = importData
+                                        , errorMessage = Just (Decode.errorToString error)
+                                        }
+                              }
+                            , Cmd.none
+                            )
+
+                Nothing ->
+                    unchanged
+
+        ImportOpen ->
+            case maybeDraft of
+                Just draft ->
                     ( { model
-                        | state = Importing { importData = importData, errorMessage = Just (Decode.errorToString error) }
+                        | state =
+                            Importing
+                                { importData =
+                                    History.current draft.boardHistory
+                                        |> Board.encode
+                                        |> Encode.encode 2
+                                , errorMessage = Nothing
+                                }
                       }
                     , Cmd.none
                     )
 
-        ImportOpen ->
-            ( { model
-                | state =
-                    Importing
-                        { importData =
-                            History.current model.draft.boardHistory
-                                |> Board.encode
-                                |> Encode.encode 2
-                        , errorMessage = Nothing
-                        }
-              }
-            , Cmd.none
-            )
+                Nothing ->
+                    unchanged
 
         ImportClosed ->
             ( { model | state = Editing }
@@ -130,19 +237,34 @@ update msg model =
             )
 
         EditUndo ->
-            updateDraft
-                (Draft.undo model.draft)
-                model
+            case maybeDraft of
+                Just draft ->
+                    updateDraft
+                        (Draft.undo draft)
+                        model
+
+                Nothing ->
+                    unchanged
 
         EditRedo ->
-            updateDraft
-                (Draft.redo model.draft)
-                model
+            case maybeDraft of
+                Just draft ->
+                    updateDraft
+                        (Draft.redo draft)
+                        model
+
+                Nothing ->
+                    unchanged
 
         EditClear ->
-            updateDraft
-                (Draft.pushBoard model.level.initialBoard model.draft)
-                model
+            case ( maybeDraft, maybeLevel ) of
+                ( Just draft, Just level ) ->
+                    updateDraft
+                        (Draft.pushBoard level.initialBoard draft)
+                        model
+
+                _ ->
+                    unchanged
 
         ClickedBack ->
             ( model
@@ -150,29 +272,55 @@ update msg model =
             )
 
         ClickedExecute ->
-            ( model, Route.pushUrl model.session.key (Route.ExecuteDraft model.draft.id) )
+            ( model
+            , Route.pushUrl
+                model.session.key
+                (Route.ExecuteDraft model.draftId)
+            )
 
-        ToolboxReplaced toolbox ->
+        InstructionToolSelected index ->
             ( { model
-                | toolbox = toolbox
+                | selectedInstructionToolIndex = Just index
               }
             , Cmd.none
             )
 
+        InstructionToolReplaced index instructionTool ->
+            case getLevel model of
+                Just level ->
+                    ( { model
+                        | session =
+                            Level.withInstructionTool index instructionTool level
+                                |> flip Session.withLevel session
+                      }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    unchanged
+
         InstructionPlaced position instruction ->
-            let
-                board =
-                    model.draft.boardHistory
-                        |> History.current
-                        |> Board.set position instruction
+            case maybeDraft of
+                Just oldDraft ->
+                    let
+                        board =
+                            oldDraft.boardHistory
+                                |> History.current
+                                |> Board.set position instruction
 
-                draft =
-                    Draft.pushBoard board model.draft
-            in
-            updateDraft draft model
+                        draft =
+                            Draft.pushBoard board oldDraft
+                    in
+                    updateDraft draft model
 
-        LoadedDraft result ->
-            ( model, Cmd.none )
+                Nothing ->
+                    unchanged
+
+        LoadedDrafts result ->
+            unchanged
+
+        LoadedLevels result ->
+            unchanged
 
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )
@@ -181,7 +329,11 @@ updateDraft draft model =
         cmd =
             Draft.saveToLocalStorage draft
     in
-    ( { model | draft = draft }, cmd )
+    ( { model
+        | session = Session.withDraft draft model.session
+      }
+    , cmd
+    )
 
 
 
@@ -194,7 +346,9 @@ subscriptions =
         loadedDraftSub =
             Ports.LocalStorage.storageGetItemResponse
                 (\( key, value ) ->
-                    LoadedDraft (Decode.decodeValue (Decode.nullable Draft.decoder) value)
+                    Decode.decodeValue (Decode.list Draft.decoder) value
+                        |> Result.mapError (Decode.errorToString >> Http.BadBody)
+                        |> LoadedDrafts
                 )
     in
     Sub.batch
@@ -206,21 +360,76 @@ subscriptions =
 -- VIEW
 
 
+view : Model -> Document Msg
+view model =
+    let
+        session =
+            model.session
+
+        content =
+            case session.levels of
+                Just levelDict ->
+                    case session.drafts of
+                        Just draftDict ->
+                            case Dict.get model.draftId draftDict of
+                                Just draft ->
+                                    case Dict.get draft.levelId levelDict of
+                                        Just level ->
+                                            viewLoaded
+                                                { draft = draft
+                                                , level = level
+                                                , selectedInstructionToolIndex = model.selectedInstructionToolIndex
+                                                , state = model.state
+                                                }
+
+                                        Nothing ->
+                                            viewError { error = "Level not found" }
+
+                                Nothing ->
+                                    viewError { error = "Draft not found" }
+
+                        Nothing ->
+                            viewError { error = "Loading drafts" }
+
+                Nothing ->
+                    viewError { error = "Loading levels" }
+
+        body =
+            layout
+                [ Background.color (rgb 0 0 0)
+                , Font.family [ Font.monospace ]
+                , Font.color (rgb 1 1 1)
+                , height fill
+                ]
+                content
+                |> List.singleton
+    in
+    { title = "Draft"
+    , body = body
+    }
+
+
 instructionSpacing : Int
 instructionSpacing =
     10
 
 
-view : Model -> Document Msg
-view model =
+viewError : ErrorModel -> Element Msg
+viewError { error } =
+    text error
+
+
+viewLoaded : LoadedModel -> Element Msg
+viewLoaded model =
     let
-        selectedInstructionTool =
-            InstructionToolbox.getSelected model.toolbox
+        maybeSelectedInstructionTool =
+            model.selectedInstructionToolIndex
+                |> Maybe.andThen (flip Array.get model.level.instructionTools)
 
         boardView =
             model.draft.boardHistory
                 |> History.current
-                |> Array.indexedMap (viewRow model.level.initialBoard selectedInstructionTool)
+                |> Array.indexedMap (viewRow model.level.initialBoard maybeSelectedInstructionTool)
                 |> Array.toList
                 |> column
                     [ spacing instructionSpacing
@@ -292,7 +501,7 @@ view model =
         toolSidebarView =
             viewToolSidebar model
 
-        body =
+        element =
             row
                 [ width fill
                 , height fill
@@ -301,20 +510,11 @@ view model =
                 , importExportBoardView
                 , toolSidebarView
                 ]
-                |> layout
-                    [ Background.color (rgb 0 0 0)
-                    , Font.family [ Font.monospace ]
-                    , Font.color (rgb 1 1 1)
-                    , height fill
-                    ]
-                |> List.singleton
     in
-    { title = "Draft"
-    , body = body
-    }
+    element
 
 
-viewSidebar : Model -> Element Msg
+viewSidebar : LoadedModel -> Element Msg
 viewSidebar model =
     let
         level =
@@ -392,53 +592,42 @@ viewSidebar model =
         ]
 
 
-viewToolSidebar : Model -> Element Msg
+viewToolSidebar : LoadedModel -> Element Msg
 viewToolSidebar model =
     let
-        instructionToolbox =
-            model.toolbox
-
         instructionTools =
-            instructionToolbox.instructionTools
+            model.level.instructionTools
 
         viewTool index instructionTool =
             let
+                selected =
+                    model.selectedInstructionToolIndex
+                        |> Maybe.map ((==) index)
+                        |> Maybe.withDefault False
+
                 attributes =
-                    case instructionToolbox.selectedIndex of
-                        Just selectedIndex ->
-                            if index == selectedIndex then
-                                [ Background.color (rgba 1 1 1 0.5)
-                                , InstructionToolView.description instructionTool
-                                    |> Html.Attributes.title
-                                    |> htmlAttribute
-                                ]
+                    if selected then
+                        [ Background.color (rgba 1 1 1 0.5)
+                        , InstructionToolView.description instructionTool
+                            |> Html.Attributes.title
+                            |> htmlAttribute
+                        ]
 
-                            else
-                                [ InstructionToolView.description instructionTool
-                                    |> Html.Attributes.title
-                                    |> htmlAttribute
-                                ]
-
-                        Nothing ->
-                            [ InstructionToolView.description instructionTool
-                                |> Html.Attributes.title
-                                |> htmlAttribute
-                            ]
+                    else
+                        [ InstructionToolView.description instructionTool
+                            |> Html.Attributes.title
+                            |> htmlAttribute
+                        ]
 
                 onPress =
-                    { instructionToolbox | selectedIndex = Just index }
-                        |> ToolboxReplaced
-                        |> Just
+                    Just (InstructionToolSelected index)
             in
             instructionToolButton attributes onPress instructionTool
 
-        replaceToolMessage index instructionTool =
-            ToolboxReplaced (InstructionToolbox.set index instructionTool instructionToolbox)
-
         toolExtraView =
-            case instructionToolbox.selectedIndex of
+            case model.selectedInstructionToolIndex of
                 Just index ->
-                    case InstructionToolbox.getSelected instructionToolbox of
+                    case Array.get index model.level.instructionTools of
                         Just (ChangeAnyDirection selectedDirection) ->
                             [ Left, Up, Down, Right ]
                                 |> List.map
@@ -452,9 +641,7 @@ viewToolSidebar model =
                                                     []
 
                                             onPress =
-                                                ChangeAnyDirection direction
-                                                    |> replaceToolMessage index
-                                                    |> Just
+                                                Just (InstructionToolReplaced index (ChangeAnyDirection direction))
 
                                             instruction =
                                                 ChangeDirection direction
@@ -484,9 +671,7 @@ viewToolSidebar model =
                                                         []
 
                                                 onPress =
-                                                    BranchAnyDirection direction falseDirection
-                                                        |> replaceToolMessage index
-                                                        |> Just
+                                                    Just (InstructionToolReplaced index (BranchAnyDirection direction falseDirection))
                                             in
                                             branchDirectionExtraButton attributes onPress True direction
                                         )
@@ -504,9 +689,7 @@ viewToolSidebar model =
                                                         []
 
                                                 onPress =
-                                                    BranchAnyDirection trueDirection direction
-                                                        |> replaceToolMessage index
-                                                        |> Just
+                                                    Just (InstructionToolReplaced index (BranchAnyDirection trueDirection direction))
                                             in
                                             branchDirectionExtraButton attributes onPress False direction
                                         )
@@ -521,11 +704,7 @@ viewToolSidebar model =
                                 , Border.color (rgb 1 1 1)
                                 , Border.rounded 0
                                 ]
-                                { onChange =
-                                    \string ->
-                                        string
-                                            |> PushValueToStack
-                                            |> replaceToolMessage index
+                                { onChange = PushValueToStack >> InstructionToolReplaced index
                                 , text = value
                                 , placeholder = Nothing
                                 , label =

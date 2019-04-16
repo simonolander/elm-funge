@@ -1,4 +1,4 @@
-module Data.DraftId exposing (DraftId(..), decoder, encode, generate, toString, urlParser)
+module Data.DraftId exposing (DraftId, decoder, encode, generate, toString, urlParser)
 
 import Array
 import Json.Decode as Decode
@@ -7,17 +7,17 @@ import Random
 import Url.Parser exposing (Parser)
 
 
-type DraftId
-    = DraftId String
+type alias DraftId =
+    String
 
 
 urlParser : Parser (DraftId -> a) a
 urlParser =
-    Url.Parser.custom "DRAFT ID" (\str -> Just (DraftId str))
+    Url.Parser.custom "DRAFT ID" (\str -> Just str)
 
 
 toString : DraftId -> String
-toString (DraftId id) =
+toString id =
     id
 
 
@@ -43,7 +43,6 @@ generate =
     in
     Random.list 16 char
         |> Random.map String.fromList
-        |> Random.map DraftId
 
 
 
@@ -57,4 +56,4 @@ encode =
 
 decoder : Decode.Decoder DraftId
 decoder =
-    Decode.map DraftId Decode.string
+    Decode.string

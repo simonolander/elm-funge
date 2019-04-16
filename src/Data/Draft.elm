@@ -1,8 +1,9 @@
-module Data.Draft exposing (Draft, decoder, encode, fromKey, generator, getDraftsFromLocalStorage, loadFromLocalStorage, loadedFromLocalStorage, pushBoard, redo, saveToLocalStorage, undo, withScore)
+module Data.Draft exposing (Draft, decoder, encode, fromKey, generator, getDraftsFromLocalStorage, getInstructionCount, loadFromLocalStorage, loadedFromLocalStorage, pushBoard, redo, saveToLocalStorage, undo, withScore)
 
 import Data.Board as Board exposing (Board)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.History as History exposing (History)
+import Data.Instruction as Instruction
 import Data.Level exposing (Level)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.Score as Score exposing (Score)
@@ -47,6 +48,22 @@ redo draft =
     { draft
         | boardHistory = History.forward draft.boardHistory
     }
+
+
+getInstructionCount : Board -> Draft -> Int
+getInstructionCount initialBoard draft =
+    let
+        count =
+            Board.count ((/=) Instruction.NoOp)
+
+        initialInstructionCount =
+            count initialBoard
+
+        currentInstructionCount =
+            History.current draft.boardHistory
+                |> count
+    in
+    currentInstructionCount - initialInstructionCount
 
 
 
@@ -126,7 +143,7 @@ fromKey : Ports.LocalStorage.Key -> Maybe DraftId
 fromKey key =
     case String.split "." key of
         "drafts" :: draftId :: [] ->
-            Just (DraftId.DraftId draftId)
+            Just draftId
 
         _ ->
             Nothing
@@ -159,7 +176,7 @@ loadFromLocalStorage draftId =
 loadedFromLocalStorage : ( Ports.LocalStorage.Key, Ports.LocalStorage.Value ) -> Result String (Maybe Draft)
 loadedFromLocalStorage ( key, value ) =
     case fromKey key of
-        Just (DraftId.DraftId draftId) ->
+        Just draftId ->
             case Decode.decodeValue (Decode.nullable decoder) value of
                 Ok (Just draft) ->
                     if DraftId.toString draft.id == draftId then

@@ -1,5 +1,6 @@
 module Levels exposing (levels)
 
+import Array
 import Data.Board as Board
 import Data.Direction exposing (Direction(..))
 import Data.Instruction exposing (Instruction(..))
@@ -21,21 +22,22 @@ levelTest =
         Board.empty 3 3
             |> Board.set { x = 2, y = 2 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction (PushToStack 15433)
-        , PushValueToStack "0"
-        , JustInstruction Add
-        , JustInstruction SendToBottom
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction JumpForward
-        , JustInstruction (Exception "Some exception")
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction (PushToStack 15433)
+            , PushValueToStack "0"
+            , JustInstruction Add
+            , JustInstruction SendToBottom
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction JumpForward
+            , JustInstruction (Exception "Some exception")
+            ]
     }
 
 
@@ -52,16 +54,17 @@ levelDoubleTheFun =
     , initialBoard =
         Board.empty 4 4
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Add
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction PopFromStack
-        , JustInstruction Terminate
-        , BranchAnyDirection Left Right
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Add
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction PopFromStack
+            , JustInstruction Terminate
+            , BranchAnyDirection Left Right
+            ]
     }
 
 
@@ -78,16 +81,17 @@ level123 =
     , initialBoard =
         Board.empty 4 4
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Read
-        , JustInstruction PopFromStack
-        , JustInstruction Print
-        , JustInstruction Terminate
-        , BranchAnyDirection Left Right
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Read
+            , JustInstruction PopFromStack
+            , JustInstruction Print
+            , JustInstruction Terminate
+            , BranchAnyDirection Left Right
+            ]
     }
 
 
@@ -108,16 +112,17 @@ levelCountDown =
     , initialBoard =
         Board.empty 7 7
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Decrement
-        , JustInstruction Read
-        , JustInstruction PopFromStack
-        , JustInstruction Print
-        , JustInstruction Terminate
-        , BranchAnyDirection Left Right
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Decrement
+            , JustInstruction Read
+            , JustInstruction PopFromStack
+            , JustInstruction Print
+            , JustInstruction Terminate
+            , BranchAnyDirection Left Right
+            ]
     }
 
 
@@ -135,18 +140,19 @@ levelSomeSums =
     , initialBoard =
         Board.empty 7 7
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction PopFromStack
-        , JustInstruction Print
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction PopFromStack
+            , JustInstruction Print
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -170,18 +176,19 @@ levelOneMinusTheOther =
     , initialBoard =
         Board.empty 7 7
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -204,18 +211,19 @@ levelPowersOfTwo =
     , initialBoard =
         Board.empty 8 8
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction PopFromStack
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction Print
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction PopFromStack
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction Print
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -238,18 +246,19 @@ levelTriangularNumbers =
     , initialBoard =
         Board.empty 8 8
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction PopFromStack
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction Print
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction PopFromStack
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction Print
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -272,19 +281,20 @@ levelSignalAmplifier =
     , initialBoard =
         Board.empty 5 5
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction JumpForward
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction JumpForward
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -308,20 +318,21 @@ levelMultiplier =
     , initialBoard =
         Board.empty 7 7
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction SendToBottom
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction JumpForward
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction SendToBottom
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction JumpForward
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -345,21 +356,22 @@ levelDivideAndConquer =
     , initialBoard =
         Board.empty 7 7
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction SendToBottom
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction (PushToStack 0)
-        , JustInstruction JumpForward
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction SendToBottom
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction (PushToStack 0)
+            , JustInstruction JumpForward
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -382,19 +394,20 @@ levelSequenceReverser =
     , initialBoard =
         Board.empty 5 5
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction JumpForward
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction JumpForward
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -417,21 +430,22 @@ levelSequenceSorter =
     , initialBoard =
         Board.empty 7 7
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction SendToBottom
-        , JustInstruction CompareLessThan
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction JumpForward
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction SendToBottom
+            , JustInstruction CompareLessThan
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction JumpForward
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -462,19 +476,20 @@ levelLessIsMore =
     , initialBoard =
         Board.empty 8 8
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction Duplicate
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        , JustInstruction Swap
-        , JustInstruction Read
-        , JustInstruction Print
-        , JustInstruction JumpForward
-        , JustInstruction PopFromStack
-        , BranchAnyDirection Left Right
-        , JustInstruction Terminate
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction Duplicate
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            , JustInstruction Swap
+            , JustInstruction Read
+            , JustInstruction Print
+            , JustInstruction JumpForward
+            , JustInstruction PopFromStack
+            , BranchAnyDirection Left Right
+            , JustInstruction Terminate
+            ]
     }
 
 
@@ -499,9 +514,10 @@ levelLabyrinth1 =
             |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
             |> Board.set { x = 4, y = 4 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            ]
     }
 
 
@@ -525,9 +541,10 @@ levelLabyrinth2 =
             |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 2 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            ]
     }
 
 
@@ -554,10 +571,11 @@ levelLabyrinth3 =
             |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 2 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction JumpForward
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction JumpForward
+            ]
     }
 
 
@@ -587,10 +605,11 @@ levelLabyrinth4 =
             |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Right
-        , JustInstruction JumpForward
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Right
+            , JustInstruction JumpForward
+            ]
     }
 
 
@@ -620,9 +639,10 @@ levelLabyrinth5 =
             |> Board.set { x = 3, y = 4 } (Branch Right Up)
             |> Board.set { x = 4, y = 4 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            ]
     }
 
 
@@ -653,10 +673,11 @@ levelLabyrinth6 =
             |> Board.set { x = 2, y = 3 } (Branch Right Up)
             |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        , JustInstruction JumpForward
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            , JustInstruction JumpForward
+            ]
     }
 
 
@@ -689,11 +710,12 @@ levelLabyrinth7 =
             |> Board.set { x = 2, y = 3 } (Branch Right Left)
             |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        , BranchAnyDirection Up Up
-        , JustInstruction JumpForward
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            , BranchAnyDirection Up Up
+            , JustInstruction JumpForward
+            ]
     }
 
 
@@ -715,9 +737,10 @@ levelLabyrinth8 =
             |> Board.set { x = 3, y = 2 } Increment
             |> Board.set { x = 4, y = 0 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            ]
     }
 
 
@@ -746,9 +769,10 @@ levelLabyrinth9 =
             |> Board.set { x = 3, y = 4 } JumpForward
             |> Board.set { x = 2, y = 2 } Terminate
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            ]
     }
 
 
@@ -778,11 +802,12 @@ levelLabyrinth10 =
             |> Board.set { x = 3, y = 4 } JumpForward
             |> Board.set { x = 4, y = 1 } JumpForward
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        , JustInstruction Increment
-        , JustInstruction Print
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            , JustInstruction Increment
+            , JustInstruction Print
+            ]
     }
 
 
@@ -812,10 +837,11 @@ levelLabyrinth11 =
             |> Board.set { x = 1, y = 4 } JumpForward
             |> Board.set { x = 2, y = 4 } Increment
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        , JustInstruction Print
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            , JustInstruction Print
+            ]
     }
 
 
@@ -832,17 +858,18 @@ levelLabyrinthLab =
     , initialBoard =
         Board.empty 5 5
     , instructionTools =
-        [ JustInstruction NoOp
-        , ChangeAnyDirection Down
-        , JustInstruction (Exception "")
-        , JustInstruction Terminate
-        , BranchAnyDirection Up Left
-        , PushValueToStack "1"
-        , JustInstruction JumpForward
-        , JustInstruction Print
-        , JustInstruction Increment
-        , JustInstruction Decrement
-        ]
+        Array.fromList
+            [ JustInstruction NoOp
+            , ChangeAnyDirection Down
+            , JustInstruction (Exception "")
+            , JustInstruction Terminate
+            , BranchAnyDirection Up Left
+            , PushValueToStack "1"
+            , JustInstruction JumpForward
+            , JustInstruction Print
+            , JustInstruction Increment
+            , JustInstruction Decrement
+            ]
     }
 
 

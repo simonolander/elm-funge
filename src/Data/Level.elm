@@ -1,18 +1,12 @@
-module Data.Level exposing (Level, decoder, encode)
+module Data.Level exposing (Level, decoder, encode, withInstructionTool)
 
+import Array exposing (Array)
 import Data.Board as Board exposing (Board)
 import Data.IO as IO exposing (IO)
 import Data.InstructionTool as InstructionTool exposing (InstructionTool)
 import Data.LevelId exposing (LevelId)
-import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
-import Json.Encode
-    exposing
-        ( Value
-        , int
-        , list
-        , object
-        , string
-        )
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 
 type alias Level =
@@ -22,7 +16,18 @@ type alias Level =
     , description : List String
     , io : IO
     , initialBoard : Board
-    , instructionTools : List InstructionTool
+    , instructionTools : Array InstructionTool
+    }
+
+
+withInstructionTool : Int -> InstructionTool -> Level -> Level
+withInstructionTool index instructionTool level =
+    { level
+        | instructionTools =
+            Array.set
+                index
+                instructionTool
+                level.instructionTools
     }
 
 
@@ -30,46 +35,46 @@ type alias Level =
 -- JSON
 
 
-encode : Level -> Value
+encode : Level -> Encode.Value
 encode level =
-    object
-        [ ( "version", int 1 )
-        , ( "id", string level.id )
-        , ( "index", int level.index )
-        , ( "name", string level.name )
-        , ( "description", list string level.description )
+    Encode.object
+        [ ( "version", Encode.int 1 )
+        , ( "id", Encode.string level.id )
+        , ( "index", Encode.int level.index )
+        , ( "name", Encode.string level.name )
+        , ( "description", Encode.list Encode.string level.description )
         , ( "io", IO.encode level.io )
         , ( "initialBoard", Board.encode level.initialBoard )
-        , ( "instructionTools", list InstructionTool.encode level.instructionTools )
+        , ( "instructionTools", Encode.array InstructionTool.encode level.instructionTools )
         ]
 
 
-decoder : Decoder Level
+decoder : Decode.Decoder Level
 decoder =
     let
         levelDecoderV1 =
-            field "id" Decode.string
-                |> andThen
+            Decode.field "id" Decode.string
+                |> Decode.andThen
                     (\id ->
-                        field "index" Decode.int
-                            |> andThen
+                        Decode.field "index" Decode.int
+                            |> Decode.andThen
                                 (\index ->
-                                    field "name" Decode.string
-                                        |> andThen
+                                    Decode.field "name" Decode.string
+                                        |> Decode.andThen
                                             (\name ->
-                                                field "description" (Decode.list Decode.string)
-                                                    |> andThen
+                                                Decode.field "description" (Decode.list Decode.string)
+                                                    |> Decode.andThen
                                                         (\description ->
-                                                            field "io" IO.decoder
-                                                                |> andThen
+                                                            Decode.field "io" IO.decoder
+                                                                |> Decode.andThen
                                                                     (\io ->
-                                                                        field "initialBoard" Board.decoder
-                                                                            |> andThen
+                                                                        Decode.field "initialBoard" Board.decoder
+                                                                            |> Decode.andThen
                                                                                 (\initialBoard ->
-                                                                                    field "instructionTools" (Decode.list InstructionTool.decoder)
-                                                                                        |> andThen
+                                                                                    Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                        |> Decode.andThen
                                                                                             (\instructionTools ->
-                                                                                                succeed
+                                                                                                Decode.succeed
                                                                                                     { id = id
                                                                                                     , name = name
                                                                                                     , index = index
@@ -87,28 +92,28 @@ decoder =
                     )
 
         levelDecoderV2 =
-            field "id" Decode.string
-                |> andThen
+            Decode.field "id" Decode.string
+                |> Decode.andThen
                     (\id ->
-                        field "index" Decode.int
-                            |> andThen
+                        Decode.field "index" Decode.int
+                            |> Decode.andThen
                                 (\index ->
-                                    field "name" Decode.string
-                                        |> andThen
+                                    Decode.field "name" Decode.string
+                                        |> Decode.andThen
                                             (\name ->
-                                                field "description" (Decode.list Decode.string)
-                                                    |> andThen
+                                                Decode.field "description" (Decode.list Decode.string)
+                                                    |> Decode.andThen
                                                         (\description ->
-                                                            field "io" IO.decoder
-                                                                |> andThen
+                                                            Decode.field "io" IO.decoder
+                                                                |> Decode.andThen
                                                                     (\io ->
-                                                                        field "initialBoard" Board.decoder
-                                                                            |> andThen
+                                                                        Decode.field "initialBoard" Board.decoder
+                                                                            |> Decode.andThen
                                                                                 (\initialBoard ->
-                                                                                    field "instructionTools" (Decode.list InstructionTool.decoder)
-                                                                                        |> andThen
+                                                                                    Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                        |> Decode.andThen
                                                                                             (\instructionTools ->
-                                                                                                succeed
+                                                                                                Decode.succeed
                                                                                                     { id = id
                                                                                                     , index = index
                                                                                                     , name = name
@@ -125,8 +130,8 @@ decoder =
                                 )
                     )
     in
-    field "version" Decode.int
-        |> andThen
+    Decode.field "version" Decode.int
+        |> Decode.andThen
             (\version ->
                 case version of
                     1 ->
@@ -136,7 +141,7 @@ decoder =
                         levelDecoderV2
 
                     _ ->
-                        fail
+                        Decode.fail
                             ("Unknown level decoder version: "
                                 ++ String.fromInt version
                             )

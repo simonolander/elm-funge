@@ -184,35 +184,7 @@ update msg model =
                         |> updateWith Levels LevelsMsg
 
                 Just (Route.EditDraft draftId) ->
-                    case model of
-                        Levels (Levels.Loaded loadedModel) ->
-                            case
-                                loadedModel.levels
-                                    |> Dict.values
-                                    |> List.map .drafts
-                                    |> List.concat
-                                    |> List.filter (.id >> (==) draftId)
-                                    |> List.head
-                            of
-                                Just draft ->
-                                    case Dict.get draft.levelId loadedModel.levels of
-                                        Just levelProgress ->
-                                            let
-                                                level =
-                                                    levelProgress.level
-                                            in
-                                            ( Draft (Draft.initWithData draft level session), Cmd.none )
-
-                                        Nothing ->
-                                            ( model, Cmd.none )
-
-                                Nothing ->
-                                    ( model, Cmd.none )
-
-                        _ ->
-                            ( model
-                            , Cmd.none
-                            )
+                    Draft.init draftId session
 
                 Just (Route.ExecuteDraft draftId) ->
                     case model of
