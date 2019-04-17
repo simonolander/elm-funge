@@ -1,18 +1,20 @@
-module Page.Execution exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Execution exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Array exposing (Array)
 import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
 import Data.Direction exposing (Direction(..))
 import Data.Draft as Draft exposing (Draft)
+import Data.DraftId exposing (DraftId)
 import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionPointer exposing (InstructionPointer)
 import Data.Level exposing (Level)
 import Data.Output exposing (Output)
-import Data.Session exposing (Session)
+import Data.Session as Session exposing (Session)
 import Data.Stack exposing (Stack)
+import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -55,21 +57,57 @@ type ExecutionState
     | FastForwarding
 
 
-type alias Model =
-    { execution : Execution
+type alias ErrorModel =
+    { session : Session
+    , draftId : DraftId
+    , error : String
+    }
+
+
+type alias LoadedModel =
+    { session : Session
+    , draftId : DraftId
+    , execution : Execution
     , state : ExecutionState
-    , draft : Draft
-    , session : Session
     }
 
 
-init : Level -> Draft -> Session -> Model
-init level draft session =
-    { execution = initialExecution level draft
-    , state = Paused
-    , draft = draft
-    , session = session
-    }
+type Model
+    = Loaded LoadedModel
+    | Error ErrorModel
+
+
+init : DraftId -> Session -> ( Model, Cmd Msg )
+init draftId session =
+    case Session.getDraftAndLevel draftId session of
+        Just ( draft, level ) ->
+            ( Loaded
+                { execution = initialExecution level draft
+                , state = Paused
+                , session = session
+                , draftId = draftId
+                }
+            , Cmd.none
+            )
+
+        Nothing ->
+            ( Error
+                { session = session
+                , draftId = draftId
+                , error = "Draft or level not found"
+                }
+            , Cmd.none
+            )
+
+
+getSession : Model -> Session
+getSession model =
+    case model of
+        Loaded { session } ->
+            session
+
+        Error { session } ->
+            session
 
 
 initialExecutionStep : Board -> Input -> ExecutionStep
@@ -141,46 +179,47 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        ClickedStep ->
-            { model | state = Paused }
+    case ( msg, model ) of
+        ( ClickedStep, Loaded loadedModel ) ->
+            { loadedModel | state = Paused }
                 |> stepModel
 
-        ClickedUndo ->
-            ( { model
-                | execution = undoExecution model.execution
-                , state = Paused
-              }
+        ( ClickedUndo, Loaded loadedModel ) ->
+            ( Loaded
+                { loadedModel
+                    | execution = undoExecution loadedModel.execution
+                    , state = Paused
+                }
             , Cmd.none
             )
 
-        ClickedRun ->
-            { model | state = Running }
+        ( ClickedRun, Loaded loadedModel ) ->
+            { loadedModel | state = Running }
                 |> stepModel
 
-        ClickedFastForward ->
-            { model | state = FastForwarding }
+        ( ClickedFastForward, Loaded loadedModel ) ->
+            { loadedModel | state = FastForwarding }
                 |> stepModel
 
-        ClickedPause ->
-            ( { model | state = Paused }, Cmd.none )
+        ( ClickedPause, Loaded loadedModel ) ->
+            ( Loaded { loadedModel | state = Paused }, Cmd.none )
 
-        ClickedNavigateBack ->
-            ( model, Route.back model.session.key )
+        ( ClickedNavigateBack, Loaded loadedModel ) ->
+            ( model, Route.back loadedModel.session.key )
 
-        ClickedNavigateBrowseLevels ->
-            ( model, Route.pushUrl model.session.key Route.Levels )
+        ( ClickedNavigateBrowseLevels, Loaded loadedModel ) ->
+            ( model, Route.pushUrl loadedModel.session.key Route.Levels )
 
-        Tick ->
-            stepModel model
+        ( Tick, Loaded loadedModel ) ->
+            stepModel loadedModel
+
+        _ ->
+            ( model, Cmd.none )
 
 
-stepModel : Model -> ( Model, Cmd Msg )
+stepModel : LoadedModel -> ( Model, Cmd Msg )
 stepModel model =
     let
-        draft =
-            model.draft
-
         execution =
             stepExecution model.execution
 
@@ -191,50 +230,55 @@ stepModel model =
             else
                 Paused
 
-        maybeScore =
-            let
-                executionStep =
-                    History.current execution.executionHistory
-            in
-            if isSolved execution then
-                let
-                    numberOfSteps =
-                        executionStep.stepCount
+        ( session, saveDraftCmd ) =
+            case Maybe.andThen (Dict.get model.draftId) model.session.drafts of
+                Just oldDraft ->
+                    if isSolved execution then
+                        let
+                            numberOfSteps =
+                                History.current execution.executionHistory
+                                    |> .stepCount
 
-                    initialNumberOfInstructions =
-                        Board.count ((/=) NoOp) execution.level.initialBoard
+                            initialNumberOfInstructions =
+                                Board.count ((/=) NoOp) execution.level.initialBoard
 
-                    totalNumberOfInstructions =
-                        History.current model.draft.boardHistory
-                            |> Board.count ((/=) NoOp)
+                            totalNumberOfInstructions =
+                                History.first execution.executionHistory
+                                    |> .board
+                                    |> Board.count ((/=) NoOp)
 
-                    numberOfInstructions =
-                        totalNumberOfInstructions - initialNumberOfInstructions
-                in
-                Just
-                    { numberOfSteps = numberOfSteps
-                    , numberOfInstructions = numberOfInstructions
-                    }
+                            numberOfInstructions =
+                                totalNumberOfInstructions - initialNumberOfInstructions
 
-            else
-                Nothing
+                            score =
+                                { numberOfSteps = numberOfSteps
+                                , numberOfInstructions = numberOfInstructions
+                                }
+
+                            newDraft =
+                                { oldDraft | maybeScore = Just score }
+
+                            newSession =
+                                Session.withDraft newDraft model.session
+                        in
+                        ( newSession, Draft.saveToLocalStorage newDraft )
+
+                    else
+                        ( model.session, Cmd.none )
+
+                Nothing ->
+                    ( model.session, Cmd.none )
 
         newModel =
-            { model
-                | execution = execution
-                , state = state
-                , draft =
-                    { draft
-                        | maybeScore = maybeScore
-                    }
-            }
+            Loaded
+                { model
+                    | session = session
+                    , execution = execution
+                    , state = state
+                }
 
         cmd =
-            if Maybe.Extra.isJust maybeScore |> Debug.log "maybeScore" then
-                Draft.saveToLocalStorage { draft | maybeScore = maybeScore }
-
-            else
-                Cmd.none
+            saveDraftCmd
     in
     ( newModel
     , cmd
@@ -637,15 +681,20 @@ stepExecutionStep executionStep =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.state of
-        Paused ->
+    case model of
+        Loaded loadedModel ->
+            case loadedModel.state of
+                Paused ->
+                    Sub.none
+
+                Running ->
+                    Time.every 250 (always Tick)
+
+                FastForwarding ->
+                    Time.every 100 (always Tick)
+
+        Error _ ->
             Sub.none
-
-        Running ->
-            Time.every 250 (always Tick)
-
-        FastForwarding ->
-            Time.every 100 (always Tick)
 
 
 
@@ -671,6 +720,32 @@ noPadding =
 view : Model -> Document Msg
 view model =
     let
+        content =
+            case model of
+                Loaded loadedModel ->
+                    viewLoaded loadedModel
+
+                Error errorModel ->
+                    text errorModel.error
+
+        body =
+            layout
+                [ height fill
+                , clip
+                , Font.family [ Font.monospace ]
+                , Font.color (rgb 1 1 1)
+                ]
+                content
+                |> List.singleton
+    in
+    { title = "Executing"
+    , body = body
+    }
+
+
+viewLoaded : LoadedModel -> Element Msg
+viewLoaded model =
+    let
         boardView =
             viewBoard model
 
@@ -680,7 +755,7 @@ view model =
         ioSidebarView =
             viewIOSidebar model
 
-        body =
+        content =
             column
                 [ width fill
                 , height fill
@@ -695,20 +770,11 @@ view model =
                     , ioSidebarView
                     ]
                 ]
-                |> layout
-                    [ height fill
-                    , clip
-                    , Font.family [ Font.monospace ]
-                    , Font.color (rgb 1 1 1)
-                    ]
-                |> List.singleton
     in
-    { title = "Executing"
-    , body = body
-    }
+    content
 
 
-viewExecutionSidebar : Model -> Element Msg
+viewExecutionSidebar : LoadedModel -> Element Msg
 viewExecutionSidebar model =
     let
         controlSize =
@@ -803,7 +869,7 @@ viewExecutionSidebar model =
         ]
 
 
-viewBoard : Model -> Element Msg
+viewBoard : LoadedModel -> Element Msg
 viewBoard model =
     let
         executionStep =
@@ -911,7 +977,7 @@ viewBoard model =
     boardWithModalView
 
 
-viewExceptionModal : Model -> String -> Element Msg
+viewExceptionModal : LoadedModel -> String -> Element Msg
 viewExceptionModal execution exceptionMessage =
     column
         [ centerX
@@ -1018,7 +1084,7 @@ viewVictoryModal execution =
         ]
 
 
-viewIOSidebar : Model -> Element Msg
+viewIOSidebar : LoadedModel -> Element Msg
 viewIOSidebar model =
     let
         executionStep =

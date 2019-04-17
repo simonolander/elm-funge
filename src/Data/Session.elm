@@ -1,4 +1,4 @@
-module Data.Session exposing (Session, getLevelDrafts, getToken, init, withDraft, withDrafts, withLevel, withLevels, withUser)
+module Data.Session exposing (Session, getDraftAndLevel, getLevelDrafts, getToken, init, withDraft, withDrafts, withLevel, withLevels, withUser)
 
 import Browser.Navigation exposing (Key)
 import Data.AuthorizationToken exposing (AuthorizationToken)
@@ -87,3 +87,18 @@ getLevelDrafts levelId session =
         |> Maybe.map Dict.values
         |> Maybe.withDefault []
         |> List.filter (\draft -> draft.levelId == levelId)
+
+
+getDraftAndLevel : DraftId -> Session -> Maybe ( Draft, Level )
+getDraftAndLevel draftId session =
+    case Maybe.andThen (Dict.get draftId) session.drafts of
+        Just draft ->
+            case Maybe.andThen (Dict.get draft.levelId) session.levels of
+                Just level ->
+                    Just ( draft, level )
+
+                Nothing ->
+                    Nothing
+
+        Nothing ->
+            Nothing

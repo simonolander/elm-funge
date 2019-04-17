@@ -5,8 +5,8 @@ module Main exposing (main)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
+import Data.Session exposing (Session)
 import Data.User as User exposing (User)
-import Dict
 import Html
 import Maybe.Extra
 import Page.Draft as Draft
@@ -76,18 +76,18 @@ init flags url key =
                 |> Maybe.map User.authorizedUser
                 |> Maybe.withDefault User.guest
 
-        model : Model
-        model =
-            Home
-                { session =
-                    { key = key
-                    , user = user
-                    }
-                }
+        session =
+            { key = key
+            , user = user
+            , levels = Nothing
+            , drafts = Nothing
+            }
 
-        cmd : Cmd Msg
+        ( model, pageCmd ) =
+            changeUrl url session
+
         cmd =
-            Cmd.none
+            pageCmd
     in
     ( model, cmd )
 
@@ -148,7 +148,7 @@ update msg model =
                     Levels.getSession levelsModel
 
                 Execution executionModel ->
-                    executionModel.session
+                    Execution.getSession executionModel
 
                 Draft draftModel ->
                     draftModel.session
@@ -172,29 +172,7 @@ update msg model =
                     )
 
         ChangedUrl url ->
-            case Route.fromUrl url of
-                Nothing ->
-                    ( model, Cmd.none )
-
-                Just Route.Home ->
-                    ( Home { session = session }, Cmd.none )
-
-                Just Route.Levels ->
-                    Levels.init session
-                        |> updateWith Levels LevelsMsg
-
-                Just (Route.EditDraft draftId) ->
-                    Draft.init draftId session
-
-                Just (Route.ExecuteDraft draftId) ->
-                    case model of
-                        Draft draftModel ->
-                            ( Execution (Execution.init draftModel.level draftModel.draft session), Cmd.none )
-
-                        _ ->
-                            ( model
-                            , Cmd.none
-                            )
+            changeUrl url session
 
         ExecutionMsg executionMsg ->
             case model of
@@ -227,6 +205,28 @@ update msg model =
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
 updateWith modelMap cmdMap ( model, cmd ) =
     ( modelMap model, Cmd.map cmdMap cmd )
+
+
+changeUrl : Url.Url -> Session -> ( Model, Cmd Msg )
+changeUrl url session =
+    case Route.fromUrl url of
+        Nothing ->
+            ( Home { session = session }, Cmd.none )
+
+        Just Route.Home ->
+            ( Home { session = session }, Cmd.none )
+
+        Just Route.Levels ->
+            Levels.init session
+                |> updateWith Levels LevelsMsg
+
+        Just (Route.EditDraft draftId) ->
+            Draft.init draftId session
+                |> updateWith Draft DraftMsg
+
+        Just (Route.ExecuteDraft draftId) ->
+            Execution.init draftId session
+                |> updateWith Execution ExecutionMsg
 
 
 
