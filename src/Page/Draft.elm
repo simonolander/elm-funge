@@ -30,6 +30,7 @@ import Levels
 import Maybe.Extra
 import Ports.LocalStorage
 import Route
+import View.LoadingScreen
 import ViewComponents exposing (..)
 
 
@@ -392,7 +393,7 @@ view model =
                             viewError { error = "Loading drafts" }
 
                 Nothing ->
-                    viewError { error = "Loading levels" }
+                    View.LoadingScreen.view "Loading levels"
 
         body =
             layout
