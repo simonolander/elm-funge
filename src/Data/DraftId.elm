@@ -29,7 +29,8 @@ generate : Random.Generator DraftId
 generate =
     let
         chars =
-            "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            --            "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "0123456789abcdef"
                 |> String.toList
                 |> Array.fromList
 

@@ -338,7 +338,12 @@ viewSidebar levelProgress =
                 label =
                     [ draftName
                         |> text
-                        |> el [ centerX, padding 10, Font.size 24 ]
+                        |> el [ centerX, Font.size 24 ]
+                    , el
+                        [ centerX
+                        , Font.color (rgb 0.2 0.2 0.2)
+                        ]
+                        (text draft.id)
                     , row
                         [ width fill
                         , spaceEvenly
