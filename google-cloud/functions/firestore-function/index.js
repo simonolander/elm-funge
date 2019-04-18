@@ -92,17 +92,22 @@ const verifyJwt = (req) => {
     }
 };
 
+const accessControlRequest = (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.method === 'OPTIONS') {
+        res.set('Access-Control-Allow-Methods', 'GET');
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.set('Access-Control-Max-Age', '3600');
+        res.status(204).send('');
+        return true;
+    }
+    return false;
+};
+
 exports.levels = (req, res) => {
     try {
-        res.set('Access-Control-Allow-Origin', '*');
-
-        if (req.method === 'OPTIONS') {
-            res.set('Access-Control-Allow-Methods', 'GET');
-            res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-            res.set('Access-Control-Max-Age', '3600');
-            res.status(204).send('');
-        } else {
-            res.set('Access-Control-Allow-Origin', '*');
+        if (accessControlRequest(req, res)) {
+            return;
         }
 
         if (req.method === 'GET') {
@@ -166,7 +171,76 @@ exports.levels = (req, res) => {
                 error
             });
     }
-}
+};
+
+exports.level = (req, res) => {
+    try {
+        if (accessControlRequest(req, res)) {
+            return;
+        }
+
+        if (req.method === 'GET') {
+            const id = Number.parseInt(req.query.offset || 0);
+            const limit = Number.parseInt(req.query.limit || 50);
+            return firestore.collection('levels')
+                .offset(offset)
+                .limit(limit)
+                .get()
+                .then(collection =>
+                    res.status(200)
+                        .send(collection.docs.map(doc => doc.data())))
+        } else if (req.method === 'POST') {
+            const {success, message, username} = verifyJwt(req);
+            if (!success) {
+                return res.status(403)
+                    .send({
+                        status: 403,
+                        messages: [message]
+                    })
+            }
+            const level = req.body;
+            const errors = schemas.levelSchema.validate(level);
+            if (errors.length > 0) {
+                return res.status(400)
+                    .send({
+                        status: 400,
+                        messages: errors
+                    });
+            }
+
+            return firestore.collection("levels")
+                .add({
+                    ...level,
+                    createdTime: new Date().getTime(),
+                    authorId: username
+                })
+                .then(doc => res.status(200).send(doc))
+                .catch(error => {
+                    console.error(error);
+                    return res.status(500)
+                        .send({
+                            status: 500,
+                            messages: ["An error occured when saving the level to the database"],
+                            error
+                        })
+                });
+        } else {
+            return res.status(400)
+                .send({
+                    status: 400,
+                    messages: [`Method not allowed: ${req.method}`],
+                });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500)
+            .send({
+                status: 500,
+                messages: ["An error occured when performing the request"],
+                error
+            });
+    }
+};
 
 exports.numbers = (req, res) => {
     if (req.method === 'DELETE') throw 'not yet built';

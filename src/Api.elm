@@ -16,8 +16,16 @@ import Url.Builder
 getLevels : (Result Http.Error (List Level) -> msg) -> Cmd msg
 getLevels toMsg =
     Http.get
-        { url = "https://us-central1-luminous-cubist-234816.cloudfunctions.net/levels"
+        { url = Url.Builder.crossOrigin gcpPrePath [ "levels" ] []
         , expect = Http.expectJson toMsg (Decode.list Level.decoder)
+        }
+
+
+getLevel : LevelId -> (Result Http.Error (Maybe Level) -> msg) -> Cmd msg
+getLevel levelId function =
+    Http.get
+        { url = Url.Builder.crossOrigin gcpPrePath [ "levels" ] [ Url.Builder.string "levelId" levelId ]
+        , expect = Http.expectJson function (Decode.maybe Level.decoder)
         }
 
 

@@ -38,15 +38,15 @@ type alias Model =
     }
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+init : Maybe LevelId -> Session -> ( Model, Cmd Msg )
+init selectedLevelId session =
     let
         offline =
             True
 
         model =
             { session = session
-            , selectedLevelId = Nothing
+            , selectedLevelId = selectedLevelId
             , error = Nothing
             }
     in
@@ -417,7 +417,7 @@ update msg model =
                     model.session.levels
                         |> Maybe.andThen (Dict.get selectedLevelId)
 
-                cmd =
+                generateDraftCmd =
                     case maybeSelectedLevel of
                         Just selectedLevel ->
                             if List.isEmpty (Session.getLevelDrafts selectedLevelId session) then
@@ -430,6 +430,15 @@ update msg model =
 
                         Nothing ->
                             Cmd.none
+
+                changeUrlCmd =
+                    Route.replaceUrl session.key (Route.Levels (Just selectedLevelId))
+
+                cmd =
+                    Cmd.batch
+                        [ generateDraftCmd
+                        , changeUrlCmd
+                        ]
             in
             ( { model
                 | selectedLevelId = Just selectedLevelId

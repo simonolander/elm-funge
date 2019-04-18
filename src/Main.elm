@@ -5,9 +5,10 @@ module Main exposing (main)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
-import Data.Session exposing (Session)
+import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Html
+import Levels
 import Maybe.Extra
 import Page.Draft as Draft
 import Page.Execution as Execution
@@ -82,6 +83,7 @@ init flags url key =
             , levels = Nothing
             , drafts = Nothing
             }
+                |> Session.withLevels Levels.levels
 
         ( model, pageCmd ) =
             changeUrl url session
@@ -216,8 +218,8 @@ changeUrl url session =
         Just Route.Home ->
             ( Home { session = session }, Cmd.none )
 
-        Just Route.Levels ->
-            Levels.init session
+        Just (Route.Levels maybeLevelId) ->
+            Levels.init maybeLevelId session
                 |> updateWith Levels LevelsMsg
 
         Just (Route.EditDraft draftId) ->

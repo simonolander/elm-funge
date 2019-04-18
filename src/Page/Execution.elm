@@ -208,7 +208,13 @@ update msg model =
             ( model, Route.back loadedModel.session.key )
 
         ( ClickedNavigateBrowseLevels, Loaded loadedModel ) ->
-            ( model, Route.pushUrl loadedModel.session.key Route.Levels )
+            let
+                levelId =
+                    loadedModel.session.drafts
+                        |> Maybe.andThen (Dict.get loadedModel.draftId)
+                        |> Maybe.map .levelId
+            in
+            ( model, Route.pushUrl loadedModel.session.key (Route.Levels levelId) )
 
         ( Tick, Loaded loadedModel ) ->
             stepModel loadedModel

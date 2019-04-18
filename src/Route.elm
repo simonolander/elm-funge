@@ -2,6 +2,7 @@ module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl)
 
 import Browser.Navigation as Navigation
 import Data.DraftId as DraftId
+import Data.LevelId as LevelId
 import Element
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, oneOf, s)
@@ -9,7 +10,7 @@ import Url.Parser as Parser exposing ((</>), Parser, oneOf, s)
 
 type Route
     = Home
-    | Levels
+    | Levels (Maybe LevelId.LevelId)
     | EditDraft DraftId.DraftId
     | ExecuteDraft DraftId.DraftId
 
@@ -40,8 +41,11 @@ toString route =
                 Home ->
                     []
 
-                Levels ->
+                Levels Nothing ->
                     [ "levels" ]
+
+                Levels (Just levelId) ->
+                    [ "levels", levelId ]
 
                 EditDraft draftId ->
                     [ "drafts", DraftId.toString draftId ]
@@ -71,7 +75,8 @@ parser : Parser (Route -> a) a
 parser =
     oneOf
         [ Parser.map Home Parser.top
-        , Parser.map Levels (s "levels")
+        , Parser.map (Levels Nothing) (s "levels")
+        , Parser.map (Levels << Just) (s "levels" </> LevelId.urlParser)
         , Parser.map EditDraft (s "drafts" </> DraftId.urlParser)
         , Parser.map ExecuteDraft (s "drafts" </> DraftId.urlParser </> s "execute")
         ]
