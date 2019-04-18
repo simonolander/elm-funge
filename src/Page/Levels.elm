@@ -18,12 +18,11 @@ import Element.Input as Input
 import Html.Attributes
 import Http
 import Json.Decode as Decode
-import Levels
-import Maybe.Extra
 import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import Result exposing (Result)
 import Route exposing (Route)
+import View.LoadingScreen
 import ViewComponents
 
 
@@ -41,50 +40,29 @@ type alias Model =
 init : Maybe LevelId -> Session -> ( Model, Cmd Msg )
 init selectedLevelId session =
     let
-        offline =
-            True
-
         model =
             { session = session
             , selectedLevelId = selectedLevelId
             , error = Nothing
             }
-    in
-    case session.levels of
-        Just levelDict ->
-            case session.drafts of
-                Just _ ->
-                    ( model, Cmd.none )
+
+        cmd =
+            case session.levels of
+                Just levelDict ->
+                    case session.drafts of
+                        Just _ ->
+                            Cmd.none
+
+                        Nothing ->
+                            levelDict
+                                |> Dict.values
+                                |> List.map .id
+                                |> Draft.getDraftsFromLocalStorage "drafts"
 
                 Nothing ->
-                    ( model
-                    , levelDict
-                        |> Dict.values
-                        |> List.map .id
-                        |> Draft.getDraftsFromLocalStorage "drafts"
-                    )
-
-        Nothing ->
-            if offline then
-                let
-                    levels =
-                        Levels.levels
-
-                    cmd =
-                        levels
-                            |> List.map .id
-                            |> Draft.getDraftsFromLocalStorage "drafts"
-                in
-                ( { model
-                    | session = Session.withLevels levels session
-                  }
-                , cmd
-                )
-
-            else
-                ( model
-                , Api.getLevels LoadedLevels
-                )
+                    Api.getLevels LoadedLevels
+    in
+    ( model, cmd )
 
 
 getSession : Model -> Session
@@ -128,10 +106,10 @@ view model =
                                     viewSuccess model.session levelProgresses model.selectedLevelId
 
                                 Nothing ->
-                                    viewLoadingDrafts model
+                                    View.LoadingScreen.view "Loading drafts"
 
                         Nothing ->
-                            viewLoadingLevels model
+                            View.LoadingScreen.view "Loading levels"
     in
     { title = "Levels"
     , body =
@@ -147,16 +125,6 @@ view model =
             content
             |> List.singleton
     }
-
-
-viewLoadingLevels : Model -> Element Msg
-viewLoadingLevels model =
-    text "Loading levels"
-
-
-viewLoadingDrafts : Model -> Element Msg
-viewLoadingDrafts model =
-    text "Loading drafts"
 
 
 viewError : Http.Error -> Element Msg
