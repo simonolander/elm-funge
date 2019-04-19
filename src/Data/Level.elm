@@ -1,13 +1,15 @@
-module Data.Level exposing (Level, decoder, encode, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withInstructionTool)
+module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withInstructionTool)
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
 import Data.IO as IO exposing (IO)
-import Data.InstructionTool as InstructionTool exposing (InstructionTool)
-import Data.LevelId exposing (LevelId)
+import Data.Instruction exposing (Instruction(..))
+import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
+import Data.LevelId as LevelId exposing (LevelId)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
+import Random
 
 
 type alias Level =
@@ -52,6 +54,32 @@ saveToLocalStorage level =
         ( localStorageKey level.id
         , encode level
         )
+
+
+
+-- RANDOM
+
+
+generator : Random.Generator Level
+generator =
+    Random.map
+        (\levelId ->
+            { id = levelId
+            , index = 0
+            , name = "New level"
+            , description = [ "Enter a description" ]
+            , io =
+                { input = []
+                , output = []
+                }
+            , initialBoard = Board.empty 4 4
+            , instructionTools =
+                JustInstruction NoOp
+                    |> List.singleton
+                    |> Array.fromList
+            }
+        )
+        LevelId.generator
 
 
 

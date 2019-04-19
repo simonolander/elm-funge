@@ -256,8 +256,8 @@ changeUrl url session =
             Execution.init draftId session
                 |> updateWith Execution ExecutionMsg
 
-        Just Route.Blueprints ->
-            Blueprints.init session
+        Just (Route.Blueprints maybeLevelId) ->
+            Blueprints.init maybeLevelId session
                 |> updateWith Blueprints BlueprintsMsg
 
 

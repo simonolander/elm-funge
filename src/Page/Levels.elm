@@ -22,6 +22,7 @@ import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import Result exposing (Result)
 import Route exposing (Route)
+import View.LevelButton
 import View.LoadingScreen
 import ViewComponents
 
@@ -186,47 +187,25 @@ viewLevels maybeSelectedLevelId levelProgresses =
                         |> Maybe.map ((==) levelProgress.level.id)
                         |> Maybe.withDefault False
 
-                buttonAttributes =
-                    if LevelProgress.isSolved levelProgress then
-                        [ htmlAttribute
-                            (Html.Attributes.class "solved")
-                        ]
+                solved =
+                    LevelProgress.isSolved levelProgress
 
-                    else
-                        []
-            in
-            Input.button
-                buttonAttributes
-                { onPress =
+                onPress =
                     Just (SelectLevel levelProgress.level.id)
-                , label =
-                    column
-                        [ padding 20
-                        , Border.width 3
-                        , width (px 256)
-                        , spaceEvenly
-                        , height (px 181)
-                        , mouseOver
-                            [ Background.color (rgba 1 1 1 0.5)
-                            ]
-                        , Background.color
-                            (if selected then
-                                rgba 1 1 1 0.4
 
-                             else
-                                rgba 0 0 0 0
-                            )
-                        ]
-                        [ el [ centerX, Font.center ] (paragraph [] [ text levelProgress.level.name ])
-                        , el [ centerX ]
-                            (paragraph
-                                [ Font.color
-                                    (rgb 0.2 0.2 0.2)
-                                ]
-                                [ text levelProgress.level.id ]
-                            )
-                        ]
-                }
+                default =
+                    View.LevelButton.default
+
+                parameters =
+                    { default
+                        | selected = selected
+                        , marked = solved
+                        , onPress = onPress
+                    }
+            in
+            View.LevelButton.view
+                parameters
+                levelProgress.level
     in
     levelProgresses
         |> List.sortBy (.level >> .index)

@@ -2,14 +2,20 @@ module Page.Blueprints exposing (Model, Msg, getSession, init, subscriptions, up
 
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
-import Data.Campaign as Campaign
+import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId
-import Data.Level as Level
+import Data.Level as Level exposing (Level)
+import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
 import Dict
 import Element exposing (..)
+import Html exposing (Html)
 import Json.Decode as Decode
 import Ports.LocalStorage as LocalStorage
+import Random
+import Route
+import View.LevelButton
+import View.LoadingScreen
 import View.SingleSidebar
 
 
@@ -19,12 +25,20 @@ import View.SingleSidebar
 
 type alias Model =
     { session : Session
+    , selectedLevelId : Maybe LevelId
+    , error : Maybe String
     }
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+init : Maybe LevelId -> Session -> ( Model, Cmd Msg )
+init selectedLevelId session =
     let
+        model =
+            { session = session
+            , selectedLevelId = selectedLevelId
+            , error = Nothing
+            }
+
         cmd =
             case Dict.get CampaignId.blueprints session.campaigns of
                 Just campaign ->
@@ -36,7 +50,7 @@ init session =
                 Nothing ->
                     Campaign.loadFromLocalStorage CampaignId.blueprints
     in
-    ( { session = session }, cmd )
+    ( model, cmd )
 
 
 getSession : Model -> Session
@@ -50,11 +64,48 @@ getSession { session } =
 
 type Msg
     = LocalStorageResponse ( LocalStorage.Key, LocalStorage.Value )
+    | ClickedNewLevel
+    | LevelGenerated Level
+    | SelectedLevelId LevelId
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SelectedLevelId levelId ->
+            ( { model | selectedLevelId = Just levelId }
+            , Route.replaceUrl model.session.key (Route.Blueprints (Just levelId))
+            )
+
+        ClickedNewLevel ->
+            ( model, Random.generate LevelGenerated Level.generator )
+
+        LevelGenerated level ->
+            let
+                session =
+                    model.session
+
+                campaign =
+                    Dict.get CampaignId.blueprints session.campaigns
+                        |> Maybe.withDefault (Campaign.empty CampaignId.blueprints)
+                        |> Campaign.withLevelId level.id
+
+                newModel =
+                    { model
+                        | session =
+                            model.session
+                                |> Session.withLevel level
+                                |> Session.withCampaign campaign
+                    }
+
+                cmd =
+                    Cmd.batch
+                        [ Level.saveToLocalStorage level
+                        , Campaign.saveToLocalStorage campaign
+                        ]
+            in
+            ( newModel, cmd )
+
         LocalStorageResponse ( key, value ) ->
             if key == Campaign.localStorageKey CampaignId.blueprints then
                 case Decode.decodeValue (Decode.maybe Campaign.decoder) value of
@@ -87,7 +138,7 @@ update msg model =
                         ( newModel, cmd )
 
                     Err error ->
-                        Debug.todo (Decode.errorToString error)
+                        ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
 
             else
                 case Decode.decodeValue (Decode.maybe Level.decoder) value of
@@ -99,10 +150,10 @@ update msg model =
                         ( newModel, Cmd.none )
 
                     Ok Nothing ->
-                        Debug.todo ("Level not found: " ++ key)
+                        ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
 
                     Err error ->
-                        Debug.todo (Decode.errorToString error)
+                        ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
 
 
 
@@ -121,9 +172,71 @@ subscriptions model =
 view : Model -> Document Msg
 view model =
     let
+        session =
+            model.session
+
         content =
-            View.SingleSidebar.view [ none ] [ none ]
+            case model.error of
+                Just error ->
+                    View.LoadingScreen.layout error
+
+                Nothing ->
+                    case Dict.get CampaignId.blueprints session.campaigns of
+                        Just campaign ->
+                            viewCampaign campaign model
+
+                        Nothing ->
+                            View.LoadingScreen.layout ("Loading " ++ CampaignId.blueprints ++ "...")
     in
     { body = [ content ]
     , title = "Blueprints"
     }
+
+
+viewCampaign : Campaign -> Model -> Html Msg
+viewCampaign campaign model =
+    let
+        session =
+            model.session
+
+        sidebarContent =
+            [ none ]
+
+        mainContent =
+            let
+                default =
+                    View.LevelButton.default
+
+                plusButton =
+                    View.LevelButton.internal
+                        { default
+                            | onPress = Just ClickedNewLevel
+                        }
+                        "Create new level"
+                        ""
+
+                levelButton levelId =
+                    case Dict.get levelId session.levels of
+                        Just level ->
+                            View.LevelButton.view
+                                { default
+                                    | onPress = Just (SelectedLevelId levelId)
+                                    , selected =
+                                        model.selectedLevelId
+                                            |> Maybe.map ((==) levelId)
+                                            |> Maybe.withDefault False
+                                }
+                                level
+
+                        Nothing ->
+                            View.LevelButton.loading
+
+                levelButtons =
+                    List.map levelButton campaign.levelIds
+
+                buttons =
+                    plusButton :: levelButtons
+            in
+            buttons
+    in
+    View.SingleSidebar.view sidebarContent mainContent

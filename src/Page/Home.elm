@@ -83,7 +83,7 @@ view model =
                 [ titleView
                 , link "Levels" (Route.Levels Nothing)
                 , link "Login" (Route.Levels Nothing)
-                , link "Blueprints" Route.Blueprints
+                , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" (Route.Levels Nothing)
                 ]
                 |> layout
