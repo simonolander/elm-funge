@@ -9,6 +9,8 @@ import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
 import Dict
 import Element exposing (..)
+import Element.Background as Background
+import Element.Input as Input
 import Html exposing (Html)
 import Json.Decode as Decode
 import Ports.LocalStorage as LocalStorage
@@ -17,6 +19,7 @@ import Route
 import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
+import ViewComponents
 
 
 
@@ -58,6 +61,11 @@ getSession { session } =
     session
 
 
+setSession : Model -> Session -> Model
+setSession model session =
+    { model | session = session }
+
+
 
 -- UPDATE
 
@@ -67,11 +75,58 @@ type Msg
     | ClickedNewLevel
     | LevelGenerated Level
     | SelectedLevelId LevelId
+    | LevelNameChanged String
+    | LevelDeleted LevelId
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LevelDeleted levelId ->
+            case Dict.get CampaignId.blueprints model.session.campaigns of
+                Just campaign ->
+                    let
+                        newCampaign =
+                            Campaign.withoutLevelId levelId campaign
+
+                        newModel =
+                            Session.withCampaign newCampaign model.session
+                                |> Session.withoutLevel levelId
+                                |> setSession model
+
+                        cmd =
+                            Cmd.batch
+                                [ Level.removeFromLocalStorage levelId
+                                , Campaign.saveToLocalStorage campaign
+                                ]
+                    in
+                    ( newModel, cmd )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        LevelNameChanged newName ->
+            case Maybe.andThen (flip Dict.get model.session.levels) model.selectedLevelId of
+                Just oldLevel ->
+                    let
+                        newLevel =
+                            Level.withName newName oldLevel
+
+                        newModel =
+                            { model
+                                | session =
+                                    model.session
+                                        |> Session.withLevel newLevel
+                            }
+
+                        cmd =
+                            Level.saveToLocalStorage newLevel
+                    in
+                    ( newModel, cmd )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
         SelectedLevelId levelId ->
             ( { model | selectedLevelId = Just levelId }
             , Route.replaceUrl model.session.key (Route.Blueprints (Just levelId))
@@ -200,7 +255,28 @@ viewCampaign campaign model =
             model.session
 
         sidebarContent =
-            [ none ]
+            case Maybe.andThen (flip Dict.get session.levels) model.selectedLevelId of
+                Just level ->
+                    [ Input.text
+                        [ Background.color (rgb 0.2 0.2 0.2) ]
+                        { onChange = LevelNameChanged
+                        , text = level.name
+                        , placeholder = Nothing
+                        , label =
+                            Input.labelAbove
+                                []
+                                (text "Level name")
+                        }
+                    , column
+                        [ width fill
+                        , scrollbarY
+                        ]
+                        []
+                    , ViewComponents.textButton [] (Just (LevelDeleted level.id)) "Delete"
+                    ]
+
+                Nothing ->
+                    [ el [ centerX ] (text "Blueprints") ]
 
         mainContent =
             let

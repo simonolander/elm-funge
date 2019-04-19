@@ -1,4 +1,4 @@
-module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withInstructionTool)
+module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, removeFromLocalStorage, saveToLocalStorage, withInstructionTool, withName)
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
@@ -34,6 +34,11 @@ withInstructionTool index instructionTool level =
     }
 
 
+withName : String -> Level -> Level
+withName name level =
+    { level | name = name }
+
+
 
 -- LOCAL STORAGE
 
@@ -54,6 +59,11 @@ saveToLocalStorage level =
         ( localStorageKey level.id
         , encode level
         )
+
+
+removeFromLocalStorage : LevelId -> Cmd msg
+removeFromLocalStorage levelId =
+    LocalStorage.storageRemoveItem (localStorageKey levelId)
 
 
 

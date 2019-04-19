@@ -1,4 +1,4 @@
-module Data.Campaign exposing (Campaign, decoder, empty, encode, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withLevelId)
+module Data.Campaign exposing (Campaign, decoder, empty, encode, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withLevelId, withoutLevelId)
 
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.LevelId as LevelId exposing (LevelId)
@@ -24,6 +24,15 @@ withLevelId : LevelId -> Campaign -> Campaign
 withLevelId levelId campaign =
     { campaign
         | levelIds = levelId :: campaign.levelIds
+    }
+
+
+withoutLevelId : LevelId -> Campaign -> Campaign
+withoutLevelId levelId campaign =
+    { campaign
+        | levelIds =
+            campaign.levelIds
+                |> List.filter ((/=) levelId)
     }
 
 

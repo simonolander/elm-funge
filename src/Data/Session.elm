@@ -1,4 +1,17 @@
-module Data.Session exposing (Session, getDraftAndLevel, getLevelDrafts, getToken, init, withCampaign, withDraft, withDrafts, withLevel, withLevels, withUser)
+module Data.Session exposing
+    ( Session
+    , getDraftAndLevel
+    , getLevelDrafts
+    , getToken
+    , init
+    , withCampaign
+    , withDraft
+    , withDrafts
+    , withLevel
+    , withLevels
+    , withUser
+    , withoutLevel
+    )
 
 import Browser.Navigation exposing (Key)
 import Data.AuthorizationToken exposing (AuthorizationToken)
@@ -53,6 +66,14 @@ withLevel level session =
     { session
         | levels =
             Dict.insert level.id level session.levels
+    }
+
+
+withoutLevel : LevelId -> Session -> Session
+withoutLevel levelId session =
+    { session
+        | levels =
+            Dict.remove levelId session.levels
     }
 
 
