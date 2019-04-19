@@ -10,6 +10,7 @@ import Data.User as User exposing (User)
 import Html
 import Levels
 import Maybe.Extra
+import Page.Blueprints as Blueprints
 import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
@@ -31,6 +32,7 @@ type Model
     | Levels Levels.Model
     | Execution Execution.Model
     | Draft Draft.Model
+    | Blueprints Blueprints.Model
 
 
 
@@ -110,20 +112,24 @@ view model =
             }
     in
     case model of
-        Home homeModel ->
-            Home.view homeModel
+        Home mdl ->
+            Home.view mdl
 
-        Levels levelsModel ->
-            Levels.view levelsModel
+        Levels mdl ->
+            Levels.view mdl
                 |> msgMap LevelsMsg
 
-        Execution executionModel ->
-            Execution.view executionModel
+        Execution mdl ->
+            Execution.view mdl
                 |> msgMap ExecutionMsg
 
-        Draft draftModel ->
-            Draft.view draftModel
+        Draft mdl ->
+            Draft.view mdl
                 |> msgMap DraftMsg
+
+        Blueprints mdl ->
+            Blueprints.view mdl
+                |> msgMap BlueprintsMsg
 
 
 
@@ -136,6 +142,8 @@ type Msg
     | LevelsMsg Levels.Msg
     | ExecutionMsg Execution.Msg
     | DraftMsg Draft.Msg
+    | HomeMsg Home.Msg
+    | BlueprintsMsg Blueprints.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -143,17 +151,20 @@ update msg model =
     let
         session =
             case model of
-                Home homeModel ->
-                    homeModel.session
+                Home mdl ->
+                    Home.getSession mdl
 
-                Levels levelsModel ->
-                    Levels.getSession levelsModel
+                Levels mdl ->
+                    Levels.getSession mdl
 
-                Execution executionModel ->
-                    Execution.getSession executionModel
+                Execution mdl ->
+                    Execution.getSession mdl
 
-                Draft draftModel ->
-                    draftModel.session
+                Draft mdl ->
+                    Draft.getSession mdl
+
+                Blueprints mdl ->
+                    Blueprints.getSession mdl
     in
     case msg of
         ClickedLink urlRequest ->
@@ -176,29 +187,47 @@ update msg model =
         ChangedUrl url ->
             changeUrl url session
 
-        ExecutionMsg executionMsg ->
+        ExecutionMsg message ->
             case model of
-                Execution executionModel ->
-                    Execution.update executionMsg executionModel
+                Execution mdl ->
+                    Execution.update message mdl
                         |> updateWith Execution ExecutionMsg
 
                 _ ->
                     ( model, Cmd.none )
 
-        DraftMsg draftMsg ->
+        DraftMsg message ->
             case model of
-                Draft draftModel ->
-                    Draft.update draftMsg draftModel
+                Draft mdl ->
+                    Draft.update message mdl
                         |> updateWith Draft DraftMsg
 
                 _ ->
                     ( model, Cmd.none )
 
-        LevelsMsg levelsMsg ->
+        LevelsMsg message ->
             case model of
-                Levels levelsModel ->
-                    Levels.update levelsMsg levelsModel
+                Levels mdl ->
+                    Levels.update message mdl
                         |> updateWith Levels LevelsMsg
+
+                _ ->
+                    ( model, Cmd.none )
+
+        HomeMsg message ->
+            case model of
+                Home mdl ->
+                    Home.update message mdl
+                        |> updateWith Home HomeMsg
+
+                _ ->
+                    ( model, Cmd.none )
+
+        BlueprintsMsg message ->
+            case model of
+                Blueprints mdl ->
+                    Blueprints.update message mdl
+                        |> updateWith Blueprints BlueprintsMsg
 
                 _ ->
                     ( model, Cmd.none )
@@ -213,10 +242,12 @@ changeUrl : Url.Url -> Session -> ( Model, Cmd Msg )
 changeUrl url session =
     case Route.fromUrl url of
         Nothing ->
-            ( Home { session = session }, Cmd.none )
+            Home.init session
+                |> updateWith Home HomeMsg
 
         Just Route.Home ->
-            ( Home { session = session }, Cmd.none )
+            Home.init session
+                |> updateWith Home HomeMsg
 
         Just (Route.Levels maybeLevelId) ->
             Levels.init maybeLevelId session
@@ -230,6 +261,10 @@ changeUrl url session =
             Execution.init draftId session
                 |> updateWith Execution ExecutionMsg
 
+        Just Route.Blueprints ->
+            Blueprints.init session
+                |> updateWith Blueprints BlueprintsMsg
+
 
 
 -- SUBSCRIPTIONS
@@ -241,11 +276,14 @@ subscriptions model =
         Home _ ->
             Sub.none
 
-        Levels m ->
-            Sub.map LevelsMsg (Levels.subscriptions m)
+        Levels mdl ->
+            Sub.map LevelsMsg (Levels.subscriptions mdl)
 
-        Execution m ->
-            Sub.map ExecutionMsg (Execution.subscriptions m)
+        Execution mdl ->
+            Sub.map ExecutionMsg (Execution.subscriptions mdl)
 
-        Draft _ ->
-            Sub.map DraftMsg Draft.subscriptions
+        Draft mdl ->
+            Sub.map DraftMsg (Draft.subscriptions mdl)
+
+        Blueprints mdl ->
+            Sub.map BlueprintsMsg (Blueprints.subscriptions mdl)

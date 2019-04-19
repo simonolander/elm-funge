@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, view)
+module Page.Home exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Browser exposing (Document)
 import Data.Session exposing (Session)
@@ -18,8 +18,42 @@ type alias Model =
     }
 
 
+init : Session -> ( Model, Cmd Msg )
+init session =
+    ( { session = session
+      }
+    , Cmd.none
+    )
+
+
+getSession : Model -> Session
+getSession { session } =
+    session
+
+
 
 -- UPDATE
+
+
+type alias Msg =
+    ()
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
 -- VIEW
 
 
@@ -33,77 +67,27 @@ view model =
                     , Font.size 32
                     ]
 
-        alphaDisclaimerView =
-            paragraph []
-                [ text "This puzzle game is in early alpha. "
-                , text "Not all the features are available, things will change, and there might be bugs. "
-                , text "Your progress will be automatically saved for now, but may be unavailable in future releases. "
-                , text "There are also not really any instructions. "
-                ]
-
-        tinyInstructionsView =
-            paragraph []
-                [ text "Every level requires you to write a program to solve. The program must output the expected output and terminate." ]
-
-        featureListView =
-            column
-                []
-                [ text "The current features are: "
-                , text "  - ~20 levels"
-                , text "  - ~16 instructions"
-                , text "  - Save solved levels and last edit to local storage"
-                , text "  - Import and export your boards"
-                ]
-
-        sourceCodeView =
-            paragraph []
-                [ text "You can browse the source "
-                , newTabLink
-                    [ Font.color (rgb 0.5 0.5 1)
-                    ]
-                    { url = "https://github.com/simonolander/elm-funge"
-                    , label = text "here"
-                    }
-                , text ". If you'd like, leave suggestions and reports in the "
-                , newTabLink
-                    [ Font.color (rgb 0.5 0.5 1)
-                    ]
-                    { url = "https://github.com/simonolander/elm-funge/issues"
-                    , label = text "issues page"
-                    }
-                , text "."
-                ]
-
-        playButtonView =
+        link text route =
             Route.link
                 [ width fill ]
-                (ViewComponents.textButton [] Nothing "I got it, let's play")
-                (Route.Levels Nothing)
-
-        loginButtonView =
-            link
-                [ width fill ]
-                -- { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=https://efng.simonolander.com"
-                { url = "https://efng.auth.us-east-1.amazoncognito.com/login?response_type=token&client_id=1mu4rr1moo02tobp2m4oe80pn8&redirect_uri=http://localhost:3000"
-                , label = ViewComponents.textButton [] Nothing "Login"
-                }
+                (ViewComponents.textButton [] Nothing text)
+                route
 
         body =
             column
                 [ padding 100
                 , spacing 20
+                , centerX
+                , width (maximum 800 fill)
                 ]
                 [ titleView
-                , alphaDisclaimerView
-                , tinyInstructionsView
-                , featureListView
-                , sourceCodeView
-                , playButtonView
-                , loginButtonView
+                , link "Levels" (Route.Levels Nothing)
+                , link "Login" (Route.Levels Nothing)
+                , link "Blueprints" Route.Blueprints
+                , link "Credits" (Route.Levels Nothing)
                 ]
                 |> layout
-                    [ Background.color (rgb 0 0 0)
-                    , width fill
+                    [ width fill
                     , height fill
                     , Font.family
                         [ Font.monospace

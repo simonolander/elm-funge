@@ -1,4 +1,4 @@
-module Page.Draft exposing (Model, Msg, init, subscriptions, update, view)
+module Page.Draft exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Api
 import Array exposing (Array)
@@ -131,6 +131,11 @@ init draftId session =
 
         Nothing ->
             ( model, Api.getLevels LoadedLevels )
+
+
+getSession : Model -> Session
+getSession { session } =
+    session
 
 
 
@@ -341,8 +346,8 @@ updateDraft draft model =
 -- SUBSCRIPTIONS
 
 
-subscriptions : Sub Msg
-subscriptions =
+subscriptions : Model -> Sub Msg
+subscriptions _ =
     let
         loadedDraftSub =
             Ports.LocalStorage.storageGetItemResponse
