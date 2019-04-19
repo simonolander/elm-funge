@@ -210,8 +210,7 @@ update msg model =
         ( ClickedNavigateBrowseLevels, Loaded loadedModel ) ->
             let
                 levelId =
-                    loadedModel.session.drafts
-                        |> Maybe.andThen (Dict.get loadedModel.draftId)
+                    Dict.get loadedModel.draftId loadedModel.session.drafts
                         |> Maybe.map .levelId
             in
             ( model, Route.pushUrl loadedModel.session.key (Route.Levels levelId) )
@@ -237,7 +236,7 @@ stepModel model =
                 Paused
 
         ( session, saveDraftCmd ) =
-            case Maybe.andThen (Dict.get model.draftId) model.session.drafts of
+            case Dict.get model.draftId model.session.drafts of
                 Just oldDraft ->
                     if isSolved execution then
                         let

@@ -47,20 +47,14 @@ init selectedLevelId session =
             }
 
         cmd =
-            case session.levels of
-                Just levelDict ->
-                    case session.drafts of
-                        Just _ ->
-                            Cmd.none
+            if Dict.isEmpty session.drafts then
+                session.levels
+                    |> Dict.values
+                    |> List.map .id
+                    |> Draft.getDraftsFromLocalStorage "drafts"
 
-                        Nothing ->
-                            levelDict
-                                |> Dict.values
-                                |> List.map .id
-                                |> Draft.getDraftsFromLocalStorage "drafts"
-
-                Nothing ->
-                    Api.getLevels LoadedLevels
+            else
+                Cmd.none
     in
     ( model, cmd )
 
@@ -83,33 +77,23 @@ view model =
                     viewError error
 
                 Nothing ->
-                    case model.session.levels of
-                        Just levelDict ->
-                            case model.session.drafts of
-                                Just draftDict ->
-                                    let
-                                        levelProgresses =
-                                            levelDict
+                    let
+                        levelProgresses =
+                            model.session.levels
+                                |> Dict.values
+                                |> List.map
+                                    (\level ->
+                                        { level = level
+                                        , drafts =
+                                            model.session.drafts
                                                 |> Dict.values
-                                                |> List.map
-                                                    (\level ->
-                                                        { level = level
-                                                        , drafts =
-                                                            draftDict
-                                                                |> Dict.values
-                                                                |> List.filter (\draft -> draft.levelId == level.id)
-                                                        }
-                                                    )
-                                                |> List.map (\levelProgress -> ( levelProgress.level.id, levelProgress ))
-                                                |> Dict.fromList
-                                    in
-                                    viewSuccess model.session levelProgresses model.selectedLevelId
-
-                                Nothing ->
-                                    View.LoadingScreen.view "Loading drafts"
-
-                        Nothing ->
-                            View.LoadingScreen.view "Loading levels"
+                                                |> List.filter (\draft -> draft.levelId == level.id)
+                                        }
+                                    )
+                                |> List.map (\levelProgress -> ( levelProgress.level.id, levelProgress ))
+                                |> Dict.fromList
+                    in
+                    viewSuccess model.session levelProgresses model.selectedLevelId
     in
     { title = "Levels"
     , body =
@@ -387,8 +371,7 @@ update msg model =
         SelectLevel selectedLevelId ->
             let
                 maybeSelectedLevel =
-                    model.session.levels
-                        |> Maybe.andThen (Dict.get selectedLevelId)
+                    Dict.get selectedLevelId model.session.levels
 
                 generateDraftCmd =
                     case maybeSelectedLevel of
@@ -492,10 +475,9 @@ update msg model =
             let
                 newSession =
                     session.drafts
-                        |> Maybe.map Dict.values
-                        |> Maybe.map ((::) draft)
-                        |> Maybe.map (flip Session.withDrafts session)
-                        |> Maybe.withDefault session
+                        |> Dict.values
+                        |> (::) draft
+                        |> flip Session.withDrafts session
             in
             ( { model | session = newSession }, Draft.saveToLocalStorage draft )
 

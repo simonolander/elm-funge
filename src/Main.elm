@@ -1,7 +1,5 @@
 module Main exposing (main)
 
---import LocalStorage
-
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
@@ -80,11 +78,8 @@ init flags url key =
                 |> Maybe.withDefault User.guest
 
         session =
-            { key = key
-            , user = user
-            , levels = Nothing
-            , drafts = Nothing
-            }
+            Session.init key
+                |> Session.withUser user
                 |> Session.withLevels Levels.levels
 
         ( model, pageCmd ) =

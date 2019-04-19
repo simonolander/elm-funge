@@ -1,4 +1,4 @@
-module Data.Level exposing (Level, decoder, encode, withInstructionTool)
+module Data.Level exposing (Level, decoder, encode, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withInstructionTool)
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
@@ -7,6 +7,7 @@ import Data.InstructionTool as InstructionTool exposing (InstructionTool)
 import Data.LevelId exposing (LevelId)
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Ports.LocalStorage as LocalStorage
 
 
 type alias Level =
@@ -29,6 +30,28 @@ withInstructionTool index instructionTool level =
                 instructionTool
                 level.instructionTools
     }
+
+
+
+-- LOCAL STORAGE
+
+
+localStorageKey : LevelId -> LocalStorage.Key
+localStorageKey levelId =
+    String.join "." [ "levels", levelId ]
+
+
+loadFromLocalStorage : LevelId -> Cmd msg
+loadFromLocalStorage levelId =
+    LocalStorage.storageGetItem (localStorageKey levelId)
+
+
+saveToLocalStorage : Level -> Cmd msg
+saveToLocalStorage level =
+    LocalStorage.storageSetItem
+        ( localStorageKey level.id
+        , encode level
+        )
 
 
 

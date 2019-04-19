@@ -70,10 +70,9 @@ type alias ErrorModel =
 
 getLevel : Model -> Maybe Level
 getLevel model =
-    model.session.drafts
-        |> Maybe.andThen (Dict.get model.draftId)
+    Dict.get model.draftId model.session.drafts
         |> Maybe.map .levelId
-        |> Maybe.andThen (flip Dict.get (Maybe.withDefault Dict.empty model.session.levels))
+        |> Maybe.andThen (flip Dict.get model.session.levels)
 
 
 init : DraftId -> Session -> ( Model, Cmd Msg )
@@ -86,51 +85,17 @@ init draftId session =
             , error = Nothing
             , selectedInstructionToolIndex = Nothing
             }
-
-        maybeLevelDict =
-            if Maybe.Extra.isJust session.levels then
-                session.levels
+    in
+    case Dict.get draftId session.drafts of
+        Just draft ->
+            if Dict.member draft.levelId session.levels then
+                ( model, Cmd.none )
 
             else
-                Levels.levels
-                    |> List.map (\level -> ( level.id, level ))
-                    |> Dict.fromList
-                    |> Just
-    in
-    case maybeLevelDict of
-        Just levelDict ->
-            case session.drafts of
-                Just draftDict ->
-                    case Dict.get draftId draftDict of
-                        Just draft ->
-                            case Dict.get draft.levelId levelDict of
-                                Just _ ->
-                                    ( model, Cmd.none )
-
-                                Nothing ->
-                                    ( { model | error = Just ("Level " ++ draft.levelId ++ " not found") }, Cmd.none )
-
-                        Nothing ->
-                            ( { model | error = Just ("Draft " ++ draftId ++ " not found") }, Cmd.none )
-
-                Nothing ->
-                    let
-                        levelIds =
-                            Dict.values levelDict
-                                |> List.map .id
-
-                        cmd =
-                            case Session.getToken session of
-                                Just token ->
-                                    Api.getDrafts token levelIds LoadedDrafts
-
-                                Nothing ->
-                                    Draft.getDraftsFromLocalStorage "drafts" levelIds
-                    in
-                    ( model, cmd )
+                ( { model | error = Just ("Level " ++ draft.levelId ++ " not found") }, Cmd.none )
 
         Nothing ->
-            ( model, Api.getLevels LoadedLevels )
+            ( { model | error = Just ("Draft " ++ draftId ++ " not found") }, Cmd.none )
 
 
 getSession : Model -> Session
@@ -166,15 +131,12 @@ update msg model =
             model.session
 
         maybeDraft =
-            Maybe.andThen (Dict.get model.draftId) session.drafts
+            Dict.get model.draftId session.drafts
 
         maybeLevel =
-            case ( maybeDraft, session.levels ) of
-                ( Just draft, Just dict ) ->
-                    Dict.get draft.levelId dict
-
-                _ ->
-                    Nothing
+            Dict.get model.draftId session.drafts
+                |> Maybe.map .levelId
+                |> Maybe.andThen (flip Dict.get session.levels)
 
         unchanged =
             ( model, Cmd.none )
@@ -373,32 +335,22 @@ view model =
             model.session
 
         content =
-            case session.levels of
-                Just levelDict ->
-                    case session.drafts of
-                        Just draftDict ->
-                            case Dict.get model.draftId draftDict of
-                                Just draft ->
-                                    case Dict.get draft.levelId levelDict of
-                                        Just level ->
-                                            viewLoaded
-                                                { draft = draft
-                                                , level = level
-                                                , selectedInstructionToolIndex = model.selectedInstructionToolIndex
-                                                , state = model.state
-                                                }
-
-                                        Nothing ->
-                                            viewError { error = "Level not found" }
-
-                                Nothing ->
-                                    viewError { error = "Draft not found" }
+            case Dict.get model.draftId session.drafts of
+                Just draft ->
+                    case Dict.get draft.levelId session.levels of
+                        Just level ->
+                            viewLoaded
+                                { draft = draft
+                                , level = level
+                                , selectedInstructionToolIndex = model.selectedInstructionToolIndex
+                                , state = model.state
+                                }
 
                         Nothing ->
-                            viewError { error = "Loading drafts" }
+                            viewError { error = "Level not found" }
 
                 Nothing ->
-                    View.LoadingScreen.view "Loading levels"
+                    viewError { error = "Draft not found" }
 
         body =
             layout

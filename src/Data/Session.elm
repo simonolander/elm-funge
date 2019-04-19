@@ -1,7 +1,9 @@
-module Data.Session exposing (Session, getDraftAndLevel, getLevelDrafts, getToken, init, withDraft, withDrafts, withLevel, withLevels, withUser)
+module Data.Session exposing (Session, getDraftAndLevel, getLevelDrafts, getToken, init, withCampaign, withDraft, withDrafts, withLevel, withLevels, withUser)
 
 import Browser.Navigation exposing (Key)
 import Data.AuthorizationToken exposing (AuthorizationToken)
+import Data.Campaign exposing (Campaign)
+import Data.CampaignId exposing (CampaignId)
 import Data.Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.Level exposing (Level)
@@ -13,8 +15,9 @@ import Dict exposing (Dict)
 type alias Session =
     { key : Key
     , user : User
-    , levels : Maybe (Dict LevelId Level)
-    , drafts : Maybe (Dict DraftId Draft)
+    , levels : Dict LevelId Level
+    , drafts : Dict DraftId Draft
+    , campaigns : Dict CampaignId Campaign
     }
 
 
@@ -22,8 +25,9 @@ init : Key -> Session
 init key =
     { key = key
     , user = User.guest
-    , levels = Nothing
-    , drafts = Nothing
+    , levels = Dict.empty
+    , drafts = Dict.empty
+    , campaigns = Dict.empty
     }
 
 
@@ -41,7 +45,6 @@ withLevels levels session =
             levels
                 |> List.map (\level -> ( level.id, level ))
                 |> Dict.fromList
-                |> Just
     }
 
 
@@ -49,30 +52,28 @@ withLevel : Level -> Session -> Session
 withLevel level session =
     { session
         | levels =
-            Maybe.withDefault Dict.empty session.levels
-                |> Dict.insert level.id level
-                |> Just
+            Dict.insert level.id level session.levels
     }
 
 
 withDrafts : List Draft -> Session -> Session
 withDrafts drafts session =
-    { session
-        | drafts =
-            drafts
-                |> List.map (\draft -> ( draft.id, draft ))
-                |> Dict.fromList
-                |> Just
-    }
+    List.foldl withDraft session drafts
 
 
 withDraft : Draft -> Session -> Session
 withDraft draft session =
     { session
         | drafts =
-            Maybe.withDefault Dict.empty session.drafts
-                |> Dict.insert draft.id draft
-                |> Just
+            Dict.insert draft.id draft session.drafts
+    }
+
+
+withCampaign : Campaign -> Session -> Session
+withCampaign campaign session =
+    { session
+        | campaigns =
+            Dict.insert campaign.id campaign session.campaigns
     }
 
 
@@ -84,16 +85,15 @@ getToken =
 getLevelDrafts : LevelId -> Session -> List Draft
 getLevelDrafts levelId session =
     session.drafts
-        |> Maybe.map Dict.values
-        |> Maybe.withDefault []
+        |> Dict.values
         |> List.filter (\draft -> draft.levelId == levelId)
 
 
 getDraftAndLevel : DraftId -> Session -> Maybe ( Draft, Level )
 getDraftAndLevel draftId session =
-    case Maybe.andThen (Dict.get draftId) session.drafts of
+    case Dict.get draftId session.drafts of
         Just draft ->
-            case Maybe.andThen (Dict.get draft.levelId) session.levels of
+            case Dict.get draft.levelId session.levels of
                 Just level ->
                     Just ( draft, level )
 
