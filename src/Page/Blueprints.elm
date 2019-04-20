@@ -77,6 +77,7 @@ type Msg
     | SelectedLevelId LevelId
     | LevelNameChanged String
     | LevelDeleted LevelId
+    | LevelDescriptionChanged String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -97,12 +98,13 @@ update msg model =
                         cmd =
                             Cmd.batch
                                 [ Level.removeFromLocalStorage levelId
-                                , Campaign.saveToLocalStorage campaign
+                                , Campaign.saveToLocalStorage newCampaign
                                 ]
                     in
                     ( newModel, cmd )
 
                 Nothing ->
+                    -- TODO warn or something?
                     ( model, Cmd.none )
 
         LevelNameChanged newName ->
@@ -113,11 +115,27 @@ update msg model =
                             Level.withName newName oldLevel
 
                         newModel =
-                            { model
-                                | session =
-                                    model.session
-                                        |> Session.withLevel newLevel
-                            }
+                            Session.withLevel newLevel model.session
+                                |> setSession model
+
+                        cmd =
+                            Level.saveToLocalStorage newLevel
+                    in
+                    ( newModel, cmd )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        LevelDescriptionChanged newDescription ->
+            case Maybe.andThen (flip Dict.get model.session.levels) model.selectedLevelId of
+                Just oldLevel ->
+                    let
+                        newLevel =
+                            Level.withDescription (String.lines newDescription) oldLevel
+
+                        newModel =
+                            Session.withLevel newLevel model.session
+                                |> setSession model
 
                         cmd =
                             Level.saveToLocalStorage newLevel
@@ -151,12 +169,14 @@ update msg model =
                             model.session
                                 |> Session.withLevel level
                                 |> Session.withCampaign campaign
+                        , selectedLevelId = Just level.id
                     }
 
                 cmd =
                     Cmd.batch
                         [ Level.saveToLocalStorage level
                         , Campaign.saveToLocalStorage campaign
+                        , Route.replaceUrl model.session.key (Route.Blueprints (Just level.id))
                         ]
             in
             ( newModel, cmd )
@@ -257,22 +277,50 @@ viewCampaign campaign model =
         sidebarContent =
             case Maybe.andThen (flip Dict.get session.levels) model.selectedLevelId of
                 Just level ->
-                    [ Input.text
-                        [ Background.color (rgb 0.2 0.2 0.2) ]
-                        { onChange = LevelNameChanged
-                        , text = level.name
-                        , placeholder = Nothing
-                        , label =
-                            Input.labelAbove
+                    let
+                        levelName =
+                            Input.text
+                                [ Background.color (rgb 0.1 0.1 0.1) ]
+                                { onChange = LevelNameChanged
+                                , text = level.name
+                                , placeholder = Nothing
+                                , label =
+                                    Input.labelAbove
+                                        []
+                                        (text "Level name")
+                                }
+
+                        levelDescription =
+                            Input.multiline
+                                [ Background.color (rgb 0.1 0.1 0.1)
+                                , height (minimum 200 shrink)
+                                ]
+                                { onChange = LevelDescriptionChanged
+                                , text = String.join "\n" level.description
+                                , placeholder = Nothing
+                                , label =
+                                    Input.labelAbove
+                                        []
+                                        (text "Level description")
+                                , spellcheck = True
+                                }
+
+                        openBlueprint =
+                            Route.link
+                                [ width fill ]
+                                (ViewComponents.textButton [] Nothing "Open")
+                                (Route.Blueprints Nothing)
+
+                        deleteBlueprint =
+                            ViewComponents.textButton
                                 []
-                                (text "Level name")
-                        }
-                    , column
-                        [ width fill
-                        , scrollbarY
-                        ]
-                        []
-                    , ViewComponents.textButton [] (Just (LevelDeleted level.id)) "Delete"
+                                (Just (LevelDeleted level.id))
+                                "Delete"
+                    in
+                    [ levelName
+                    , levelDescription
+                    , openBlueprint
+                    , deleteBlueprint
                     ]
 
                 Nothing ->
@@ -284,12 +332,7 @@ viewCampaign campaign model =
                     View.LevelButton.default
 
                 plusButton =
-                    View.LevelButton.internal
-                        { default
-                            | onPress = Just ClickedNewLevel
-                        }
-                        "Create new level"
-                        ""
+                    ViewComponents.textButton [] (Just ClickedNewLevel) "Create new level"
 
                 levelButton levelId =
                     case Dict.get levelId session.levels of
@@ -309,10 +352,14 @@ viewCampaign campaign model =
 
                 levelButtons =
                     List.map levelButton campaign.levelIds
-
-                buttons =
-                    plusButton :: levelButtons
             in
-            buttons
+            column
+                [ width fill, spacing 30 ]
+                [ plusButton
+                , wrappedRow
+                    [ spacing 20
+                    ]
+                    levelButtons
+                ]
     in
     View.SingleSidebar.view sidebarContent mainContent

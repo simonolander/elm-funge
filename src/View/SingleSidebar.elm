@@ -6,7 +6,7 @@ import Element.Font as Font
 import Html exposing (Html)
 
 
-view : List (Element msg) -> List (Element msg) -> Html msg
+view : List (Element msg) -> Element msg -> Html msg
 view sidebarContent mainContent =
     let
         sidebar =
@@ -22,13 +22,11 @@ view sidebarContent mainContent =
                 sidebarContent
 
         main =
-            wrappedRow
+            el
                 [ width (fillPortion 3)
                 , height fill
-                , padding 20
-                , spacing 20
-                , alignTop
                 , scrollbarY
+                , padding 20
                 ]
                 mainContent
     in

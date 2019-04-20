@@ -1,4 +1,4 @@
-module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, removeFromLocalStorage, saveToLocalStorage, withInstructionTool, withName)
+module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, removeFromLocalStorage, saveToLocalStorage, withDescription, withIO, withInitialBoard, withInstructionTool, withInstructionTools, withName)
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
@@ -37,6 +37,26 @@ withInstructionTool index instructionTool level =
 withName : String -> Level -> Level
 withName name level =
     { level | name = name }
+
+
+withDescription : List String -> Level -> Level
+withDescription description level =
+    { level | description = description }
+
+
+withIO : IO -> Level -> Level
+withIO io level =
+    { level | io = io }
+
+
+withInitialBoard : Board -> Level -> Level
+withInitialBoard initialBoard level =
+    { level | initialBoard = initialBoard }
+
+
+withInstructionTools : Array InstructionTool -> Level -> Level
+withInstructionTools instructionTools level =
+    { level | instructionTools = instructionTools }
 
 
 
