@@ -14,6 +14,7 @@ type Route
     | EditDraft DraftId.DraftId
     | ExecuteDraft DraftId.DraftId
     | Blueprints (Maybe LevelId.LevelId)
+    | Blueprint LevelId.LevelId
 
 
 fromUrl : Url -> Maybe Route
@@ -59,6 +60,9 @@ toString route =
 
                 Blueprints (Just levelId) ->
                     [ "blueprints", levelId ]
+
+                Blueprint levelId ->
+                    [ "blueprints", levelId, "edit" ]
     in
     "/#" ++ String.join "/" pieces
 
@@ -88,4 +92,5 @@ parser =
         , Parser.map ExecuteDraft (s "drafts" </> DraftId.urlParser </> s "execute")
         , Parser.map (Blueprints Nothing) (s "blueprints")
         , Parser.map (Blueprints << Just) (s "blueprints" </> LevelId.urlParser)
+        , Parser.map Blueprint (s "blueprints" </> LevelId.urlParser </> s "edit")
         ]

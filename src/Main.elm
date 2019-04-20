@@ -8,6 +8,7 @@ import Data.User as User exposing (User)
 import Html
 import Levels
 import Maybe.Extra
+import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
 import Page.Draft as Draft
 import Page.Execution as Execution
@@ -30,6 +31,7 @@ type Model
     | Levels Levels.Model
     | Execution Execution.Model
     | Draft Draft.Model
+    | Blueprint Blueprint.Model
     | Blueprints Blueprints.Model
 
 
@@ -122,6 +124,10 @@ view model =
             Draft.view mdl
                 |> msgMap DraftMsg
 
+        Blueprint mdl ->
+            Blueprint.view mdl
+                |> msgMap BlueprintMsg
+
         Blueprints mdl ->
             Blueprints.view mdl
                 |> msgMap BlueprintsMsg
@@ -139,6 +145,7 @@ type Msg
     | DraftMsg Draft.Msg
     | HomeMsg Home.Msg
     | BlueprintsMsg Blueprints.Msg
+    | BlueprintMsg Blueprint.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -160,6 +167,9 @@ update msg model =
 
                 Blueprints mdl ->
                     Blueprints.getSession mdl
+
+                Blueprint mdl ->
+                    Blueprint.getSession mdl
     in
     case msg of
         ClickedLink urlRequest ->
@@ -227,6 +237,15 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        BlueprintMsg message ->
+            case model of
+                Blueprint mdl ->
+                    Blueprint.update message mdl
+                        |> updateWith Blueprint BlueprintMsg
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
 updateWith modelMap cmdMap ( model, cmd ) =
@@ -260,6 +279,10 @@ changeUrl url session =
             Blueprints.init maybeLevelId session
                 |> updateWith Blueprints BlueprintsMsg
 
+        Just (Route.Blueprint levelId) ->
+            Blueprint.init levelId session
+                |> updateWith Blueprint BlueprintMsg
+
 
 
 -- SUBSCRIPTIONS
@@ -282,3 +305,6 @@ subscriptions model =
 
         Blueprints mdl ->
             Sub.map BlueprintsMsg (Blueprints.subscriptions mdl)
+
+        Blueprint mdl ->
+            Sub.map BlueprintMsg (Blueprint.subscriptions mdl)

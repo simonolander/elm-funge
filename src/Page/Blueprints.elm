@@ -309,7 +309,7 @@ viewCampaign campaign model =
                             Route.link
                                 [ width fill ]
                                 (ViewComponents.textButton [] Nothing "Open")
-                                (Route.Blueprints Nothing)
+                                (Route.Blueprint level.id)
 
                         deleteBlueprint =
                             ViewComponents.textButton

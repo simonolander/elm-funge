@@ -1,6 +1,7 @@
 module Page.Blueprint exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Browser exposing (Document)
+import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
 import Element exposing (..)
 
@@ -14,8 +15,8 @@ type alias Model =
     }
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+init : LevelId -> Session -> ( Model, Cmd Msg )
+init levelId session =
     ( { session = session }, Cmd.none )
 
 
