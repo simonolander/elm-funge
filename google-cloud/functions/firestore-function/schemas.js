@@ -1,3 +1,4 @@
+
 class AnySchema {
     validate(test, path = '') {
         return [];
@@ -275,4 +276,13 @@ exports.levelSchema = new ObjectSchema({
     }),
     index: new IntegerSchema({ minLength: 0 }),
     chapter: new StringSchema
+});
+
+export var loginRequest = new ObjectSchema({
+    username: new StringSchema({minLength: 1}),
+    password: new StringSchema(),
+});
+
+export var getScoresRequest = new ObjectSchema({
+    levelId: new StringSchema()
 });

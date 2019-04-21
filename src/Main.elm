@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Api.Auth0 as Auth0
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
@@ -14,6 +15,7 @@ import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
 import Page.Levels as Levels
+import Page.Login as Login
 import Route
 import Url exposing (Url)
 
@@ -33,6 +35,7 @@ type Model
     | Draft Draft.Model
     | Blueprint Blueprint.Model
     | Blueprints Blueprints.Model
+    | Login Login.Model
 
 
 
@@ -58,37 +61,29 @@ main =
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        user =
-            url.fragment
-                |> Maybe.withDefault ""
-                |> String.split "&"
-                |> List.map
-                    (\pair ->
-                        case String.split "=" pair of
-                            [ queryKey, value ] ->
-                                Just ( queryKey, value )
-
-                            _ ->
-                                Nothing
+        ( session, sessionCmd ) =
+            case Auth0.loginResponseFromUrl url of
+                Just loginResponse ->
+                    ( Session.init key
+                        |> Session.withUser (User.authorizedUser (AuthorizationToken.fromString loginResponse.accessToken))
+                        |> Session.withLevels Levels.levels
+                    , Auth0.getUserInfo loginResponse.accessToken (always Ignored)
                     )
-                |> Maybe.Extra.values
-                |> List.filter (Tuple.first >> (==) "id_token")
-                |> List.head
-                |> Maybe.map Tuple.second
-                |> Maybe.map AuthorizationToken.fromString
-                |> Maybe.map User.authorizedUser
-                |> Maybe.withDefault User.guest
 
-        session =
-            Session.init key
-                |> Session.withUser user
-                |> Session.withLevels Levels.levels
+                Nothing ->
+                    ( Session.init key
+                        |> Session.withLevels Levels.levels
+                    , Cmd.none
+                    )
 
         ( model, pageCmd ) =
             changeUrl url session
 
         cmd =
-            pageCmd
+            Cmd.batch
+                [ pageCmd
+                , sessionCmd
+                ]
     in
     ( model, cmd )
 
@@ -132,6 +127,10 @@ view model =
             Blueprints.view mdl
                 |> msgMap BlueprintsMsg
 
+        Login mdl ->
+            Login.view mdl
+                |> msgMap LoginMsg
+
 
 
 -- UPDATE
@@ -146,6 +145,8 @@ type Msg
     | HomeMsg Home.Msg
     | BlueprintsMsg Blueprints.Msg
     | BlueprintMsg Blueprint.Msg
+    | LoginMsg Login.Msg
+    | Ignored
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -170,8 +171,14 @@ update msg model =
 
                 Blueprint mdl ->
                     Blueprint.getSession mdl
+
+                Login mdl ->
+                    Login.getSession mdl
     in
     case msg of
+        Ignored ->
+            ( model, Cmd.none )
+
         ClickedLink urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
@@ -246,6 +253,15 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        LoginMsg message ->
+            case model of
+                Login mdl ->
+                    Login.update message mdl
+                        |> updateWith Login LoginMsg
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
 updateWith modelMap cmdMap ( model, cmd ) =
@@ -283,6 +299,10 @@ changeUrl url session =
             Blueprint.init levelId session
                 |> updateWith Blueprint BlueprintMsg
 
+        Just Route.Login ->
+            Login.init session
+                |> updateWith Login LoginMsg
+
 
 
 -- SUBSCRIPTIONS
@@ -308,3 +328,6 @@ subscriptions model =
 
         Blueprint mdl ->
             Sub.map BlueprintMsg (Blueprint.subscriptions mdl)
+
+        Login mdl ->
+            Sub.map LoginMsg (Login.subscriptions mdl)

@@ -1,5 +1,6 @@
 module Page.Home exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
+import Api.Auth0 as Auth0
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
@@ -81,7 +82,16 @@ view model =
                 ]
                 [ titleView
                 , link "Levels" (Route.Levels Nothing)
-                , link "Login" (Route.Levels Nothing)
+                , Element.link
+                    [ width fill ]
+                    { label = ViewComponents.textButton [] Nothing "Login"
+                    , url = Auth0.login
+                    }
+                , Element.link
+                    [ width fill ]
+                    { label = ViewComponents.textButton [] Nothing "Logout"
+                    , url = Auth0.logout
+                    }
                 , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" (Route.Levels Nothing)
                 ]

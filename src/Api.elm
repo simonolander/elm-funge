@@ -4,8 +4,11 @@ import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToke
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
+import Data.User exposing (User)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
+import Json.Encode as Encode
+import Result exposing (Result)
 import Url.Builder
 
 
@@ -22,10 +25,10 @@ getLevels toMsg =
 
 
 getLevel : LevelId -> (Result Http.Error (Maybe Level) -> msg) -> Cmd msg
-getLevel levelId function =
+getLevel levelId toMsg =
     Http.get
         { url = Url.Builder.crossOrigin gcpPrePath [ "levels" ] [ Url.Builder.string "levelId" levelId ]
-        , expect = Http.expectJson function (Decode.maybe Level.decoder)
+        , expect = Http.expectJson toMsg (Decode.maybe Level.decoder)
         }
 
 

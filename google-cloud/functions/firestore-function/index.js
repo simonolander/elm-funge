@@ -104,6 +104,19 @@ const accessControlRequest = (req, res) => {
     return false;
 };
 
+const objectHasErrors = (object, schema, res) => {
+    const errors = schema.validate(object);
+    if (errors.length > 0) {
+        res.status(400)
+            .send({
+                status: 400,
+                messages: errors
+            });
+        return true;
+    }
+    return false;
+};
+
 exports.levels = (req, res) => {
     try {
         if (accessControlRequest(req, res)) {
@@ -230,6 +243,87 @@ exports.level = (req, res) => {
                     status: 400,
                     messages: [`Method not allowed: ${req.method}`],
                 });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500)
+            .send({
+                status: 500,
+                messages: ["An error occured when performing the request"],
+                error
+            });
+    }
+};
+
+exports.scores = (req, res) => {
+    try {
+        if (accessControlRequest(req, res)) {
+            return;
+        }
+
+        switch (req.method) {
+            case 'GET':
+                if (objectHasErrors(req.query, schemas.getScoresRequest, res)) {
+                    return;
+                }
+                const { levelId } = req.query;
+                return firestore.collection('scores')
+                    .
+                break;
+            default:
+                return res.status(400)
+                    .send({
+                        status: 400,
+                        messages: [`Method not allowed: ${req.method}`],
+                    });
+        }
+
+        if (req.method === 'GET') {
+            const offset = Number.parseInt(req.query.offset || 0);
+            const limit = Number.parseInt(req.query.limit || 50);
+            return firestore.collection('levels')
+                .offset(offset)
+                .limit(limit)
+                .get()
+                .then(collection =>
+                    res.status(200)
+                        .send(collection.docs.map(doc => doc.data())))
+        } else if (req.method === 'POST') {
+            const {success, message, username} = verifyJwt(req);
+            if (!success) {
+                return res.status(403)
+                    .send({
+                        status: 403,
+                        messages: [message]
+                    })
+            }
+            const level = req.body;
+            const errors = schemas.levelSchema.validate(level);
+            if (errors.length > 0) {
+                return res.status(400)
+                    .send({
+                        status: 400,
+                        messages: errors
+                    });
+            }
+
+            return firestore.collection("levels")
+                .add({
+                    ...level,
+                    createdTime: new Date().getTime(),
+                    authorId: username
+                })
+                .then(doc => res.status(200).send(doc))
+                .catch(error => {
+                    console.error(error);
+                    return res.status(500)
+                        .send({
+                            status: 500,
+                            messages: ["An error occured when saving the level to the database"],
+                            error
+                        })
+                });
+        } else {
         }
     } catch (error) {
         console.error(error);

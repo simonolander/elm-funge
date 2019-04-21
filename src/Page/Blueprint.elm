@@ -12,12 +12,19 @@ import Element exposing (..)
 
 type alias Model =
     { session : Session
+    , levelId : LevelId
     }
 
 
 init : LevelId -> Session -> ( Model, Cmd Msg )
 init levelId session =
-    ( { session = session }, Cmd.none )
+    let
+        model =
+            { session = session
+            , levelId = levelId
+            }
+    in
+    ( model, Cmd.none )
 
 
 getSession : Model -> Session
