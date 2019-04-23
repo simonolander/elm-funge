@@ -1,14 +1,15 @@
 module Main exposing (main)
 
 import Api.Auth0 as Auth0
+import Api.GCP
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Html
+import Http
 import Levels
-import Maybe.Extra
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
 import Page.Draft as Draft
@@ -61,23 +62,25 @@ main =
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        ( session, sessionCmd ) =
+        sessionWithLevels =
+            Session.init key
+                |> Session.withLevels Levels.levels
+
+        ( sessionWithUser, sessionCmd ) =
             case Auth0.loginResponseFromUrl url of
                 Just loginResponse ->
-                    ( Session.init key
+                    ( sessionWithLevels
                         |> Session.withUser (User.authorizedUser (AuthorizationToken.fromString loginResponse.accessToken))
-                        |> Session.withLevels Levels.levels
-                    , Auth0.getUserInfo loginResponse.accessToken (always Ignored)
+                    , Api.GCP.verifyIdentityToken (AuthorizationToken.fromString loginResponse.accessToken) VerifyTokenResponse
                     )
 
                 Nothing ->
-                    ( Session.init key
-                        |> Session.withLevels Levels.levels
+                    ( sessionWithLevels
                     , Cmd.none
                     )
 
         ( model, pageCmd ) =
-            changeUrl url session
+            changeUrl url sessionWithUser
 
         cmd =
             Cmd.batch
@@ -147,6 +150,7 @@ type Msg
     | BlueprintMsg Blueprint.Msg
     | LoginMsg Login.Msg
     | Ignored
+    | VerifyTokenResponse (Result Http.Error ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -198,6 +202,14 @@ update msg model =
 
         ChangedUrl url ->
             changeUrl url session
+
+        VerifyTokenResponse response ->
+            case response of
+                Ok () ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
 
         ExecutionMsg message ->
             case model of

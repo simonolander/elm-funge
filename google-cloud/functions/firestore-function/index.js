@@ -19,77 +19,53 @@ keF6ZSiX+axHF8531+puvsDeDyYOeX/Ysjaftw5aq9bHcSkEbH5zqKWifClfbFvO
 6ywgwfDPVQzVgyWQrz5tSLRX5dPLe2zZYkdnTVFWBxynebpg5ZPUoQk+J08/lPLy
 0wIDAQAB
 -----END PUBLIC KEY-----`;
-
 const AMAZON_COGNITO_AUD = '1mu4rr1moo02tobp2m4oe80pn8';
 const AMAZON_COGNITO_ISS = 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_BbVWFzVcU';
 
+const AUTH0_PEM =
+    `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5p0770GvIbSHccc1p02i
+JSOX3qzora1iNRJJOooyvEjAmHZeRbiZlsaw86YvEcM9dllK9rVpj3TTE1E5MGJz
+U3p7DzIBTfHE4f3K1gBlKiWuo/mUClEu5XRnPL36brfRfaRHe42rjzPFoZyjGZN4
+QU4cqa13eQsTPRb+6OOYPiUPHhnTlfxr/0eGf4E8j3PQmsiCzjpQJkdgG2Kb8thH
+iAdQvWb9plN5brxB4+7HXOVs+KqKRCrAVRJ6x4YggNFDjOxcSyvylpDZGY+OnRpI
+/V1OD62pjU8pOzwE+TA3DBpdbmB+/EpINDotQ4R0LCXWwq04b/x7LwSouR09iMhF
++wIDAQAB
+-----END PUBLIC KEY-----`;
+const AUTH0_AUD = 'https://us-central1-luminous-cubist-234816.cloudfunctions.net';
+const AUTH0_ISS = 'https://dev-253xzd4c.eu.auth0.com/';
+
+const audience = AUTH0_AUD;
+const issuer = AUTH0_ISS;
+const pem = AUTH0_PEM;
+
+const Exception = (status = 500, messages = 'An unknown error occurred') => ({
+    status,
+    messages: Array.isArray(messages) ? messages : [messages],
+});
+
 const verifyJwt = (req) => {
-    try {
-        const authorizationHeader = req.get('Authorization');
-        if (typeof authorizationHeader !== 'string') {
-            return {
-                success: false,
-                message: `Failed failed to extract authorization header, malformed header: ${authorizationHeader}`
-            };
-        }
-        const splits = authorizationHeader.split(' ');
-        if (splits.length !== 2) {
-            return {
-                success: false,
-                message: `Failed failed to extract authorization header, malformed header: ${authorizationHeader}`
-            };
-        }
-        const [type, token] = splits;
-        if (type !== 'Bearer') {
-            return {
-                success: false,
-                message: `Failed failed to extract authorization header, invalid type: ${type}`
-            };
-        }
-        const tokenObject = jwt.verify(token, AMAZON_COGNITO_PEM, {algorithm: 'RS256'});
-        if (tokenObject.token_use !== 'id') {
-            return {
-                success: false,
-                message: `Failed to verify jwt, invalid token use: ${tokenObject.token_use}`
-            };
-        }
-        if (tokenObject.aud !== AMAZON_COGNITO_AUD) {
-            return {
-                success: false,
-                message: `Failed to verify jwt, invalid audience: ${tokenObject.aud}`
-            };
-        }
-        if (tokenObject.iss !== AMAZON_COGNITO_ISS) {
-            return {
-                success: false,
-                message: `Failed to verify jwt, invalid issuer: ${tokenObject.iss}`
-            };
-        }
-        const username = tokenObject['cognito:username'];
-        if (typeof username !== 'string') {
-            return {
-                success: false,
-                message: `Failed to verify jwt, invalid cognito:username: ${username}`
-            };
-        }
-        if (typeof username.length === 0) {
-            return {
-                success: false,
-                message: `Failed to verify jwt, invalid cognito:username: ${username}`
-            };
-        }
-        return {
-            success: true,
-            username,
-            email: tokenObject.email
-        };
-    } catch (e) {
-        console.error(e);
-        return {
-            success: false,
-            message: e.message
-        };
+    const authorizationHeader = req.get('Authorization');
+    if (typeof authorizationHeader !== 'string') {
+        throw Exception(403, `Failed failed to extract authorization header, malformed header: ${authorizationHeader}`);
     }
+    const splits = authorizationHeader.split(' ');
+    if (splits.length !== 2) {
+        throw Exception(403, `Failed failed to extract authorization header, malformed header: ${authorizationHeader}`);
+    }
+    const [type, token] = splits;
+    if (type !== 'Bearer') {
+        throw Exception(403, `Failed failed to extract authorization header, invalid type: ${type}`);
+    }
+    const tokenObject = jwt.verify(token, pem, {algorithm: 'RS256', audience: audience, issuer: issuer});
+    const subject = tokenObject['sub'];
+    if (typeof subject !== 'string') {
+        throw Exception(403, `Failed to verify jwt, invalid subject: ${subject}`);
+    }
+    if (subject.length === 0) {
+        throw Exception(403, `Failed to verify jwt, subject empty`);
+    }
+    return subject;
 };
 
 const accessControlRequest = (req, res) => {
@@ -104,20 +80,29 @@ const accessControlRequest = (req, res) => {
     return false;
 };
 
-const objectHasErrors = (object, schema, res) => {
+const validateObject = (object, schema) => {
     const errors = schema.validate(object);
     if (errors.length > 0) {
-        res.status(400)
-            .send({
-                status: 400,
-                messages: errors
-            });
-        return true;
+        throw Exception(400, errors);
     }
-    return false;
+    return errors;
 };
 
-exports.levels = (req, res) => {
+const getUser = async (subject) => {
+    const usersCollection = firestore.collection('users');
+    const querySnapshot = await usersCollection.where("subjectAuth0", "==", subject)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.empty) {
+        const documentReference = await usersCollection.add({subjectAuth0: subject});
+        return await documentReference.get();
+    } else {
+        return querySnapshot.docs[0];
+    }
+};
+
+exports.levels = async (req, res) => {
     try {
         if (accessControlRequest(req, res)) {
             return;
@@ -126,15 +111,14 @@ exports.levels = (req, res) => {
         if (req.method === 'GET') {
             const offset = Number.parseInt(req.query.offset || 0);
             const limit = Number.parseInt(req.query.limit || 50);
-            return firestore.collection('levels')
+            const levels = await firestore.collection('levels')
                 .offset(offset)
                 .limit(limit)
-                .get()
-                .then(collection =>
-                    res.status(200)
-                        .send(collection.docs.map(doc => doc.data())))
+                .get();
+            return res.status(200)
+                .send(levels.docs.map(doc => doc.data()));
         } else if (req.method === 'POST') {
-            const {success, message, username} = verifyJwt(req);
+            const {success, message, subject} = verifyJwt(req);
             if (!success) {
                 return res.status(403)
                     .send({
@@ -142,32 +126,16 @@ exports.levels = (req, res) => {
                         messages: [message]
                     })
             }
-            const level = req.body;
-            const errors = schemas.levelSchema.validate(level);
-            if (errors.length > 0) {
-                return res.status(400)
-                    .send({
-                        status: 400,
-                        messages: errors
-                    });
-            }
-
-            return firestore.collection("levels")
+            const level = validateObject(req.body, schemas.levelSchema);
+            const documentReference = await firestore.collection("levels")
                 .add({
                     ...level,
                     createdTime: new Date().getTime(),
-                    authorId: username
-                })
-                .then(doc => res.status(200).send(doc))
-                .catch(error => {
-                    console.error(error);
-                    return res.status(500)
-                        .send({
-                            status: 500,
-                            messages: ["An error occured when saving the level to the database"],
-                            error
-                        })
+                    authorId: subject
                 });
+            const documentSnapshot = await documentReference.get();
+            return res.status(200)
+                .send(documentSnapshot.data());
         } else {
             return res.status(400)
                 .send({
@@ -186,57 +154,17 @@ exports.levels = (req, res) => {
     }
 };
 
-exports.level = (req, res) => {
+exports.userInfo = async (req, res) => {
     try {
         if (accessControlRequest(req, res)) {
             return;
         }
 
         if (req.method === 'GET') {
-            const id = Number.parseInt(req.query.offset || 0);
-            const limit = Number.parseInt(req.query.limit || 50);
-            return firestore.collection('levels')
-                .offset(offset)
-                .limit(limit)
-                .get()
-                .then(collection =>
-                    res.status(200)
-                        .send(collection.docs.map(doc => doc.data())))
-        } else if (req.method === 'POST') {
-            const {success, message, username} = verifyJwt(req);
-            if (!success) {
-                return res.status(403)
-                    .send({
-                        status: 403,
-                        messages: [message]
-                    })
-            }
-            const level = req.body;
-            const errors = schemas.levelSchema.validate(level);
-            if (errors.length > 0) {
-                return res.status(400)
-                    .send({
-                        status: 400,
-                        messages: errors
-                    });
-            }
-
-            return firestore.collection("levels")
-                .add({
-                    ...level,
-                    createdTime: new Date().getTime(),
-                    authorId: username
-                })
-                .then(doc => res.status(200).send(doc))
-                .catch(error => {
-                    console.error(error);
-                    return res.status(500)
-                        .send({
-                            status: 500,
-                            messages: ["An error occured when saving the level to the database"],
-                            error
-                        })
-                });
+            const subject = verifyJwt(req);
+            const user = await getUser(subject);
+            return res.status(200)
+                .send(user.data());
         } else {
             return res.status(400)
                 .send({
@@ -246,95 +174,47 @@ exports.level = (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        return res.status(500)
-            .send({
-                status: 500,
-                messages: ["An error occured when performing the request"],
-                error
-            });
+        const status = error.status || 500;
+        const messages = error.messages || ['An unknown error occured'];
+        return res.status(status)
+            .send({status, messages})
     }
 };
 
-exports.scores = (req, res) => {
+exports.drafts = async (req, res) => {
     try {
         if (accessControlRequest(req, res)) {
             return;
         }
 
-        switch (req.method) {
-            case 'GET':
-                if (objectHasErrors(req.query, schemas.getScoresRequest, res)) {
-                    return;
-                }
-                const { levelId } = req.query;
-                return firestore.collection('scores')
-                    .
-                break;
-            default:
-                return res.status(400)
-                    .send({
-                        status: 400,
-                        messages: [`Method not allowed: ${req.method}`],
-                    });
-        }
+        const subject = verifyJwt(req);
 
         if (req.method === 'GET') {
-            const offset = Number.parseInt(req.query.offset || 0);
-            const limit = Number.parseInt(req.query.limit || 50);
-            return firestore.collection('levels')
-                .offset(offset)
-                .limit(limit)
-                .get()
-                .then(collection =>
-                    res.status(200)
-                        .send(collection.docs.map(doc => doc.data())))
-        } else if (req.method === 'POST') {
-            const {success, message, username} = verifyJwt(req);
-            if (!success) {
-                return res.status(403)
-                    .send({
-                        status: 403,
-                        messages: [message]
-                    })
-            }
-            const level = req.body;
-            const errors = schemas.levelSchema.validate(level);
-            if (errors.length > 0) {
-                return res.status(400)
-                    .send({
-                        status: 400,
-                        messages: errors
-                    });
-            }
+            const user = await getUser(subject);
+            const drafts = await firestore.collection("drafts")
+                .where("authorId", "==", user.id)
+                .get();
 
-            return firestore.collection("levels")
-                .add({
-                    ...level,
-                    createdTime: new Date().getTime(),
-                    authorId: username
-                })
-                .then(doc => res.status(200).send(doc))
-                .catch(error => {
-                    console.error(error);
-                    return res.status(500)
-                        .send({
-                            status: 500,
-                            messages: ["An error occured when saving the level to the database"],
-                            error
-                        })
-                });
+            return res.status(200)
+                .send(drafts.docs.map(doc => doc.data()));
+        } else if (req.method === 'PUT') {
+            throw Exception();
         } else {
+            return res.status(400)
+                .send({
+                    status: 400,
+                    messages: [`Method not allowed: ${req.method}`],
+                });
         }
     } catch (error) {
         console.error(error);
-        return res.status(500)
-            .send({
-                status: 500,
-                messages: ["An error occured when performing the request"],
-                error
-            });
+        const status = error.status || 500;
+        const messages = error.messages || ['An unknown error occured'];
+        return res.status(status)
+            .send({status, messages})
     }
 };
+
 
 exports.numbers = (req, res) => {
     if (req.method === 'DELETE') throw 'not yet built';

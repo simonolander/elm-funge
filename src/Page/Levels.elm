@@ -1,6 +1,6 @@
 module Page.Levels exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
-import Api
+import Api.GCP as GCP
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Draft as Draft exposing (Draft)
@@ -397,7 +397,7 @@ update msg model =
                         cmd =
                             case Session.getToken session of
                                 Just token ->
-                                    Api.getDrafts token levelIds LoadedDrafts
+                                    GCP.getDrafts token levelIds LoadedDrafts
 
                                 Nothing ->
                                     Draft.getDraftsFromLocalStorage "drafts" levelIds

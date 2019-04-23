@@ -1,6 +1,5 @@
 module Page.Draft exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
-import Api
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
@@ -26,11 +25,8 @@ import Http
 import InstructionToolView
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
-import Levels
-import Maybe.Extra
 import Ports.LocalStorage
 import Route
-import View.LoadingScreen
 import ViewComponents exposing (..)
 
 

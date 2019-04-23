@@ -278,11 +278,11 @@ exports.levelSchema = new ObjectSchema({
     chapter: new StringSchema
 });
 
-export var loginRequest = new ObjectSchema({
+exports.loginRequest = new ObjectSchema({
     username: new StringSchema({minLength: 1}),
     password: new StringSchema(),
 });
 
-export var getScoresRequest = new ObjectSchema({
+exports.getScoresRequest = new ObjectSchema({
     levelId: new StringSchema()
 });

@@ -1,10 +1,11 @@
-module Api exposing (getDrafts, getLevels)
+module Api.GCP exposing (getDrafts, getLevels, getUserInfo, verifyIdentityToken)
 
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.User exposing (User)
+import Data.UserInfo as UserInfo exposing (UserInfo)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -48,6 +49,30 @@ getDrafts token levelIds toMsg =
     authorizedGet url token expect
 
 
+getUserInfo : AuthorizationToken -> (Result Http.Error UserInfo -> msg) -> Cmd msg
+getUserInfo authorizationToken toMsg =
+    let
+        url =
+            Url.Builder.crossOrigin gcpPrePath [ "userInfo" ] []
+
+        expect =
+            Http.expectJson toMsg UserInfo.decoder
+    in
+    authorizedGet url authorizationToken expect
+
+
+verifyIdentityToken : AuthorizationToken -> (Result Http.Error () -> msg) -> Cmd msg
+verifyIdentityToken authorizationToken toMsg =
+    let
+        url =
+            Url.Builder.crossOrigin gcpPrePath [ "userInfo" ] []
+
+        expect =
+            Http.expectWhatever toMsg
+    in
+    authorizedGet url authorizationToken expect
+
+
 
 -- PRIVATE
 
@@ -63,13 +88,13 @@ authorizationHeader token =
 
 
 authorizedGet : String -> AuthorizationToken -> Http.Expect msg -> Cmd msg
-authorizedGet url token function =
+authorizedGet url token expect =
     Http.request
         { method = "GET"
         , headers = [ authorizationHeader token ]
         , url = url
         , body = Http.emptyBody
-        , expect = function
+        , expect = expect
         , timeout = Nothing
         , tracker = Nothing
         }

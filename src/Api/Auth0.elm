@@ -5,8 +5,6 @@ import Http
 import Maybe.Extra
 import Url exposing (Url)
 import Url.Builder
-import Url.Parser
-import Url.Parser.Query
 
 
 
@@ -40,6 +38,10 @@ scope =
         ]
 
 
+audience =
+    "https://us-central1-luminous-cubist-234816.cloudfunctions.net"
+
+
 
 -- MODEL
 
@@ -49,26 +51,6 @@ type alias LoginResponse =
     , expiresIn : Int
     , tokenType : String
     }
-
-
-parser =
-    Url.Parser.Query.map3
-        (\maybeAccessToken maybeExpiresIn maybeTokenType ->
-            case ( maybeAccessToken, maybeExpiresIn, maybeTokenType ) of
-                ( Just accessToken, Just expiresIn, Just tokenType ) ->
-                    Just
-                        { accessToken = accessToken
-                        , expiresIn = expiresIn
-                        , tokenType = tokenType
-                        }
-
-                _ ->
-                    Nothing
-        )
-        (Url.Parser.Query.string "access_token")
-        (Url.Parser.Query.int "expires_in")
-        (Url.Parser.Query.string "token_type")
-        |> Url.Parser.query
 
 
 loginResponseFromUrl : Url -> Maybe LoginResponse
@@ -120,6 +102,7 @@ login =
         , Url.Builder.string "response_type" responseType
         , Url.Builder.string "redirect_uri" redirectUri
         , Url.Builder.string "scope" scope
+        , Url.Builder.string "audience" audience
         ]
 
 
