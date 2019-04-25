@@ -1,4 +1,3 @@
-
 class AnySchema {
     validate(test, path = '') {
         return [];
@@ -13,8 +12,7 @@ class ObjectSchema {
     validate(test, path = '') {
         if (typeof test !== 'object') {
             return [`${path} must be an object but had the type ${typeof test}`]
-        }
-        else {
+        } else {
             return [].concat(
                 ...Object.entries(this.schema)
                     .map(([key, value]) => value.validate(test[key], `${path}.${key}`)),
@@ -44,15 +42,14 @@ class ExactSchema {
     validate(test, path = '') {
         if (test === this.value) {
             return []
-        }
-        else {
+        } else {
             return [`${path} must be exactly ${this.value} but was ${test}`]
         }
     }
 }
 
 class StringSchema {
-    constructor({ minLength = 0, maxLength = 255 } = {}) {
+    constructor({minLength = 0, maxLength = 255} = {}) {
         this.minLength = minLength;
         this.maxLength = maxLength;
     }
@@ -60,21 +57,18 @@ class StringSchema {
     validate(test, path = '') {
         if (typeof test !== 'string') {
             return [`${path} must be a string but had the type ${typeof test}`]
-        }
-        else if (typeof this.minLength === 'number' && test.length < this.minLength) {
+        } else if (typeof this.minLength === 'number' && test.length < this.minLength) {
             return [`${path} must be at least ${this.minLength} characters long`]
-        }
-        else if (typeof this.maxLength === 'number' && test.length > this.maxLength) {
+        } else if (typeof this.maxLength === 'number' && test.length > this.maxLength) {
             return [`${path} must be at most ${this.maxLength} characters long`]
-        }
-        else {
+        } else {
             return []
         }
     }
 }
 
 class IntegerSchema {
-    constructor({ minValue, maxValue } = {}) {
+    constructor({minValue, maxValue} = {}) {
         this.minValue = minValue;
         this.maxValue = maxValue;
     }
@@ -82,39 +76,34 @@ class IntegerSchema {
     validate(test, path = '') {
         if (typeof test !== 'number') {
             return [`${path} must be a number but had the type ${typeof test}`]
-        }
-        else if (!Number.isInteger(test)) {
+        } else if (!Number.isInteger(test)) {
             return [`${path} must be an integer but was ${test}`]
-        }
-        else if (typeof this.minValue === 'number' && test < this.minValue) {
+        } else if (typeof this.minValue === 'number' && test < this.minValue) {
             return [`${path} must be at least ${this.minValue} but was ${test}`]
-        }
-        else if (typeof this.maxValue === 'number' && test > this.maxValue) {
+        } else if (typeof this.maxValue === 'number' && test > this.maxValue) {
             return [`${path} must be at most ${this.maxValue} but was ${test}`]
-        }
-        else {
+        } else {
             return []
         }
     }
 }
 
 class ArraySchema {
-    constructor({ each = new AnySchema } = {}) {
+    constructor({each = new AnySchema} = {}) {
         this.each = each;
     }
 
     validate(testArray, path = '') {
         if (!Array.isArray(testArray)) {
             return [`${path} must be an array`]
-        }
-        else {
+        } else {
             return [].concat(...testArray.map((test, index) => this.each.validate(test, `${path}[${index}]`)))
         }
     }
 }
 
 class AnyOfSchema {
-    constructor({ anyOf = [] } = {}) {
+    constructor({anyOf = []} = {}) {
         this.anyOf = anyOf;
     }
 
@@ -122,15 +111,14 @@ class AnyOfSchema {
         const validates = this.anyOf.map((schema, index) => schema.validate(test, `${path}::${index}`));
         if (validates.some(messages => messages.length === 0)) {
             return [];
-        }
-        else {
+        } else {
             return [].concat(...validates);
         }
     }
 }
 
 class AllOfSchema {
-    constructor({ allOf = [] } = {}) {
+    constructor({allOf = []} = {}) {
         this.allOf = allOf;
     }
 
@@ -140,7 +128,7 @@ class AllOfSchema {
 }
 
 class EnumSchema extends StringSchema {
-    constructor({ enums = [] } = {}) {
+    constructor({enums = []} = {}) {
         super();
         this.enums = enums;
     }
@@ -149,11 +137,9 @@ class EnumSchema extends StringSchema {
         const validateSuper = super.validate(test, path);
         if (validateSuper.length !== 0) {
             return validateSuper;
-        }
-        else if (!this.enums.some(enumValue => enumValue === test)) {
+        } else if (!this.enums.some(enumValue => enumValue === test)) {
             return [`${path} is ${test} but must be one of [${this.enums.join(', ')}]`];
-        }
-        else {
+        } else {
             return [];
         }
     }
@@ -249,40 +235,59 @@ class InstructionToolSchema extends AnyOfSchema {
     }
 }
 
-exports.levelSchema = new ObjectSchema({
-    version: new IntegerSchema({ minValue: 0 }),
+const boardSchema = new ObjectSchema({
+    width: new IntegerSchema({minValue: 1}),
+    height: new IntegerSchema({minValue: 1}),
+    instructions: new ArraySchema({
+        each: new ObjectSchema({
+            x: new IntegerSchema({minValue: 0}),
+            y: new IntegerSchema({minValue: 0}),
+            instruction: new InstructionSchema
+        })
+    })
+});
+
+const levelSchema = new ObjectSchema({
+    version: new IntegerSchema({minValue: 0}),
     id: new StringSchema,
     name: new StringSchema,
     description: new ArraySchema({
         each: new StringSchema
     }),
     io: new ObjectSchema({
-        input: new ArraySchema({ each: new IntegerSchema }),
-        output: new ArraySchema({ each: new IntegerSchema }),
+        input: new ArraySchema({each: new IntegerSchema}),
+        output: new ArraySchema({each: new IntegerSchema}),
     }),
-    initialBoard: new ObjectSchema({
-        width: new IntegerSchema({ minValue: 1 }),
-        height: new IntegerSchema({ minValue: 1 }),
-        instructions: new ArraySchema({
-            each: new ObjectSchema({
-                x: new IntegerSchema({ minValue: 0 }),
-                y: new IntegerSchema({ minValue: 0 }),
-                instruction: new InstructionSchema
-            })
-        })
-    }),
+    initialBoard: boardSchema,
     instructionTools: new ArraySchema({
         each: new InstructionToolSchema
     }),
-    index: new IntegerSchema({ minLength: 0 }),
+    index: new IntegerSchema({minLength: 0}),
     chapter: new StringSchema
 });
 
-exports.loginRequest = new ObjectSchema({
-    username: new StringSchema({minLength: 1}),
-    password: new StringSchema(),
+const scoreSchema = new ObjectSchema({
+    numberOfSteps: new IntegerSchema({minValue: 0}),
+    numberOfInstructions: new IntegerSchema({minValue: 0})
 });
 
-exports.getScoresRequest = new ObjectSchema({
+const solutionSchema = new ObjectSchema({
+    id: new StringSchema({minLength: 1}),
+    levelId: new StringSchema({minLength: 1}),
+    score: scoreSchema,
+    board: boardSchema
+});
+
+const draftSchema = new ObjectSchema({
+    id: new StringSchema({minLength: 1}),
+    levelId: new StringSchema({minLength: 1}),
+    board: boardSchema
+});
+
+exports.levelSchema = levelSchema;
+exports.solutionSchema = solutionSchema;
+exports.draftSchema = draftSchema;
+
+exports.requestHighscore = new ObjectSchema({
     levelId: new StringSchema()
 });

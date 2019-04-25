@@ -102,6 +102,24 @@ const getUser = async (subject) => {
     }
 };
 
+const getById = collectionName => async id => {
+    const querySnapshot = await firestore.collection(collectionName)
+        .where("id", "==", id)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.empty) {
+        return null;
+    }
+    else {
+        return querySnapshot.docs[0];
+    }
+};
+
+const getDraft = getById("drafts");
+const getLevel = getById("levels");
+const getSolutions = getById("solutions");
+
 exports.levels = async (req, res) => {
     try {
         if (accessControlRequest(req, res)) {
@@ -197,8 +215,48 @@ exports.drafts = async (req, res) => {
 
             return res.status(200)
                 .send(drafts.docs.map(doc => doc.data()));
-        } else if (req.method === 'PUT') {
-            throw Exception();
+        } else if (req.method === 'POST') {
+            const draft = validateObject(req.body, schemas.draftSchema);
+            const user = getUser(subject);
+            const existingDraft = getDraft(draft.id);
+            await user;
+            await existingDraft;
+            if (existingDraft) {
+                const existingDraftAuthorId = existingDraft.data().authorId;
+                if (existingDraftAuthorId === user.id) {
+                    const level = await getLevel(draft.levelId);
+                    if (!level) {
+                        return res.status(404)
+                            .send({
+                                status: 404,
+                                messages: [`Level ${draft.levelId} not found`]
+                            });
+                    }
+                    existingDraft.set({...draft, authorId: user.id});
+                    return res.status(200).send();
+                }
+                else {
+                    return res.status(401)
+                        .send({
+                            status: 401,
+                            messages: [`User ${user.id} doesn't have the right to modify draft ${draft.id}`]
+                        });
+                }
+            }
+            else {
+                const level = await getLevel(draft.levelId);
+                if (!level) {
+                    return res.status(404)
+                        .send({
+                            status: 404,
+                            messages: [`Level ${draft.levelId} not found`]
+                        });
+                }
+                firestore.collection("drafts")
+                    .add({...draft, authorId: user.id});
+                return res.status(200)
+                    .send()
+            }
         } else {
             return res.status(400)
                 .send({
@@ -215,6 +273,52 @@ exports.drafts = async (req, res) => {
     }
 };
 
+exports.highscore = async (req, res) => {
+    try {
+        if (accessControlRequest(req, res)) {
+            return;
+        }
+
+        if (req.method === 'GET') {
+            const { levelId } = validateObject(req.query, schemas.requestHighscore);
+            const solutions = await firestore.collection("solutions")
+                .where("levelId", "==", levelId)
+                .get();
+
+            const highscoreFields = ['numberOfSteps', 'numberOfInstructions'];
+            const highscore = Object.entries(solutions.docs
+                .map(doc => doc.data())
+                .reduce((highscore, solution) => {
+                highscoreFields.forEach(field => {
+                    highscore[field][solution[field]] = highscore[field][solution[field]] + 1 || 1;
+                });
+                return highscore;
+            }, highscoreFields.reduce((highscore, field) => {
+                highscore[field] = {};
+                return highscore;
+            }, {}))).reduce((highscore, [field, counts]) => {
+                highscore[field] = Object.entries(counts)
+                    .map(([key, value]) => [parseInt(key), value]);
+                return highscore;
+            }, {});
+
+            return res.status(200)
+                .send(drafts.docs.map(doc => doc.data()));
+        } else {
+            return res.status(400)
+                .send({
+                    status: 400,
+                    messages: [`Method not allowed: ${req.method}`],
+                });
+        }
+    } catch (error) {
+        console.error(error);
+        const status = error.status || 500;
+        const messages = error.messages || ['An unknown error occured'];
+        return res.status(status)
+            .send({status, messages})
+    }
+};
 
 exports.numbers = (req, res) => {
     if (req.method === 'DELETE') throw 'not yet built';

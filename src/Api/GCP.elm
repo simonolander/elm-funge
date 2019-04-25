@@ -1,10 +1,10 @@
-module Api.GCP exposing (getDrafts, getLevels, getUserInfo, verifyIdentityToken)
+module Api.GCP exposing (getDrafts, getLevels, getUserInfo, publishSolution, saveDraft, verifyIdentityToken)
 
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.User exposing (User)
+import Data.Solution as Solution exposing (Solution)
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
@@ -33,20 +33,46 @@ getLevel levelId toMsg =
         }
 
 
-getDrafts : AuthorizationToken -> List LevelId -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
-getDrafts token levelIds toMsg =
+getDrafts : AuthorizationToken -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
+getDrafts token toMsg =
     let
         url =
-            levelIds
-                |> String.join ","
-                |> Url.Builder.string "levelIds"
-                |> List.singleton
-                |> Url.Builder.crossOrigin gcpPrePath [ "drafts" ]
+            Url.Builder.crossOrigin gcpPrePath [ "drafts" ] []
 
         expect =
             Http.expectJson toMsg (Decode.list Draft.decoder)
     in
     authorizedGet url token expect
+
+
+saveDraft : AuthorizationToken -> Draft -> (Result Http.Error () -> msg) -> Cmd msg
+saveDraft token draft toMsg =
+    let
+        url =
+            Url.Builder.crossOrigin gcpPrePath [ "drafts" ] []
+
+        expect =
+            Http.expectWhatever toMsg
+
+        body =
+            Draft.encode draft
+    in
+    authorizedPost url token body expect
+
+
+publishSolution : AuthorizationToken -> Solution -> (Result Http.Error () -> msg) -> Cmd msg
+publishSolution token solution toMsg =
+    let
+        url =
+            Url.Builder.crossOrigin gcpPrePath [ "solutions" ] []
+
+        expect =
+            Http.expectWhatever toMsg
+
+        body =
+            Solution.encode solution
+    in
+    authorizedPost url token body expect
 
 
 getUserInfo : AuthorizationToken -> (Result Http.Error UserInfo -> msg) -> Cmd msg
@@ -94,6 +120,19 @@ authorizedGet url token expect =
         , headers = [ authorizationHeader token ]
         , url = url
         , body = Http.emptyBody
+        , expect = expect
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+authorizedPost : String -> AuthorizationToken -> Encode.Value -> Http.Expect msg -> Cmd msg
+authorizedPost url token body expect =
+    Http.request
+        { method = "POST"
+        , headers = [ authorizationHeader token ]
+        , url = url
+        , body = Http.jsonBody body
         , expect = expect
         , timeout = Nothing
         , tracker = Nothing

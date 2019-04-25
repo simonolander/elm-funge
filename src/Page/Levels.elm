@@ -14,8 +14,6 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
-import Html.Attributes
 import Http
 import Json.Decode as Decode
 import Ports.LocalStorage as LocalStorage exposing (Key)
@@ -23,7 +21,6 @@ import Random
 import Result exposing (Result)
 import Route exposing (Route)
 import View.LevelButton
-import View.LoadingScreen
 import ViewComponents
 
 
@@ -397,7 +394,7 @@ update msg model =
                         cmd =
                             case Session.getToken session of
                                 Just token ->
-                                    GCP.getDrafts token levelIds LoadedDrafts
+                                    GCP.getDrafts token LoadedDrafts
 
                                 Nothing ->
                                     Draft.getDraftsFromLocalStorage "drafts" levelIds
