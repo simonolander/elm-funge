@@ -3,6 +3,7 @@ module Page.Levels exposing (Model, Msg, getSession, init, subscriptions, update
 import Api.GCP as GCP
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.Level exposing (Level)
@@ -30,16 +31,18 @@ import ViewComponents
 
 type alias Model =
     { session : Session
+    , campaignId : CampaignId
     , selectedLevelId : Maybe LevelId
     , error : Maybe Http.Error
     }
 
 
-init : Maybe LevelId -> Session -> ( Model, Cmd Msg )
-init selectedLevelId session =
+init : CampaignId -> Maybe LevelId -> Session -> ( Model, Cmd Msg )
+init campaignId selectedLevelId session =
     let
         model =
             { session = session
+            , campaignId = campaignId
             , selectedLevelId = selectedLevelId
             , error = Nothing
             }
@@ -364,7 +367,7 @@ update msg model =
                             Cmd.none
 
                 changeUrlCmd =
-                    Route.replaceUrl session.key (Route.Levels (Just selectedLevelId))
+                    Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
 
                 cmd =
                     Cmd.batch

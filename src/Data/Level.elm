@@ -2,6 +2,7 @@ module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStor
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
+import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.IO as IO exposing (IO)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
@@ -15,6 +16,7 @@ import Random
 type alias Level =
     { id : LevelId
     , index : Int
+    , campaignId : CampaignId
     , name : String
     , description : List String
     , io : IO
@@ -96,6 +98,7 @@ generator =
         (\levelId ->
             { id = levelId
             , index = 0
+            , campaignId = CampaignId.blueprints
             , name = "New level"
             , description = [ "Enter a description" ]
             , io =
@@ -122,6 +125,7 @@ encode level =
         [ ( "version", Encode.int 1 )
         , ( "id", Encode.string level.id )
         , ( "index", Encode.int level.index )
+        , ( "campaignId", CampaignId.encode level.campaignId )
         , ( "name", Encode.string level.name )
         , ( "description", Encode.list Encode.string level.description )
         , ( "io", IO.encode level.io )
@@ -140,30 +144,35 @@ decoder =
                         Decode.field "index" Decode.int
                             |> Decode.andThen
                                 (\index ->
-                                    Decode.field "name" Decode.string
+                                    Decode.field "campaignId" CampaignId.decoder
                                         |> Decode.andThen
-                                            (\name ->
-                                                Decode.field "description" (Decode.list Decode.string)
+                                            (\campaignId ->
+                                                Decode.field "name" Decode.string
                                                     |> Decode.andThen
-                                                        (\description ->
-                                                            Decode.field "io" IO.decoder
+                                                        (\name ->
+                                                            Decode.field "description" (Decode.list Decode.string)
                                                                 |> Decode.andThen
-                                                                    (\io ->
-                                                                        Decode.field "initialBoard" Board.decoder
+                                                                    (\description ->
+                                                                        Decode.field "io" IO.decoder
                                                                             |> Decode.andThen
-                                                                                (\initialBoard ->
-                                                                                    Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                (\io ->
+                                                                                    Decode.field "initialBoard" Board.decoder
                                                                                         |> Decode.andThen
-                                                                                            (\instructionTools ->
-                                                                                                Decode.succeed
-                                                                                                    { id = id
-                                                                                                    , name = name
-                                                                                                    , index = index
-                                                                                                    , description = description
-                                                                                                    , io = io
-                                                                                                    , initialBoard = initialBoard
-                                                                                                    , instructionTools = instructionTools
-                                                                                                    }
+                                                                                            (\initialBoard ->
+                                                                                                Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                                    |> Decode.andThen
+                                                                                                        (\instructionTools ->
+                                                                                                            Decode.succeed
+                                                                                                                { id = id
+                                                                                                                , name = name
+                                                                                                                , index = index
+                                                                                                                , campaignId = campaignId
+                                                                                                                , description = description
+                                                                                                                , io = io
+                                                                                                                , initialBoard = initialBoard
+                                                                                                                , instructionTools = instructionTools
+                                                                                                                }
+                                                                                                        )
                                                                                             )
                                                                                 )
                                                                     )
@@ -179,30 +188,35 @@ decoder =
                         Decode.field "index" Decode.int
                             |> Decode.andThen
                                 (\index ->
-                                    Decode.field "name" Decode.string
+                                    Decode.field "campaignId" CampaignId.decoder
                                         |> Decode.andThen
-                                            (\name ->
-                                                Decode.field "description" (Decode.list Decode.string)
+                                            (\campaignId ->
+                                                Decode.field "name" Decode.string
                                                     |> Decode.andThen
-                                                        (\description ->
-                                                            Decode.field "io" IO.decoder
+                                                        (\name ->
+                                                            Decode.field "description" (Decode.list Decode.string)
                                                                 |> Decode.andThen
-                                                                    (\io ->
-                                                                        Decode.field "initialBoard" Board.decoder
+                                                                    (\description ->
+                                                                        Decode.field "io" IO.decoder
                                                                             |> Decode.andThen
-                                                                                (\initialBoard ->
-                                                                                    Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                (\io ->
+                                                                                    Decode.field "initialBoard" Board.decoder
                                                                                         |> Decode.andThen
-                                                                                            (\instructionTools ->
-                                                                                                Decode.succeed
-                                                                                                    { id = id
-                                                                                                    , index = index
-                                                                                                    , name = name
-                                                                                                    , description = description
-                                                                                                    , io = io
-                                                                                                    , initialBoard = initialBoard
-                                                                                                    , instructionTools = instructionTools
-                                                                                                    }
+                                                                                            (\initialBoard ->
+                                                                                                Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                                    |> Decode.andThen
+                                                                                                        (\instructionTools ->
+                                                                                                            Decode.succeed
+                                                                                                                { id = id
+                                                                                                                , index = index
+                                                                                                                , campaignId = campaignId
+                                                                                                                , name = name
+                                                                                                                , description = description
+                                                                                                                , io = io
+                                                                                                                , initialBoard = initialBoard
+                                                                                                                , instructionTools = instructionTools
+                                                                                                                }
+                                                                                                        )
                                                                                             )
                                                                                 )
                                                                     )

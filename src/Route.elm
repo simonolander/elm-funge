@@ -1,6 +1,8 @@
 module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl)
 
+import Basics.Extra exposing (flip)
 import Browser.Navigation as Navigation
+import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.DraftId as DraftId
 import Data.LevelId as LevelId
 import Element
@@ -10,7 +12,7 @@ import Url.Parser as Parser exposing ((</>), Parser, oneOf, s)
 
 type Route
     = Home
-    | Levels (Maybe LevelId.LevelId)
+    | Campaign CampaignId (Maybe LevelId.LevelId)
     | EditDraft DraftId.DraftId
     | ExecuteDraft DraftId.DraftId
     | Blueprints (Maybe LevelId.LevelId)
@@ -44,11 +46,11 @@ toString route =
                 Home ->
                     []
 
-                Levels Nothing ->
-                    [ "levels" ]
+                Campaign campaignId Nothing ->
+                    [ "campaign", campaignId ]
 
-                Levels (Just levelId) ->
-                    [ "levels", levelId ]
+                Campaign campaignId (Just levelId) ->
+                    [ "campaign", campaignId, "level", levelId ]
 
                 EditDraft draftId ->
                     [ "drafts", DraftId.toString draftId ]
@@ -90,8 +92,8 @@ parser : Parser (Route -> a) a
 parser =
     oneOf
         [ Parser.map Home Parser.top
-        , Parser.map (Levels Nothing) (s "levels")
-        , Parser.map (Levels << Just) (s "levels" </> LevelId.urlParser)
+        , Parser.map (flip Campaign Nothing) (s "campaign" </> CampaignId.urlParser)
+        , Parser.map (\campaignId levelId -> Campaign campaignId (Just levelId)) (s "campaign" </> CampaignId.urlParser </> s "level" </> LevelId.urlParser)
         , Parser.map EditDraft (s "drafts" </> DraftId.urlParser)
         , Parser.map ExecuteDraft (s "drafts" </> DraftId.urlParser </> s "execute")
         , Parser.map (Blueprints Nothing) (s "blueprints")

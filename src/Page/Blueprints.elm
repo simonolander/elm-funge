@@ -183,7 +183,7 @@ update msg model =
 
         LocalStorageResponse ( key, value ) ->
             if key == Campaign.localStorageKey CampaignId.blueprints then
-                case Decode.decodeValue (Decode.maybe Campaign.decoder) value of
+                case Decode.decodeValue (Decode.nullable Campaign.decoder) value of
                     Ok (Just campaign) ->
                         let
                             newModel =
@@ -216,7 +216,7 @@ update msg model =
                         ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
 
             else
-                case Decode.decodeValue (Decode.maybe Level.decoder) value of
+                case Decode.decodeValue (Decode.nullable Level.decoder) value of
                     Ok (Just level) ->
                         let
                             newModel =

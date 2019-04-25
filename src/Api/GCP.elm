@@ -29,7 +29,7 @@ getLevel : LevelId -> (Result Http.Error (Maybe Level) -> msg) -> Cmd msg
 getLevel levelId toMsg =
     Http.get
         { url = Url.Builder.crossOrigin gcpPrePath [ "levels" ] [ Url.Builder.string "levelId" levelId ]
-        , expect = Http.expectJson toMsg (Decode.maybe Level.decoder)
+        , expect = Http.expectJson toMsg (Decode.nullable Level.decoder)
         }
 
 

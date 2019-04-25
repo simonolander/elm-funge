@@ -18,6 +18,7 @@ import Page.Home as Home
 import Page.Levels as Levels
 import Page.Login as Login
 import Route
+import Set exposing (Set)
 import Url exposing (Url)
 
 
@@ -62,9 +63,27 @@ main =
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
+        levels =
+            Levels.levels
+
+        campaigns =
+            List.map .campaignId levels
+                |> Set.fromList
+                |> Set.toList
+                |> List.map
+                    (\campaignId ->
+                        { id = campaignId
+                        , levelIds =
+                            levels
+                                |> List.filter (.campaignId >> (==) campaignId)
+                                |> List.map .id
+                        }
+                    )
+
         sessionWithLevels =
             Session.init key
-                |> Session.withLevels Levels.levels
+                |> Session.withLevels levels
+                |> Session.withCampaigns campaigns
 
         ( sessionWithUser, sessionCmd ) =
             case Auth0.loginResponseFromUrl url of
@@ -291,8 +310,8 @@ changeUrl url session =
             Home.init session
                 |> updateWith Home HomeMsg
 
-        Just (Route.Levels maybeLevelId) ->
-            Levels.init maybeLevelId session
+        Just (Route.Campaign campaignId maybeLevelId) ->
+            Levels.init campaignId maybeLevelId session
                 |> updateWith Levels LevelsMsg
 
         Just (Route.EditDraft draftId) ->

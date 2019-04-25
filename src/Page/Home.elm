@@ -2,6 +2,7 @@ module Page.Home exposing (Model, Msg, getSession, init, subscriptions, update, 
 
 import Api.Auth0 as Auth0
 import Browser exposing (Document)
+import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
@@ -81,7 +82,7 @@ view model =
                 , width (maximum 800 fill)
                 ]
                 [ titleView
-                , link "Levels" (Route.Levels Nothing)
+                , link "Levels" (Route.Campaign CampaignId.standard Nothing)
                 , Element.link
                     [ width fill ]
                     { label = ViewComponents.textButton [] Nothing "Login"
@@ -93,7 +94,7 @@ view model =
                     , url = Auth0.logout
                     }
                 , link "Blueprints" (Route.Blueprints Nothing)
-                , link "Credits" (Route.Levels Nothing)
+                , link "Credits" (Route.Campaign "credits" Nothing)
                 ]
                 |> layout
                     [ width fill

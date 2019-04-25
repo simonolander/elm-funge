@@ -78,7 +78,7 @@ view model =
             Route.link
                 [ width fill ]
                 (ViewComponents.textButton [] Nothing "I got it, let's play")
-                (Route.Levels Nothing)
+                (Route.Campaign Nothing)
 
         loginButtonView =
             link

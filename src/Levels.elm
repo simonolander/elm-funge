@@ -2,6 +2,7 @@ module Levels exposing (levels)
 
 import Array
 import Data.Board as Board
+import Data.CampaignId as CampaignId
 import Data.Direction exposing (Direction(..))
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool exposing (InstructionTool(..))
@@ -12,6 +13,7 @@ levelTest : Level
 levelTest =
     { id = "e182f31307fecaac"
     , index = 0
+    , campaignId = CampaignId.standard
     , name = "test"
     , description = [ "For testing purposes" ]
     , io =
@@ -45,6 +47,7 @@ levelDoubleTheFun : Level
 levelDoubleTheFun =
     { id = "42fe70779bd30656"
     , index = 1
+    , campaignId = CampaignId.standard
     , name = "Double the fun"
     , description = [ "> Read a number n from input", "> Output n * 2", "The last input is 0 and should not be printed" ]
     , io =
@@ -72,6 +75,7 @@ level123 : Level
 level123 =
     { id = "88c653c6c3a5b5e7"
     , index = 2
+    , campaignId = CampaignId.standard
     , name = "One, two, three"
     , description = [ "> Output the numbers 1, 2, and 3" ]
     , io =
@@ -99,6 +103,7 @@ levelCountDown : Level
 levelCountDown =
     { id = "e2f96c5345e5f1f6"
     , index = 3
+    , campaignId = CampaignId.standard
     , name = "Count down"
     , description = [ "> Read a number n from input", "> Output all the numbers from n to 0", "The last input is 0 and should not be printed" ]
     , io =
@@ -130,6 +135,7 @@ levelSomeSums : Level
 levelSomeSums =
     { id = "c2003520d988f8d0"
     , index = 4
+    , campaignId = CampaignId.standard
     , name = "Some sums"
     , description = [ "> Read two numbers a and b from input", "> Output a + b", "The last input is 0 and should not be printed" ]
     , io =
@@ -160,6 +166,7 @@ levelOneMinusTheOther : Level
 levelOneMinusTheOther =
     { id = "1a3c6d6a80769a07"
     , index = 5
+    , campaignId = CampaignId.standard
     , name = "One minus the other"
     , description = [ "> Read two numbers a and b from input", "> Output a - b", "The last input is 0 and should not be printed" ]
     , io =
@@ -196,6 +203,7 @@ levelPowersOfTwo : Level
 levelPowersOfTwo =
     { id = "3ee1f15ae601fc94"
     , index = 6
+    , campaignId = CampaignId.standard
     , name = "Powers of two"
     , description = [ "> Read a number n from input", "> Output 2^n ", "The last input is 0 and should not be printed" ]
     , io =
@@ -231,6 +239,7 @@ levelTriangularNumbers : Level
 levelTriangularNumbers =
     { id = "24c7efb5c41f8f8f"
     , index = 7
+    , campaignId = CampaignId.standard
     , name = "Triangular numbers"
     , description = [ "> Read a number n from input", "> Output n*(n+1)/2 ", "The last input is 0 and should not be printed" ]
     , io =
@@ -266,6 +275,7 @@ levelSignalAmplifier : Level
 levelSignalAmplifier =
     { id = "d3c077ea5033222c"
     , index = 8
+    , campaignId = CampaignId.standard
     , name = "Signal amplifier"
     , description = [ "> Read a number x from the input", "> Output x + 10", "The last input is 0 should not be outputed" ]
     , io =
@@ -302,6 +312,7 @@ levelMultiplier : Level
 levelMultiplier =
     { id = "bc27b58a0cafb0ba"
     , index = 9
+    , campaignId = CampaignId.standard
     , name = "Multiplier"
     , description = [ "> Read two positive numbers x and y from the input", "> Output x * y", "The last input is 0 should not be outputed" ]
     , io =
@@ -340,6 +351,7 @@ levelDivideAndConquer : Level
 levelDivideAndConquer =
     { id = "9abf854cff37e96b"
     , index = 10
+    , campaignId = CampaignId.standard
     , name = "Divide and conquer"
     , description = [ "> Read two positive numbers x and y from the input", "> Output ⌊x / y⌋", "The last input is 0 should not be outputed" ]
     , io =
@@ -379,6 +391,7 @@ levelSequenceReverser : Level
 levelSequenceReverser =
     { id = "407410b1638112a9"
     , index = 11
+    , campaignId = CampaignId.standard
     , name = "Sequence reverser"
     , description = [ "> Read a sequence of numbers from input", "> Output the sequence in reverse", "The last input is 0 is not part of the sequence" ]
     , io =
@@ -415,6 +428,7 @@ levelSequenceSorter : Level
 levelSequenceSorter =
     { id = "b96e6c12476716a3"
     , index = 12
+    , campaignId = CampaignId.standard
     , name = "Sequence sorter"
     , description = [ "> Read a sequence from the input", "> Output the sequence sorted from lowest to highest", "The last input is 0 should not be outputed" ]
     , io =
@@ -453,6 +467,7 @@ levelLessIsMore : Level
 levelLessIsMore =
     { id = "1fac7ddba473e99d"
     , index = 13
+    , campaignId = CampaignId.standard
     , name = "Less is more"
     , description = [ "> Read two numbers a and b from the input", "> If a < b output a, otherwise output b", "The last input is 0 is not part of the sequence" ]
     , io =
@@ -497,6 +512,7 @@ levelLabyrinth1 : Level
 levelLabyrinth1 =
     { id = "be13bbdd076a586c"
     , index = 14
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 1"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -525,6 +541,7 @@ levelLabyrinth2 : Level
 levelLabyrinth2 =
     { id = "e6d9465e4aacaa0f"
     , index = 15
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 2"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -552,6 +569,7 @@ levelLabyrinth3 : Level
 levelLabyrinth3 =
     { id = "e81d1f82a8a37103"
     , index = 16
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 3"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -583,6 +601,7 @@ levelLabyrinth4 : Level
 levelLabyrinth4 =
     { id = "e7d5826a6db19981"
     , index = 17
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 4"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -617,6 +636,7 @@ levelLabyrinth5 : Level
 levelLabyrinth5 =
     { id = "519983570eefe19c"
     , index = 18
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 5"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -650,6 +670,7 @@ levelLabyrinth6 : Level
 levelLabyrinth6 =
     { id = "81101cdad21a4ed2"
     , index = 19
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 6"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -685,6 +706,7 @@ levelLabyrinth7 : Level
 levelLabyrinth7 =
     { id = "36ae04449442c355"
     , index = 20
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 7"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -723,6 +745,7 @@ levelLabyrinth8 : Level
 levelLabyrinth8 =
     { id = "42cdf083b26bb8ab"
     , index = 21
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 8"
     , description = [ "> Output 1, 2, 3, 4", "> Terminate the program" ]
     , io =
@@ -748,6 +771,7 @@ levelLabyrinth9 : Level
 levelLabyrinth9 =
     { id = "5ed6d025ab5937e4"
     , index = 22
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 9"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -780,6 +804,7 @@ levelLabyrinth10 : Level
 levelLabyrinth10 =
     { id = "b4c862e5dcfb82c1"
     , index = 23
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 10"
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -815,6 +840,7 @@ levelLabyrinth11 : Level
 levelLabyrinth11 =
     { id = "f8ba39bc9d01ef03"
     , index = 24
+    , campaignId = CampaignId.standard
     , name = "Labyrinth 11"
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
@@ -849,6 +875,7 @@ levelLabyrinthLab : Level
 levelLabyrinthLab =
     { id = "572b4066ff5a9bd9"
     , index = 25
+    , campaignId = CampaignId.standard
     , name = "Labyrinth lab"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =

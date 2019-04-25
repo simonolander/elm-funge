@@ -5,6 +5,7 @@ module Data.Session exposing
     , getToken
     , init
     , withCampaign
+    , withCampaigns
     , withDraft
     , withDrafts
     , withLevel
@@ -53,12 +54,7 @@ withUser user session =
 
 withLevels : List Level -> Session -> Session
 withLevels levels session =
-    { session
-        | levels =
-            levels
-                |> List.map (\level -> ( level.id, level ))
-                |> Dict.fromList
-    }
+    List.foldl withLevel session levels
 
 
 withLevel : Level -> Session -> Session
@@ -96,6 +92,11 @@ withCampaign campaign session =
         | campaigns =
             Dict.insert campaign.id campaign session.campaigns
     }
+
+
+withCampaigns : List Campaign -> Session -> Session
+withCampaigns campaigns session =
+    List.foldl withCampaign session campaigns
 
 
 getToken : Session -> Maybe AuthorizationToken

@@ -1,8 +1,10 @@
 module Page.Execution exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Array exposing (Array)
+import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
+import Data.CampaignId as CampaignId
 import Data.Direction exposing (Direction(..))
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
@@ -212,8 +214,15 @@ update msg model =
                 levelId =
                     Dict.get loadedModel.draftId loadedModel.session.drafts
                         |> Maybe.map .levelId
+
+                level =
+                    Maybe.andThen (flip Dict.get loadedModel.session.levels) levelId
+
+                campaignId =
+                    Maybe.map .campaignId level
+                        |> Maybe.withDefault CampaignId.standard
             in
-            ( model, Route.pushUrl loadedModel.session.key (Route.Levels levelId) )
+            ( model, Route.pushUrl loadedModel.session.key (Route.Campaign campaignId levelId) )
 
         ( Tick, Loaded loadedModel ) ->
             stepModel loadedModel
