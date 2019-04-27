@@ -1,4 +1,4 @@
-module View.SingleSidebar exposing (view)
+module View.SingleSidebar exposing (layout, view)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -6,7 +6,21 @@ import Element.Font as Font
 import Html exposing (Html)
 
 
-view : List (Element msg) -> Element msg -> Html msg
+layout : List (Element msg) -> Element msg -> Html msg
+layout sidebarContent mainContent =
+    view sidebarContent mainContent
+        |> Element.layout
+            [ Background.color (rgb 0 0 0)
+            , width fill
+            , height fill
+            , Font.family
+                [ Font.monospace
+                ]
+            , Font.color (rgb 1 1 1)
+            ]
+
+
+view : List (Element msg) -> Element msg -> Element msg
 view sidebarContent mainContent =
     let
         sidebar =
@@ -30,20 +44,10 @@ view sidebarContent mainContent =
                 ]
                 mainContent
     in
-    layout
-        [ Background.color (rgb 0 0 0)
-        , width fill
+    row
+        [ width fill
         , height fill
-        , Font.family
-            [ Font.monospace
-            ]
-        , Font.color (rgb 1 1 1)
         ]
-        (row
-            [ width fill
-            , height fill
-            ]
-            [ sidebar
-            , main
-            ]
-        )
+        [ sidebar
+        , main
+        ]

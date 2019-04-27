@@ -1,4 +1,4 @@
-module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, removeFromLocalStorage, saveToLocalStorage, withDescription, withIO, withInitialBoard, withInstructionTool, withInstructionTools, withName)
+module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, localStorageResponse, removeFromLocalStorage, saveToLocalStorage, withDescription, withIO, withInitialBoard, withInstructionTool, withInstructionTools, withName)
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
@@ -86,6 +86,19 @@ saveToLocalStorage level =
 removeFromLocalStorage : LevelId -> Cmd msg
 removeFromLocalStorage levelId =
     LocalStorage.storageRemoveItem (localStorageKey levelId)
+
+
+localStorageResponse : (Result Decode.Error (Maybe Level) -> a) -> ( String, Encode.Value ) -> Maybe a
+localStorageResponse onResult ( key, value ) =
+    case String.split "." key of
+        "levels" :: _ :: [] ->
+            value
+                |> Decode.decodeValue (Decode.nullable decoder)
+                |> onResult
+                |> Just
+
+        _ ->
+            Nothing
 
 
 

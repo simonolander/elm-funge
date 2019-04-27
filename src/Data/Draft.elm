@@ -1,4 +1,4 @@
-module Data.Draft exposing (Draft, decoder, encode, fromKey, generator, getDraftsFromLocalStorage, getInstructionCount, loadFromLocalStorage, loadedFromLocalStorage, pushBoard, redo, saveToLocalStorage, undo, withScore)
+module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadDraftIdsFromLocalStorage, loadFromLocalStorage, localStorageDraftIdsResponse, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo, withScore)
 
 import Data.Board as Board exposing (Board)
 import Data.DraftId as DraftId exposing (DraftId)
@@ -131,29 +131,19 @@ decoder =
 -- LOCAL STORAGE
 
 
-toKey : DraftId -> Ports.LocalStorage.Key
-toKey draftId =
+localStorageKey : DraftId -> Ports.LocalStorage.Key
+localStorageKey draftId =
     String.join "."
         [ "drafts"
         , DraftId.toString draftId
         ]
 
 
-fromKey : Ports.LocalStorage.Key -> Maybe DraftId
-fromKey key =
-    case String.split "." key of
-        "drafts" :: draftId :: [] ->
-            Just draftId
-
-        _ ->
-            Nothing
-
-
 saveToLocalStorage : Draft -> Cmd msg
 saveToLocalStorage draft =
     let
         key =
-            toKey draft.id
+            localStorageKey draft.id
 
         value =
             encode draft
@@ -168,44 +158,41 @@ loadFromLocalStorage : DraftId -> Cmd msg
 loadFromLocalStorage draftId =
     let
         key =
-            toKey draftId
+            localStorageKey draftId
     in
     Ports.LocalStorage.storageGetItem key
 
 
-loadedFromLocalStorage : ( Ports.LocalStorage.Key, Ports.LocalStorage.Value ) -> Result String (Maybe Draft)
-loadedFromLocalStorage ( key, value ) =
-    case fromKey key of
-        Just draftId ->
-            case Decode.decodeValue (Decode.nullable decoder) value of
-                Ok (Just draft) ->
-                    if DraftId.toString draft.id == draftId then
-                        Ok (Just draft)
-
-                    else
-                        Err ("Draft ids doesn't match, expected " ++ draftId ++ " but was " ++ DraftId.toString draft.id)
-
-                Ok Nothing ->
-                    Ok Nothing
-
-                Err error ->
-                    Err (Decode.errorToString error)
-
-        Nothing ->
-            Err ("Malformed key: " ++ key)
-
-
-getDraftsFromLocalStorage : Ports.LocalStorage.Key -> List LevelId -> Cmd msg
-getDraftsFromLocalStorage tag levelIds =
+loadDraftIdsFromLocalStorage : LevelId -> Cmd msg
+loadDraftIdsFromLocalStorage levelId =
     let
-        toDraftsKey levelId =
+        key =
             String.join "." [ "levels", levelId, "draftIds" ]
     in
-    Ports.LocalStorage.storageGetAndThen
-        ( tag
-        , levelIds
-            |> List.map toDraftsKey
-        , [ Nothing
-          , Just "drafts"
-          ]
-        )
+    Ports.LocalStorage.storageGetItem key
+
+
+localStorageResponse : (Result Decode.Error (Maybe Draft) -> a) -> ( String, Encode.Value ) -> Maybe a
+localStorageResponse onResult ( key, value ) =
+    case String.split "." key of
+        "drafts" :: _ :: [] ->
+            value
+                |> Decode.decodeValue (Decode.nullable decoder)
+                |> onResult
+                |> Just
+
+        _ ->
+            Nothing
+
+
+localStorageDraftIdsResponse : (Result Decode.Error (List DraftId) -> a) -> ( String, Encode.Value ) -> Maybe a
+localStorageDraftIdsResponse onResult ( key, value ) =
+    case String.split "." key of
+        "levels" :: _ :: "draftIds" :: [] ->
+            value
+                |> Decode.decodeValue (Decode.list DraftId.decoder)
+                |> onResult
+                |> Just
+
+        _ ->
+            Nothing

@@ -1,4 +1,4 @@
-module Page.Login exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Login exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Browser exposing (Document)
 import Data.Session exposing (Session)
@@ -6,6 +6,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
+import Json.Encode as Encode
 import ViewComponents
 
 
@@ -56,6 +57,11 @@ update msg model =
 
         LoginClicked ->
             ( model, Cmd.none )
+
+
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
+    ( model, Cmd.none )
 
 
 

@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Home exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Api.Auth0 as Auth0
 import Browser exposing (Document)
@@ -6,6 +6,7 @@ import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
+import Json.Encode as Encode
 import Route exposing (Route)
 import ViewComponents
 
@@ -42,6 +43,11 @@ type alias Msg =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    ( model, Cmd.none )
+
+
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
     ( model, Cmd.none )
 
 

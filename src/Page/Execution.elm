@@ -1,4 +1,4 @@
-module Page.Execution exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Execution exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -25,6 +25,7 @@ import Element.Input as Input
 import ExecutionControlView
 import Html.Attributes
 import InstructionView
+import Json.Encode as Encode
 import Maybe.Extra
 import Route
 import Time
@@ -229,6 +230,11 @@ update msg model =
 
         _ ->
             ( model, Cmd.none )
+
+
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
+    ( model, Cmd.none )
 
 
 stepModel : LoadedModel -> ( Model, Cmd Msg )

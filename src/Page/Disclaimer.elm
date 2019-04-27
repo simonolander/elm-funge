@@ -1,10 +1,11 @@
-module Page.Disclaimer exposing (Model, view)
+module Page.Disclaimer exposing (Model, localStorageResponseUpdate, view)
 
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
+import Json.Encode as Encode
 import Route exposing (Route)
 import ViewComponents
 
@@ -20,6 +21,23 @@ type alias Model =
 
 
 -- UPDATE
+
+
+type alias Msg =
+    ()
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
+
+
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
+    ( model, Cmd.none )
+
+
+
 -- VIEW
 
 

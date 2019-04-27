@@ -1,4 +1,4 @@
-module Page.Draft exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Draft exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -81,22 +81,31 @@ init draftId session =
             , error = Nothing
             , selectedInstructionToolIndex = Nothing
             }
+
+        cmd =
+            case Dict.get draftId session.drafts of
+                Just draft ->
+                    case Dict.get draft.levelId session.levels of
+                        Just level ->
+                            Cmd.none
+
+                        Nothing ->
+                            Level.loadFromLocalStorage draft.levelId
+
+                Nothing ->
+                    Draft.loadFromLocalStorage draftId
     in
-    case Dict.get draftId session.drafts of
-        Just draft ->
-            if Dict.member draft.levelId session.levels then
-                ( model, Cmd.none )
-
-            else
-                ( { model | error = Just ("Level " ++ draft.levelId ++ " not found") }, Cmd.none )
-
-        Nothing ->
-            ( { model | error = Just ("Draft " ++ draftId ++ " not found") }, Cmd.none )
+    ( model, cmd )
 
 
 getSession : Model -> Session
 getSession { session } =
     session
+
+
+setSession : Model -> Session -> Model
+setSession model session =
+    { model | session = session }
 
 
 
@@ -300,24 +309,65 @@ updateDraft draft model =
     )
 
 
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
+    let
+        session =
+            model.session
+
+        onDraft result =
+            case result of
+                Ok (Just draft) ->
+                    let
+                        newModel =
+                            Session.withDraft draft session
+                                |> setSession model
+
+                        cmd =
+                            case Dict.get draft.levelId session.levels of
+                                Just _ ->
+                                    Cmd.none
+
+                                Nothing ->
+                                    Level.loadFromLocalStorage draft.levelId
+                    in
+                    ( newModel, cmd )
+
+                Ok Nothing ->
+                    ( { model | error = Just ("Draft not found: " ++ key) }, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+
+        onLevel result =
+            case result of
+                Ok (Just level) ->
+                    ( Session.withLevel level session
+                        |> setSession model
+                    , Cmd.none
+                    )
+
+                Ok Nothing ->
+                    ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+    in
+    ( key, value )
+        |> Ports.LocalStorage.oneOf
+            [ Draft.localStorageResponse onDraft
+            , Level.localStorageResponse onLevel
+            ]
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    let
-        loadedDraftSub =
-            Ports.LocalStorage.storageGetItemResponse
-                (\( key, value ) ->
-                    Decode.decodeValue (Decode.list Draft.decoder) value
-                        |> Result.mapError (Decode.errorToString >> Http.BadBody)
-                        |> LoadedDrafts
-                )
-    in
-    Sub.batch
-        [ loadedDraftSub
-        ]
+subscriptions =
+    always Sub.none
 
 
 

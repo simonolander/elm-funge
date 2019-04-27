@@ -1,4 +1,4 @@
-module Data.Campaign exposing (Campaign, decoder, empty, encode, loadFromLocalStorage, localStorageKey, saveToLocalStorage, withLevelId, withoutLevelId)
+module Data.Campaign exposing (Campaign, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withLevelId, withoutLevelId)
 
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.LevelId as LevelId exposing (LevelId)
@@ -56,6 +56,19 @@ saveToLocalStorage campaign =
         ( localStorageKey campaign.id
         , encode campaign
         )
+
+
+localStorageResponse : (Result Decode.Error (Maybe Campaign) -> a) -> ( String, Encode.Value ) -> Maybe a
+localStorageResponse onResult ( key, value ) =
+    case String.split "." key of
+        "campaigns" :: _ :: [] ->
+            value
+                |> Decode.decodeValue (Decode.nullable decoder)
+                |> onResult
+                |> Just
+
+        _ ->
+            Nothing
 
 
 

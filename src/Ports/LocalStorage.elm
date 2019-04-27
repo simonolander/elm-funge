@@ -1,6 +1,7 @@
-port module Ports.LocalStorage exposing (Key, NewValue, OldValue, Value, storageClear, storageGetAndThen, storageGetItem, storageGetItemResponse, storageOnKeyAdded, storageOnKeyChanged, storageOnKeyRemoved, storagePushToSet, storageRemoveFromSet, storageRemoveItem, storageSetItem)
+port module Ports.LocalStorage exposing (Key, NewValue, OldValue, Value, oneOf, storageClear, storageGetAndThen, storageGetItem, storageGetItemResponse, storageOnKeyAdded, storageOnKeyChanged, storageOnKeyRemoved, storagePushToSet, storageRemoveFromSet, storageRemoveItem, storageSetItem)
 
 import Json.Encode as Encode
+import Maybe.Extra
 
 
 type alias Key =
@@ -64,3 +65,11 @@ port storageRemoveFromSet : ( Key, Value ) -> Cmd msg
 
 
 port storageGetAndThen : ( Key, List Key, List (Maybe String) ) -> Cmd msg
+
+
+oneOf : List (( String, Encode.Value ) -> Maybe a) -> ( String, Encode.Value ) -> Maybe a
+oneOf resolvers keyValue =
+    resolvers
+        |> List.map (\resolver -> resolver keyValue)
+        |> Maybe.Extra.values
+        |> List.head

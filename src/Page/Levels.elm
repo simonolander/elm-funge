@@ -1,14 +1,14 @@
-module Page.Levels exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Levels exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Api.GCP as GCP
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId as DraftId exposing (DraftId)
-import Data.Level exposing (Level)
+import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.LevelProgress as LevelProgress exposing (LevelProgress)
 import Data.Session as Session exposing (Session)
 import Dict exposing (Dict)
 import Element exposing (..)
@@ -16,12 +16,15 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Http
-import Json.Decode as Decode
+import Json.Encode as Encode
+import Maybe.Extra
 import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import Result exposing (Result)
 import Route exposing (Route)
 import View.LevelButton
+import View.LoadingScreen
+import View.SingleSidebar
 import ViewComponents
 
 
@@ -48,16 +51,45 @@ init campaignId selectedLevelId session =
             }
 
         cmd =
-            if Dict.isEmpty session.drafts then
-                session.levels
-                    |> Dict.values
-                    |> List.map .id
-                    |> Draft.getDraftsFromLocalStorage "drafts"
+            case Dict.get campaignId session.campaigns of
+                Nothing ->
+                    loadCampaign campaignId session
 
-            else
-                Cmd.none
+                Just campaign ->
+                    loadLevels campaign session
     in
     ( model, cmd )
+
+
+loadCampaign : CampaignId -> Session -> Cmd Msg
+loadCampaign campaignId session =
+    Campaign.loadFromLocalStorage campaignId
+
+
+loadLevels : Campaign -> Session -> Cmd Msg
+loadLevels campaign session =
+    let
+        loadLevelsCmd =
+            campaign.levelIds
+                |> List.filter (not << flip Dict.member session.levels)
+                |> List.map Level.loadFromLocalStorage
+                |> Cmd.batch
+
+        loadDraftsCmd =
+            campaign.levelIds
+                |> List.map (flip Dict.get session.levels)
+                |> Maybe.Extra.values
+                |> List.map .id
+                |> List.map Draft.loadDraftIdsFromLocalStorage
+                |> Cmd.batch
+
+        cmd =
+            Cmd.batch
+                [ loadLevelsCmd
+                , loadDraftsCmd
+                ]
+    in
+    cmd
 
 
 getSession : Model -> Session
@@ -65,266 +97,9 @@ getSession model =
     model.session
 
 
-
--- VIEW
-
-
-view : Model -> Document Msg
-view model =
-    let
-        content =
-            case model.error of
-                Just error ->
-                    viewError error
-
-                Nothing ->
-                    let
-                        levelProgresses =
-                            model.session.levels
-                                |> Dict.values
-                                |> List.map
-                                    (\level ->
-                                        { level = level
-                                        , drafts =
-                                            model.session.drafts
-                                                |> Dict.values
-                                                |> List.filter (\draft -> draft.levelId == level.id)
-                                        }
-                                    )
-                                |> List.map (\levelProgress -> ( levelProgress.level.id, levelProgress ))
-                                |> Dict.fromList
-                    in
-                    viewSuccess model.session levelProgresses model.selectedLevelId
-    in
-    { title = "Levels"
-    , body =
-        layout
-            [ Background.color (rgb 0 0 0)
-            , width fill
-            , height fill
-            , Font.family
-                [ Font.monospace
-                ]
-            , Font.color (rgb 1 1 1)
-            ]
-            content
-            |> List.singleton
-    }
-
-
-viewError : Http.Error -> Element Msg
-viewError error =
-    case error of
-        Http.BadUrl string ->
-            "Bad url: "
-                ++ string
-                |> text
-
-        Http.Timeout ->
-            "Timeout"
-                |> text
-
-        Http.NetworkError ->
-            "Network error"
-                |> text
-
-        Http.BadStatus int ->
-            "Bad status: "
-                ++ String.fromInt int
-                |> text
-
-        Http.BadBody string ->
-            "Bad body: "
-                ++ string
-                |> text
-
-
-viewSuccess : Session -> Dict LevelId LevelProgress -> Maybe LevelId -> Element Msg
-viewSuccess session levels selectedLevelId =
-    let
-        levelsView =
-            viewLevels selectedLevelId (Dict.values levels)
-
-        sidebarView =
-            selectedLevelId
-                |> Maybe.andThen (flip Dict.get levels)
-                |> Maybe.map viewSidebar
-                |> Maybe.withDefault
-                    (column
-                        [ width (fillPortion 1)
-                        , height fill
-                        , padding 20
-                        , spacing 20
-                        , alignTop
-                        , Background.color (rgb 0.05 0.05 0.05)
-                        ]
-                        [ el
-                            [ centerX
-                            , Font.size 32
-                            ]
-                            (text "EFNG")
-                        , el
-                            [ centerX
-                            ]
-                            (text "Select a level")
-                        ]
-                    )
-    in
-    row
-        [ width fill
-        , height fill
-        ]
-        [ sidebarView, levelsView ]
-
-
-viewLevels : Maybe LevelId -> List LevelProgress -> Element Msg
-viewLevels maybeSelectedLevelId levelProgresses =
-    let
-        viewLevel levelProgress =
-            let
-                selected =
-                    maybeSelectedLevelId
-                        |> Maybe.map ((==) levelProgress.level.id)
-                        |> Maybe.withDefault False
-
-                solved =
-                    LevelProgress.isSolved levelProgress
-
-                onPress =
-                    Just (SelectLevel levelProgress.level.id)
-
-                default =
-                    View.LevelButton.default
-
-                parameters =
-                    { default
-                        | selected = selected
-                        , marked = solved
-                        , onPress = onPress
-                    }
-            in
-            View.LevelButton.view
-                parameters
-                levelProgress.level
-    in
-    levelProgresses
-        |> List.sortBy (.level >> .index)
-        |> List.map viewLevel
-        |> wrappedRow
-            [ width (fillPortion 3)
-            , height fill
-            , spacing 20
-            , alignTop
-            , padding 20
-            , scrollbarY
-            ]
-
-
-viewSidebar : LevelProgress -> Element Msg
-viewSidebar levelProgress =
-    let
-        level =
-            levelProgress.level
-
-        levelNameView =
-            ViewComponents.viewTitle []
-                level.name
-
-        descriptionView =
-            ViewComponents.descriptionTextbox
-                []
-                level.description
-
-        solvedStatusView =
-            row
-                [ centerX ]
-                [ el
-                    [ width fill
-                    ]
-                    (if LevelProgress.isSolved levelProgress then
-                        text "Solved"
-
-                     else
-                        text "Not solved"
-                    )
-                ]
-
-        viewDraft index draft =
-            let
-                attrs =
-                    [ width fill
-                    , padding 10
-                    , spacing 15
-                    , Border.width 3
-                    , Border.color (rgb 1 1 1)
-                    , centerX
-                    , mouseOver
-                        [ Background.color (rgb 0.5 0.5 0.5)
-                        ]
-                    ]
-
-                draftName =
-                    "Draft " ++ String.fromInt (index + 1)
-
-                label =
-                    [ draftName
-                        |> text
-                        |> el [ centerX, Font.size 24 ]
-                    , el
-                        [ centerX
-                        , Font.color (rgb 0.2 0.2 0.2)
-                        ]
-                        (text draft.id)
-                    , row
-                        [ width fill
-                        , spaceEvenly
-                        ]
-                        [ text "Instructions: "
-                        , Draft.getInstructionCount level.initialBoard draft
-                            |> String.fromInt
-                            |> text
-                        ]
-                    , row
-                        [ width fill
-                        , spaceEvenly
-                        ]
-                        [ text "Steps: "
-                        , draft.maybeScore
-                            |> Maybe.map .numberOfSteps
-                            |> Maybe.map String.fromInt
-                            |> Maybe.withDefault "N/A"
-                            |> text
-                        ]
-                    ]
-                        |> column
-                            attrs
-            in
-            Route.link
-                [ width fill ]
-                label
-                (Route.EditDraft draft.id)
-
-        draftsView =
-            levelProgress.drafts
-                |> List.indexedMap viewDraft
-                |> column
-                    [ width fill
-                    , spacing 20
-                    ]
-    in
-    column
-        [ width (fillPortion 1)
-        , height fill
-        , padding 20
-        , spacing 20
-        , alignTop
-        , Background.color (rgb 0.05 0.05 0.05)
-        ]
-        [ levelNameView
-        , solvedStatusView
-        , descriptionView
-        , draftsView
-        ]
+setSession : Model -> Session -> Model
+setSession model session =
+    { model | session = session }
 
 
 
@@ -335,7 +110,6 @@ type Msg
     = SelectLevel LevelId
     | LoadedLevels (Result Http.Error (List Level))
     | LoadedDrafts (Result Http.Error (List Draft))
-    | GotLocalStorageResponse ( LocalStorage.Key, LocalStorage.Value )
     | OpenDraftClicked DraftId
     | GeneratedDraft Draft
 
@@ -400,7 +174,9 @@ update msg model =
                                     GCP.getDrafts token LoadedDrafts
 
                                 Nothing ->
-                                    Draft.getDraftsFromLocalStorage "drafts" levelIds
+                                    levelIds
+                                        |> List.map Level.loadFromLocalStorage
+                                        |> Cmd.batch
                     in
                     ( { model
                         | session = Session.withLevels levels session
@@ -431,25 +207,6 @@ update msg model =
                     , Cmd.none
                     )
 
-        GotLocalStorageResponse ( "drafts", value ) ->
-            case Decode.decodeValue (Decode.list Draft.decoder) value of
-                Ok drafts ->
-                    ( { model
-                        | session = Session.withDrafts drafts session
-                      }
-                    , Cmd.none
-                    )
-
-                Err error ->
-                    ( { model
-                        | error =
-                            Decode.errorToString error
-                                |> Http.BadBody
-                                |> Just
-                      }
-                    , Cmd.none
-                    )
-
         GeneratedDraft draft ->
             let
                 newSession =
@@ -460,8 +217,76 @@ update msg model =
             in
             ( { model | session = newSession }, Draft.saveToLocalStorage draft )
 
-        _ ->
-            ( model, Cmd.none )
+
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
+    let
+        session =
+            model.session
+
+        onCampaign result =
+            case result of
+                Ok (Just campaign) ->
+                    ( Session.withCampaign campaign session
+                        |> setSession model
+                    , loadLevels campaign session
+                    )
+
+                Ok Nothing ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
+
+        onLevel result =
+            case result of
+                Ok (Just level) ->
+                    ( Session.withLevel level session
+                        |> setSession model
+                    , Draft.loadDraftIdsFromLocalStorage level.id
+                    )
+
+                Ok Nothing ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
+
+        onDraftIds result =
+            case result of
+                Ok draftIds ->
+                    ( model
+                    , draftIds
+                        |> List.filter (not << flip Dict.member session.drafts)
+                        |> List.map Draft.loadFromLocalStorage
+                        |> Cmd.batch
+                    )
+
+                Err error ->
+                    ( model, Cmd.none )
+
+        onDraft result =
+            case result of
+                Ok (Just draft) ->
+                    ( Session.withDraft draft session
+                        |> setSession model
+                    , Cmd.none
+                    )
+
+                Ok Nothing ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
+    in
+    ( key, value )
+        |> LocalStorage.oneOf
+            [ Draft.localStorageResponse onDraft
+            , Draft.localStorageDraftIdsResponse onDraftIds
+            , Level.localStorageResponse onLevel
+            , Campaign.localStorageResponse onCampaign
+            ]
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 
@@ -469,5 +294,249 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    LocalStorage.storageGetItemResponse GotLocalStorageResponse
+subscriptions =
+    always Sub.none
+
+
+
+-- VIEW
+
+
+view : Model -> Document Msg
+view model =
+    let
+        session =
+            model.session
+
+        content =
+            case model.error of
+                Just error ->
+                    viewError error
+
+                Nothing ->
+                    case Dict.get model.campaignId session.campaigns of
+                        Just campaign ->
+                            viewCampaign campaign model
+
+                        Nothing ->
+                            View.LoadingScreen.view "Loading campaign"
+    in
+    { title = "Levels"
+    , body =
+        layout
+            [ Background.color (rgb 0 0 0)
+            , width fill
+            , height fill
+            , Font.family
+                [ Font.monospace
+                ]
+            , Font.color (rgb 1 1 1)
+            ]
+            content
+            |> List.singleton
+    }
+
+
+viewError : Http.Error -> Element Msg
+viewError error =
+    case error of
+        Http.BadUrl string ->
+            "Bad url: "
+                ++ string
+                |> text
+
+        Http.Timeout ->
+            "Timeout"
+                |> text
+
+        Http.NetworkError ->
+            "Network error"
+                |> text
+
+        Http.BadStatus int ->
+            "Bad status: "
+                ++ String.fromInt int
+                |> text
+
+        Http.BadBody string ->
+            "Bad body: "
+                ++ string
+                |> text
+
+
+viewCampaign : Campaign -> Model -> Element Msg
+viewCampaign campaign model =
+    let
+        selectedLevel =
+            model.selectedLevelId
+                |> Maybe.Extra.filter (flip List.member campaign.levelIds)
+                |> Maybe.andThen (flip Dict.get model.session.levels)
+
+        sidebar =
+            case selectedLevel of
+                Just level ->
+                    viewSidebar level model
+
+                Nothing ->
+                    [ el
+                        [ centerX
+                        , Font.size 32
+                        ]
+                        (text "EFNG")
+                    , el
+                        [ centerX
+                        ]
+                        (text "Select a level")
+                    ]
+
+        mainContent =
+            viewLevels campaign model
+    in
+    View.SingleSidebar.view sidebar mainContent
+
+
+viewLevels : Campaign -> Model -> Element Msg
+viewLevels campaign model =
+    let
+        viewLevel level =
+            let
+                selected =
+                    model.selectedLevelId
+                        |> Maybe.map ((==) level.id)
+                        |> Maybe.withDefault False
+
+                solved =
+                    model.session.drafts
+                        |> Dict.values
+                        |> List.any (.maybeScore >> Maybe.Extra.isJust)
+
+                onPress =
+                    Just (SelectLevel level.id)
+
+                default =
+                    View.LevelButton.default
+
+                parameters =
+                    { default
+                        | selected = selected
+                        , marked = solved
+                        , onPress = onPress
+                    }
+            in
+            View.LevelButton.view
+                parameters
+                level
+    in
+    campaign.levelIds
+        |> List.map (flip Dict.get model.session.levels)
+        |> Maybe.Extra.values
+        |> List.sortBy .index
+        |> List.map viewLevel
+        |> wrappedRow
+            [ spacing 20
+            ]
+        |> el []
+
+
+viewSidebar : Level -> Model -> List (Element Msg)
+viewSidebar level model =
+    let
+        levelNameView =
+            ViewComponents.viewTitle []
+                level.name
+
+        descriptionView =
+            ViewComponents.descriptionTextbox
+                []
+                level.description
+
+        drafts =
+            Dict.values model.session.drafts
+                |> List.filter (.levelId >> (==) level.id)
+
+        solved =
+            drafts
+                |> List.any (.maybeScore >> Maybe.Extra.isJust)
+
+        solvedStatusView =
+            row
+                [ centerX ]
+                [ el
+                    [ width fill
+                    ]
+                    (if solved then
+                        text "Solved"
+
+                     else
+                        text "Not solved"
+                    )
+                ]
+
+        viewDraft index draft =
+            let
+                attrs =
+                    [ width fill
+                    , padding 10
+                    , spacing 15
+                    , Border.width 3
+                    , Border.color (rgb 1 1 1)
+                    , centerX
+                    , mouseOver
+                        [ Background.color (rgb 0.5 0.5 0.5)
+                        ]
+                    ]
+
+                draftName =
+                    "Draft " ++ String.fromInt (index + 1)
+
+                label =
+                    [ draftName
+                        |> text
+                        |> el [ centerX, Font.size 24 ]
+                    , el
+                        [ centerX
+                        , Font.color (rgb 0.2 0.2 0.2)
+                        ]
+                        (text draft.id)
+                    , row
+                        [ width fill
+                        , spaceEvenly
+                        ]
+                        [ text "Instructions: "
+                        , Draft.getInstructionCount level.initialBoard draft
+                            |> String.fromInt
+                            |> text
+                        ]
+                    , row
+                        [ width fill
+                        , spaceEvenly
+                        ]
+                        [ text "Steps: "
+                        , draft.maybeScore
+                            |> Maybe.map .numberOfSteps
+                            |> Maybe.map String.fromInt
+                            |> Maybe.withDefault "N/A"
+                            |> text
+                        ]
+                    ]
+                        |> column
+                            attrs
+            in
+            Route.link
+                [ width fill ]
+                label
+                (Route.EditDraft draft.id)
+
+        draftsView =
+            drafts
+                |> List.indexedMap viewDraft
+                |> column
+                    [ width fill
+                    , spacing 20
+                    ]
+    in
+    [ levelNameView
+    , solvedStatusView
+    , descriptionView
+    , draftsView
+    ]

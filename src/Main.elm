@@ -9,6 +9,7 @@ import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Html
 import Http
+import Json.Encode as Encode
 import Levels
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
@@ -17,6 +18,7 @@ import Page.Execution as Execution
 import Page.Home as Home
 import Page.Levels as Levels
 import Page.Login as Login
+import Ports.LocalStorage
 import Route
 import Set exposing (Set)
 import Url exposing (Url)
@@ -170,6 +172,7 @@ type Msg
     | LoginMsg Login.Msg
     | Ignored
     | VerifyTokenResponse (Result Http.Error ())
+    | LocalStorageResponse ( String, Encode.Value )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -198,11 +201,11 @@ update msg model =
                 Login mdl ->
                     Login.getSession mdl
     in
-    case msg of
-        Ignored ->
+    case ( msg, model ) of
+        ( Ignored, _ ) ->
             ( model, Cmd.none )
 
-        ClickedLink urlRequest ->
+        ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
                     case url.fragment of
@@ -219,10 +222,13 @@ update msg model =
                     , Navigation.load href
                     )
 
-        ChangedUrl url ->
+        ( ChangedUrl url, _ ) ->
             changeUrl url session
 
-        VerifyTokenResponse response ->
+        ( LocalStorageResponse response, mdl ) ->
+            localStorageResponseUpdate response mdl
+
+        ( VerifyTokenResponse response, _ ) ->
             case response of
                 Ok () ->
                     ( model, Cmd.none )
@@ -230,68 +236,36 @@ update msg model =
                 Err error ->
                     ( model, Cmd.none )
 
-        ExecutionMsg message ->
-            case model of
-                Execution mdl ->
-                    Execution.update message mdl
-                        |> updateWith Execution ExecutionMsg
+        ( ExecutionMsg message, Execution mdl ) ->
+            Execution.update message mdl
+                |> updateWith Execution ExecutionMsg
 
-                _ ->
-                    ( model, Cmd.none )
+        ( DraftMsg message, Draft mdl ) ->
+            Draft.update message mdl
+                |> updateWith Draft DraftMsg
 
-        DraftMsg message ->
-            case model of
-                Draft mdl ->
-                    Draft.update message mdl
-                        |> updateWith Draft DraftMsg
+        ( LevelsMsg message, Levels mdl ) ->
+            Levels.update message mdl
+                |> updateWith Levels LevelsMsg
 
-                _ ->
-                    ( model, Cmd.none )
+        ( HomeMsg message, Home mdl ) ->
+            Home.update message mdl
+                |> updateWith Home HomeMsg
 
-        LevelsMsg message ->
-            case model of
-                Levels mdl ->
-                    Levels.update message mdl
-                        |> updateWith Levels LevelsMsg
+        ( BlueprintsMsg message, Blueprints mdl ) ->
+            Blueprints.update message mdl
+                |> updateWith Blueprints BlueprintsMsg
 
-                _ ->
-                    ( model, Cmd.none )
+        ( BlueprintMsg message, Blueprint mdl ) ->
+            Blueprint.update message mdl
+                |> updateWith Blueprint BlueprintMsg
 
-        HomeMsg message ->
-            case model of
-                Home mdl ->
-                    Home.update message mdl
-                        |> updateWith Home HomeMsg
+        ( LoginMsg message, Login mdl ) ->
+            Login.update message mdl
+                |> updateWith Login LoginMsg
 
-                _ ->
-                    ( model, Cmd.none )
-
-        BlueprintsMsg message ->
-            case model of
-                Blueprints mdl ->
-                    Blueprints.update message mdl
-                        |> updateWith Blueprints BlueprintsMsg
-
-                _ ->
-                    ( model, Cmd.none )
-
-        BlueprintMsg message ->
-            case model of
-                Blueprint mdl ->
-                    Blueprint.update message mdl
-                        |> updateWith Blueprint BlueprintMsg
-
-                _ ->
-                    ( model, Cmd.none )
-
-        LoginMsg message ->
-            case model of
-                Login mdl ->
-                    Login.update message mdl
-                        |> updateWith Login LoginMsg
-
-                _ ->
-                    ( model, Cmd.none )
+        ( message, mdl ) ->
+            Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
 
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
@@ -335,30 +309,72 @@ changeUrl url session =
                 |> updateWith Login LoginMsg
 
 
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate response model =
+    case model of
+        Home mdl ->
+            Home.localStorageResponseUpdate response mdl
+                |> updateWith Home HomeMsg
+
+        Levels mdl ->
+            Levels.localStorageResponseUpdate response mdl
+                |> updateWith Levels LevelsMsg
+
+        Execution mdl ->
+            Execution.localStorageResponseUpdate response mdl
+                |> updateWith Execution ExecutionMsg
+
+        Draft mdl ->
+            Draft.localStorageResponseUpdate response mdl
+                |> updateWith Draft DraftMsg
+
+        Blueprints mdl ->
+            Blueprints.localStorageResponseUpdate response mdl
+                |> updateWith Blueprints BlueprintsMsg
+
+        Blueprint mdl ->
+            Blueprint.localStorageResponseUpdate response mdl
+                |> updateWith Blueprint BlueprintMsg
+
+        Login mdl ->
+            Login.localStorageResponseUpdate response mdl
+                |> updateWith Login LoginMsg
+
+
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model of
-        Home _ ->
-            Sub.none
+    let
+        specificSubscriptions =
+            case model of
+                Home _ ->
+                    Sub.none
 
-        Levels mdl ->
-            Sub.map LevelsMsg (Levels.subscriptions mdl)
+                Levels mdl ->
+                    Sub.map LevelsMsg (Levels.subscriptions mdl)
 
-        Execution mdl ->
-            Sub.map ExecutionMsg (Execution.subscriptions mdl)
+                Execution mdl ->
+                    Sub.map ExecutionMsg (Execution.subscriptions mdl)
 
-        Draft mdl ->
-            Sub.map DraftMsg (Draft.subscriptions mdl)
+                Draft mdl ->
+                    Sub.map DraftMsg (Draft.subscriptions mdl)
 
-        Blueprints mdl ->
-            Sub.map BlueprintsMsg (Blueprints.subscriptions mdl)
+                Blueprints mdl ->
+                    Sub.map BlueprintsMsg (Blueprints.subscriptions mdl)
 
-        Blueprint mdl ->
-            Sub.map BlueprintMsg (Blueprint.subscriptions mdl)
+                Blueprint mdl ->
+                    Sub.map BlueprintMsg (Blueprint.subscriptions mdl)
 
-        Login mdl ->
-            Sub.map LoginMsg (Login.subscriptions mdl)
+                Login mdl ->
+                    Sub.map LoginMsg (Login.subscriptions mdl)
+
+        localStorageSubscriptions =
+            Ports.LocalStorage.storageGetItemResponse LocalStorageResponse
+    in
+    Sub.batch
+        [ specificSubscriptions
+        , localStorageSubscriptions
+        ]

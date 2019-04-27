@@ -1,4 +1,4 @@
-module Page.Blueprints exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Blueprints exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
@@ -13,6 +13,7 @@ import Element.Background as Background
 import Element.Input as Input
 import Html exposing (Html)
 import Json.Decode as Decode
+import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
 import Random
 import Route
@@ -71,8 +72,7 @@ setSession model session =
 
 
 type Msg
-    = LocalStorageResponse ( LocalStorage.Key, LocalStorage.Value )
-    | ClickedNewLevel
+    = ClickedNewLevel
     | LevelGenerated Level
     | SelectedLevelId LevelId
     | LevelNameChanged String
@@ -181,54 +181,64 @@ update msg model =
             in
             ( newModel, cmd )
 
-        LocalStorageResponse ( key, value ) ->
-            if key == Campaign.localStorageKey CampaignId.blueprints then
-                case Decode.decodeValue (Decode.nullable Campaign.decoder) value of
-                    Ok (Just campaign) ->
-                        let
-                            newModel =
-                                { model | session = Session.withCampaign campaign model.session }
 
-                            cmd =
-                                campaign.levelIds
-                                    |> List.filter (not << flip Dict.member model.session.levels)
-                                    |> List.map Level.loadFromLocalStorage
-                                    |> Cmd.batch
-                        in
-                        ( newModel, cmd )
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
+    let
+        onCampaign result =
+            case result of
+                Ok (Just campaign) ->
+                    let
+                        newModel =
+                            { model | session = Session.withCampaign campaign model.session }
 
-                    Ok Nothing ->
-                        let
-                            campaign =
-                                Campaign.empty CampaignId.blueprints
+                        cmd =
+                            campaign.levelIds
+                                |> List.filter (not << flip Dict.member model.session.levels)
+                                |> List.map Level.loadFromLocalStorage
+                                |> Cmd.batch
+                    in
+                    ( newModel, cmd )
 
-                            newModel =
-                                { model
-                                    | session = Session.withCampaign campaign model.session
-                                }
+                Ok Nothing ->
+                    let
+                        campaign =
+                            Campaign.empty CampaignId.blueprints
 
-                            cmd =
-                                Campaign.saveToLocalStorage campaign
-                        in
-                        ( newModel, cmd )
+                        newModel =
+                            { model
+                                | session = Session.withCampaign campaign model.session
+                            }
 
-                    Err error ->
-                        ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+                        cmd =
+                            Campaign.saveToLocalStorage campaign
+                    in
+                    ( newModel, cmd )
 
-            else
-                case Decode.decodeValue (Decode.nullable Level.decoder) value of
-                    Ok (Just level) ->
-                        let
-                            newModel =
-                                { model | session = Session.withLevel level model.session }
-                        in
-                        ( newModel, Cmd.none )
+                Err error ->
+                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
 
-                    Ok Nothing ->
-                        ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
+        onLevel result =
+            case result of
+                Ok (Just level) ->
+                    let
+                        newModel =
+                            { model | session = Session.withLevel level model.session }
+                    in
+                    ( newModel, Cmd.none )
 
-                    Err error ->
-                        ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+                Ok Nothing ->
+                    ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+    in
+    ( key, value )
+        |> LocalStorage.oneOf
+            [ Level.localStorageResponse onLevel
+            , Campaign.localStorageResponse onCampaign
+            ]
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 
@@ -236,8 +246,8 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    LocalStorage.storageGetItemResponse LocalStorageResponse
+subscriptions =
+    always Sub.none
 
 
 
@@ -362,4 +372,4 @@ viewCampaign campaign model =
                     levelButtons
                 ]
     in
-    View.SingleSidebar.view sidebarContent mainContent
+    View.SingleSidebar.layout sidebarContent mainContent
