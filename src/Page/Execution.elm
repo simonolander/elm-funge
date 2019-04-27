@@ -12,7 +12,7 @@ import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionPointer exposing (InstructionPointer)
-import Data.Level exposing (Level)
+import Data.Level as Level exposing (Level)
 import Data.Output exposing (Output)
 import Data.Session as Session exposing (Session)
 import Data.Stack exposing (Stack)
@@ -25,10 +25,13 @@ import Element.Input as Input
 import ExecutionControlView
 import Html.Attributes
 import InstructionView
+import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
+import Ports.LocalStorage
 import Route
 import Time
+import View.LoadingScreen
 import ViewComponents
 
 
@@ -60,57 +63,53 @@ type ExecutionState
     | FastForwarding
 
 
-type alias ErrorModel =
+type alias Model =
     { session : Session
     , draftId : DraftId
-    , error : String
-    }
-
-
-type alias LoadedModel =
-    { session : Session
-    , draftId : DraftId
-    , execution : Execution
+    , execution : Maybe Execution
     , state : ExecutionState
+    , error : Maybe String
     }
-
-
-type Model
-    = Loaded LoadedModel
-    | Error ErrorModel
 
 
 init : DraftId -> Session -> ( Model, Cmd Msg )
 init draftId session =
-    case Session.getDraftAndLevel draftId session of
-        Just ( draft, level ) ->
-            ( Loaded
-                { execution = initialExecution level draft
-                , state = Paused
-                , session = session
-                , draftId = draftId
-                }
-            , Cmd.none
-            )
+    let
+        model =
+            { session = session
+            , draftId = draftId
+            , state = Paused
+            , execution = Nothing
+            , error = Nothing
+            }
+    in
+    case Dict.get draftId session.drafts of
+        Just draft ->
+            case Dict.get draft.levelId session.levels of
+                Just level ->
+                    ( { model | execution = Just (initialExecution level draft) }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model
+                    , Level.loadFromLocalStorage draft.levelId
+                    )
 
         Nothing ->
-            ( Error
-                { session = session
-                , draftId = draftId
-                , error = "Draft or level not found"
-                }
-            , Cmd.none
+            ( model
+            , Draft.loadFromLocalStorage draftId
             )
 
 
 getSession : Model -> Session
-getSession model =
-    case model of
-        Loaded { session } ->
-            session
+getSession { session } =
+    session
 
-        Error { session } ->
-            session
+
+setSession : Model -> Session -> Model
+setSession model session =
+    { model | session = session }
 
 
 initialExecutionStep : Board -> Input -> ExecutionStep
@@ -182,66 +181,126 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
-        ( ClickedStep, Loaded loadedModel ) ->
-            { loadedModel | state = Paused }
-                |> stepModel
+    case model.execution of
+        Just execution ->
+            case msg of
+                ClickedStep ->
+                    { model | state = Paused }
+                        |> stepModel execution
 
-        ( ClickedUndo, Loaded loadedModel ) ->
-            ( Loaded
-                { loadedModel
-                    | execution = undoExecution loadedModel.execution
-                    , state = Paused
-                }
-            , Cmd.none
-            )
+                ClickedUndo ->
+                    ( { model
+                        | execution = Just (undoExecution execution)
+                        , state = Paused
+                      }
+                    , Cmd.none
+                    )
 
-        ( ClickedRun, Loaded loadedModel ) ->
-            { loadedModel | state = Running }
-                |> stepModel
+                ClickedRun ->
+                    { model | state = Running }
+                        |> stepModel execution
 
-        ( ClickedFastForward, Loaded loadedModel ) ->
-            { loadedModel | state = FastForwarding }
-                |> stepModel
+                ClickedFastForward ->
+                    { model | state = FastForwarding }
+                        |> stepModel execution
 
-        ( ClickedPause, Loaded loadedModel ) ->
-            ( Loaded { loadedModel | state = Paused }, Cmd.none )
+                ClickedPause ->
+                    ( { model | state = Paused }, Cmd.none )
 
-        ( ClickedNavigateBack, Loaded loadedModel ) ->
-            ( model, Route.back loadedModel.session.key )
+                ClickedNavigateBack ->
+                    ( model, Route.back model.session.key )
 
-        ( ClickedNavigateBrowseLevels, Loaded loadedModel ) ->
-            let
-                levelId =
-                    Dict.get loadedModel.draftId loadedModel.session.drafts
-                        |> Maybe.map .levelId
+                ClickedNavigateBrowseLevels ->
+                    let
+                        levelId =
+                            Dict.get model.draftId model.session.drafts
+                                |> Maybe.map .levelId
 
-                level =
-                    Maybe.andThen (flip Dict.get loadedModel.session.levels) levelId
+                        level =
+                            Maybe.andThen (flip Dict.get model.session.levels) levelId
 
-                campaignId =
-                    Maybe.map .campaignId level
-                        |> Maybe.withDefault CampaignId.standard
-            in
-            ( model, Route.pushUrl loadedModel.session.key (Route.Campaign campaignId levelId) )
+                        campaignId =
+                            Maybe.map .campaignId level
+                                |> Maybe.withDefault CampaignId.standard
+                    in
+                    ( model, Route.pushUrl model.session.key (Route.Campaign campaignId levelId) )
 
-        ( Tick, Loaded loadedModel ) ->
-            stepModel loadedModel
+                Tick ->
+                    stepModel execution model
 
-        _ ->
+        Nothing ->
             ( model, Cmd.none )
 
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
 localStorageResponseUpdate ( key, value ) model =
-    ( model, Cmd.none )
+    let
+        session =
+            getSession model
+
+        onDraft result =
+            case result of
+                Ok (Just draft) ->
+                    let
+                        modelWithDraft =
+                            Session.withDraft draft session
+                                |> setSession model
+                    in
+                    case Dict.get draft.levelId session.levels of
+                        Just level ->
+                            ( { modelWithDraft
+                                | execution = Just (initialExecution level draft)
+                              }
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            ( modelWithDraft, Level.loadFromLocalStorage draft.levelId )
+
+                Ok Nothing ->
+                    ( { model | error = Just ("Draft not found: " ++ key) }, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+
+        onLevel result =
+            case result of
+                Ok (Just level) ->
+                    let
+                        modelWithLevel =
+                            Session.withLevel level session
+                                |> setSession model
+                    in
+                    case Dict.get model.draftId session.drafts of
+                        Just draft ->
+                            ( { modelWithLevel
+                                | execution = Just (initialExecution level draft)
+                              }
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            ( modelWithLevel, Cmd.none )
+
+                Ok Nothing ->
+                    ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+    in
+    ( key, value )
+        |> Ports.LocalStorage.oneOf
+            [ Draft.localStorageResponse onDraft
+            , Level.localStorageResponse onLevel
+            ]
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
-stepModel : LoadedModel -> ( Model, Cmd Msg )
-stepModel model =
+stepModel : Execution -> Model -> ( Model, Cmd Msg )
+stepModel oldExecution model =
     let
         execution =
-            stepExecution model.execution
+            stepExecution oldExecution
 
         state =
             if canStepExecution execution then
@@ -290,12 +349,11 @@ stepModel model =
                     ( model.session, Cmd.none )
 
         newModel =
-            Loaded
-                { model
-                    | session = session
-                    , execution = execution
-                    , state = state
-                }
+            { model
+                | session = session
+                , execution = Just execution
+                , state = state
+            }
 
         cmd =
             saveDraftCmd
@@ -701,20 +759,19 @@ stepExecutionStep executionStep =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model of
-        Loaded loadedModel ->
-            case loadedModel.state of
-                Paused ->
-                    Sub.none
+    if Maybe.Extra.isJust model.execution then
+        case model.state of
+            Paused ->
+                Sub.none
 
-                Running ->
-                    Time.every 250 (always Tick)
+            Running ->
+                Time.every 250 (always Tick)
 
-                FastForwarding ->
-                    Time.every 100 (always Tick)
+            FastForwarding ->
+                Time.every 100 (always Tick)
 
-        Error _ ->
-            Sub.none
+    else
+        Sub.none
 
 
 
@@ -741,12 +798,17 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            case model of
-                Loaded loadedModel ->
-                    viewLoaded loadedModel
+            case model.error of
+                Just error ->
+                    View.LoadingScreen.view error
 
-                Error errorModel ->
-                    text errorModel.error
+                Nothing ->
+                    case model.execution of
+                        Just execution ->
+                            viewLoaded execution model
+
+                        Nothing ->
+                            View.LoadingScreen.view "Loading..."
 
         body =
             layout
@@ -763,17 +825,17 @@ view model =
     }
 
 
-viewLoaded : LoadedModel -> Element Msg
-viewLoaded model =
+viewLoaded : Execution -> Model -> Element Msg
+viewLoaded execution model =
     let
         boardView =
-            viewBoard model
+            viewBoard execution model
 
         executionSideBarView =
-            viewExecutionSidebar model
+            viewExecutionSidebar execution model
 
         ioSidebarView =
-            viewIOSidebar model
+            viewIOSidebar execution model
 
         content =
             column
@@ -794,8 +856,8 @@ viewLoaded model =
     content
 
 
-viewExecutionSidebar : LoadedModel -> Element Msg
-viewExecutionSidebar model =
+viewExecutionSidebar : Execution -> Model -> Element Msg
+viewExecutionSidebar execution model =
     let
         controlSize =
             50
@@ -803,11 +865,11 @@ viewExecutionSidebar model =
         titleView =
             ViewComponents.viewTitle
                 []
-                model.execution.level.name
+                execution.level.name
 
         descriptionView =
             ViewComponents.descriptionTextbox []
-                model.execution.level.description
+                execution.level.description
 
         backButtonView =
             ViewComponents.textButton []
@@ -889,11 +951,11 @@ viewExecutionSidebar model =
         ]
 
 
-viewBoard : LoadedModel -> Element Msg
-viewBoard model =
+viewBoard : Execution -> Model -> Element Msg
+viewBoard execution model =
     let
         executionStep =
-            model.execution.executionHistory
+            execution.executionHistory
                 |> History.current
 
         instructionPointer =
@@ -965,30 +1027,30 @@ viewBoard model =
                     ]
 
         boardWithModalView =
-            case getExceptionMessage model.execution of
+            case getExceptionMessage execution of
                 Just message ->
                     boardView
                         |> el
                             [ width (fillPortion 3)
                             , height fill
-                            , inFront (viewExceptionModal model message)
+                            , inFront (viewExceptionModal execution model message)
                             ]
 
                 Nothing ->
-                    if isSolved model.execution then
+                    if isSolved execution then
                         boardView
                             |> el
                                 [ width (fillPortion 3)
                                 , height fill
-                                , inFront (viewVictoryModal model.execution)
+                                , inFront (viewVictoryModal execution)
                                 ]
 
-                    else if History.current model.execution.executionHistory |> .terminated then
+                    else if History.current execution.executionHistory |> .terminated then
                         boardView
                             |> el
                                 [ width (fillPortion 3)
                                 , height fill
-                                , inFront (viewWrongOutputModal model.execution)
+                                , inFront (viewWrongOutputModal execution)
                                 ]
 
                     else
@@ -997,8 +1059,8 @@ viewBoard model =
     boardWithModalView
 
 
-viewExceptionModal : LoadedModel -> String -> Element Msg
-viewExceptionModal execution exceptionMessage =
+viewExceptionModal : Execution -> Model -> String -> Element Msg
+viewExceptionModal execution model exceptionMessage =
     column
         [ centerX
         , centerY
@@ -1104,11 +1166,11 @@ viewVictoryModal execution =
         ]
 
 
-viewIOSidebar : LoadedModel -> Element Msg
-viewIOSidebar model =
+viewIOSidebar : Execution -> Model -> Element Msg
+viewIOSidebar execution model =
     let
         executionStep =
-            History.current model.execution.executionHistory
+            History.current execution.executionHistory
 
         viewSingle label values =
             let
@@ -1240,7 +1302,7 @@ viewIOSidebar model =
             viewSingle "Stack" executionStep.stack
 
         outputView =
-            viewDouble "Output" model.execution.level.io.output executionStep.output
+            viewDouble "Output" execution.level.io.output executionStep.output
     in
     row
         [ width (fillPortion 1)

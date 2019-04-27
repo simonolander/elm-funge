@@ -408,6 +408,7 @@ viewLevels campaign model =
                 solved =
                     model.session.drafts
                         |> Dict.values
+                        |> List.filter (.levelId >> (==) level.id)
                         |> List.any (.maybeScore >> Maybe.Extra.isJust)
 
                 onPress =

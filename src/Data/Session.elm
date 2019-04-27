@@ -1,6 +1,5 @@
 module Data.Session exposing
     ( Session
-    , getDraftAndLevel
     , getLevelDrafts
     , getToken
     , init
@@ -109,18 +108,3 @@ getLevelDrafts levelId session =
     session.drafts
         |> Dict.values
         |> List.filter (\draft -> draft.levelId == levelId)
-
-
-getDraftAndLevel : DraftId -> Session -> Maybe ( Draft, Level )
-getDraftAndLevel draftId session =
-    case Dict.get draftId session.drafts of
-        Just draft ->
-            case Dict.get draft.levelId session.levels of
-                Just level ->
-                    Just ( draft, level )
-
-                Nothing ->
-                    Nothing
-
-        Nothing ->
-            Nothing
