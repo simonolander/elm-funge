@@ -1,14 +1,19 @@
 module View.SingleSidebar exposing (layout, view)
 
+import Api.Auth0
+import Data.Session exposing (Session)
+import Data.User as User
 import Element exposing (..)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 import Html exposing (Html)
+import Maybe.Extra
 
 
-layout : List (Element msg) -> Element msg -> Html msg
-layout sidebarContent mainContent =
-    view sidebarContent mainContent
+layout : List (Element msg) -> Element msg -> Session -> Html msg
+layout sidebarContent mainContent session =
+    view sidebarContent mainContent session
         |> Element.layout
             [ Background.color (rgb 0 0 0)
             , width fill
@@ -20,8 +25,8 @@ layout sidebarContent mainContent =
             ]
 
 
-view : List (Element msg) -> Element msg -> Element msg
-view sidebarContent mainContent =
+view : List (Element msg) -> Element msg -> Session -> Element msg
+view sidebarContent mainContent session =
     let
         sidebar =
             column
@@ -43,11 +48,97 @@ view sidebarContent mainContent =
                 , padding 20
                 ]
                 mainContent
+
+        loginButton =
+            link
+                [ alignRight
+                , padding 20
+                , mouseOver
+                    [ Background.color (rgb 0.5 0.5 0.5) ]
+                ]
+                (if User.isLoggedIn session.user then
+                    { url = Api.Auth0.logout
+                    , label = text "Logout"
+                    }
+
+                 else
+                    { url = Api.Auth0.login
+                    , label = text "Login"
+                    }
+                )
     in
-    row
-        [ width fill
-        , height fill
-        ]
-        [ sidebar
-        , main
-        ]
+    scewn
+        { north = Just loginButton
+        , west = Just sidebar
+        , center = Just main
+        , east = Nothing
+        , south = Nothing
+        }
+
+
+scewn :
+    { south : Maybe (Element msg)
+    , center : Maybe (Element msg)
+    , east : Maybe (Element msg)
+    , west : Maybe (Element msg)
+    , north : Maybe (Element msg)
+    }
+    -> Element msg
+scewn { south, center, east, west, north } =
+    let
+        middle =
+            let
+                toRow =
+                    row [ width fill, height fill, scrollbars ]
+            in
+            case ( west, center, east ) of
+                ( Just w, Just c, Just e ) ->
+                    [ el [ width (fillPortion 1), height fill ] w
+                    , el [ width (fillPortion 3), height fill ] c
+                    , el [ width (fillPortion 1), height fill ] e
+                    ]
+                        |> toRow
+                        |> Just
+
+                ( Just w, Just c, Nothing ) ->
+                    [ el [ width (fillPortion 1), height fill ] w
+                    , el [ width (fillPortion 3), height fill ] c
+                    ]
+                        |> toRow
+                        |> Just
+
+                ( Just w, Nothing, Just e ) ->
+                    [ el [ width (fillPortion 1), height fill ] w
+                    , el [ width (fillPortion 1), height fill ] e
+                    ]
+                        |> toRow
+                        |> Just
+
+                ( Just w, Nothing, Nothing ) ->
+                    Just (el [ width fill, height fill ] w)
+
+                ( Nothing, Just c, Just e ) ->
+                    [ el [ width (fillPortion 3), height fill ] c
+                    , el [ width (fillPortion 1), height fill ] e
+                    ]
+                        |> toRow
+                        |> Just
+
+                ( Nothing, Just c, Nothing ) ->
+                    Just (el [ width fill, height fill ] c)
+
+                ( Nothing, Nothing, Just e ) ->
+                    Just (el [ width fill, height fill ] e)
+
+                ( Nothing, Nothing, Nothing ) ->
+                    Just (el [ width fill, height fill ] none)
+
+        top =
+            Maybe.map (el [ width fill ]) north
+
+        bottom =
+            Maybe.map (el [ width fill ]) south
+    in
+    [ top, middle, bottom ]
+        |> Maybe.Extra.values
+        |> column [ width fill, height fill ]

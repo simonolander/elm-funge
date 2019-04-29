@@ -392,7 +392,7 @@ viewCampaign campaign model =
         mainContent =
             viewLevels campaign model
     in
-    View.SingleSidebar.view sidebar mainContent
+    View.SingleSidebar.view sidebar mainContent model.session
 
 
 viewLevels : Campaign -> Model -> Element Msg

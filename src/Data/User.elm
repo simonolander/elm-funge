@@ -1,4 +1,4 @@
-module Data.User exposing (User, authorizedUser, getToken, guest)
+module Data.User exposing (User, authorizedUser, getToken, guest, isLoggedIn)
 
 import Data.AuthorizationToken exposing (AuthorizationToken)
 
@@ -30,3 +30,13 @@ authorizedUser token =
 guest : User
 guest =
     Guest
+
+
+isLoggedIn : User -> Bool
+isLoggedIn user =
+    case user of
+        Guest ->
+            False
+
+        AuthenticatedUser _ ->
+            True

@@ -372,4 +372,4 @@ viewCampaign campaign model =
                     levelButtons
                 ]
     in
-    View.SingleSidebar.layout sidebarContent mainContent
+    View.SingleSidebar.layout sidebarContent mainContent model.session
