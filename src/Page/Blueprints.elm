@@ -17,6 +17,7 @@ import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
 import Random
 import Route
+import View.ErrorScreen
 import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
@@ -263,7 +264,7 @@ view model =
         content =
             case model.error of
                 Just error ->
-                    View.LoadingScreen.layout error
+                    View.ErrorScreen.layout error
 
                 Nothing ->
                     case Dict.get CampaignId.blueprints session.campaigns of

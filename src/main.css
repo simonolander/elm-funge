@@ -34,3 +34,8 @@ body > div {
   border-right-color: #fff;
   border-top-color: #fff;
 }
+
+.pre * {
+    color: #ff8259;
+  white-space: pre !important;
+}

@@ -15,6 +15,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Html
 import Http
 import Json.Encode as Encode
 import Maybe.Extra
@@ -22,6 +23,7 @@ import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import Result exposing (Result)
 import Route exposing (Route)
+import View.ErrorScreen
 import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
@@ -339,29 +341,25 @@ view model =
 
 viewError : Http.Error -> Element Msg
 viewError error =
-    case error of
-        Http.BadUrl string ->
-            "Bad url: "
-                ++ string
-                |> text
+    let
+        errorMessage =
+            case error of
+                Http.BadUrl string ->
+                    "Bad url: " ++ string
 
-        Http.Timeout ->
-            "Timeout"
-                |> text
+                Http.Timeout ->
+                    "The request timed out"
 
-        Http.NetworkError ->
-            "Network error"
-                |> text
+                Http.NetworkError ->
+                    "Network error"
 
-        Http.BadStatus int ->
-            "Bad status: "
-                ++ String.fromInt int
-                |> text
+                Http.BadStatus int ->
+                    "Bad status: " ++ String.fromInt int
 
-        Http.BadBody string ->
-            "Bad body: "
-                ++ string
-                |> text
+                Http.BadBody string ->
+                    string
+    in
+    View.ErrorScreen.view errorMessage
 
 
 viewCampaign : Campaign -> Model -> Element Msg

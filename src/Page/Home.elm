@@ -8,6 +8,9 @@ import Element exposing (..)
 import Element.Font as Font
 import Json.Encode as Encode
 import Route exposing (Route)
+import View.Header
+import View.Layout
+import View.Scewn
 import ViewComponents
 
 
@@ -80,7 +83,10 @@ view model =
                 (ViewComponents.textButton [] Nothing text)
                 route
 
-        body =
+        header =
+            View.Header.view model.session
+
+        main =
             column
                 [ padding 100
                 , spacing 20
@@ -89,27 +95,19 @@ view model =
                 ]
                 [ titleView
                 , link "Levels" (Route.Campaign CampaignId.standard Nothing)
-                , Element.link
-                    [ width fill ]
-                    { label = ViewComponents.textButton [] Nothing "Login"
-                    , url = Auth0.login
-                    }
-                , Element.link
-                    [ width fill ]
-                    { label = ViewComponents.textButton [] Nothing "Logout"
-                    , url = Auth0.logout
-                    }
                 , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" (Route.Campaign "credits" Nothing)
                 ]
-                |> layout
-                    [ width fill
-                    , height fill
-                    , Font.family
-                        [ Font.monospace
-                        ]
-                    , Font.color (rgb 1 1 1)
-                    ]
+
+        body =
+            View.Scewn.view
+                { north = Just header
+                , center = Just main
+                , west = Nothing
+                , east = Nothing
+                , south = Nothing
+                }
+                |> View.Layout.layout
                 |> List.singleton
     in
     { title = "Home"
