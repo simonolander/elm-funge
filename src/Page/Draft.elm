@@ -28,6 +28,11 @@ import Json.Encode as Encode
 import Ports.LocalStorage
 import Route
 import View.Board
+import View.ErrorScreen
+import View.Header
+import View.Layout
+import View.LoadingScreen
+import View.Scewn
 import ViewComponents exposing (..)
 
 
@@ -53,7 +58,8 @@ type alias Model =
 
 
 type alias LoadedModel =
-    { draft : Draft
+    { session : Session
+    , draft : Draft
     , level : Level
     , selectedInstructionToolIndex : Maybe Int
     , state : State
@@ -382,41 +388,37 @@ view model =
             model.session
 
         content =
-            case Dict.get model.draftId session.drafts of
-                Just draft ->
-                    case Dict.get draft.levelId session.levels of
-                        Just level ->
-                            viewLoaded
-                                { draft = draft
-                                , level = level
-                                , selectedInstructionToolIndex = model.selectedInstructionToolIndex
-                                , state = model.state
-                                }
-
-                        Nothing ->
-                            viewError { error = "Level not found" }
+            case model.error of
+                Just error ->
+                    View.ErrorScreen.view error
 
                 Nothing ->
-                    viewError { error = "Draft not found" }
+                    case Dict.get model.draftId session.drafts of
+                        Just draft ->
+                            case Dict.get draft.levelId session.levels of
+                                Just level ->
+                                    viewLoaded
+                                        { session = session
+                                        , draft = draft
+                                        , level = level
+                                        , selectedInstructionToolIndex = model.selectedInstructionToolIndex
+                                        , state = model.state
+                                        }
+
+                                Nothing ->
+                                    View.LoadingScreen.view "Loading level..."
+
+                        Nothing ->
+                            View.LoadingScreen.view "Loading draft..."
 
         body =
-            layout
-                [ Background.color (rgb 0 0 0)
-                , Font.family [ Font.monospace ]
-                , Font.color (rgb 1 1 1)
-                , height fill
-                ]
-                content
+            content
+                |> View.Layout.layout
                 |> List.singleton
     in
     { title = "Draft"
     , body = body
     }
-
-
-viewError : ErrorModel -> Element Msg
-viewError { error } =
-    text error
 
 
 viewLoaded : LoadedModel -> Element Msg
@@ -447,61 +449,55 @@ viewLoaded model =
                 , disabledPositions = disabledPositions
                 }
 
-        importExportBoardView =
+        importModal =
             case model.state of
                 Editing ->
-                    boardView
+                    Nothing
 
                 Importing { importData, errorMessage } ->
-                    boardView
-                        |> el
-                            [ width (fillPortion 3)
-                            , height fill
-                            , inFront
-                                (column
-                                    [ centerX
-                                    , centerY
-                                    , Background.color (rgb 0 0 0)
-                                    , padding 20
-                                    , Font.family [ Font.monospace ]
-                                    , Font.color (rgb 1 1 1)
-                                    , spacing 10
-                                    , Border.width 3
-                                    , Border.color (rgb 1 1 1)
-                                    ]
-                                    [ el
-                                        [ Font.size 32
-                                        , centerX
-                                        ]
-                                        (text "Import / Export")
-                                    , Input.multiline
-                                        [ Background.color (rgb 0 0 0)
-                                        , width (px 500)
-                                        , height (px 500)
-                                        ]
-                                        { onChange = ImportDataChanged
-                                        , text = importData
-                                        , placeholder = Nothing
-                                        , spellcheck = False
-                                        , label =
-                                            Input.labelAbove
-                                                []
-                                                (text "Copy or paste from here")
-                                        }
-                                    , errorMessage
-                                        |> Maybe.map text
-                                        |> Maybe.map List.singleton
-                                        |> Maybe.map (paragraph [])
-                                        |> Maybe.withDefault none
-                                    , ViewComponents.textButton []
-                                        (Just (Import importData))
-                                        "Import"
-                                    , ViewComponents.textButton []
-                                        (Just ImportClosed)
-                                        "Close"
-                                    ]
-                                )
+                    column
+                        [ centerX
+                        , centerY
+                        , Background.color (rgb 0 0 0)
+                        , padding 20
+                        , Font.family [ Font.monospace ]
+                        , Font.color (rgb 1 1 1)
+                        , spacing 10
+                        , Border.width 3
+                        , Border.color (rgb 1 1 1)
+                        ]
+                        [ el
+                            [ Font.size 32
+                            , centerX
                             ]
+                            (text "Import / Export")
+                        , Input.multiline
+                            [ Background.color (rgb 0 0 0)
+                            , width (px 500)
+                            , height (px 500)
+                            ]
+                            { onChange = ImportDataChanged
+                            , text = importData
+                            , placeholder = Nothing
+                            , spellcheck = False
+                            , label =
+                                Input.labelAbove
+                                    []
+                                    (text "Copy or paste from here")
+                            }
+                        , errorMessage
+                            |> Maybe.map text
+                            |> Maybe.map List.singleton
+                            |> Maybe.map (paragraph [])
+                            |> Maybe.withDefault none
+                        , ViewComponents.textButton []
+                            (Just (Import importData))
+                            "Import"
+                        , ViewComponents.textButton []
+                            (Just ImportClosed)
+                            "Close"
+                        ]
+                        |> Just
 
         sidebarView =
             viewSidebar model
@@ -510,14 +506,14 @@ viewLoaded model =
             viewToolSidebar model
 
         element =
-            row
-                [ width fill
-                , height fill
-                ]
-                [ sidebarView
-                , importExportBoardView
-                , toolSidebarView
-                ]
+            View.Scewn.view
+                { north = Just (View.Header.view model.session)
+                , west = Just sidebarView
+                , center = Just boardView
+                , east = Just toolSidebarView
+                , south = Nothing
+                , modal = importModal
+                }
     in
     element
 

@@ -1,8 +1,6 @@
 module View.SingleSidebar exposing (layout, view)
 
-import Api.Auth0
 import Data.Session exposing (Session)
-import Data.User as User
 import Element exposing (..)
 import Element.Background as Background
 import Html
@@ -44,6 +42,7 @@ view sidebarContent mainContent session =
         , center = Just main
         , east = Nothing
         , south = Nothing
+        , modal = Nothing
         }
 
 

@@ -263,4 +263,5 @@ viewBlueprint level model =
         , center = Just center
         , east = Nothing
         , south = Nothing
+        , modal = Nothing
         }

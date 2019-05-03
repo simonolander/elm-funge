@@ -106,6 +106,7 @@ view model =
                 , west = Nothing
                 , east = Nothing
                 , south = Nothing
+                , modal = Nothing
                 }
                 |> View.Layout.layout
                 |> List.singleton

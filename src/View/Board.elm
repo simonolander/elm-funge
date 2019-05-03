@@ -65,4 +65,5 @@ view params =
             , width fill
             , height fill
             , padding 10
+            , scrollbars
             ]
