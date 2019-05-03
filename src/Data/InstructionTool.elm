@@ -1,7 +1,7 @@
-module Data.InstructionTool exposing (InstructionTool(..), decoder, encode)
+module Data.InstructionTool exposing (InstructionTool(..), decoder, encode, getInstruction)
 
 import Data.Direction exposing (Direction(..))
-import Data.Instruction as Instruction exposing (Instruction)
+import Data.Instruction as Instruction exposing (Instruction(..))
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
 import Json.Encode exposing (Value, object, string)
 
@@ -11,6 +11,29 @@ type InstructionTool
     | ChangeAnyDirection Direction
     | BranchAnyDirection Direction Direction
     | PushValueToStack String
+
+
+getInstruction : InstructionTool -> Instruction
+getInstruction instructionTool =
+    case instructionTool of
+        JustInstruction instruction ->
+            instruction
+
+        ChangeAnyDirection direction ->
+            ChangeDirection direction
+
+        BranchAnyDirection trueDirection falseDirection ->
+            Branch trueDirection falseDirection
+
+        PushValueToStack value ->
+            value
+                |> String.toInt
+                |> Maybe.map PushToStack
+                |> Maybe.withDefault (Exception (value ++ " is not a number"))
+
+
+
+-- JSON
 
 
 encode : InstructionTool -> Value

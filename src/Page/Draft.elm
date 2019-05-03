@@ -10,7 +10,7 @@ import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.History as History
 import Data.Instruction exposing (Instruction(..))
-import Data.InstructionTool exposing (InstructionTool(..))
+import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
 import Data.Position exposing (Position)
 import Data.Session as Session exposing (Session)
@@ -27,6 +27,7 @@ import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 import Ports.LocalStorage
 import Route
+import View.Board
 import ViewComponents exposing (..)
 
 
@@ -413,11 +414,6 @@ view model =
     }
 
 
-instructionSpacing : Int
-instructionSpacing =
-    10
-
-
 viewError : ErrorModel -> Element Msg
 viewError { error } =
     text error
@@ -430,18 +426,26 @@ viewLoaded model =
             model.selectedInstructionToolIndex
                 |> Maybe.andThen (flip Array.get model.level.instructionTools)
 
+        board =
+            History.current model.draft.boardHistory
+
+        boardOnClick =
+            maybeSelectedInstructionTool
+                |> Maybe.map InstructionTool.getInstruction
+                |> Maybe.map (\instruction { position } -> InstructionPlaced position instruction)
+
+        disabledPositions =
+            Board.instructions model.level.initialBoard
+                |> List.filter (.instruction >> (/=) NoOp)
+                |> List.map .position
+
         boardView =
-            model.draft.boardHistory
-                |> History.current
-                |> Array.indexedMap (viewRow model.level.initialBoard maybeSelectedInstructionTool)
-                |> Array.toList
-                |> column
-                    [ spacing instructionSpacing
-                    , scrollbars
-                    , width (fillPortion 3)
-                    , height fill
-                    , padding instructionSpacing
-                    ]
+            View.Board.view
+                { board = board
+                , onClick = boardOnClick
+                , selectedPosition = Nothing
+                , disabledPositions = disabledPositions
+                }
 
         importExportBoardView =
             case model.state of
@@ -747,71 +751,3 @@ viewToolSidebar model =
         [ toolsView
         , toolExtraView
         ]
-
-
-viewRow : Board -> Maybe InstructionTool -> Int -> Array Instruction -> Element Msg
-viewRow initialBoard selectedInstructionTool rowIndex boardRow =
-    boardRow
-        |> Array.indexedMap (viewInstruction initialBoard selectedInstructionTool rowIndex)
-        |> Array.toList
-        |> row [ spacing instructionSpacing ]
-
-
-viewInstruction : Board -> Maybe InstructionTool -> Int -> Int -> Instruction -> Element Msg
-viewInstruction initialBoard selectedInstructionTool rowIndex columnIndex instruction =
-    let
-        initialInstruction =
-            Board.get { x = columnIndex, y = rowIndex } initialBoard
-                |> Maybe.withDefault NoOp
-
-        editable =
-            initialInstruction == NoOp
-
-        attributes =
-            if editable then
-                []
-
-            else
-                let
-                    backgroundColor =
-                        case initialInstruction of
-                            Exception _ ->
-                                rgb 0.1 0 0
-
-                            _ ->
-                                rgb 0.15 0.15 0.15
-                in
-                [ Background.color backgroundColor
-                , htmlAttribute (Html.Attributes.style "cursor" "not-allowed")
-                , mouseOver []
-                ]
-
-        onPress =
-            if editable then
-                selectedInstructionTool
-                    |> Maybe.map getInstruction
-                    |> Maybe.map (InstructionPlaced { x = columnIndex, y = rowIndex })
-
-            else
-                Nothing
-    in
-    instructionButton attributes onPress instruction
-
-
-getInstruction : InstructionTool -> Instruction
-getInstruction instructionTool =
-    case instructionTool of
-        JustInstruction instruction ->
-            instruction
-
-        ChangeAnyDirection direction ->
-            ChangeDirection direction
-
-        BranchAnyDirection trueDirection falseDirection ->
-            Branch trueDirection falseDirection
-
-        PushValueToStack value ->
-            value
-                |> String.toInt
-                |> Maybe.map PushToStack
-                |> Maybe.withDefault (Exception (value ++ " is not a number"))

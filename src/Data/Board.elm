@@ -1,21 +1,30 @@
-module Data.Board exposing (Board, count, decoder, empty, encode, get, height, set, width)
+module Data.Board exposing (Board, count, decoder, empty, encode, get, height, instructions, set, width, withHeight, withWidth)
 
 import Array exposing (Array)
+import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
 import Data.Instruction as Instruction exposing (Instruction)
 import Data.Position exposing (Position)
-import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
-import Json.Encode exposing (Value, array, int, list, object)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode
 
 
 type alias Board =
     Array (Array Instruction)
 
 
-type alias BoardInstruction =
-    { x : Int
-    , y : Int
-    , instruction : Instruction
-    }
+withSize : Int -> Int -> Board -> Board
+withSize w h board =
+    withInstructions (instructions board) (empty w h)
+
+
+withWidth : Int -> Board -> Board
+withWidth w board =
+    withSize w (height board) board
+
+
+withHeight : Int -> Board -> Board
+withHeight h board =
+    withSize (width board) h board
 
 
 empty : Int -> Int -> Board
@@ -48,7 +57,12 @@ instructions board =
                 row
                     |> Array.indexedMap
                         (\x instruction ->
-                            { x = x, y = y, instruction = instruction }
+                            { position =
+                                { x = x
+                                , y = y
+                                }
+                            , instruction = instruction
+                            }
                         )
                     |> Array.toList
             )
@@ -79,8 +93,8 @@ count predicate board =
 withInstructions : List BoardInstruction -> Board -> Board
 withInstructions boardInstructions board =
     let
-        setInstruction { x, y, instruction } =
-            set { x = x, y = y } instruction
+        setInstruction { position, instruction } =
+            set position instruction
     in
     List.foldl setInstruction board boardInstructions
 
@@ -89,46 +103,16 @@ withInstructions boardInstructions board =
 -- JSON
 
 
-encodeBoardInstruction : BoardInstruction -> Value
-encodeBoardInstruction boardInstruction =
-    object
-        [ ( "x", int boardInstruction.x )
-        , ( "y", int boardInstruction.y )
-        , ( "instruction", Instruction.encode boardInstruction.instruction )
-        ]
-
-
-boardInstructionDecoder : Decoder BoardInstruction
-boardInstructionDecoder =
-    Decode.field "x" Decode.int
-        |> Decode.andThen
-            (\x ->
-                Decode.field "y" Decode.int
-                    |> Decode.andThen
-                        (\y ->
-                            Decode.field "instruction" Instruction.decoder
-                                |> andThen
-                                    (\instruction ->
-                                        Decode.succeed
-                                            { x = x
-                                            , y = y
-                                            , instruction = instruction
-                                            }
-                                    )
-                        )
-            )
-
-
-encode : Board -> Value
+encode : Board -> Encode.Value
 encode board =
-    object
-        [ ( "width", int (width board) )
-        , ( "height", int (height board) )
+    Encode.object
+        [ ( "width", Encode.int (width board) )
+        , ( "height", Encode.int (height board) )
         , ( "instructions"
           , board
                 |> instructions
                 |> List.filter (.instruction >> (/=) Instruction.NoOp)
-                |> list encodeBoardInstruction
+                |> Encode.list BoardInstruction.encode
           )
         ]
 
@@ -160,16 +144,16 @@ decoder =
             in
             case ( maybeWidth, boardHeight ) of
                 ( Nothing, _ ) ->
-                    fail "All rows must have the same length"
+                    Decode.fail "All rows must have the same length"
 
                 ( _, 0 ) ->
-                    fail "Board cannot be empty"
+                    Decode.fail "Board cannot be empty"
 
                 ( Just 0, _ ) ->
-                    fail "Board cannot be empty"
+                    Decode.fail "Board cannot be empty"
 
                 _ ->
-                    succeed board
+                    Decode.succeed board
     in
     Decode.field "width" Decode.int
         |> Decode.andThen
@@ -177,7 +161,7 @@ decoder =
                 Decode.field "height" Decode.int
                     |> Decode.andThen
                         (\decodedHeight ->
-                            Decode.field "instructions" (Decode.list boardInstructionDecoder)
+                            Decode.field "instructions" (Decode.list BoardInstruction.decoder)
                                 |> Decode.andThen
                                     (\decodedBoardInstructions ->
                                         empty decodedWidth decodedHeight

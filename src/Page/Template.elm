@@ -3,6 +3,7 @@ module Page.Template exposing (Model, Msg, getSession, init, subscriptions, upda
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
+import Json.Encode as Encode
 
 
 
@@ -24,6 +25,11 @@ getSession { session } =
     session
 
 
+setSession : Model -> Session -> Model
+setSession model session =
+    { model | session = session }
+
+
 
 -- UPDATE
 
@@ -34,6 +40,11 @@ type alias Msg =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    ( model, Cmd.none )
+
+
+localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
+localStorageResponseUpdate ( key, value ) model =
     ( model, Cmd.none )
 
 

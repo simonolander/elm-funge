@@ -1,4 +1,4 @@
-module Data.Level exposing (Level, decoder, encode, generator, loadFromLocalStorage, localStorageKey, localStorageResponse, removeFromLocalStorage, saveToLocalStorage, withDescription, withIO, withInitialBoard, withInstructionTool, withInstructionTools, withName)
+module Data.Level exposing (Level, constraints, decoder, encode, generator, loadFromLocalStorage, localStorageKey, localStorageResponse, removeFromLocalStorage, saveToLocalStorage, withDescription, withIO, withInitialBoard, withInstructionTool, withInstructionTools, withName)
 
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
@@ -22,6 +22,14 @@ type alias Level =
     , io : IO
     , initialBoard : Board
     , instructionTools : Array InstructionTool
+    }
+
+
+constraints =
+    { minWidth = 1
+    , maxWidth = 31
+    , minHeight = 1
+    , maxHeight = 31
     }
 
 
