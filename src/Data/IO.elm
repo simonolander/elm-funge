@@ -1,21 +1,9 @@
-module Data.IO exposing (IO, decoder, encode)
+module Data.IO exposing (IO, constraints, decoder, encode, withInput, withOutput)
 
 import Data.Input exposing (Input)
 import Data.Output exposing (Output)
 import Json.Decode as Decode
-    exposing
-        ( Decoder
-        , andThen
-        , field
-        , succeed
-        )
-import Json.Encode
-    exposing
-        ( Value
-        , int
-        , list
-        , object
-        )
+import Json.Encode as Encode
 
 
 type alias IO =
@@ -24,27 +12,43 @@ type alias IO =
     }
 
 
+constraints =
+    { max = (2 ^ 16) - 1
+    , min = -(2 ^ 16)
+    }
+
+
+withInput : Input -> IO -> IO
+withInput input io =
+    { io | input = input }
+
+
+withOutput : Output -> IO -> IO
+withOutput output io =
+    { io | output = output }
+
+
 
 -- JSON
 
 
-encode : IO -> Value
+encode : IO -> Encode.Value
 encode io =
-    object
-        [ ( "input", list int io.input )
-        , ( "output", list int io.output )
+    Encode.object
+        [ ( "input", Encode.list Encode.int io.input )
+        , ( "output", Encode.list Encode.int io.output )
         ]
 
 
-decoder : Decoder IO
+decoder : Decode.Decoder IO
 decoder =
-    field "input" (Decode.list Decode.int)
-        |> andThen
+    Decode.field "input" (Decode.list Decode.int)
+        |> Decode.andThen
             (\input ->
-                field "output" (Decode.list Decode.int)
-                    |> andThen
+                Decode.field "output" (Decode.list Decode.int)
+                    |> Decode.andThen
                         (\output ->
-                            succeed
+                            Decode.succeed
                                 { input = input
                                 , output = output
                                 }

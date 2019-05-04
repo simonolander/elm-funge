@@ -1,4 +1,4 @@
-module View.Input exposing (TextConfiguration, numericInput, textInput)
+module View.Input exposing (TextConfiguration, multiline, numericInput, textInput)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -12,6 +12,7 @@ type alias TextConfiguration msg a =
         | onChange : String -> msg
         , text : String
         , labelText : String
+        , placeholder : Maybe String
     }
 
 
@@ -34,12 +35,17 @@ textInput attributes configuration =
             Input.labelAbove
                 []
                 (text configuration.labelText)
+
+        placeholder =
+            configuration.placeholder
+                |> Maybe.map text
+                |> Maybe.map (Input.placeholder [])
     in
     Input.text
         allAttributes
         { onChange = configuration.onChange
         , text = configuration.text
-        , placeholder = Nothing
+        , placeholder = placeholder
         , label = label
         }
 
@@ -63,3 +69,21 @@ numericInput attributes configuration =
                 ]
     in
     textInput allAttributes configuration
+
+
+multiline :
+    { onChange : String -> msg
+    , text : String
+    , labelText : String
+    , spellcheck : Bool
+    }
+    -> Element msg
+multiline conf =
+    Input.multiline
+        [ Background.color (rgb 0.1 0.1 0.1) ]
+        { onChange = conf.onChange
+        , text = conf.text
+        , placeholder = Just (Input.placeholder [] (text "1\n3\n5\n10"))
+        , label = Input.labelAbove [] (text conf.labelText)
+        , spellcheck = conf.spellcheck
+        }

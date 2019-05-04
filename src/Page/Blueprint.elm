@@ -3,6 +3,8 @@ module Page.Blueprint exposing (Model, Msg, getSession, init, localStorageRespon
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Board as Board
+import Data.CampaignId as CampaignId
+import Data.IO as IO
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -14,6 +16,8 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Ports.LocalStorage
+import Route
+import View.Board
 import View.Header
 import View.Input
 import View.Layout
@@ -30,6 +34,8 @@ type alias Model =
     , levelId : LevelId
     , width : String
     , height : String
+    , input : String
+    , output : String
     , error : Maybe String
     }
 
@@ -42,6 +48,8 @@ init levelId session =
             , levelId = levelId
             , width = ""
             , height = ""
+            , input = ""
+            , output = ""
             , error = Nothing
             }
     in
@@ -59,6 +67,14 @@ initWithLevel level model =
         | levelId = level.id
         , width = String.fromInt (Board.width level.initialBoard)
         , height = String.fromInt (Board.height level.initialBoard)
+        , input =
+            level.io.input
+                |> List.map String.fromInt
+                |> String.join ","
+        , output =
+            level.io.output
+                |> List.map String.fromInt
+                |> String.join ","
       }
     , Cmd.none
     )
@@ -81,6 +97,8 @@ setSession model session =
 type Msg
     = ChangedWidth String
     | ChangedHeight String
+    | ChangedInput String
+    | ChangedOutput String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -149,6 +167,60 @@ update msg model =
 
                         Nothing ->
                             ( modelWithHeight, Cmd.none )
+
+                ChangedInput inputString ->
+                    let
+                        modelWithInput =
+                            { model | input = inputString }
+
+                        input =
+                            inputString
+                                |> String.split ","
+                                |> List.map String.trim
+                                |> List.map String.toInt
+                                |> Maybe.Extra.values
+                                |> List.filter (flip (>=) IO.constraints.min)
+                                |> List.filter (flip (<=) IO.constraints.max)
+
+                        newLevel =
+                            input
+                                |> flip IO.withInput level.io
+                                |> flip Level.withIO level
+
+                        newSession =
+                            Session.withLevel newLevel model.session
+
+                        cmd =
+                            Level.saveToLocalStorage newLevel
+                    in
+                    ( { modelWithInput | session = newSession }, cmd )
+
+                ChangedOutput outputString ->
+                    let
+                        modelWithOutput =
+                            { model | output = outputString }
+
+                        output =
+                            outputString
+                                |> String.split ","
+                                |> List.map String.trim
+                                |> List.map String.toInt
+                                |> Maybe.Extra.values
+                                |> List.filter (flip (>=) IO.constraints.min)
+                                |> List.filter (flip (<=) IO.constraints.max)
+
+                        newLevel =
+                            output
+                                |> flip IO.withOutput level.io
+                                |> flip Level.withIO level
+
+                        newSession =
+                            Session.withLevel newLevel model.session
+
+                        cmd =
+                            Level.saveToLocalStorage newLevel
+                    in
+                    ( { modelWithOutput | session = newSession }, cmd )
 
         Nothing ->
             ( model, Cmd.none )
@@ -223,6 +295,7 @@ viewBlueprint level model =
                         { text = model.width
                         , labelText = "Width"
                         , onChange = ChangedWidth
+                        , placeholder = Nothing
                         , min = Just Level.constraints.minWidth
                         , max = Just Level.constraints.maxWidth
                         , step = Just 1
@@ -233,10 +306,32 @@ viewBlueprint level model =
                         { text = model.height
                         , labelText = "Height"
                         , onChange = ChangedHeight
+                        , placeholder = Nothing
                         , min = Just Level.constraints.minHeight
                         , max = Just Level.constraints.maxHeight
                         , step = Just 1
                         }
+
+                inputInput =
+                    View.Input.textInput
+                        []
+                        { onChange = ChangedInput
+                        , text = model.input
+                        , labelText = "Input"
+                        , placeholder = Just "1,2,3,0"
+                        }
+
+                outputInput =
+                    View.Input.textInput
+                        []
+                        { onChange = ChangedOutput
+                        , text = model.output
+                        , labelText = "Output"
+                        , placeholder = Just "2,4,6"
+                        }
+
+                link =
+                    Route.link [] (text "test") (Route.Campaign CampaignId.blueprints (Just level.id))
             in
             column
                 [ width fill
@@ -252,10 +347,31 @@ viewBlueprint level model =
                     [ text level.name ]
                 , widthInput
                 , heightInput
+                , inputInput
+                , outputInput
+                , link
                 ]
 
         center =
-            none
+            let
+                board =
+                    level.initialBoard
+
+                onClick =
+                    Nothing
+
+                selectedPosition =
+                    Nothing
+
+                disabledPositions =
+                    []
+            in
+            View.Board.view
+                { board = board
+                , onClick = onClick
+                , selectedPosition = selectedPosition
+                , disabledPositions = disabledPositions
+                }
     in
     View.Scewn.view
         { north = Just header
