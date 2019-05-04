@@ -15,7 +15,6 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Html
 import Http
 import Json.Encode as Encode
 import Maybe.Extra

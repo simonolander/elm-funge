@@ -1,4 +1,4 @@
-module Data.Direction exposing (Direction(..), decoder, encode)
+module Data.Direction exposing (Direction(..), all, decoder, encode)
 
 import Json.Decode as Decode exposing (Decoder, andThen, fail, succeed)
 import Json.Encode exposing (Value, string)
@@ -9,6 +9,15 @@ type Direction
     | Up
     | Right
     | Down
+
+
+all : List Direction
+all =
+    [ Left
+    , Up
+    , Right
+    , Down
+    ]
 
 
 

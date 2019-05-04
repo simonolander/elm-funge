@@ -2,6 +2,7 @@ module View.Input exposing (TextConfiguration, multiline, numericInput, textInpu
 
 import Element exposing (..)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Input as Input
 import Html.Attributes
 import Maybe.Extra
@@ -29,7 +30,8 @@ textInput attributes configuration =
     let
         allAttributes =
             attributes
-                ++ [ Background.color (rgb 0.1 0.1 0.1) ]
+                ++ [ Background.color (rgb 0.1 0.1 0.1)
+                   ]
 
         label =
             Input.labelAbove
@@ -58,6 +60,7 @@ numericInput attributes configuration =
             , Maybe.map (String.fromFloat >> Html.Attributes.min) configuration.min
             , Maybe.map (String.fromFloat >> Html.Attributes.max) configuration.max
             , Maybe.map (String.fromFloat >> Html.Attributes.step) configuration.step
+            , Just (Html.Attributes.class "number")
             ]
                 |> Maybe.Extra.values
                 |> List.map htmlAttribute

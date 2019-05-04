@@ -4,8 +4,8 @@ import Array
 import Data.Board as Board
 import Data.CampaignId as CampaignId
 import Data.Direction exposing (Direction(..))
-import Data.Instruction exposing (Instruction(..))
-import Data.InstructionTool exposing (InstructionTool(..))
+import Data.Instruction as Instruction exposing (Instruction(..))
+import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level exposing (Level)
 
 
@@ -38,7 +38,7 @@ levelTest =
             , JustInstruction PopFromStack
             , BranchAnyDirection Left Right
             , JustInstruction JumpForward
-            , JustInstruction (Exception "Some exception")
+            , InstructionTool.Exception ""
             ]
     }
 
@@ -521,13 +521,13 @@ levelLabyrinth1 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 2, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 4, y = 4 } Terminate
     , instructionTools =
         Array.fromList
@@ -550,12 +550,12 @@ levelLabyrinth2 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 2 } Terminate
     , instructionTools =
         Array.fromList
@@ -578,15 +578,15 @@ levelLabyrinth3 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 4 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 2 } Terminate
     , instructionTools =
         Array.fromList
@@ -610,18 +610,18 @@ levelLabyrinth4 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 1, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
         Array.fromList
@@ -645,16 +645,16 @@ levelLabyrinth5 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 4, y = 2 } (PushToStack 1)
             |> Board.set { x = 3, y = 4 } (Branch Right Up)
             |> Board.set { x = 4, y = 4 } Terminate
@@ -679,17 +679,17 @@ levelLabyrinth6 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 1 } (PushToStack 1)
             |> Board.set { x = 2, y = 3 } (Branch Right Up)
             |> Board.set { x = 3, y = 3 } Terminate
@@ -715,19 +715,19 @@ levelLabyrinth7 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 2, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 4 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 1, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 4 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 1, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 1 } Increment
             |> Board.set { x = 2, y = 3 } (Branch Right Left)
             |> Board.set { x = 3, y = 3 } Terminate
@@ -780,9 +780,9 @@ levelLabyrinth9 =
         }
     , initialBoard =
         Board.empty 5 5
-            |> Board.set { x = 2, y = 1 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 1 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 4, y = 0 } JumpForward
             |> Board.set { x = 0, y = 1 } JumpForward
             |> Board.set { x = 1, y = 2 } JumpForward
@@ -814,16 +814,16 @@ levelLabyrinth10 =
     , initialBoard =
         Board.empty 5 5
             |> Board.set { x = 0, y = 2 } JumpForward
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 4 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 4 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 1, y = 0 } JumpForward
             |> Board.set { x = 1, y = 2 } (Branch Left Up)
             |> Board.set { x = 2, y = 1 } JumpForward
             |> Board.set { x = 2, y = 2 } Terminate
-            |> Board.set { x = 2, y = 3 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 2, y = 3 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 2 } (Branch Right Up)
-            |> Board.set { x = 3, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 3 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 3, y = 4 } JumpForward
             |> Board.set { x = 4, y = 1 } JumpForward
     , instructionTools =
@@ -850,14 +850,14 @@ levelLabyrinth11 =
     , initialBoard =
         Board.empty 5 5
             |> Board.set { x = 2, y = 0 } JumpForward
-            |> Board.set { x = 3, y = 0 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 0 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 0 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 4, y = 0 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 0, y = 1 } JumpForward
             |> Board.set { x = 2, y = 1 } (Branch Up Right)
             |> Board.set { x = 1, y = 2 } JumpForward
             |> Board.set { x = 2, y = 2 } Terminate
-            |> Board.set { x = 3, y = 2 } (Exception "Don't hit the exceptions")
-            |> Board.set { x = 0, y = 3 } (Exception "Don't hit the exceptions")
+            |> Board.set { x = 3, y = 2 } (Instruction.Exception "Don't hit the exceptions")
+            |> Board.set { x = 0, y = 3 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 2, y = 3 } (Branch Down Right)
             |> Board.set { x = 4, y = 3 } JumpForward
             |> Board.set { x = 1, y = 4 } JumpForward
@@ -888,7 +888,7 @@ levelLabyrinthLab =
         Array.fromList
             [ JustInstruction NoOp
             , ChangeAnyDirection Down
-            , JustInstruction (Exception "")
+            , JustInstruction (Instruction.Exception "")
             , JustInstruction Terminate
             , BranchAnyDirection Up Left
             , PushValueToStack "1"

@@ -1,4 +1,4 @@
-module Data.Board exposing (Board, count, decoder, empty, encode, get, height, instructions, set, width, withHeight, withWidth)
+module Data.Board exposing (Board, count, decoder, empty, encode, get, height, instructions, set, width, withBoardInstruction, withHeight, withWidth)
 
 import Array exposing (Array)
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
@@ -47,6 +47,11 @@ set { x, y } instruction board =
 
         Nothing ->
             board
+
+
+withBoardInstruction : BoardInstruction -> Board -> Board
+withBoardInstruction boardInstruction board =
+    set boardInstruction.position boardInstruction.instruction board
 
 
 instructions : Board -> List BoardInstruction

@@ -9,7 +9,7 @@ module ViewComponents exposing
     )
 
 import Data.Direction exposing (Direction(..))
-import Data.Instruction exposing (Instruction(..))
+import Data.Instruction as Instruction exposing (Instruction(..))
 import Data.InstructionTool exposing (InstructionTool(..))
 import Element exposing (..)
 import Element.Background as Background
@@ -67,7 +67,7 @@ instructionButton attributes onPress instruction =
     let
         attrs2 =
             case instruction of
-                Exception _ ->
+                Instruction.Exception _ ->
                     [ Background.color (rgba 1 0 0 0.1) ]
 
                 _ ->
@@ -154,7 +154,7 @@ instructionToolButton attributes onPress instructionTool =
     let
         attrs2 =
             case instructionTool of
-                JustInstruction (Exception _) ->
+                JustInstruction (Instruction.Exception _) ->
                     [ Background.color (rgba 1 0 0 0.1) ]
 
                 _ ->

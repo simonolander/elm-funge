@@ -55,6 +55,7 @@ view { south, center, east, west, north, modal } =
                     , el
                         [ width (fillPortion 3)
                         , height fill
+                        , scrollbars
                         ]
                         c
                     ]
@@ -70,6 +71,7 @@ view { south, center, east, west, north, modal } =
                     , el
                         [ width (maximum 500 (fillPortion 1))
                         , height fill
+                        , scrollbars
                         ]
                         e
                     ]

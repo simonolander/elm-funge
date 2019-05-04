@@ -1,4 +1,4 @@
-module Data.BoardInstruction exposing (BoardInstruction, decoder, encode)
+module Data.BoardInstruction exposing (BoardInstruction, decoder, encode, withInstruction)
 
 import Data.Instruction as Instruction exposing (Instruction)
 import Data.Position as Position exposing (Position)
@@ -10,6 +10,11 @@ type alias BoardInstruction =
     { position : Position
     , instruction : Instruction
     }
+
+
+withInstruction : Instruction -> BoardInstruction -> BoardInstruction
+withInstruction instruction boardInstruction =
+    { boardInstruction | instruction = instruction }
 
 
 

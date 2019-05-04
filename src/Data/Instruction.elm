@@ -1,4 +1,4 @@
-module Data.Instruction exposing (Instruction(..), decoder, encode)
+module Data.Instruction exposing (Instruction(..), all, decoder, encode)
 
 import Data.Direction as Direction exposing (Direction)
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
@@ -33,6 +33,34 @@ type Instruction
     | Terminate
     | SendToBottom
     | Exception String
+
+
+all : List Instruction
+all =
+    [ NoOp
+    , PopFromStack
+    , JumpForward
+    , Duplicate
+    , Swap
+    , Negate
+    , Abs
+    , Not
+    , Increment
+    , Decrement
+    , Add
+    , Subtract
+    , Multiply
+    , Divide
+    , Equals
+    , CompareLessThan
+    , And
+    , Or
+    , XOr
+    , Read
+    , Print
+    , Terminate
+    , SendToBottom
+    ]
 
 
 

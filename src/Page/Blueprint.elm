@@ -1,10 +1,14 @@
 module Page.Blueprint exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
+import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Board as Board
+import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
 import Data.CampaignId as CampaignId
 import Data.IO as IO
+import Data.Instruction exposing (Instruction)
+import Data.InstructionTool as InstructionTool exposing (InstructionTool)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -20,6 +24,7 @@ import Route
 import View.Board
 import View.Header
 import View.Input
+import View.InstructionTools
 import View.Layout
 import View.LoadingScreen
 import View.Scewn
@@ -37,6 +42,8 @@ type alias Model =
     , input : String
     , output : String
     , error : Maybe String
+    , instructionTools : Array InstructionTool
+    , selectedInstructionToolIndex : Maybe Int
     }
 
 
@@ -51,6 +58,8 @@ init levelId session =
             , input = ""
             , output = ""
             , error = Nothing
+            , instructionTools = Array.fromList InstructionTool.all
+            , selectedInstructionToolIndex = Nothing
             }
     in
     case Dict.get levelId session.levels of
@@ -99,6 +108,9 @@ type Msg
     | ChangedHeight String
     | ChangedInput String
     | ChangedOutput String
+    | InstructionToolSelected Int
+    | InstructionToolReplaced Int InstructionTool
+    | InitialInstructionPlaced BoardInstruction
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -221,6 +233,30 @@ update msg model =
                             Level.saveToLocalStorage newLevel
                     in
                     ( { modelWithOutput | session = newSession }, cmd )
+
+                InstructionToolSelected index ->
+                    ( { model | selectedInstructionToolIndex = Just index }, Cmd.none )
+
+                InstructionToolReplaced index instructionTool ->
+                    ( { model | instructionTools = Array.set index instructionTool model.instructionTools }, Cmd.none )
+
+                InitialInstructionPlaced boardInstruction ->
+                    let
+                        newLevel =
+                            boardInstruction
+                                |> Debug.log "boardInstruction"
+                                |> flip Board.withBoardInstruction level.initialBoard
+                                |> flip Level.withInitialBoard level
+
+                        newModel =
+                            newLevel
+                                |> flip Session.withLevel model.session
+                                |> setSession model
+
+                        cmd =
+                            Level.saveToLocalStorage newLevel
+                    in
+                    ( newModel, cmd )
 
         Nothing ->
             ( model, Cmd.none )
@@ -357,8 +393,13 @@ viewBlueprint level model =
                 board =
                     level.initialBoard
 
+                onClick : Maybe (BoardInstruction -> Msg)
                 onClick =
-                    Nothing
+                    model.selectedInstructionToolIndex
+                        |> Maybe.andThen (flip Array.get model.instructionTools)
+                        |> Maybe.map InstructionTool.getInstruction
+                        |> Maybe.map BoardInstruction.withInstruction
+                        |> Maybe.map ((<<) InitialInstructionPlaced)
 
                 selectedPosition =
                     Nothing
@@ -372,12 +413,20 @@ viewBlueprint level model =
                 , selectedPosition = selectedPosition
                 , disabledPositions = disabledPositions
                 }
+
+        east =
+            View.InstructionTools.view
+                { instructionTools = model.instructionTools
+                , selectedIndex = model.selectedInstructionToolIndex
+                , onSelect = Just InstructionToolSelected
+                , onReplace = InstructionToolReplaced
+                }
     in
     View.Scewn.view
         { north = Just header
         , west = Just west
         , center = Just center
-        , east = Nothing
+        , east = Just east
         , south = Nothing
         , modal = Nothing
         }

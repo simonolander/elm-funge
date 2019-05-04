@@ -5,7 +5,6 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
-import Data.Direction exposing (Direction(..))
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.History as History
@@ -20,9 +19,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Html.Attributes
 import Http
-import InstructionToolView
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -30,6 +27,7 @@ import Route
 import View.Board
 import View.ErrorScreen
 import View.Header
+import View.InstructionTools
 import View.Layout
 import View.LoadingScreen
 import View.Scewn
@@ -503,7 +501,12 @@ viewLoaded model =
             viewSidebar model
 
         toolSidebarView =
-            viewToolSidebar model
+            View.InstructionTools.view
+                { instructionTools = model.level.instructionTools
+                , selectedIndex = model.selectedInstructionToolIndex
+                , onSelect = Just InstructionToolSelected
+                , onReplace = InstructionToolReplaced
+                }
 
         element =
             View.Scewn.view
@@ -593,157 +596,4 @@ viewSidebar model =
             , importExportButtonView
             , el [ alignBottom, width fill ] backButton
             ]
-        ]
-
-
-viewToolSidebar : LoadedModel -> Element Msg
-viewToolSidebar model =
-    let
-        instructionTools =
-            model.level.instructionTools
-
-        viewTool index instructionTool =
-            let
-                selected =
-                    model.selectedInstructionToolIndex
-                        |> Maybe.map ((==) index)
-                        |> Maybe.withDefault False
-
-                attributes =
-                    if selected then
-                        [ Background.color (rgba 1 1 1 0.5)
-                        , InstructionToolView.description instructionTool
-                            |> Html.Attributes.title
-                            |> htmlAttribute
-                        ]
-
-                    else
-                        [ InstructionToolView.description instructionTool
-                            |> Html.Attributes.title
-                            |> htmlAttribute
-                        ]
-
-                onPress =
-                    Just (InstructionToolSelected index)
-            in
-            instructionToolButton attributes onPress instructionTool
-
-        toolExtraView =
-            case model.selectedInstructionToolIndex of
-                Just index ->
-                    case Array.get index model.level.instructionTools of
-                        Just (ChangeAnyDirection selectedDirection) ->
-                            [ Left, Up, Down, Right ]
-                                |> List.map
-                                    (\direction ->
-                                        let
-                                            attributes =
-                                                if selectedDirection == direction then
-                                                    [ Background.color (rgb 0.5 0.5 0.5) ]
-
-                                                else
-                                                    []
-
-                                            onPress =
-                                                Just (InstructionToolReplaced index (ChangeAnyDirection direction))
-
-                                            instruction =
-                                                ChangeDirection direction
-                                        in
-                                        instructionButton attributes onPress instruction
-                                    )
-                                |> wrappedRow
-                                    [ spacing 10
-                                    , width (px 222)
-                                    , centerX
-                                    ]
-
-                        Just (BranchAnyDirection trueDirection falseDirection) ->
-                            row
-                                [ centerX
-                                , spacing 10
-                                ]
-                                [ [ Up, Left, Right, Down ]
-                                    |> List.map
-                                        (\direction ->
-                                            let
-                                                attributes =
-                                                    if trueDirection == direction then
-                                                        [ Background.color (rgb 0.5 0.5 0.5) ]
-
-                                                    else
-                                                        []
-
-                                                onPress =
-                                                    Just (InstructionToolReplaced index (BranchAnyDirection direction falseDirection))
-                                            in
-                                            branchDirectionExtraButton attributes onPress True direction
-                                        )
-                                    |> column
-                                        [ spacing 10 ]
-                                , [ Up, Left, Right, Down ]
-                                    |> List.map
-                                        (\direction ->
-                                            let
-                                                attributes =
-                                                    if falseDirection == direction then
-                                                        [ Background.color (rgb 0.5 0.5 0.5) ]
-
-                                                    else
-                                                        []
-
-                                                onPress =
-                                                    Just (InstructionToolReplaced index (BranchAnyDirection trueDirection direction))
-                                            in
-                                            branchDirectionExtraButton attributes onPress False direction
-                                        )
-                                    |> column
-                                        [ spacing 10 ]
-                                ]
-
-                        Just (PushValueToStack value) ->
-                            Input.text
-                                [ Background.color (rgb 0 0 0)
-                                , Border.width 3
-                                , Border.color (rgb 1 1 1)
-                                , Border.rounded 0
-                                ]
-                                { onChange = PushValueToStack >> InstructionToolReplaced index
-                                , text = value
-                                , placeholder = Nothing
-                                , label =
-                                    Input.labelAbove
-                                        []
-                                        (text "Enter value")
-                                }
-
-                        Just (JustInstruction _) ->
-                            none
-
-                        Nothing ->
-                            none
-
-                Nothing ->
-                    none
-
-        toolsView =
-            instructionTools
-                |> Array.indexedMap viewTool
-                |> Array.toList
-                |> wrappedRow
-                    [ width (px 222)
-                    , spacing 10
-                    , centerX
-                    ]
-    in
-    column
-        [ width (px 262)
-        , height fill
-        , Background.color (rgb 0.08 0.08 0.08)
-        , spacing 40
-        , padding 10
-        , scrollbarY
-        ]
-        [ toolsView
-        , toolExtraView
         ]

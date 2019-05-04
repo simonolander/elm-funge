@@ -1,4 +1,4 @@
-module Data.InstructionTool exposing (InstructionTool(..), decoder, encode, getInstruction)
+module Data.InstructionTool exposing (InstructionTool(..), all, decoder, encode, getInstruction)
 
 import Data.Direction exposing (Direction(..))
 import Data.Instruction as Instruction exposing (Instruction(..))
@@ -11,6 +11,19 @@ type InstructionTool
     | ChangeAnyDirection Direction
     | BranchAnyDirection Direction Direction
     | PushValueToStack String
+    | Exception String
+
+
+all : List InstructionTool
+all =
+    List.concat
+        [ Instruction.all
+            |> List.map JustInstruction
+        , [ ChangeAnyDirection Left
+          , BranchAnyDirection Left Right
+          , Exception ""
+          ]
+        ]
 
 
 getInstruction : InstructionTool -> Instruction
@@ -29,7 +42,10 @@ getInstruction instructionTool =
             value
                 |> String.toInt
                 |> Maybe.map PushToStack
-                |> Maybe.withDefault (Exception (value ++ " is not a number"))
+                |> Maybe.withDefault (Instruction.Exception (value ++ " is not a number"))
+
+        Exception exceptionMessage ->
+            Instruction.Exception exceptionMessage
 
 
 
@@ -60,6 +76,11 @@ encode instructionTool =
                 [ ( "tag", string "PushValueToStack" )
                 ]
 
+        Exception _ ->
+            object
+                [ ( "tag", string "Exception" )
+                ]
+
 
 decoder : Decoder InstructionTool
 decoder =
@@ -78,6 +99,9 @@ decoder =
 
                 "PushValueToStack" ->
                     succeed (PushValueToStack "0")
+
+                "Exception" ->
+                    succeed (Exception "")
 
                 _ ->
                     fail ("Unknown instruction tool tag: " ++ tag)

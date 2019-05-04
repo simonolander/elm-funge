@@ -21,6 +21,9 @@ description instructionTool =
         PushValueToStack _ ->
             "Push a value to the stack"
 
+        Exception _ ->
+            "Exception"
+
 
 view : List (Attribute msg) -> InstructionTool -> Element msg
 view attributes instructionTool =
@@ -42,5 +45,10 @@ view attributes instructionTool =
 
         PushValueToStack _ ->
             "n"
+                |> text
+                |> el ([ Font.size 26, centerY ] ++ attributes)
+
+        Exception _ ->
+            "!"
                 |> text
                 |> el ([ Font.size 26, centerY ] ++ attributes)
