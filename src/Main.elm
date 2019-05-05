@@ -13,10 +13,10 @@ import Json.Encode as Encode
 import Levels
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
+import Page.Campaign as Levels
 import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
-import Page.Levels as Levels
 import Page.Login as Login
 import Ports.LocalStorage
 import Route

@@ -1,4 +1,4 @@
-module Page.Levels exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Campaign exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
 
 import Api.GCP as GCP
 import Basics.Extra exposing (flip)
