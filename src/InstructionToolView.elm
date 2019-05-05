@@ -1,5 +1,6 @@
 module InstructionToolView exposing (description, view)
 
+import Data.Instruction as Instruction
 import Data.InstructionTool exposing (InstructionTool(..))
 import Element exposing (..)
 import Element.Font as Font
@@ -48,7 +49,5 @@ view attributes instructionTool =
                 |> text
                 |> el ([ Font.size 26, centerY ] ++ attributes)
 
-        Exception _ ->
-            "!"
-                |> text
-                |> el ([ Font.size 26, centerY ] ++ attributes)
+        Exception errorMessage ->
+            InstructionView.view attributes (Instruction.Exception errorMessage)

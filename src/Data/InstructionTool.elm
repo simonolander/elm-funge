@@ -17,7 +17,7 @@ type InstructionTool
 all : List InstructionTool
 all =
     List.concat
-        [ Instruction.all
+        [ Instruction.allSimple
             |> List.map JustInstruction
         , [ ChangeAnyDirection Left
           , BranchAnyDirection Left Right

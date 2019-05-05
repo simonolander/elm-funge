@@ -173,7 +173,7 @@ view conf =
         |> column
             [ width (px 262)
             , height fill
-            , Background.color (rgb 0.1 0.1 0.1)
+            , Background.color (rgb 0.05 0.05 0.05)
             , spacing 40
             , padding 10
             , scrollbarY

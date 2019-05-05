@@ -1,4 +1,4 @@
-module Data.Instruction exposing (Instruction(..), all, decoder, encode)
+module Data.Instruction exposing (Instruction(..), allSimple, decoder, encode)
 
 import Data.Direction as Direction exposing (Direction)
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
@@ -35,8 +35,8 @@ type Instruction
     | Exception String
 
 
-all : List Instruction
-all =
+allSimple : List Instruction
+allSimple =
     [ NoOp
     , PopFromStack
     , JumpForward

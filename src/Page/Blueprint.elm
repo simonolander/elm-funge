@@ -7,8 +7,8 @@ import Data.Board as Board
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
 import Data.CampaignId as CampaignId
 import Data.IO as IO
-import Data.Instruction exposing (Instruction)
-import Data.InstructionTool as InstructionTool exposing (InstructionTool)
+import Data.Instruction exposing (Instruction(..))
+import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -16,6 +16,8 @@ import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
+import Extra.Array
+import InstructionToolView
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -28,6 +30,7 @@ import View.InstructionTools
 import View.Layout
 import View.LoadingScreen
 import View.Scewn
+import ViewComponents
 
 
 
@@ -44,6 +47,7 @@ type alias Model =
     , error : Maybe String
     , instructionTools : Array InstructionTool
     , selectedInstructionToolIndex : Maybe Int
+    , enabledInstructionTools : Array ( InstructionTool, Bool )
     }
 
 
@@ -60,6 +64,7 @@ init levelId session =
             , error = Nothing
             , instructionTools = Array.fromList InstructionTool.all
             , selectedInstructionToolIndex = Nothing
+            , enabledInstructionTools = Array.empty
             }
     in
     case Dict.get levelId session.levels of
@@ -84,6 +89,11 @@ initWithLevel level model =
             level.io.output
                 |> List.map String.fromInt
                 |> String.join ","
+        , enabledInstructionTools =
+            InstructionTool.all
+                |> List.filter ((/=) (JustInstruction NoOp))
+                |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
+                |> Array.fromList
       }
     , Cmd.none
     )
@@ -110,6 +120,7 @@ type Msg
     | ChangedOutput String
     | InstructionToolSelected Int
     | InstructionToolReplaced Int InstructionTool
+    | InstructionToolEnabled Int
     | InitialInstructionPlaced BoardInstruction
 
 
@@ -240,6 +251,34 @@ update msg model =
                 InstructionToolReplaced index instructionTool ->
                     ( { model | instructionTools = Array.set index instructionTool model.instructionTools }, Cmd.none )
 
+                InstructionToolEnabled index ->
+                    let
+                        newEnabledInstructionTools =
+                            Array.get index model.enabledInstructionTools
+                                |> Maybe.map (\( tool, enabled ) -> ( tool, not enabled ))
+                                |> Maybe.map (flip (Array.set index) model.enabledInstructionTools)
+                                |> Maybe.withDefault model.enabledInstructionTools
+
+                        newLevel =
+                            newEnabledInstructionTools
+                                |> Array.filter Tuple.second
+                                |> Array.map Tuple.first
+                                |> Array.append (Array.fromList [ JustInstruction NoOp ])
+                                |> flip Level.withInstructionTools level
+
+                        newSession =
+                            Session.withLevel newLevel model.session
+
+                        cmd =
+                            Level.saveToLocalStorage newLevel
+                    in
+                    ( { model
+                        | session = newSession
+                        , enabledInstructionTools = newEnabledInstructionTools
+                      }
+                    , cmd
+                    )
+
                 InitialInstructionPlaced boardInstruction ->
                     let
                         newLevel =
@@ -366,6 +405,35 @@ viewBlueprint level model =
                         , placeholder = Just "2,4,6"
                         }
 
+                instructionTools =
+                    let
+                        enableInstructionToolButton index ( tool, enabled ) =
+                            ViewComponents.imageButton
+                                [ if enabled then
+                                    Background.color (rgb 0.25 0.25 0.25)
+
+                                  else
+                                    Background.color (rgb 0 0 0)
+                                ]
+                                (Just (InstructionToolEnabled index))
+                                (InstructionToolView.view [] tool)
+
+                        instructionToolRow =
+                            model.enabledInstructionTools
+                                |> Array.indexedMap enableInstructionToolButton
+                                |> Array.toList
+                                |> wrappedRow [ spacing 10 ]
+
+                        title =
+                            text "Enabled instructions"
+                    in
+                    column
+                        [ width fill
+                        ]
+                        [ title
+                        , instructionToolRow
+                        ]
+
                 link =
                     Route.link [] (text "test") (Route.Campaign CampaignId.blueprints (Just level.id))
             in
@@ -374,6 +442,7 @@ viewBlueprint level model =
                 , height fill
                 , padding 20
                 , spacing 20
+                , scrollbars
                 , Background.color (rgb 0.05 0.05 0.05)
                 ]
                 [ paragraph
@@ -385,6 +454,7 @@ viewBlueprint level model =
                 , heightInput
                 , inputInput
                 , outputInput
+                , instructionTools
                 , link
                 ]
 
