@@ -7,6 +7,7 @@ import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId as DraftId exposing (DraftId)
+import Data.HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -111,6 +112,7 @@ type Msg
     = SelectLevel LevelId
     | LoadedLevels (Result Http.Error (List Level))
     | LoadedDrafts (Result Http.Error (List Draft))
+    | LoadedHighScore (Result Http.Error HighScore)
     | OpenDraftClicked DraftId
     | GeneratedDraft Draft
 
@@ -144,10 +146,14 @@ update msg model =
                 changeUrlCmd =
                     Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
 
+                loadHighScoreCmd =
+                    GCP.getHighScore selectedLevelId LoadedHighScore
+
                 cmd =
                     Cmd.batch
                         [ generateDraftCmd
                         , changeUrlCmd
+                        , loadHighScoreCmd
                         ]
             in
             ( { model
@@ -197,6 +203,22 @@ update msg model =
                 Ok drafts ->
                     ( { model
                         | session = Session.withDrafts drafts session
+                      }
+                    , Cmd.none
+                    )
+
+                Err error ->
+                    ( { model
+                        | error = Just error
+                      }
+                    , Cmd.none
+                    )
+
+        LoadedHighScore result ->
+            case result of
+                Ok highScore ->
+                    ( { model
+                        | session = Session.withHighScore highScore session
                       }
                     , Cmd.none
                     )

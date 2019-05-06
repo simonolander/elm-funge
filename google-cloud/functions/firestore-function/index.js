@@ -85,7 +85,7 @@ const validateObject = (object, schema) => {
     if (errors.length > 0) {
         throw Exception(400, errors);
     }
-    return errors;
+    return object;
 };
 
 const getUser = async (subject) => {
@@ -273,7 +273,7 @@ exports.drafts = async (req, res) => {
     }
 };
 
-exports.highscore = async (req, res) => {
+exports.highScores = async (req, res) => {
     try {
         if (accessControlRequest(req, res)) {
             return;
@@ -285,25 +285,26 @@ exports.highscore = async (req, res) => {
                 .where("levelId", "==", levelId)
                 .get();
 
-            const highscoreFields = ['numberOfSteps', 'numberOfInstructions'];
-            const highscore = Object.entries(solutions.docs
+            const highScoreFields = ['numberOfSteps', 'numberOfInstructions'];
+            const highScore = Object.entries(solutions.docs
                 .map(doc => doc.data())
-                .reduce((highscore, solution) => {
-                highscoreFields.forEach(field => {
-                    highscore[field][solution[field]] = highscore[field][solution[field]] + 1 || 1;
+                .reduce((highScore, solution) => {
+                highScoreFields.forEach(field => {
+                    highScore[field][solution[field]] = highScore[field][solution[field]] + 1 || 1;
                 });
-                return highscore;
-            }, highscoreFields.reduce((highscore, field) => {
-                highscore[field] = {};
-                return highscore;
-            }, {}))).reduce((highscore, [field, counts]) => {
-                highscore[field] = Object.entries(counts)
+                return highScore;
+            }, highScoreFields.reduce((highScore, field) => {
+                highScore[field] = {};
+                return highScore;
+            }, {}))).reduce((highScore, [field, counts]) => {
+                highScore[field] = Object.entries(counts)
                     .map(([key, value]) => [parseInt(key), value]);
-                return highscore;
+                return highScore;
             }, {});
+            highScore.levelId = levelId;
 
             return res.status(200)
-                .send(drafts.docs.map(doc => doc.data()));
+                .send(highScore);
         } else {
             return res.status(400)
                 .send({

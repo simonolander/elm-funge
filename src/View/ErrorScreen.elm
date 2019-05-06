@@ -16,18 +16,14 @@ layout =
 view : String -> Element msg
 view errorMessage =
     paragraph
-        [ width (maximum 1400 fill)
+        [ width fill
         , height fill
         , centerX
         , Background.color (rgb 0.1 0.1 0.1)
         , padding 40
         , htmlAttribute (Attribute.class "pre")
         , scrollbars
+        , Font.color (rgb 1 0.51 0.35)
+        , Font.size 30
         ]
         [ text errorMessage ]
-        |> el
-            [ width fill
-            , height fill
-            , Font.color (rgb 1 0.51 0.35)
-            , Font.size 30
-            ]

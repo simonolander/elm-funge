@@ -7,6 +7,7 @@ module Data.Session exposing
     , withCampaigns
     , withDraft
     , withDrafts
+    , withHighScore
     , withLevel
     , withLevels
     , withUser
@@ -19,6 +20,7 @@ import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
+import Data.HighScore exposing (HighScore)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.User as User exposing (User)
@@ -31,6 +33,7 @@ type alias Session =
     , levels : Dict LevelId Level
     , drafts : Dict DraftId Draft
     , campaigns : Dict CampaignId Campaign
+    , highScores : Dict LevelId HighScore
     }
 
 
@@ -41,6 +44,7 @@ init key =
     , levels = Dict.empty
     , drafts = Dict.empty
     , campaigns = Dict.empty
+    , highScores = Dict.empty
     }
 
 
@@ -96,6 +100,14 @@ withCampaign campaign session =
 withCampaigns : List Campaign -> Session -> Session
 withCampaigns campaigns session =
     List.foldl withCampaign session campaigns
+
+
+withHighScore : HighScore -> Session -> Session
+withHighScore highScore session =
+    { session
+        | highScores =
+            Dict.insert highScore.levelId highScore session.highScores
+    }
 
 
 getToken : Session -> Maybe AuthorizationToken
