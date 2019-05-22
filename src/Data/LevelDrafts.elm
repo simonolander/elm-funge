@@ -1,4 +1,4 @@
-module Data.LevelDrafts exposing (LevelDrafts, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withDraftId)
+module Data.LevelDrafts exposing (LevelDrafts, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withDraftId, withDraftIds)
 
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.LevelId as LevelId exposing (LevelId)
@@ -27,6 +27,13 @@ withDraftId : DraftId -> LevelDrafts -> LevelDrafts
 withDraftId draftId levelDrafts =
     { levelDrafts
         | draftIds = Set.insert draftId levelDrafts.draftIds
+    }
+
+
+withDraftIds : Set DraftId -> LevelDrafts -> LevelDrafts
+withDraftIds draftIds levelDrafts =
+    { levelDrafts
+        | draftIds = Set.union levelDrafts.draftIds draftIds
     }
 
 

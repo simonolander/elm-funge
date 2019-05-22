@@ -2,6 +2,7 @@ import './main.css';
 import { Elm } from './Main.elm';
 // import registerServiceWorker from './js/registerServiceWorker';
 import localStoragePorts from './js/local-storage-ports';
+import consolePorts from './js/console-ports';
 
 const app = Elm.Main.init({
   node: document.getElementById('root'),
@@ -14,3 +15,4 @@ const app = Elm.Main.init({
 // registerServiceWorker();
 
 localStoragePorts.register(app.ports, console.log);
+consolePorts.register(app.ports);

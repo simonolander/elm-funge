@@ -23,6 +23,7 @@ import Http
 import Json.Decode
 import Json.Encode as Encode
 import Maybe.Extra
+import Ports.Console
 import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import RemoteData exposing (RemoteData(..))
@@ -89,18 +90,7 @@ initLevelId levelId session =
 
 initLevelDrafts : LevelId -> Session -> Cmd Msg
 initLevelDrafts levelId session =
-    case Session.getLevelDrafts levelId session of
-        NotAsked ->
-            LevelDrafts.loadFromLocalStorage levelId
-
-        Loading ->
-            Cmd.none
-
-        Failure e ->
-            LevelDrafts.loadFromLocalStorage levelId
-
-        Success a ->
-            Cmd.none
+    LevelDrafts.loadFromLocalStorage levelId
 
 
 initDraft : DraftId -> Session -> Cmd Msg
@@ -132,7 +122,8 @@ type Msg
     | LoadedLevels (Result Http.Error (List Level))
     | LoadedDrafts (Result Http.Error (List Draft))
     | LoadedHighScore (RequestResult LevelId HighScore)
-    | OpenDraftClicked DraftId
+    | ClickedOpenDraft DraftId
+    | ClickedGenerateDraft
     | GeneratedDraft Draft
 
 
@@ -141,6 +132,9 @@ update msg model =
     let
         session =
             getSession model
+
+        generateDraft levelId =
+            Random.generate GeneratedDraft (Draft.generator levelId)
     in
     case msg of
         SelectLevel selectedLevelId ->
@@ -187,10 +181,23 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        OpenDraftClicked draftId ->
+        ClickedOpenDraft draftId ->
             ( model
             , Route.pushUrl model.session.key (Route.EditDraft draftId)
             )
+
+        ClickedGenerateDraft ->
+            let
+                maybeSelectedLevel =
+                    model.selectedLevelId
+                        |> Maybe.andThen (flip Dict.get session.levels)
+            in
+            case maybeSelectedLevel of
+                Just level ->
+                    ( model, generateDraft level )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         LoadedLevels result ->
             case result of
@@ -308,16 +315,28 @@ localStorageResponseUpdate ( key, value ) model =
                 Ok (Just levelDrafts) ->
                     ( Session.withLevelDrafts levelDrafts session
                         |> setSession model
+                        |> Debug.log "log"
                     , levelDrafts
                         |> .draftIds
                         |> Set.toList
                         |> List.filter (not << flip Dict.member session.drafts)
                         |> List.map Draft.loadFromLocalStorage
+                        |> (::) (Ports.Console.log (LevelDrafts.encode levelDrafts))
                         |> Cmd.batch
                     )
 
                 Ok Nothing ->
-                    ( model, Cmd.none )
+                    case model.selectedLevelId of
+                        Just levelId ->
+                            ( Session.withLevelDrafts (LevelDrafts.empty levelId) session
+                                |> setSession model
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            ( model
+                            , Ports.Console.errorString "YIO5XLw3FQVsRyaj"
+                            )
 
                 Err error ->
                     ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
@@ -338,12 +357,15 @@ localStorageResponseUpdate ( key, value ) model =
     in
     ( key, value )
         |> LocalStorage.oneOf
-            [ Draft.localStorageResponse onDraft
-            , LevelDrafts.localStorageResponse onLevelDrafts
+            [ Campaign.localStorageResponse onCampaign
             , Level.localStorageResponse onLevel
-            , Campaign.localStorageResponse onCampaign
+            , LevelDrafts.localStorageResponse onLevelDrafts
+            , Draft.localStorageResponse onDraft
             ]
-        |> Maybe.withDefault ( model, Cmd.none )
+        |> Maybe.withDefault
+            ( model
+            , Ports.Console.errorString ("No matching localStorageResponse for key: " ++ key)
+            )
 
 
 
@@ -512,6 +534,12 @@ viewSidebar level model =
             Session.getHighScore level.id model.session
                 |> View.HighScore.view
 
+        newDraftButton =
+            ViewComponents.textButton
+                []
+                (Just ClickedGenerateDraft)
+                "New draft"
+
         viewDraft index draft =
             let
                 attrs =
@@ -570,6 +598,7 @@ viewSidebar level model =
         draftsView =
             drafts
                 |> List.indexedMap viewDraft
+                |> (::) newDraftButton
                 |> column
                     [ width fill
                     , spacing 20

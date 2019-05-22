@@ -92,10 +92,8 @@ withDrafts drafts session =
 
 withDraft : Draft -> Session -> Session
 withDraft draft session =
-    { session
-        | drafts =
-            Dict.insert draft.id draft session.drafts
-    }
+    { session | drafts = Dict.insert draft.id draft session.drafts }
+        |> withLevelDraft draft.levelId draft.id
 
 
 withCampaign : Campaign -> Session -> Session
@@ -168,4 +166,16 @@ withLevelDraft levelId draftId session =
 
 withLevelDrafts : LevelDrafts -> Session -> Session
 withLevelDrafts levelDrafts session =
-    Set.foldl (withLevelDraft levelDrafts.levelId) session levelDrafts.draftIds
+    let
+        newLevelDrafts =
+            case Dict.get levelDrafts.levelId session.levelDrafts of
+                Just (Success oldLevelDrafts) ->
+                    Success (LevelDrafts.withDraftIds oldLevelDrafts.draftIds levelDrafts)
+
+                _ ->
+                    Success levelDrafts
+    in
+    { session
+        | levelDrafts =
+            Dict.insert levelDrafts.levelId newLevelDrafts session.levelDrafts
+    }
