@@ -9,21 +9,28 @@ import Data.Draft as Draft exposing (Draft)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
+import Data.LevelDrafts as LevelDrafts exposing (LevelDrafts)
 import Data.LevelId exposing (LevelId)
+import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Extra.String exposing (fromHttpError)
 import Http
+import Json.Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
+import RemoteData exposing (RemoteData(..))
 import Result exposing (Result)
 import Route exposing (Route)
+import Set
 import View.ErrorScreen
+import View.HighScore
 import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
@@ -38,7 +45,7 @@ type alias Model =
     { session : Session
     , campaignId : CampaignId
     , selectedLevelId : Maybe LevelId
-    , error : Maybe Http.Error
+    , error : Maybe String
     }
 
 
@@ -53,45 +60,57 @@ init campaignId selectedLevelId session =
             }
 
         cmd =
-            case Dict.get campaignId session.campaigns of
-                Nothing ->
-                    loadCampaign campaignId session
-
-                Just campaign ->
-                    loadLevels campaign session
+            initCampaignId campaignId session
     in
     ( model, cmd )
 
 
-loadCampaign : CampaignId -> Session -> Cmd Msg
-loadCampaign campaignId session =
-    Campaign.loadFromLocalStorage campaignId
+initCampaignId : CampaignId -> Session -> Cmd Msg
+initCampaignId campaignId session =
+    case Dict.get campaignId session.campaigns of
+        Nothing ->
+            Campaign.loadFromLocalStorage campaignId
 
-
-loadLevels : Campaign -> Session -> Cmd Msg
-loadLevels campaign session =
-    let
-        loadLevelsCmd =
+        Just campaign ->
             campaign.levelIds
-                |> List.filter (not << flip Dict.member session.levels)
-                |> List.map Level.loadFromLocalStorage
+                |> List.map (flip initLevelId session)
                 |> Cmd.batch
 
-        loadDraftsCmd =
-            campaign.levelIds
-                |> List.map (flip Dict.get session.levels)
-                |> Maybe.Extra.values
-                |> List.map .id
-                |> List.map Draft.loadDraftIdsFromLocalStorage
-                |> Cmd.batch
 
-        cmd =
-            Cmd.batch
-                [ loadLevelsCmd
-                , loadDraftsCmd
-                ]
-    in
-    cmd
+initLevelId : LevelId -> Session -> Cmd Msg
+initLevelId levelId session =
+    case Dict.get levelId session.levels of
+        Just level ->
+            Cmd.none
+
+        Nothing ->
+            Level.loadFromLocalStorage levelId
+
+
+initLevelDrafts : LevelId -> Session -> Cmd Msg
+initLevelDrafts levelId session =
+    case Session.getLevelDrafts levelId session of
+        NotAsked ->
+            LevelDrafts.loadFromLocalStorage levelId
+
+        Loading ->
+            Cmd.none
+
+        Failure e ->
+            LevelDrafts.loadFromLocalStorage levelId
+
+        Success a ->
+            Cmd.none
+
+
+initDraft : DraftId -> Session -> Cmd Msg
+initDraft draftId session =
+    case Dict.get draftId session.drafts of
+        Just draft ->
+            Cmd.none
+
+        Nothing ->
+            Draft.loadFromLocalStorage draftId
 
 
 getSession : Model -> Session
@@ -112,7 +131,7 @@ type Msg
     = SelectLevel LevelId
     | LoadedLevels (Result Http.Error (List Level))
     | LoadedDrafts (Result Http.Error (List Draft))
-    | LoadedHighScore (Result Http.Error HighScore)
+    | LoadedHighScore (RequestResult LevelId HighScore)
     | OpenDraftClicked DraftId
     | GeneratedDraft Draft
 
@@ -125,42 +144,48 @@ update msg model =
     in
     case msg of
         SelectLevel selectedLevelId ->
-            let
-                maybeSelectedLevel =
-                    Dict.get selectedLevelId model.session.levels
+            case Dict.get selectedLevelId session.levels of
+                Just selectedLevel ->
+                    let
+                        loadLevelDraftsCmd =
+                            initLevelDrafts selectedLevelId session
 
-                generateDraftCmd =
-                    case maybeSelectedLevel of
-                        Just selectedLevel ->
-                            if List.isEmpty (Session.getLevelDrafts selectedLevelId session) then
-                                Random.generate
-                                    GeneratedDraft
-                                    (Draft.generator selectedLevel)
+                        generateDraftCmd =
+                            case Session.getLevelDrafts selectedLevelId session of
+                                Success levelDrafts ->
+                                    if Set.isEmpty levelDrafts.draftIds then
+                                        Random.generate
+                                            GeneratedDraft
+                                            (Draft.generator selectedLevel)
 
-                            else
-                                Cmd.none
+                                    else
+                                        Cmd.none
 
-                        Nothing ->
-                            Cmd.none
+                                _ ->
+                                    Cmd.none
 
-                changeUrlCmd =
-                    Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
+                        changeUrlCmd =
+                            Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
 
-                loadHighScoreCmd =
-                    GCP.getHighScore selectedLevelId LoadedHighScore
+                        loadHighScoreCmd =
+                            GCP.getHighScore selectedLevelId LoadedHighScore
 
-                cmd =
-                    Cmd.batch
-                        [ generateDraftCmd
-                        , changeUrlCmd
-                        , loadHighScoreCmd
-                        ]
-            in
-            ( { model
-                | selectedLevelId = Just selectedLevelId
-              }
-            , cmd
-            )
+                        cmd =
+                            Cmd.batch
+                                [ generateDraftCmd
+                                , changeUrlCmd
+                                , loadHighScoreCmd
+                                , loadLevelDraftsCmd
+                                ]
+                    in
+                    ( { model
+                        | selectedLevelId = Just selectedLevelId
+                      }
+                    , cmd
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         OpenDraftClicked draftId ->
             ( model
@@ -193,7 +218,7 @@ update msg model =
 
                 Err error ->
                     ( { model
-                        | error = Just error
+                        | error = Just (fromHttpError error)
                       }
                     , Cmd.none
                     )
@@ -209,26 +234,25 @@ update msg model =
 
                 Err error ->
                     ( { model
-                        | error = Just error
+                        | error = Just (fromHttpError error)
                       }
                     , Cmd.none
                     )
 
-        LoadedHighScore result ->
-            case result of
-                Ok highScore ->
-                    ( { model
-                        | session = Session.withHighScore highScore session
-                      }
-                    , Cmd.none
-                    )
+        LoadedHighScore requestResult ->
+            let
+                newSession =
+                    Session.withHighScore requestResult session
 
-                Err error ->
-                    ( { model
-                        | error = Just error
-                      }
-                    , Cmd.none
-                    )
+                newModel =
+                    setSession model newSession
+
+                cmd =
+                    Cmd.none
+            in
+            ( newModel
+            , Cmd.none
+            )
 
         GeneratedDraft draft ->
             let
@@ -252,41 +276,51 @@ localStorageResponseUpdate ( key, value ) model =
                 Ok (Just campaign) ->
                     ( Session.withCampaign campaign session
                         |> setSession model
-                    , loadLevels campaign session
+                    , campaign.levelIds
+                        |> List.map (flip initLevelId session)
+                        |> Cmd.batch
                     )
 
+                -- TODO
                 Ok Nothing ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    ( model, Cmd.none )
+                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
 
         onLevel result =
             case result of
                 Ok (Just level) ->
                     ( Session.withLevel level session
                         |> setSession model
-                    , Draft.loadDraftIdsFromLocalStorage level.id
+                    , Cmd.none
+                    )
+
+                -- TODO
+                Ok Nothing ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
+
+        onLevelDrafts result =
+            case result of
+                Ok (Just levelDrafts) ->
+                    ( Session.withLevelDrafts levelDrafts session
+                        |> setSession model
+                    , levelDrafts
+                        |> .draftIds
+                        |> Set.toList
+                        |> List.filter (not << flip Dict.member session.drafts)
+                        |> List.map Draft.loadFromLocalStorage
+                        |> Cmd.batch
                     )
 
                 Ok Nothing ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    ( model, Cmd.none )
-
-        onDraftIds result =
-            case result of
-                Ok draftIds ->
-                    ( model
-                    , draftIds
-                        |> List.filter (not << flip Dict.member session.drafts)
-                        |> List.map Draft.loadFromLocalStorage
-                        |> Cmd.batch
-                    )
-
-                Err error ->
-                    ( model, Cmd.none )
+                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
 
         onDraft result =
             case result of
@@ -300,12 +334,12 @@ localStorageResponseUpdate ( key, value ) model =
                     ( model, Cmd.none )
 
                 Err error ->
-                    ( model, Cmd.none )
+                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
     in
     ( key, value )
         |> LocalStorage.oneOf
             [ Draft.localStorageResponse onDraft
-            , Draft.localStorageDraftIdsResponse onDraftIds
+            , LevelDrafts.localStorageResponse onLevelDrafts
             , Level.localStorageResponse onLevel
             , Campaign.localStorageResponse onCampaign
             ]
@@ -360,27 +394,9 @@ view model =
     }
 
 
-viewError : Http.Error -> Element Msg
+viewError : String -> Element Msg
 viewError error =
-    let
-        errorMessage =
-            case error of
-                Http.BadUrl string ->
-                    "Bad url: " ++ string
-
-                Http.Timeout ->
-                    "The request timed out"
-
-                Http.NetworkError ->
-                    "Network error"
-
-                Http.BadStatus int ->
-                    "Bad status: " ++ String.fromInt int
-
-                Http.BadBody string ->
-                    string
-    in
-    View.ErrorScreen.view errorMessage
+    View.ErrorScreen.view error
 
 
 viewCampaign : Campaign -> Model -> Element Msg
@@ -492,6 +508,10 @@ viewSidebar level model =
                     )
                 ]
 
+        highScore =
+            Session.getHighScore level.id model.session
+                |> View.HighScore.view
+
         viewDraft index draft =
             let
                 attrs =
@@ -558,5 +578,6 @@ viewSidebar level model =
     [ levelNameView
     , solvedStatusView
     , descriptionView
+    , highScore
     , draftsView
     ]

@@ -1,9 +1,10 @@
-module Extra.Decode exposing (tuple)
+module Extra.Decode exposing (set, tuple)
 
 import Json.Decode exposing (..)
+import Set
 
 
-tuple : Json.Decode.Decoder a -> Json.Decode.Decoder b -> Json.Decode.Decoder ( a, b )
+tuple : Decoder a -> Decoder b -> Decoder ( a, b )
 tuple aDecoder bDecoder =
     map List.length (list value)
         |> andThen
@@ -20,3 +21,8 @@ tuple aDecoder bDecoder =
                     _ ->
                         fail ("Invalid length: expected 2 but was " ++ String.fromInt length)
             )
+
+
+set : Decoder comparable -> Decoder (Set.Set comparable)
+set decoder =
+    map Set.fromList (list decoder)

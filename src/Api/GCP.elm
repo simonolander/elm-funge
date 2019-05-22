@@ -5,6 +5,7 @@ import Data.Draft as Draft exposing (Draft)
 import Data.HighScore as HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
+import Data.RequestResult exposing (RequestResult)
 import Data.Solution as Solution exposing (Solution)
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Http exposing (Expect, Header)
@@ -100,14 +101,14 @@ verifyIdentityToken authorizationToken toMsg =
     authorizedGet url authorizationToken expect
 
 
-getHighScore : LevelId -> (Result Http.Error HighScore -> msg) -> Cmd msg
+getHighScore : LevelId -> (RequestResult LevelId HighScore -> msg) -> Cmd msg
 getHighScore levelId toMsg =
     let
         url =
             buildUrl [ "highScores" ] [ Url.Builder.string "levelId" levelId ]
 
         expect =
-            Http.expectJson toMsg HighScore.decoder
+            Http.expectJson (RequestResult levelId >> toMsg) HighScore.decoder
     in
     Http.get
         { url = url
