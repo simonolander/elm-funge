@@ -1,5 +1,6 @@
-module Data.LevelDrafts exposing (LevelDrafts, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withDraftId, withDraftIds)
+module Data.DraftBook exposing (DraftBook, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withDraftId, withDraftIds)
 
+import Basics.Extra exposing (flip)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.LevelId as LevelId exposing (LevelId)
 import Extra.Decode
@@ -10,27 +11,27 @@ import Ports.LocalStorage
 import Set exposing (Set)
 
 
-type alias LevelDrafts =
+type alias DraftBook =
     { levelId : LevelId
     , draftIds : Set DraftId
     }
 
 
-empty : LevelId -> LevelDrafts
+empty : LevelId -> DraftBook
 empty levelId =
     { levelId = levelId
     , draftIds = Set.empty
     }
 
 
-withDraftId : DraftId -> LevelDrafts -> LevelDrafts
+withDraftId : DraftId -> DraftBook -> DraftBook
 withDraftId draftId levelDrafts =
     { levelDrafts
         | draftIds = Set.insert draftId levelDrafts.draftIds
     }
 
 
-withDraftIds : Set DraftId -> LevelDrafts -> LevelDrafts
+withDraftIds : Set DraftId -> DraftBook -> DraftBook
 withDraftIds draftIds levelDrafts =
     { levelDrafts
         | draftIds = Set.union levelDrafts.draftIds draftIds
@@ -41,7 +42,7 @@ withDraftIds draftIds levelDrafts =
 -- JSON
 
 
-encode : LevelDrafts -> Encode.Value
+encode : DraftBook -> Encode.Value
 encode levelDrafts =
     Encode.object
         [ ( "levelId", LevelId.encode levelDrafts.levelId )
@@ -49,7 +50,7 @@ encode levelDrafts =
         ]
 
 
-decoder : Decode.Decoder LevelDrafts
+decoder : Decode.Decoder DraftBook
 decoder =
     Decode.field "levelId" LevelId.decoder
         |> Decode.andThen
@@ -71,7 +72,7 @@ decoder =
 
 localStorageKey : LevelId -> Ports.LocalStorage.Key
 localStorageKey levelId =
-    String.join "." [ "levels", levelId, "draftIds" ]
+    String.join "." [ "levels", levelId, "draftBook" ]
 
 
 saveToLocalStorage : DraftId -> LevelId -> Cmd msg
@@ -95,12 +96,20 @@ loadFromLocalStorage levelId =
     Ports.LocalStorage.storageGetItem key
 
 
-localStorageResponse : (Result Decode.Error (Maybe LevelDrafts) -> a) -> ( String, Encode.Value ) -> Maybe a
+localStorageResponse : (Result Decode.Error DraftBook -> a) -> ( String, Encode.Value ) -> Maybe a
 localStorageResponse onResult ( key, value ) =
     case String.split "." key of
-        "levels" :: _ :: "draftIds" :: [] ->
+        "levels" :: levelId :: "draftBook" :: [] ->
+            let
+                decoder_ =
+                    DraftId.decoder
+                        |> Extra.Decode.set
+                        |> Decode.map (flip withDraftIds (empty levelId))
+                        |> Decode.nullable
+                        |> Decode.map (Maybe.withDefault (empty levelId))
+            in
             value
-                |> Decode.decodeValue (Decode.nullable decoder)
+                |> Decode.decodeValue decoder_
                 |> onResult
                 |> Just
 

@@ -1,11 +1,9 @@
-module Api.GCP exposing (getDrafts, getHighScore, getLevels, getUserInfo, publishSolution, saveDraft, verifyIdentityToken)
+module Api.GCP exposing (get, getDrafts, getLevels, getUserInfo, publishSolution, saveDraft, verifyIdentityToken)
 
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Draft as Draft exposing (Draft)
-import Data.HighScore as HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.RequestResult exposing (RequestResult)
 import Data.Solution as Solution exposing (Solution)
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Http exposing (Expect, Header)
@@ -101,14 +99,14 @@ verifyIdentityToken authorizationToken toMsg =
     authorizedGet url authorizationToken expect
 
 
-getHighScore : LevelId -> (RequestResult LevelId HighScore -> msg) -> Cmd msg
-getHighScore levelId toMsg =
+get : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> Cmd msg
+get path queryParameters decoder toMsg =
     let
         url =
-            buildUrl [ "highScores" ] [ Url.Builder.string "levelId" levelId ]
+            buildUrl path queryParameters
 
         expect =
-            Http.expectJson (RequestResult levelId >> toMsg) HighScore.decoder
+            Http.expectJson toMsg decoder
     in
     Http.get
         { url = url

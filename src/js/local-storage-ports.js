@@ -65,8 +65,9 @@ window.addEventListener('storage', function (storageEvent) {
  * @param  {Function} log    Function to log ports for the given Elm app
  */
 function register(ports, log) {
-    log = log || function () {
-    };
+    log = typeof log === 'function'
+        ? log
+        : function () {};
 
     // Mapped to Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Storage
     if (typeof ports.storageGetItem !== 'undefined') {
@@ -113,7 +114,7 @@ function register(ports, log) {
         var response = getLocalStorageItem(key);
 
         log('storageGetItemResponse', key, response);
-        ports.storageGetItemResponse.send([key, response]);
+        setTimeout(() => {ports.storageGetItemResponse.send([key, response])}, 2000);
     }
 
     function storageSetItem(_ref) {

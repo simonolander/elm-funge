@@ -5,7 +5,7 @@ module.exports = {
 function register(ports) {
     if (typeof ports.log !== 'undefined') {
         ports.log.subscribe(function (value) {
-            console.log(JSON.parse(value));
+            console.log(value);
         });
     }
     if (typeof ports.error !== 'undefined') {

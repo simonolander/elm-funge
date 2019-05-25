@@ -1,16 +1,19 @@
 module Data.Session exposing
     ( Session
+    , getDraft
+    , getDraftBook
     , getHighScore
-    , getLevelDrafts
     , getToken
     , init
+    , loadingDraftBook
+    , loadingHighScore
     , withCampaign
     , withCampaigns
     , withDraft
+    , withDraftBook
     , withDrafts
     , withHighScore
     , withLevel
-    , withLevelDrafts
     , withLevels
     , withUser
     , withoutLevel
@@ -22,16 +25,15 @@ import Data.AuthorizationToken exposing (AuthorizationToken)
 import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft exposing (Draft)
+import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
 import Data.HighScore exposing (HighScore)
 import Data.Level exposing (Level)
-import Data.LevelDrafts as LevelDrafts exposing (LevelDrafts)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult exposing (RequestResult)
 import Data.User as User exposing (User)
 import Dict exposing (Dict)
 import RemoteData exposing (RemoteData(..), WebData)
-import Set
 
 
 type alias Session =
@@ -41,7 +43,7 @@ type alias Session =
     , drafts : Dict DraftId Draft
     , campaigns : Dict CampaignId Campaign
     , highScores : Dict LevelId (WebData HighScore)
-    , levelDrafts : Dict LevelId (WebData LevelDrafts)
+    , draftBooks : Dict LevelId (WebData DraftBook)
     }
 
 
@@ -53,7 +55,7 @@ init key =
     , drafts = Dict.empty
     , campaigns = Dict.empty
     , highScores = Dict.empty
-    , levelDrafts = Dict.empty
+    , draftBooks = Dict.empty
     }
 
 
@@ -85,6 +87,17 @@ withoutLevel levelId session =
     }
 
 
+getDraft : DraftId -> Session -> WebData Draft
+getDraft draftId session =
+    case Dict.get draftId session.drafts of
+        Just draft ->
+            Success draft
+
+        -- TODO
+        Nothing ->
+            Loading
+
+
 withDrafts : List Draft -> Session -> Session
 withDrafts drafts session =
     List.foldl withDraft session drafts
@@ -92,8 +105,17 @@ withDrafts drafts session =
 
 withDraft : Draft -> Session -> Session
 withDraft draft session =
-    { session | drafts = Dict.insert draft.id draft session.drafts }
-        |> withLevelDraft draft.levelId draft.id
+    { session
+        | drafts =
+            Dict.insert draft.id draft session.drafts
+        , draftBooks =
+            Dict.get draft.levelId session.draftBooks
+                |> Maybe.map (RemoteData.withDefault (DraftBook.empty draft.levelId))
+                |> Maybe.withDefault (DraftBook.empty draft.levelId)
+                |> DraftBook.withDraftId draft.id
+                |> Success
+                |> flip (Dict.insert draft.levelId) session.draftBooks
+    }
 
 
 withCampaign : Campaign -> Session -> Session
@@ -128,54 +150,41 @@ getToken =
     .user >> User.getToken
 
 
-getLevelDrafts : LevelId -> Session -> WebData LevelDrafts
-getLevelDrafts levelId session =
-    session.levelDrafts
+getDraftBook : LevelId -> Session -> WebData DraftBook
+getDraftBook levelId session =
+    session.draftBooks
         |> Dict.get levelId
         |> Maybe.withDefault NotAsked
 
 
-withLevelDraft : LevelId -> DraftId -> Session -> Session
-withLevelDraft levelId draftId session =
+withDraftBook : DraftBook -> Session -> Session
+withDraftBook draftBook session =
     let
-        insertLevelDraft levelDrafts =
-            levelDrafts
-                |> LevelDrafts.withDraftId draftId
-                |> Success
-                |> flip (Dict.insert levelId) session.levelDrafts
+        newDraftBook =
+            case Dict.get draftBook.levelId session.draftBooks of
+                Just (Success oldDraftBook) ->
+                    Success (DraftBook.withDraftIds oldDraftBook.draftIds draftBook)
+
+                _ ->
+                    Success draftBook
     in
     { session
-        | levelDrafts =
-            case Dict.get levelId session.levelDrafts of
-                Nothing ->
-                    insertLevelDraft (LevelDrafts.empty levelId)
-
-                Just NotAsked ->
-                    insertLevelDraft (LevelDrafts.empty levelId)
-
-                Just Loading ->
-                    insertLevelDraft (LevelDrafts.empty levelId)
-
-                Just (Failure _) ->
-                    insertLevelDraft (LevelDrafts.empty levelId)
-
-                Just (Success levelDrafts) ->
-                    insertLevelDraft levelDrafts
+        | draftBooks =
+            Dict.insert draftBook.levelId newDraftBook session.draftBooks
     }
 
 
-withLevelDrafts : LevelDrafts -> Session -> Session
-withLevelDrafts levelDrafts session =
-    let
-        newLevelDrafts =
-            case Dict.get levelDrafts.levelId session.levelDrafts of
-                Just (Success oldLevelDrafts) ->
-                    Success (LevelDrafts.withDraftIds oldLevelDrafts.draftIds levelDrafts)
-
-                _ ->
-                    Success levelDrafts
-    in
+loadingDraftBook : LevelId -> Session -> Session
+loadingDraftBook levelId session =
     { session
-        | levelDrafts =
-            Dict.insert levelDrafts.levelId newLevelDrafts session.levelDrafts
+        | draftBooks =
+            Dict.insert levelId Loading session.draftBooks
+    }
+
+
+loadingHighScore : LevelId -> Session -> Session
+loadingHighScore levelId session =
+    { session
+        | highScores =
+            Dict.insert levelId Loading session.highScores
     }

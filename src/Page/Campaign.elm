@@ -6,10 +6,10 @@ import Browser exposing (Document)
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
+import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId as DraftId exposing (DraftId)
-import Data.HighScore exposing (HighScore)
+import Data.HighScore as HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
-import Data.LevelDrafts as LevelDrafts exposing (LevelDrafts)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
@@ -30,6 +30,7 @@ import RemoteData exposing (RemoteData(..))
 import Result exposing (Result)
 import Route exposing (Route)
 import Set
+import View.Box
 import View.ErrorScreen
 import View.HighScore
 import View.LevelButton
@@ -59,48 +60,78 @@ init campaignId selectedLevelId session =
             , selectedLevelId = selectedLevelId
             , error = Nothing
             }
-
-        cmd =
-            initCampaignId campaignId session
     in
-    ( model, cmd )
+    load model
 
 
-initCampaignId : CampaignId -> Session -> Cmd Msg
-initCampaignId campaignId session =
-    case Dict.get campaignId session.campaigns of
-        Nothing ->
-            Campaign.loadFromLocalStorage campaignId
-
+load : Model -> ( Model, Cmd Msg )
+load model =
+    case Dict.get model.campaignId model.session.campaigns of
         Just campaign ->
-            campaign.levelIds
-                |> List.map (flip initLevelId session)
-                |> Cmd.batch
+            let
+                loadLevelsCmd =
+                    campaign.levelIds
+                        |> List.filter (not << flip Dict.member model.session.levels)
+                        |> List.map Level.loadFromLocalStorage
+                        |> Cmd.batch
 
+                ( selectedLevelModel, loadSelectedLevelCmd ) =
+                    case model.selectedLevelId of
+                        Just levelId ->
+                            let
+                                ( draftBookModel, draftBookCmd ) =
+                                    case Session.getDraftBook levelId model.session of
+                                        NotAsked ->
+                                            ( Session.loadingDraftBook levelId model.session
+                                                |> setSession model
+                                            , DraftBook.loadFromLocalStorage levelId
+                                            )
 
-initLevelId : LevelId -> Session -> Cmd Msg
-initLevelId levelId session =
-    case Dict.get levelId session.levels of
-        Just level ->
-            Cmd.none
+                                        Loading ->
+                                            ( model, Cmd.none )
+
+                                        Failure _ ->
+                                            ( model, Cmd.none )
+
+                                        Success draftBook ->
+                                            ( model
+                                            , draftBook.draftIds
+                                                |> Set.toList
+                                                |> List.filter (not << flip Dict.member model.session.drafts)
+                                                |> List.map Draft.loadFromLocalStorage
+                                                |> Cmd.batch
+                                            )
+
+                                ( highScoreModel, highScoreCmd ) =
+                                    case Session.getHighScore levelId draftBookModel.session of
+                                        NotAsked ->
+                                            ( Session.loadingHighScore levelId draftBookModel.session
+                                                |> setSession draftBookModel
+                                            , HighScore.loadFromServer levelId LoadedHighScore
+                                            )
+
+                                        _ ->
+                                            ( draftBookModel, Cmd.none )
+                            in
+                            ( highScoreModel
+                            , Cmd.batch
+                                [ draftBookCmd
+                                , highScoreCmd
+                                ]
+                            )
+
+                        Nothing ->
+                            ( model, Cmd.none )
+            in
+            ( selectedLevelModel
+            , Cmd.batch
+                [ loadLevelsCmd
+                , loadSelectedLevelCmd
+                ]
+            )
 
         Nothing ->
-            Level.loadFromLocalStorage levelId
-
-
-initLevelDrafts : LevelId -> Session -> Cmd Msg
-initLevelDrafts levelId session =
-    LevelDrafts.loadFromLocalStorage levelId
-
-
-initDraft : DraftId -> Session -> Cmd Msg
-initDraft draftId session =
-    case Dict.get draftId session.drafts of
-        Just draft ->
-            Cmd.none
-
-        Nothing ->
-            Draft.loadFromLocalStorage draftId
+            ( model, Campaign.loadFromLocalStorage model.campaignId )
 
 
 getSession : Model -> Session
@@ -141,42 +172,19 @@ update msg model =
             case Dict.get selectedLevelId session.levels of
                 Just selectedLevel ->
                     let
-                        loadLevelDraftsCmd =
-                            initLevelDrafts selectedLevelId session
-
-                        generateDraftCmd =
-                            case Session.getLevelDrafts selectedLevelId session of
-                                Success levelDrafts ->
-                                    if Set.isEmpty levelDrafts.draftIds then
-                                        Random.generate
-                                            GeneratedDraft
-                                            (Draft.generator selectedLevel)
-
-                                    else
-                                        Cmd.none
-
-                                _ ->
-                                    Cmd.none
+                        ( newModel, loadCmd ) =
+                            load { model | selectedLevelId = Just selectedLevelId }
 
                         changeUrlCmd =
                             Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
 
-                        loadHighScoreCmd =
-                            GCP.getHighScore selectedLevelId LoadedHighScore
-
                         cmd =
                             Cmd.batch
-                                [ generateDraftCmd
-                                , changeUrlCmd
-                                , loadHighScoreCmd
-                                , loadLevelDraftsCmd
+                                [ changeUrlCmd
+                                , loadCmd
                                 ]
                     in
-                    ( { model
-                        | selectedLevelId = Just selectedLevelId
-                      }
-                    , cmd
-                    )
+                    ( newModel, cmd )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -263,13 +271,17 @@ update msg model =
 
         GeneratedDraft draft ->
             let
-                newSession =
-                    session.drafts
-                        |> Dict.values
-                        |> (::) draft
-                        |> flip Session.withDrafts session
+                newModel =
+                    Session.withDraft draft session
+                        |> setSession model
+
+                cmd =
+                    Cmd.batch
+                        [ Draft.saveToLocalStorage draft
+                        , Route.pushUrl session.key (Route.EditDraft draft.id)
+                        ]
             in
-            ( { model | session = newSession }, Draft.saveToLocalStorage draft )
+            ( newModel, cmd )
 
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
@@ -281,85 +293,75 @@ localStorageResponseUpdate ( key, value ) model =
         onCampaign result =
             case result of
                 Ok (Just campaign) ->
-                    ( Session.withCampaign campaign session
+                    Session.withCampaign campaign session
                         |> setSession model
-                    , campaign.levelIds
-                        |> List.map (flip initLevelId session)
-                        |> Cmd.batch
-                    )
+                        |> load
 
                 -- TODO
                 Ok Nothing ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
+                    ( { model
+                        | error = Just (Json.Decode.errorToString error)
+                      }
+                    , Ports.Console.errorString (Json.Decode.errorToString error)
+                    )
 
         onLevel result =
             case result of
                 Ok (Just level) ->
-                    ( Session.withLevel level session
+                    Session.withLevel level session
                         |> setSession model
-                    , Cmd.none
-                    )
+                        |> load
 
                 -- TODO
                 Ok Nothing ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
-
-        onLevelDrafts result =
-            case result of
-                Ok (Just levelDrafts) ->
-                    ( Session.withLevelDrafts levelDrafts session
-                        |> setSession model
-                        |> Debug.log "log"
-                    , levelDrafts
-                        |> .draftIds
-                        |> Set.toList
-                        |> List.filter (not << flip Dict.member session.drafts)
-                        |> List.map Draft.loadFromLocalStorage
-                        |> (::) (Ports.Console.log (LevelDrafts.encode levelDrafts))
-                        |> Cmd.batch
+                    ( { model
+                        | error = Just (Json.Decode.errorToString error)
+                      }
+                    , Ports.Console.errorString (Json.Decode.errorToString error)
                     )
 
-                Ok Nothing ->
-                    case model.selectedLevelId of
-                        Just levelId ->
-                            ( Session.withLevelDrafts (LevelDrafts.empty levelId) session
-                                |> setSession model
-                            , Cmd.none
-                            )
-
-                        Nothing ->
-                            ( model
-                            , Ports.Console.errorString "YIO5XLw3FQVsRyaj"
-                            )
+        onDraftBook result =
+            case result of
+                Ok draftBook ->
+                    Session.withDraftBook draftBook session
+                        |> setSession model
+                        |> load
 
                 Err error ->
-                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
+                    ( { model
+                        | error = Just (Json.Decode.errorToString error)
+                      }
+                    , Ports.Console.errorString (Json.Decode.errorToString error)
+                    )
 
         onDraft result =
             case result of
                 Ok (Just draft) ->
-                    ( Session.withDraft draft session
+                    Session.withDraft draft session
                         |> setSession model
-                    , Cmd.none
-                    )
+                        |> load
 
                 Ok Nothing ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    ( { model | error = Just (Json.Decode.errorToString error) }, Cmd.none )
+                    ( { model
+                        | error = Just (Json.Decode.errorToString error)
+                      }
+                    , Ports.Console.errorString (Json.Decode.errorToString error)
+                    )
     in
     ( key, value )
         |> LocalStorage.oneOf
             [ Campaign.localStorageResponse onCampaign
             , Level.localStorageResponse onLevel
-            , LevelDrafts.localStorageResponse onLevelDrafts
+            , DraftBook.localStorageResponse onDraftBook
             , Draft.localStorageResponse onDraft
             ]
         |> Maybe.withDefault
@@ -534,75 +536,8 @@ viewSidebar level model =
             Session.getHighScore level.id model.session
                 |> View.HighScore.view
 
-        newDraftButton =
-            ViewComponents.textButton
-                []
-                (Just ClickedGenerateDraft)
-                "New draft"
-
-        viewDraft index draft =
-            let
-                attrs =
-                    [ width fill
-                    , padding 10
-                    , spacing 15
-                    , Border.width 3
-                    , Border.color (rgb 1 1 1)
-                    , centerX
-                    , mouseOver
-                        [ Background.color (rgb 0.5 0.5 0.5)
-                        ]
-                    ]
-
-                draftName =
-                    "Draft " ++ String.fromInt (index + 1)
-
-                label =
-                    [ draftName
-                        |> text
-                        |> el [ centerX, Font.size 24 ]
-                    , el
-                        [ centerX
-                        , Font.color (rgb 0.2 0.2 0.2)
-                        ]
-                        (text draft.id)
-                    , row
-                        [ width fill
-                        , spaceEvenly
-                        ]
-                        [ text "Instructions: "
-                        , Draft.getInstructionCount level.initialBoard draft
-                            |> String.fromInt
-                            |> text
-                        ]
-                    , row
-                        [ width fill
-                        , spaceEvenly
-                        ]
-                        [ text "Steps: "
-                        , draft.maybeScore
-                            |> Maybe.map .numberOfSteps
-                            |> Maybe.map String.fromInt
-                            |> Maybe.withDefault "N/A"
-                            |> text
-                        ]
-                    ]
-                        |> column
-                            attrs
-            in
-            Route.link
-                [ width fill ]
-                label
-                (Route.EditDraft draft.id)
-
         draftsView =
-            drafts
-                |> List.indexedMap viewDraft
-                |> (::) newDraftButton
-                |> column
-                    [ width fill
-                    , spacing 20
-                    ]
+            viewDrafts level model.session
     in
     [ levelNameView
     , solvedStatusView
@@ -610,3 +545,99 @@ viewSidebar level model =
     , highScore
     , draftsView
     ]
+
+
+viewDrafts : Level -> Session -> Element Msg
+viewDrafts level session =
+    case Session.getDraftBook level.id session of
+        NotAsked ->
+            View.Box.simpleNonInteractive "Not asked"
+
+        Loading ->
+            View.Box.simpleNonInteractive "Loading drafts"
+
+        Failure error ->
+            View.Box.simpleError (Extra.String.fromHttpError error)
+
+        Success draftBook ->
+            let
+                newDraftButton =
+                    ViewComponents.textButton
+                        []
+                        (Just ClickedGenerateDraft)
+                        "New draft"
+
+                viewDraft index draftId =
+                    case Session.getDraft draftId session of
+                        NotAsked ->
+                            View.Box.simpleNonInteractive "Not asked"
+
+                        Loading ->
+                            View.Box.simpleNonInteractive ("Loading draft " ++ String.fromInt (index + 1))
+
+                        Failure error ->
+                            View.Box.simpleError (Extra.String.fromHttpError error)
+
+                        Success draft ->
+                            let
+                                attrs =
+                                    [ width fill
+                                    , padding 10
+                                    , spacing 15
+                                    , Border.width 3
+                                    , Border.color (rgb 1 1 1)
+                                    , centerX
+                                    , mouseOver
+                                        [ Background.color (rgb 0.5 0.5 0.5)
+                                        ]
+                                    ]
+
+                                draftName =
+                                    "Draft " ++ String.fromInt (index + 1)
+
+                                label =
+                                    [ draftName
+                                        |> text
+                                        |> el [ centerX, Font.size 24 ]
+                                    , el
+                                        [ centerX
+                                        , Font.color (rgb 0.2 0.2 0.2)
+                                        ]
+                                        (text draft.id)
+                                    , row
+                                        [ width fill
+                                        , spaceEvenly
+                                        ]
+                                        [ text "Instructions: "
+                                        , Draft.getInstructionCount level.initialBoard draft
+                                            |> String.fromInt
+                                            |> text
+                                        ]
+                                    , row
+                                        [ width fill
+                                        , spaceEvenly
+                                        ]
+                                        [ text "Steps: "
+                                        , draft.maybeScore
+                                            |> Maybe.map .numberOfSteps
+                                            |> Maybe.map String.fromInt
+                                            |> Maybe.withDefault "N/A"
+                                            |> text
+                                        ]
+                                    ]
+                                        |> column
+                                            attrs
+                            in
+                            Route.link
+                                [ width fill ]
+                                label
+                                (Route.EditDraft draft.id)
+            in
+            draftBook.draftIds
+                |> Set.toList
+                |> List.indexedMap viewDraft
+                |> (::) newDraftButton
+                |> column
+                    [ width fill
+                    , spacing 20
+                    ]

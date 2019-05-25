@@ -1,7 +1,9 @@
-module View.Box exposing (nonInteractive)
+module View.Box exposing (nonInteractive, simpleError, simpleNonInteractive)
 
 import Element exposing (..)
 import Element.Border as Border
+import Element.Font as Font
+import View.Constant exposing (color)
 
 
 gray : Color
@@ -18,3 +20,23 @@ nonInteractive element =
         , width fill
         ]
         element
+
+
+simpleNonInteractive : String -> Element msg
+simpleNonInteractive message =
+    paragraph
+        [ Font.color color.font.subtle
+        , Font.center
+        ]
+        [ text message ]
+        |> nonInteractive
+
+
+simpleError : String -> Element msg
+simpleError message =
+    paragraph
+        [ Font.color color.font.error
+        , Font.center
+        ]
+        [ text message ]
+        |> nonInteractive

@@ -1,6 +1,7 @@
 module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadDraftIdsFromLocalStorage, loadFromLocalStorage, localStorageDraftIdsResponse, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo, withScore)
 
 import Data.Board as Board exposing (Board)
+import Data.DraftBook as DraftBook
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.History as History exposing (History)
 import Data.Instruction as Instruction
@@ -150,7 +151,7 @@ saveToLocalStorage draft =
     in
     Cmd.batch
         [ Ports.LocalStorage.storageSetItem ( key, value )
-        , Ports.LocalStorage.storagePushToSet ( String.join "." [ "levels", draft.levelId, "draftIds" ], DraftId.encode draft.id )
+        , DraftBook.saveToLocalStorage draft.id draft.levelId
         ]
 
 
