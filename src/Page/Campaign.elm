@@ -19,6 +19,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Extra.String exposing (fromHttpError)
+import Html.Attributes
 import Http
 import Json.Decode
 import Json.Encode as Encode
@@ -590,6 +591,15 @@ viewDrafts level session =
                                     , mouseOver
                                         [ Background.color (rgb 0.5 0.5 0.5)
                                         ]
+                                    , htmlAttribute
+                                        (Html.Attributes.class
+                                            (if Maybe.Extra.isJust draft.maybeScore then
+                                                "solved"
+
+                                             else
+                                                ""
+                                            )
+                                        )
                                     ]
 
                                 draftName =
