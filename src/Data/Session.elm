@@ -19,9 +19,9 @@ module Data.Session exposing
     , withoutLevel
     )
 
-import Basics.Extra exposing (flip)
 import Browser.Navigation exposing (Key)
 import Data.AuthorizationToken exposing (AuthorizationToken)
+import Data.Cache as Cache exposing (Cache)
 import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft exposing (Draft)
@@ -43,7 +43,7 @@ type alias Session =
     , drafts : Dict DraftId Draft
     , campaigns : Dict CampaignId Campaign
     , highScores : Dict LevelId (WebData HighScore)
-    , draftBooks : Dict LevelId (WebData DraftBook)
+    , draftBooks : Cache LevelId DraftBook
     }
 
 
@@ -55,7 +55,7 @@ init key =
     , drafts = Dict.empty
     , campaigns = Dict.empty
     , highScores = Dict.empty
-    , draftBooks = Dict.empty
+    , draftBooks = Cache.empty
     }
 
 
@@ -109,12 +109,9 @@ withDraft draft session =
         | drafts =
             Dict.insert draft.id draft session.drafts
         , draftBooks =
-            Dict.get draft.levelId session.draftBooks
-                |> Maybe.map (RemoteData.withDefault (DraftBook.empty draft.levelId))
-                |> Maybe.withDefault (DraftBook.empty draft.levelId)
-                |> DraftBook.withDraftId draft.id
-                |> Success
-                |> flip (Dict.insert draft.levelId) session.draftBooks
+            session.draftBooks
+                |> Cache.withDefault draft.levelId (DraftBook.empty draft.levelId)
+                |> Cache.map draft.levelId (DraftBook.withDraftId draft.id)
     }
 
 
@@ -152,25 +149,16 @@ getToken =
 
 getDraftBook : LevelId -> Session -> WebData DraftBook
 getDraftBook levelId session =
-    session.draftBooks
-        |> Dict.get levelId
-        |> Maybe.withDefault NotAsked
+    Cache.get levelId session.draftBooks
 
 
 withDraftBook : DraftBook -> Session -> Session
 withDraftBook draftBook session =
-    let
-        newDraftBook =
-            case Dict.get draftBook.levelId session.draftBooks of
-                Just (Success oldDraftBook) ->
-                    Success (DraftBook.withDraftIds oldDraftBook.draftIds draftBook)
-
-                _ ->
-                    Success draftBook
-    in
     { session
         | draftBooks =
-            Dict.insert draftBook.levelId newDraftBook session.draftBooks
+            session.draftBooks
+                |> Cache.withDefault draftBook.levelId draftBook
+                |> Cache.map draftBook.levelId (DraftBook.withDraftIds draftBook.draftIds)
     }
 
 
@@ -178,7 +166,7 @@ loadingDraftBook : LevelId -> Session -> Session
 loadingDraftBook levelId session =
     { session
         | draftBooks =
-            Dict.insert levelId Loading session.draftBooks
+            Cache.loading levelId session.draftBooks
     }
 
 
