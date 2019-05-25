@@ -17,12 +17,12 @@ view session =
                 ]
                 (if User.isLoggedIn session.user then
                     { url = Api.Auth0.logout
-                    , label = text "Logout"
+                    , label = text "Sign out"
                     }
 
                  else
                     { url = Api.Auth0.login
-                    , label = text "Login"
+                    , label = text "Sign in"
                     }
                 )
     in

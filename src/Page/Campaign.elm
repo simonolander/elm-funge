@@ -106,10 +106,15 @@ load model =
                                 ( highScoreModel, highScoreCmd ) =
                                     case Session.getHighScore levelId draftBookModel.session of
                                         NotAsked ->
-                                            ( Session.loadingHighScore levelId draftBookModel.session
-                                                |> setSession draftBookModel
-                                            , HighScore.loadFromServer levelId LoadedHighScore
-                                            )
+                                            case Session.getToken draftBookModel.session of
+                                                Just _ ->
+                                                    ( Session.loadingHighScore levelId draftBookModel.session
+                                                        |> setSession draftBookModel
+                                                    , HighScore.loadFromServer levelId LoadedHighScore
+                                                    )
+
+                                                Nothing ->
+                                                    ( draftBookModel, Cmd.none )
 
                                         _ ->
                                             ( draftBookModel, Cmd.none )
@@ -170,25 +175,20 @@ update msg model =
     in
     case msg of
         SelectLevel selectedLevelId ->
-            case Dict.get selectedLevelId session.levels of
-                Just selectedLevel ->
-                    let
-                        ( newModel, loadCmd ) =
-                            load { model | selectedLevelId = Just selectedLevelId }
+            let
+                ( newModel, loadCmd ) =
+                    load { model | selectedLevelId = Just selectedLevelId }
 
-                        changeUrlCmd =
-                            Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
+                changeUrlCmd =
+                    Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
 
-                        cmd =
-                            Cmd.batch
-                                [ changeUrlCmd
-                                , loadCmd
-                                ]
-                    in
-                    ( newModel, cmd )
-
-                Nothing ->
-                    ( model, Cmd.none )
+                cmd =
+                    Cmd.batch
+                        [ changeUrlCmd
+                        , loadCmd
+                        ]
+            in
+            ( newModel, cmd )
 
         ClickedOpenDraft draftId ->
             ( model
@@ -534,8 +534,12 @@ viewSidebar level model =
                 ]
 
         highScore =
-            Session.getHighScore level.id model.session
-                |> View.HighScore.view
+            if Maybe.Extra.isJust (Session.getToken model.session) then
+                Session.getHighScore level.id model.session
+                    |> View.HighScore.view
+
+            else
+                View.Box.simpleNonInteractive "Sign in to enable high scores"
 
         draftsView =
             viewDrafts level model.session
