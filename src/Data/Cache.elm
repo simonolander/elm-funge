@@ -1,4 +1,4 @@
-module Data.Cache exposing (Cache, empty, error, get, insert, loading, map, remove, setInsert, withDefault)
+module Data.Cache exposing (Cache, empty, error, fromResult, get, insert, loading, map, remove, setInsert, withDefault)
 
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
@@ -49,6 +49,11 @@ loading key =
 
 
 -- NICHE
+
+
+fromResult : comparable -> Result Http.Error value -> Cache comparable value -> Cache comparable value
+fromResult key result =
+    insertInternal key (RemoteData.fromResult result)
 
 
 setInsert : comparable1 -> comparable2 -> Cache comparable1 (Set comparable2) -> Cache comparable1 (Set comparable2)

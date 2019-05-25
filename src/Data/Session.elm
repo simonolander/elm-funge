@@ -42,7 +42,7 @@ type alias Session =
     , levels : Dict LevelId Level
     , drafts : Dict DraftId Draft
     , campaigns : Dict CampaignId Campaign
-    , highScores : Dict LevelId (WebData HighScore)
+    , highScores : Cache LevelId HighScore
     , draftBooks : Cache LevelId DraftBook
     }
 
@@ -54,7 +54,7 @@ init key =
     , levels = Dict.empty
     , drafts = Dict.empty
     , campaigns = Dict.empty
-    , highScores = Dict.empty
+    , highScores = Cache.empty
     , draftBooks = Cache.empty
     }
 
@@ -132,14 +132,13 @@ withHighScore : RequestResult LevelId HighScore -> Session -> Session
 withHighScore { request, result } session =
     { session
         | highScores =
-            Dict.insert request (RemoteData.fromResult result) session.highScores
+            Cache.fromResult request result session.highScores
     }
 
 
 getHighScore : LevelId -> Session -> WebData HighScore
 getHighScore levelId session =
-    Dict.get levelId session.highScores
-        |> Maybe.withDefault NotAsked
+    Cache.get levelId session.highScores
 
 
 getToken : Session -> Maybe AuthorizationToken
@@ -174,5 +173,5 @@ loadingHighScore : LevelId -> Session -> Session
 loadingHighScore levelId session =
     { session
         | highScores =
-            Dict.insert levelId Loading session.highScores
+            Cache.loading levelId session.highScores
     }
