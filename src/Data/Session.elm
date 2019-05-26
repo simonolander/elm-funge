@@ -1,18 +1,35 @@
 module Data.Session exposing
     ( Session
+    , campaignError
+    , campaignLoading
+    , draftBookError
+    , draftBookLoading
+    , draftError
+    , draftLoading
+    , getCampaign
     , getDraft
     , getDraftBook
     , getHighScore
+    , getLevel
     , getToken
+    , highScoreError
+    , highScoreLoading
     , init
-    , loadingDraftBook
+    , levelError
+    , levelLoading
     , loadingHighScore
+    , setCampaignCache
+    , setDraftBookCache
+    , setDraftCache
+    , setHighScoreCache
+    , setLevelCache
     , withCampaign
     , withCampaigns
     , withDraft
     , withDraftBook
     , withDrafts
     , withHighScore
+    , withHighScoreResult
     , withLevel
     , withLevels
     , withUser
@@ -32,16 +49,16 @@ import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult exposing (RequestResult)
 import Data.User as User exposing (User)
-import Dict exposing (Dict)
+import Http
 import RemoteData exposing (RemoteData(..), WebData)
 
 
 type alias Session =
     { key : Key
     , user : User
-    , levels : Dict LevelId Level
-    , drafts : Dict DraftId Draft
-    , campaigns : Dict CampaignId Campaign
+    , levels : Cache LevelId Level
+    , drafts : Cache DraftId Draft
+    , campaigns : Cache CampaignId Campaign
     , highScores : Cache LevelId HighScore
     , draftBooks : Cache LevelId DraftBook
     }
@@ -51,9 +68,9 @@ init : Key -> Session
 init key =
     { key = key
     , user = User.guest
-    , levels = Dict.empty
-    , drafts = Dict.empty
-    , campaigns = Dict.empty
+    , levels = Cache.empty
+    , drafts = Cache.empty
+    , campaigns = Cache.empty
     , highScores = Cache.empty
     , draftBooks = Cache.empty
     }
@@ -66,48 +83,78 @@ withUser user session =
     }
 
 
+getToken : Session -> Maybe AuthorizationToken
+getToken =
+    .user >> User.getToken
+
+
+
+-- LEVEL CACHE
+
+
+setLevelCache : Session -> Cache LevelId Level -> Session
+setLevelCache session cache =
+    { session | levels = cache }
+
+
+getLevel : LevelId -> Session -> WebData Level
+getLevel levelId session =
+    Cache.get levelId session.levels
+
+
+withLevel : Level -> Session -> Session
+withLevel level session =
+    session.levels
+        |> Cache.insert level.id level
+        |> setLevelCache session
+
+
 withLevels : List Level -> Session -> Session
 withLevels levels session =
     List.foldl withLevel session levels
 
 
-withLevel : Level -> Session -> Session
-withLevel level session =
-    { session
-        | levels =
-            Dict.insert level.id level session.levels
-    }
-
-
 withoutLevel : LevelId -> Session -> Session
 withoutLevel levelId session =
-    { session
-        | levels =
-            Dict.remove levelId session.levels
-    }
+    session.levels
+        |> Cache.remove levelId
+        |> setLevelCache session
 
 
-getDraft : DraftId -> Session -> WebData Draft
-getDraft draftId session =
-    case Dict.get draftId session.drafts of
-        Just draft ->
-            Success draft
-
-        -- TODO
-        Nothing ->
-            Loading
+levelLoading : LevelId -> Session -> Session
+levelLoading levelId session =
+    session.levels
+        |> Cache.loading levelId
+        |> setLevelCache session
 
 
-withDrafts : List Draft -> Session -> Session
-withDrafts drafts session =
-    List.foldl withDraft session drafts
+levelError : LevelId -> Http.Error -> Session -> Session
+levelError levelId error session =
+    session.levels
+        |> Cache.failure levelId error
+        |> setLevelCache session
+
+
+
+-- DRAFT CACHE
+
+
+setDraftCache : Session -> Cache LevelId Draft -> Session
+setDraftCache session cache =
+    { session | drafts = cache }
+
+
+getDraft : LevelId -> Session -> WebData Draft
+getDraft levelId session =
+    Cache.get levelId session.drafts
 
 
 withDraft : Draft -> Session -> Session
 withDraft draft session =
     { session
         | drafts =
-            Dict.insert draft.id draft session.drafts
+            session.drafts
+                |> Cache.insert draft.id draft
         , draftBooks =
             session.draftBooks
                 |> Cache.withDefault draft.levelId (DraftBook.empty draft.levelId)
@@ -115,12 +162,37 @@ withDraft draft session =
     }
 
 
-withCampaign : Campaign -> Session -> Session
-withCampaign campaign session =
-    { session
-        | campaigns =
-            Dict.insert campaign.id campaign session.campaigns
-    }
+withDrafts : List Draft -> Session -> Session
+withDrafts drafts session =
+    List.foldl withDraft session drafts
+
+
+draftLoading : LevelId -> Session -> Session
+draftLoading levelId session =
+    session.drafts
+        |> Cache.loading levelId
+        |> setDraftCache session
+
+
+draftError : LevelId -> Http.Error -> Session -> Session
+draftError levelId error session =
+    session.drafts
+        |> Cache.failure levelId error
+        |> setDraftCache session
+
+
+
+-- CAMPAIGN CACHE
+
+
+setCampaignCache : Session -> Cache LevelId Campaign -> Session
+setCampaignCache session cache =
+    { session | campaigns = cache }
+
+
+getCampaign : LevelId -> Session -> WebData Campaign
+getCampaign levelId session =
+    Cache.get levelId session.campaigns
 
 
 withCampaigns : List Campaign -> Session -> Session
@@ -128,12 +200,34 @@ withCampaigns campaigns session =
     List.foldl withCampaign session campaigns
 
 
-withHighScore : RequestResult LevelId HighScore -> Session -> Session
-withHighScore { request, result } session =
-    { session
-        | highScores =
-            Cache.fromResult request result session.highScores
-    }
+withCampaign : Campaign -> Session -> Session
+withCampaign campaign session =
+    session.campaigns
+        |> Cache.insert campaign.id campaign
+        |> setCampaignCache session
+
+
+campaignLoading : LevelId -> Session -> Session
+campaignLoading levelId session =
+    session.campaigns
+        |> Cache.loading levelId
+        |> setCampaignCache session
+
+
+campaignError : LevelId -> Http.Error -> Session -> Session
+campaignError levelId error session =
+    session.campaigns
+        |> Cache.failure levelId error
+        |> setCampaignCache session
+
+
+
+-- HIGH SCORE CACHE
+
+
+setHighScoreCache : Session -> Cache LevelId HighScore -> Session
+setHighScoreCache session cache =
+    { session | highScores = cache }
 
 
 getHighScore : LevelId -> Session -> WebData HighScore
@@ -141,9 +235,42 @@ getHighScore levelId session =
     Cache.get levelId session.highScores
 
 
-getToken : Session -> Maybe AuthorizationToken
-getToken =
-    .user >> User.getToken
+withHighScore : HighScore -> Session -> Session
+withHighScore highScore session =
+    session.highScores
+        |> Cache.insert highScore.levelId highScore
+        |> setHighScoreCache session
+
+
+withHighScoreResult : RequestResult LevelId HighScore -> Session -> Session
+withHighScoreResult { request, result } session =
+    { session
+        | highScores =
+            Cache.fromResult request result session.highScores
+    }
+
+
+highScoreLoading : LevelId -> Session -> Session
+highScoreLoading levelId session =
+    session.highScores
+        |> Cache.loading levelId
+        |> setHighScoreCache session
+
+
+highScoreError : LevelId -> Http.Error -> Session -> Session
+highScoreError levelId error session =
+    session.highScores
+        |> Cache.failure levelId error
+        |> setHighScoreCache session
+
+
+
+-- DRAFT BOOK CACHE
+
+
+setDraftBookCache : Session -> Cache LevelId DraftBook -> Session
+setDraftBookCache session cache =
+    { session | draftBooks = cache }
 
 
 getDraftBook : LevelId -> Session -> WebData DraftBook
@@ -153,20 +280,24 @@ getDraftBook levelId session =
 
 withDraftBook : DraftBook -> Session -> Session
 withDraftBook draftBook session =
-    { session
-        | draftBooks =
-            session.draftBooks
-                |> Cache.withDefault draftBook.levelId draftBook
-                |> Cache.map draftBook.levelId (DraftBook.withDraftIds draftBook.draftIds)
-    }
+    session.draftBooks
+        |> Cache.withDefault draftBook.levelId draftBook
+        |> Cache.map draftBook.levelId (DraftBook.withDraftIds draftBook.draftIds)
+        |> setDraftBookCache session
 
 
-loadingDraftBook : LevelId -> Session -> Session
-loadingDraftBook levelId session =
-    { session
-        | draftBooks =
-            Cache.loading levelId session.draftBooks
-    }
+draftBookLoading : LevelId -> Session -> Session
+draftBookLoading levelId session =
+    session.draftBooks
+        |> Cache.loading levelId
+        |> setDraftBookCache session
+
+
+draftBookError : LevelId -> Http.Error -> Session -> Session
+draftBookError levelId error session =
+    session.draftBooks
+        |> Cache.failure levelId error
+        |> setDraftBookCache session
 
 
 loadingHighScore : LevelId -> Session -> Session

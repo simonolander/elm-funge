@@ -1,4 +1,4 @@
-module Data.Cache exposing (Cache, empty, error, fromResult, get, insert, loading, map, remove, setInsert, withDefault)
+module Data.Cache exposing (Cache, empty, failure, fromResult, get, insert, isNotAsked, loading, map, remove, setInsert, withDefault)
 
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
@@ -37,9 +37,9 @@ remove key cache =
         |> Cache
 
 
-error : comparable -> Http.Error -> Cache comparable value -> Cache comparable value
-error key err =
-    insertInternal key (Failure err)
+failure : comparable -> Http.Error -> Cache comparable value -> Cache comparable value
+failure key error =
+    insertInternal key (Failure error)
 
 
 loading : comparable -> Cache comparable value -> Cache comparable value
@@ -47,8 +47,15 @@ loading key =
     insertInternal key Loading
 
 
+isNotAsked : comparable -> Cache comparable value -> Bool
+isNotAsked key cache =
+    cache
+        |> get key
+        |> RemoteData.isNotAsked
 
--- NICHE
+
+
+-- ADVANCED
 
 
 fromResult : comparable -> Result Http.Error value -> Cache comparable value -> Cache comparable value

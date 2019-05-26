@@ -3,6 +3,7 @@ module Page.Campaign exposing (Model, Msg, getSession, init, localStorageRespons
 import Api.GCP as GCP
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
@@ -13,11 +14,11 @@ import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
-import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Extra.RemoteData
 import Extra.String exposing (fromHttpError)
 import Html.Attributes
 import Http
@@ -67,67 +68,80 @@ init campaignId selectedLevelId session =
 
 load : Model -> ( Model, Cmd Msg )
 load model =
-    case Dict.get model.campaignId model.session.campaigns of
-        Just campaign ->
+    case Session.getCampaign model.campaignId model.session of
+        Success campaign ->
             let
-                loadLevelsCmd =
-                    campaign.levelIds
-                        |> List.filter (not << flip Dict.member model.session.levels)
+                ( loadingLevelsModel, loadLevelsCmd ) =
+                    let
+                        notAskedLevelIds =
+                            campaign.levelIds
+                                |> List.filter (flip Cache.isNotAsked model.session.levels)
+                    in
+                    ( notAskedLevelIds
+                        |> List.foldl Session.levelLoading model.session
+                        |> setSession model
+                    , notAskedLevelIds
                         |> List.map Level.loadFromLocalStorage
                         |> Cmd.batch
+                    )
 
                 ( selectedLevelModel, loadSelectedLevelCmd ) =
                     case model.selectedLevelId of
                         Just levelId ->
                             let
-                                ( draftBookModel, draftBookCmd ) =
-                                    case Session.getDraftBook levelId model.session of
+                                ( loadingDraftBookModel, loadDraftBookCmd ) =
+                                    case Session.getDraftBook levelId loadingLevelsModel.session of
                                         NotAsked ->
-                                            ( Session.loadingDraftBook levelId model.session
-                                                |> setSession model
+                                            ( loadingLevelsModel.session
+                                                |> Session.draftBookLoading levelId
+                                                |> setSession loadingLevelsModel
                                             , DraftBook.loadFromLocalStorage levelId
                                             )
 
-                                        Loading ->
-                                            ( model, Cmd.none )
-
-                                        Failure _ ->
-                                            ( model, Cmd.none )
-
                                         Success draftBook ->
-                                            ( model
-                                            , draftBook.draftIds
-                                                |> Set.toList
-                                                |> List.filter (not << flip Dict.member model.session.drafts)
+                                            let
+                                                notAskedDraftIds =
+                                                    draftBook.draftIds
+                                                        |> Set.toList
+                                                        |> List.filter (flip Cache.isNotAsked loadingLevelsModel.session.drafts)
+                                            in
+                                            ( notAskedDraftIds
+                                                |> List.foldl Session.draftLoading loadingLevelsModel.session
+                                                |> setSession loadingLevelsModel
+                                            , notAskedDraftIds
                                                 |> List.map Draft.loadFromLocalStorage
                                                 |> Cmd.batch
                                             )
 
-                                ( highScoreModel, highScoreCmd ) =
-                                    case Session.getHighScore levelId draftBookModel.session of
+                                        _ ->
+                                            ( loadingLevelsModel, Cmd.none )
+
+                                ( loadingHighScoreModel, loadHighScoreCmd ) =
+                                    case Session.getHighScore levelId loadingDraftBookModel.session of
                                         NotAsked ->
-                                            case Session.getToken draftBookModel.session of
+                                            case Session.getToken loadingDraftBookModel.session of
                                                 Just _ ->
-                                                    ( Session.loadingHighScore levelId draftBookModel.session
-                                                        |> setSession draftBookModel
+                                                    ( loadingDraftBookModel.session
+                                                        |> Session.loadingHighScore levelId
+                                                        |> setSession loadingDraftBookModel
                                                     , HighScore.loadFromServer levelId LoadedHighScore
                                                     )
 
                                                 Nothing ->
-                                                    ( draftBookModel, Cmd.none )
+                                                    ( loadingDraftBookModel, Cmd.none )
 
                                         _ ->
-                                            ( draftBookModel, Cmd.none )
+                                            ( loadingDraftBookModel, Cmd.none )
                             in
-                            ( highScoreModel
+                            ( loadingHighScoreModel
                             , Cmd.batch
-                                [ draftBookCmd
-                                , highScoreCmd
+                                [ loadDraftBookCmd
+                                , loadHighScoreCmd
                                 ]
                             )
 
                         Nothing ->
-                            ( model, Cmd.none )
+                            ( loadingLevelsModel, Cmd.none )
             in
             ( selectedLevelModel
             , Cmd.batch
@@ -136,8 +150,15 @@ load model =
                 ]
             )
 
-        Nothing ->
-            ( model, Campaign.loadFromLocalStorage model.campaignId )
+        NotAsked ->
+            ( model.session
+                |> Session.campaignLoading model.campaignId
+                |> setSession model
+            , Campaign.loadFromLocalStorage model.campaignId
+            )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 getSession : Model -> Session
@@ -196,16 +217,14 @@ update msg model =
             )
 
         ClickedGenerateDraft ->
-            let
-                maybeSelectedLevel =
-                    model.selectedLevelId
-                        |> Maybe.andThen (flip Dict.get session.levels)
-            in
-            case maybeSelectedLevel of
-                Just level ->
+            case
+                model.selectedLevelId
+                    |> Maybe.map (flip Session.getLevel session)
+            of
+                Just (Success level) ->
                     ( model, generateDraft level )
 
-                Nothing ->
+                _ ->
                     ( model, Cmd.none )
 
         LoadedLevels result ->
@@ -258,7 +277,7 @@ update msg model =
         LoadedHighScore requestResult ->
             let
                 newSession =
-                    Session.withHighScore requestResult session
+                    Session.withHighScoreResult requestResult session
 
                 newModel =
                     setSession model newSession
@@ -396,12 +415,18 @@ view model =
                     viewError error
 
                 Nothing ->
-                    case Dict.get model.campaignId session.campaigns of
-                        Just campaign ->
-                            viewCampaign campaign model
+                    case Session.getCampaign model.campaignId session of
+                        NotAsked ->
+                            View.LoadingScreen.view "Not asked for campaign"
 
-                        Nothing ->
-                            View.LoadingScreen.view "Loading campaign"
+                        Loading ->
+                            View.LoadingScreen.view "Loading campaign..."
+
+                        Failure error ->
+                            View.ErrorScreen.view (Extra.String.fromHttpError error)
+
+                        Success campaign ->
+                            viewCampaign campaign model
     in
     { title = "Levels"
     , body =
@@ -427,27 +452,39 @@ viewError error =
 viewCampaign : Campaign -> Model -> Element Msg
 viewCampaign campaign model =
     let
-        selectedLevel =
-            model.selectedLevelId
-                |> Maybe.Extra.filter (flip List.member campaign.levelIds)
-                |> Maybe.andThen (flip Dict.get model.session.levels)
+        viewTemporarySidebar message =
+            [ el
+                [ centerX
+                , Font.size 32
+                ]
+                (text "EFNG")
+            , paragraph
+                [ width fill
+                , Font.center
+                ]
+                [ text message ]
+            ]
 
         sidebar =
-            case selectedLevel of
-                Just level ->
+            case
+                model.selectedLevelId
+                    |> Maybe.Extra.filter (flip List.member campaign.levelIds)
+                    |> Maybe.map (flip Session.getLevel model.session)
+            of
+                Just (Success level) ->
                     viewSidebar level model
 
+                Just NotAsked ->
+                    viewTemporarySidebar "Not asked :/"
+
+                Just Loading ->
+                    viewTemporarySidebar "Loading level..."
+
+                Just (Failure error) ->
+                    viewTemporarySidebar (Extra.String.fromHttpError error)
+
                 Nothing ->
-                    [ el
-                        [ centerX
-                        , Font.size 32
-                        ]
-                        (text "EFNG")
-                    , el
-                        [ centerX
-                        ]
-                        (text "Select a level")
-                    ]
+                    viewTemporarySidebar "Select a level"
 
         mainContent =
             viewLevels campaign model
@@ -466,10 +503,15 @@ viewLevels campaign model =
                         |> Maybe.withDefault False
 
                 solved =
-                    model.session.drafts
-                        |> Dict.values
-                        |> List.filter (.levelId >> (==) level.id)
-                        |> List.any (.maybeScore >> Maybe.Extra.isJust)
+                    level.id
+                        |> flip Session.getDraftBook model.session
+                        |> RemoteData.map .draftIds
+                        |> RemoteData.map Set.toList
+                        |> RemoteData.withDefault []
+                        |> List.map (flip Session.getDraft model.session)
+                        |> List.map (RemoteData.map .maybeScore)
+                        |> List.map (RemoteData.map Maybe.Extra.isJust)
+                        |> List.any ((==) (Success True))
 
                 onPress =
                     Just (SelectLevel level.id)
@@ -487,12 +529,39 @@ viewLevels campaign model =
             View.LevelButton.view
                 parameters
                 level
+
+        viewLevelWebData webData =
+            case webData of
+                NotAsked ->
+                    View.Box.simpleNonInteractive "Not asked :/"
+
+                Loading ->
+                    View.Box.simpleNonInteractive "Loading level..."
+
+                Failure error ->
+                    View.Box.simpleError (Extra.String.fromHttpError error)
+
+                Success level ->
+                    viewLevel level
+
+        sort d1 d2 =
+            case ( d1, d2 ) of
+                ( Success a, Success b ) ->
+                    compare a.index b.index
+
+                ( Success _, _ ) ->
+                    LT
+
+                ( _, Success _ ) ->
+                    GT
+
+                _ ->
+                    EQ
     in
     campaign.levelIds
-        |> List.map (flip Dict.get model.session.levels)
-        |> Maybe.Extra.values
-        |> List.sortBy .index
-        |> List.map viewLevel
+        |> List.map (flip Session.getLevel model.session)
+        |> List.sortWith sort
+        |> List.map viewLevelWebData
         |> wrappedRow
             [ spacing 20
             ]
@@ -511,26 +580,44 @@ viewSidebar level model =
                 []
                 level.description
 
-        drafts =
-            Dict.values model.session.drafts
-                |> List.filter (.levelId >> (==) level.id)
-
-        solved =
-            drafts
-                |> List.any (.maybeScore >> Maybe.Extra.isJust)
-
         solvedStatusView =
-            row
-                [ centerX ]
-                [ el
-                    [ width fill
-                    ]
-                    (if solved then
-                        text "Solved"
+            let
+                solvedStatus =
+                    case
+                        Session.getDraftBook level.id model.session
+                    of
+                        Success draftBook ->
+                            let
+                                drafts =
+                                    draftBook.draftIds
+                                        |> Set.toList
+                                        |> List.map (flip Session.getDraft model.session)
 
-                     else
-                        text "Not solved"
-                    )
+                                anySolved =
+                                    drafts
+                                        |> Extra.RemoteData.successes
+                                        |> List.any (.maybeScore >> Maybe.Extra.isJust)
+
+                                anyLoading =
+                                    List.any RemoteData.isLoading drafts
+                            in
+                            if anySolved then
+                                "Solved"
+
+                            else if anyLoading then
+                                "Loading drafts..."
+
+                            else
+                                "Not solved"
+
+                        _ ->
+                            "Loading drafts..."
+            in
+            paragraph
+                [ width fill
+                , Font.center
+                ]
+                [ text solvedStatus
                 ]
 
         highScore =

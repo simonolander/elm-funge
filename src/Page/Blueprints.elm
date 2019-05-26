@@ -3,7 +3,7 @@ module Page.Blueprints exposing (Model, Msg, getSession, init, localStorageRespo
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Campaign as Campaign exposing (Campaign)
-import Data.CampaignId as CampaignId
+import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -16,6 +16,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
 import Random
+import RemoteData exposing (RemoteData(..))
 import Route
 import View.ErrorScreen
 import View.LevelButton
@@ -35,6 +36,11 @@ type alias Model =
     }
 
 
+campaignId : CampaignId
+campaignId =
+    CampaignId.blueprints
+
+
 init : Maybe LevelId -> Session -> ( Model, Cmd Msg )
 init selectedLevelId session =
     let
@@ -43,19 +49,30 @@ init selectedLevelId session =
             , selectedLevelId = selectedLevelId
             , error = Nothing
             }
-
-        cmd =
-            case Dict.get CampaignId.blueprints session.campaigns of
-                Just campaign ->
-                    campaign.levelIds
-                        |> List.filter (not << flip Dict.member session.levels)
-                        |> List.map Level.loadFromLocalStorage
-                        |> Cmd.batch
-
-                Nothing ->
-                    Campaign.loadFromLocalStorage CampaignId.blueprints
     in
-    ( model, cmd )
+    load model
+
+
+load : Model -> ( Model, Cmd Msg )
+load model =
+    case Session.getCampaign CampaignId.blueprints model.session of
+        NotAsked ->
+            ( model.session
+                |> Session.loadingCampaign campaignId
+                |> setSession model
+            , Campaign.loadFromLocalStorage campaignId
+            )
+
+        Success campaign ->
+            ( model
+            , campaign.levelIds
+                |> List.filter (not << flip Dict.member session.levels)
+                |> List.map Level.loadFromLocalStorage
+                |> Cmd.batch
+            )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 getSession : Model -> Session
@@ -85,7 +102,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LevelDeleted levelId ->
-            case Dict.get CampaignId.blueprints model.session.campaigns of
+            case Dict.get campaignId model.session.campaigns of
                 Just campaign ->
                     let
                         newCampaign =
@@ -160,8 +177,8 @@ update msg model =
                     model.session
 
                 campaign =
-                    Dict.get CampaignId.blueprints session.campaigns
-                        |> Maybe.withDefault (Campaign.empty CampaignId.blueprints)
+                    Dict.get campaignId session.campaigns
+                        |> Maybe.withDefault (Campaign.empty campaignId)
                         |> Campaign.withLevelId level.id
 
                 newModel =
@@ -204,7 +221,7 @@ localStorageResponseUpdate ( key, value ) model =
                 Ok Nothing ->
                     let
                         campaign =
-                            Campaign.empty CampaignId.blueprints
+                            Campaign.empty campaignId
 
                         newModel =
                             { model
@@ -267,12 +284,12 @@ view model =
                     View.ErrorScreen.layout error
 
                 Nothing ->
-                    case Dict.get CampaignId.blueprints session.campaigns of
+                    case Dict.get campaignId session.campaigns of
                         Just campaign ->
                             viewCampaign campaign model
 
                         Nothing ->
-                            View.LoadingScreen.layout ("Loading " ++ CampaignId.blueprints ++ "...")
+                            View.LoadingScreen.layout ("Loading " ++ campaignId ++ "...")
     in
     { body = [ content ]
     , title = "Blueprints"
