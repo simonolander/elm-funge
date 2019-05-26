@@ -2,18 +2,20 @@ module Page.Blueprints exposing (Model, Msg, getSession, init, localStorageRespo
 
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
-import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Input as Input
+import Extra.String
 import Html exposing (Html)
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Ports.Console
 import Ports.LocalStorage as LocalStorage
 import Random
 import RemoteData exposing (RemoteData(..))
@@ -58,15 +60,21 @@ load model =
     case Session.getCampaign CampaignId.blueprints model.session of
         NotAsked ->
             ( model.session
-                |> Session.loadingCampaign campaignId
+                |> Session.campaignLoading campaignId
                 |> setSession model
             , Campaign.loadFromLocalStorage campaignId
             )
 
         Success campaign ->
-            ( model
-            , campaign.levelIds
-                |> List.filter (not << flip Dict.member session.levels)
+            let
+                notAskedLevelIds =
+                    campaign.levelIds
+                        |> List.filter (flip Cache.isNotAsked model.session.levels)
+            in
+            ( notAskedLevelIds
+                |> List.foldl Session.levelLoading model.session
+                |> setSession model
+            , notAskedLevelIds
                 |> List.map Level.loadFromLocalStorage
                 |> Cmd.batch
             )
@@ -102,7 +110,10 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LevelDeleted levelId ->
-            case Dict.get campaignId model.session.campaigns of
+            case
+                Session.getCampaign campaignId model.session
+                    |> RemoteData.toMaybe
+            of
                 Just campaign ->
                     let
                         newCampaign =
@@ -122,11 +133,14 @@ update msg model =
                     ( newModel, cmd )
 
                 Nothing ->
-                    -- TODO warn or something?
-                    ( model, Cmd.none )
+                    ( model, Ports.Console.errorString ("v1mC6LQO : Could not delete level " ++ levelId) )
 
         LevelNameChanged newName ->
-            case Maybe.andThen (flip Dict.get model.session.levels) model.selectedLevelId of
+            case
+                model.selectedLevelId
+                    |> Maybe.map (flip Session.getLevel model.session)
+                    |> Maybe.andThen RemoteData.toMaybe
+            of
                 Just oldLevel ->
                     let
                         newLevel =
@@ -142,10 +156,14 @@ update msg model =
                     ( newModel, cmd )
 
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( model, Ports.Console.errorString "tWy71t5l : Could not update level name" )
 
         LevelDescriptionChanged newDescription ->
-            case Maybe.andThen (flip Dict.get model.session.levels) model.selectedLevelId of
+            case
+                model.selectedLevelId
+                    |> Maybe.map (flip Session.getLevel model.session)
+                    |> Maybe.andThen RemoteData.toMaybe
+            of
                 Just oldLevel ->
                     let
                         newLevel =
@@ -161,7 +179,7 @@ update msg model =
                     ( newModel, cmd )
 
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( model, Ports.Console.errorString "Pm6iHnXM : Could not update level description" )
 
         SelectedLevelId levelId ->
             ( { model | selectedLevelId = Just levelId }
@@ -177,8 +195,8 @@ update msg model =
                     model.session
 
                 campaign =
-                    Dict.get campaignId session.campaigns
-                        |> Maybe.withDefault (Campaign.empty campaignId)
+                    Session.getCampaign campaignId session
+                        |> RemoteData.withDefault (Campaign.empty campaignId)
                         |> Campaign.withLevelId level.id
 
                 newModel =
@@ -206,17 +224,7 @@ localStorageResponseUpdate ( key, value ) model =
         onCampaign result =
             case result of
                 Ok (Just campaign) ->
-                    let
-                        newModel =
-                            { model | session = Session.withCampaign campaign model.session }
-
-                        cmd =
-                            campaign.levelIds
-                                |> List.filter (not << flip Dict.member model.session.levels)
-                                |> List.map Level.loadFromLocalStorage
-                                |> Cmd.batch
-                    in
-                    ( newModel, cmd )
+                    load { model | session = Session.withCampaign campaign model.session }
 
                 Ok Nothing ->
                     let
@@ -284,12 +292,18 @@ view model =
                     View.ErrorScreen.layout error
 
                 Nothing ->
-                    case Dict.get campaignId session.campaigns of
-                        Just campaign ->
-                            viewCampaign campaign model
+                    case Session.getCampaign campaignId session of
+                        NotAsked ->
+                            View.ErrorScreen.layout "Not asked :/"
 
-                        Nothing ->
+                        Loading ->
                             View.LoadingScreen.layout ("Loading " ++ campaignId ++ "...")
+
+                        Failure error ->
+                            View.ErrorScreen.layout (Extra.String.fromHttpError error)
+
+                        Success campaign ->
+                            viewCampaign campaign model
     in
     { body = [ content ]
     , title = "Blueprints"
@@ -303,7 +317,11 @@ viewCampaign campaign model =
             model.session
 
         sidebarContent =
-            case Maybe.andThen (flip Dict.get session.levels) model.selectedLevelId of
+            case
+                model.selectedLevelId
+                    |> Maybe.map (flip Session.getLevel session)
+                    |> Maybe.andThen RemoteData.toMaybe
+            of
                 Just level ->
                     let
                         levelName =
@@ -363,7 +381,10 @@ viewCampaign campaign model =
                     ViewComponents.textButton [] (Just ClickedNewLevel) "Create new level"
 
                 levelButton levelId =
-                    case Dict.get levelId session.levels of
+                    case
+                        Session.getLevel levelId session
+                            |> RemoteData.toMaybe
+                    of
                         Just level ->
                             View.LevelButton.view
                                 { default
@@ -375,6 +396,7 @@ viewCampaign campaign model =
                                 }
                                 level
 
+                        -- TODO Maybe different cases for loading, error and not asked?
                         Nothing ->
                             View.LevelButton.loading
 
