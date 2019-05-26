@@ -19,10 +19,12 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Extra.String
 import Http
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 import Ports.LocalStorage
+import RemoteData exposing (RemoteData(..))
 import Route
 import View.Board
 import View.ErrorScreen
@@ -69,13 +71,6 @@ type alias ErrorModel =
     }
 
 
-getLevel : Model -> Maybe Level
-getLevel model =
-    Dict.get model.draftId model.session.drafts
-        |> Maybe.map .levelId
-        |> Maybe.andThen (flip Dict.get model.session.levels)
-
-
 init : DraftId -> Session -> ( Model, Cmd Msg )
 init draftId session =
     let
@@ -86,21 +81,34 @@ init draftId session =
             , error = Nothing
             , selectedInstructionToolIndex = Nothing
             }
-
-        cmd =
-            case Dict.get draftId session.drafts of
-                Just draft ->
-                    case Dict.get draft.levelId session.levels of
-                        Just level ->
-                            Cmd.none
-
-                        Nothing ->
-                            Level.loadFromLocalStorage draft.levelId
-
-                Nothing ->
-                    Draft.loadFromLocalStorage draftId
     in
-    ( model, cmd )
+    load model
+
+
+load : Model -> ( Model, Cmd Msg )
+load model =
+    case Session.getDraft model.draftId model.session of
+        NotAsked ->
+            ( model.session
+                |> Session.draftLoading model.draftId
+                |> setSession model
+            , Draft.loadFromLocalStorage model.draftId
+            )
+
+        Success draft ->
+            case Session.getLevel draft.levelId model.session of
+                NotAsked ->
+                    ( model.session
+                        |> Session.levelLoading draft.levelId
+                        |> setSession model
+                    , Level.loadFromLocalStorage draft.levelId
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 getSession : Model -> Session
@@ -141,12 +149,14 @@ update msg model =
             model.session
 
         maybeDraft =
-            Dict.get model.draftId session.drafts
+            Session.getDraft model.draftId session
+                |> RemoteData.toMaybe
 
         maybeLevel =
-            Dict.get model.draftId session.drafts
+            maybeDraft
                 |> Maybe.map .levelId
-                |> Maybe.andThen (flip Dict.get session.levels)
+                |> Maybe.map (flip Session.getLevel session)
+                |> Maybe.andThen RemoteData.toMaybe
 
         unchanged =
             ( model, Cmd.none )
@@ -264,7 +274,7 @@ update msg model =
             )
 
         InstructionToolReplaced index instructionTool ->
-            case getLevel model of
+            case maybeLevel of
                 Just level ->
                     ( { model
                         | session =
@@ -294,9 +304,11 @@ update msg model =
                 Nothing ->
                     unchanged
 
+        -- TODO
         LoadedDrafts result ->
             unchanged
 
+        -- TODO
         LoadedLevels result ->
             unchanged
 
@@ -323,20 +335,9 @@ localStorageResponseUpdate ( key, value ) model =
         onDraft result =
             case result of
                 Ok (Just draft) ->
-                    let
-                        newModel =
-                            Session.withDraft draft session
-                                |> setSession model
-
-                        cmd =
-                            case Dict.get draft.levelId session.levels of
-                                Just _ ->
-                                    Cmd.none
-
-                                Nothing ->
-                                    Level.loadFromLocalStorage draft.levelId
-                    in
-                    ( newModel, cmd )
+                    Session.withDraft draft session
+                        |> setSession model
+                        |> load
 
                 Ok Nothing ->
                     ( { model | error = Just ("Draft not found: " ++ key) }, Cmd.none )
@@ -347,10 +348,9 @@ localStorageResponseUpdate ( key, value ) model =
         onLevel result =
             case result of
                 Ok (Just level) ->
-                    ( Session.withLevel level session
+                    Session.withLevel level session
                         |> setSession model
-                    , Cmd.none
-                    )
+                        |> load
 
                 Ok Nothing ->
                     ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
@@ -391,10 +391,28 @@ view model =
                     View.ErrorScreen.view error
 
                 Nothing ->
-                    case Dict.get model.draftId session.drafts of
-                        Just draft ->
-                            case Dict.get draft.levelId session.levels of
-                                Just level ->
+                    case Session.getDraft model.draftId session of
+                        NotAsked ->
+                            View.ErrorScreen.view ("Not asked for draft: " ++ model.draftId)
+
+                        Loading ->
+                            View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ "...")
+
+                        Failure error ->
+                            View.ErrorScreen.view (Extra.String.fromHttpError error)
+
+                        Success draft ->
+                            case Session.getLevel draft.levelId session of
+                                NotAsked ->
+                                    View.ErrorScreen.view ("Not asked for level: " ++ draft.levelId)
+
+                                Loading ->
+                                    View.LoadingScreen.view ("Loading level " ++ draft.levelId ++ "...")
+
+                                Failure error ->
+                                    View.ErrorScreen.view (Extra.String.fromHttpError error)
+
+                                Success level ->
                                     viewLoaded
                                         { session = session
                                         , draft = draft
@@ -402,12 +420,6 @@ view model =
                                         , selectedInstructionToolIndex = model.selectedInstructionToolIndex
                                         , state = model.state
                                         }
-
-                                Nothing ->
-                                    View.LoadingScreen.view "Loading level..."
-
-                        Nothing ->
-                            View.LoadingScreen.view "Loading draft..."
 
         body =
             content
