@@ -17,13 +17,16 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Extra.Array
+import Extra.String
 import InstructionToolView
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Ports.LocalStorage
+import RemoteData exposing (RemoteData(..))
 import Route
 import View.Board
+import View.ErrorScreen
 import View.Header
 import View.Input
 import View.InstructionTools
@@ -67,12 +70,43 @@ init levelId session =
             , enabledInstructionTools = Array.empty
             }
     in
-    case Dict.get levelId session.levels of
-        Just level ->
-            initWithLevel level model
+    load model
 
-        Nothing ->
-            ( model, Level.loadFromLocalStorage levelId )
+
+load : Model -> ( Model, Cmd Msg )
+load model =
+    case Session.getLevel model.levelId model.session of
+        Success level ->
+            ( { model
+                | levelId = level.id
+                , width = String.fromInt (Board.width level.initialBoard)
+                , height = String.fromInt (Board.height level.initialBoard)
+                , input =
+                    level.io.input
+                        |> List.map String.fromInt
+                        |> String.join ","
+                , output =
+                    level.io.output
+                        |> List.map String.fromInt
+                        |> String.join ","
+                , enabledInstructionTools =
+                    InstructionTool.all
+                        |> List.filter ((/=) (JustInstruction NoOp))
+                        |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
+                        |> Array.fromList
+              }
+            , Cmd.none
+            )
+
+        NotAsked ->
+            ( model.session
+                |> Session.levelLoading model.levelId
+                |> setSession model
+            , Level.loadFromLocalStorage model.levelId
+            )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 initWithLevel : Level -> Model -> ( Model, Cmd Msg )
@@ -126,7 +160,10 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case Dict.get model.levelId model.session.levels of
+    case
+        Session.getLevel model.levelId model.session
+            |> RemoteData.toMaybe
+    of
         Just level ->
             case msg of
                 ChangedWidth widthString ->
@@ -340,12 +377,18 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            case Dict.get model.levelId model.session.levels of
-                Just level ->
-                    viewBlueprint level model
+            case Session.getLevel model.levelId model.session of
+                NotAsked ->
+                    View.ErrorScreen.view "Not asked :/"
 
-                Nothing ->
-                    View.LoadingScreen.view "Loading..."
+                Loading ->
+                    View.LoadingScreen.view ("Loading level " ++ model.levelId ++ "...")
+
+                Failure error ->
+                    View.ErrorScreen.view (Extra.String.fromHttpError error)
+
+                Success level ->
+                    viewBlueprint level model
 
         body =
             content
