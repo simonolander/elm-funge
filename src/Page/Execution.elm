@@ -16,7 +16,6 @@ import Data.Level as Level exposing (Level)
 import Data.Output exposing (Output)
 import Data.Session as Session exposing (Session)
 import Data.Stack exposing (Stack)
-import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -29,6 +28,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Ports.LocalStorage
+import RemoteData exposing (RemoteData(..))
 import Route
 import Time
 import View.LoadingScreen
@@ -83,23 +83,40 @@ init draftId session =
             , error = Nothing
             }
     in
-    case Dict.get draftId session.drafts of
-        Just draft ->
-            case Dict.get draft.levelId session.levels of
-                Just level ->
-                    ( { model | execution = Just (initialExecution level draft) }
-                    , Cmd.none
-                    )
+    load model
 
-                Nothing ->
-                    ( model
+
+load : Model -> ( Model, Cmd Msg )
+load model =
+    case Session.getDraft model.draftId model.session of
+        NotAsked ->
+            ( model.session
+                |> Session.draftLoading model.draftId
+                |> setSession model
+            , Draft.loadFromLocalStorage model.draftId
+            )
+
+        Success draft ->
+            case Session.getLevel draft.levelId model.session of
+                NotAsked ->
+                    ( model.session
+                        |> Session.levelLoading draft.levelId
+                        |> setSession model
                     , Level.loadFromLocalStorage draft.levelId
                     )
 
-        Nothing ->
-            ( model
-            , Draft.loadFromLocalStorage draftId
-            )
+                Success level ->
+                    ( { model
+                        | execution = Just (initialExecution level draft)
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 getSession : Model -> Session
@@ -213,14 +230,16 @@ update msg model =
                 ClickedNavigateBrowseLevels ->
                     let
                         levelId =
-                            Dict.get model.draftId model.session.drafts
+                            model.session
+                                |> Session.getDraft model.draftId
+                                |> RemoteData.toMaybe
                                 |> Maybe.map .levelId
 
-                        level =
-                            Maybe.andThen (flip Dict.get model.session.levels) levelId
-
                         campaignId =
-                            Maybe.map .campaignId level
+                            levelId
+                                |> Maybe.map (flip Session.getLevel model.session)
+                                |> Maybe.andThen RemoteData.toMaybe
+                                |> Maybe.map .campaignId
                                 |> Maybe.withDefault CampaignId.standard
                     in
                     ( model, Route.pushUrl model.session.key (Route.Campaign campaignId levelId) )
@@ -241,21 +260,9 @@ localStorageResponseUpdate ( key, value ) model =
         onDraft result =
             case result of
                 Ok (Just draft) ->
-                    let
-                        modelWithDraft =
-                            Session.withDraft draft session
-                                |> setSession model
-                    in
-                    case Dict.get draft.levelId session.levels of
-                        Just level ->
-                            ( { modelWithDraft
-                                | execution = Just (initialExecution level draft)
-                              }
-                            , Cmd.none
-                            )
-
-                        Nothing ->
-                            ( modelWithDraft, Level.loadFromLocalStorage draft.levelId )
+                    Session.withDraft draft session
+                        |> setSession model
+                        |> load
 
                 Ok Nothing ->
                     ( { model | error = Just ("Draft not found: " ++ key) }, Cmd.none )
@@ -266,21 +273,9 @@ localStorageResponseUpdate ( key, value ) model =
         onLevel result =
             case result of
                 Ok (Just level) ->
-                    let
-                        modelWithLevel =
-                            Session.withLevel level session
-                                |> setSession model
-                    in
-                    case Dict.get model.draftId session.drafts of
-                        Just draft ->
-                            ( { modelWithLevel
-                                | execution = Just (initialExecution level draft)
-                              }
-                            , Cmd.none
-                            )
-
-                        Nothing ->
-                            ( modelWithLevel, Cmd.none )
+                    Session.withLevel level session
+                        |> setSession model
+                        |> load
 
                 Ok Nothing ->
                     ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
@@ -310,7 +305,11 @@ stepModel oldExecution model =
                 Paused
 
         ( session, saveDraftCmd ) =
-            case Dict.get model.draftId model.session.drafts of
+            case
+                model.session
+                    |> Session.getDraft model.draftId
+                    |> RemoteData.toMaybe
+            of
                 Just oldDraft ->
                     if isSolved execution then
                         let
@@ -413,27 +412,27 @@ peek list =
 pop2 : List Int -> ( Int, Int, List Int )
 pop2 list =
     case list of
-        a :: b :: tail ->
-            ( a, b, tail )
+        [] ->
+            ( 0, 0, [] )
 
         a :: [] ->
             ( a, 0, [] )
 
-        [] ->
-            ( 0, 0, [] )
+        a :: b :: tail ->
+            ( a, b, tail )
 
 
 peek2 : List Int -> ( Int, Int )
 peek2 list =
     case list of
-        a :: b :: _ ->
-            ( a, b )
+        [] ->
+            ( 0, 0 )
 
         a :: [] ->
             ( a, 0 )
 
-        [] ->
-            ( 0, 0 )
+        a :: b :: _ ->
+            ( a, b )
 
 
 popOp : (Int -> Int) -> Stack -> Stack
@@ -808,7 +807,7 @@ view model =
                             viewLoaded execution model
 
                         Nothing ->
-                            View.LoadingScreen.view "Loading..."
+                            View.LoadingScreen.view "Loading draft..."
 
         body =
             layout
