@@ -14,6 +14,8 @@ import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
+import Data.Solution as Solution
+import Data.SolutionBook as SolutionBook
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -63,15 +65,31 @@ init campaignId selectedLevelId session =
             , error = Nothing
             }
     in
-    load model
+    load ( model, Cmd.none )
 
 
-load : Model -> ( Model, Cmd Msg )
-load model =
-    case Session.getCampaign model.campaignId model.session of
-        Success campaign ->
-            let
-                ( loadingLevelsModel, loadLevelsCmd ) =
+load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load =
+    let
+        loadCampaign ( model, cmd ) =
+            case Session.getCampaign model.campaignId model.session of
+                NotAsked ->
+                    ( model.session
+                        |> Session.campaignLoading model.campaignId
+                        |> setSession model
+                    , Campaign.loadFromLocalStorage model.campaignId
+                    )
+
+                _ ->
+                    ( model, cmd )
+
+        loadLevels ( model, cmd ) =
+            case
+                model.session
+                    |> Session.getCampaign model.campaignId
+                    |> RemoteData.toMaybe
+            of
+                Just campaign ->
                     let
                         notAskedLevelIds =
                             campaign.levelIds
@@ -82,83 +100,145 @@ load model =
                         |> setSession model
                     , notAskedLevelIds
                         |> List.map Level.loadFromLocalStorage
+                        |> (::) cmd
                         |> Cmd.batch
                     )
 
-                ( selectedLevelModel, loadSelectedLevelCmd ) =
-                    case model.selectedLevelId of
-                        Just levelId ->
-                            let
-                                ( loadingDraftBookModel, loadDraftBookCmd ) =
-                                    case Session.getDraftBook levelId loadingLevelsModel.session of
-                                        NotAsked ->
-                                            ( loadingLevelsModel.session
-                                                |> Session.draftBookLoading levelId
-                                                |> setSession loadingLevelsModel
-                                            , DraftBook.loadFromLocalStorage levelId
-                                            )
+                Nothing ->
+                    ( model, cmd )
 
-                                        Success draftBook ->
-                                            let
-                                                notAskedDraftIds =
-                                                    draftBook.draftIds
-                                                        |> Set.toList
-                                                        |> List.filter (flip Cache.isNotAsked loadingLevelsModel.session.drafts)
-                                            in
-                                            ( notAskedDraftIds
-                                                |> List.foldl Session.draftLoading loadingLevelsModel.session
-                                                |> setSession loadingLevelsModel
-                                            , notAskedDraftIds
-                                                |> List.map Draft.loadFromLocalStorage
-                                                |> Cmd.batch
-                                            )
+        loadSolutionBooks ( model, cmd ) =
+            case
+                model.session
+                    |> Session.getCampaign model.campaignId
+                    |> RemoteData.toMaybe
+            of
+                Just campaign ->
+                    let
+                        notAskedLevelIds =
+                            campaign.levelIds
+                                |> List.filter (flip Cache.isNotAsked model.session.solutionBooks)
+                    in
+                    ( notAskedLevelIds
+                        |> List.foldl Session.solutionBookLoading model.session
+                        |> setSession model
+                    , notAskedLevelIds
+                        |> List.map SolutionBook.loadFromLocalStorage
+                        |> (::) cmd
+                        |> Cmd.batch
+                    )
 
-                                        _ ->
-                                            ( loadingLevelsModel, Cmd.none )
+                Nothing ->
+                    ( model, cmd )
 
-                                ( loadingHighScoreModel, loadHighScoreCmd ) =
-                                    case Session.getHighScore levelId loadingDraftBookModel.session of
-                                        NotAsked ->
-                                            case Session.getToken loadingDraftBookModel.session of
-                                                Just _ ->
-                                                    ( loadingDraftBookModel.session
-                                                        |> Session.loadingHighScore levelId
-                                                        |> setSession loadingDraftBookModel
-                                                    , HighScore.loadFromServer levelId LoadedHighScore
-                                                    )
+        loadSolutions ( model, cmd ) =
+            case
+                model.session
+                    |> Session.getCampaign model.campaignId
+                    |> RemoteData.toMaybe
+            of
+                Just campaign ->
+                    let
+                        notAskedSolutionIds =
+                            campaign.levelIds
+                                |> List.map (flip Session.getSolutionBook model.session)
+                                |> Extra.RemoteData.successes
+                                |> List.map .solutionIds
+                                |> List.map Set.toList
+                                |> List.concat
+                                |> List.filter (flip Cache.isNotAsked model.session.solutions)
+                    in
+                    ( notAskedSolutionIds
+                        |> List.foldl Session.solutionLoading model.session
+                        |> setSession model
+                    , notAskedSolutionIds
+                        |> List.map Solution.loadFromLocalStorage
+                        |> (::) cmd
+                        |> Cmd.batch
+                    )
 
-                                                Nothing ->
-                                                    ( loadingDraftBookModel, Cmd.none )
+                Nothing ->
+                    ( model, cmd )
 
-                                        _ ->
-                                            ( loadingDraftBookModel, Cmd.none )
-                            in
-                            ( loadingHighScoreModel
+        loadSelectedLevelDraftBook ( model, cmd ) =
+            case model.selectedLevelId of
+                Just levelId ->
+                    case Session.getDraftBook levelId model.session of
+                        NotAsked ->
+                            ( model.session
+                                |> Session.draftBookLoading levelId
+                                |> setSession model
                             , Cmd.batch
-                                [ loadDraftBookCmd
-                                , loadHighScoreCmd
+                                [ cmd
+                                , DraftBook.loadFromLocalStorage levelId
                                 ]
                             )
 
-                        Nothing ->
-                            ( loadingLevelsModel, Cmd.none )
-            in
-            ( selectedLevelModel
-            , Cmd.batch
-                [ loadLevelsCmd
-                , loadSelectedLevelCmd
-                ]
-            )
+                        _ ->
+                            ( model, cmd )
 
-        NotAsked ->
-            ( model.session
-                |> Session.campaignLoading model.campaignId
-                |> setSession model
-            , Campaign.loadFromLocalStorage model.campaignId
-            )
+                Nothing ->
+                    ( model, cmd )
 
-        _ ->
-            ( model, Cmd.none )
+        loadSelectedLevelDrafts ( model, cmd ) =
+            case
+                model.selectedLevelId
+                    |> Maybe.map (flip Session.getDraftBook model.session)
+                    |> Maybe.andThen RemoteData.toMaybe
+            of
+                Just draftBook ->
+                    let
+                        notAskedDraftIds =
+                            draftBook.draftIds
+                                |> Set.toList
+                                |> List.filter (flip Cache.isNotAsked model.session.drafts)
+                    in
+                    ( notAskedDraftIds
+                        |> List.foldl Session.draftLoading model.session
+                        |> setSession model
+                    , notAskedDraftIds
+                        |> List.map Draft.loadFromLocalStorage
+                        |> (::) cmd
+                        |> Cmd.batch
+                    )
+
+                Nothing ->
+                    ( model, cmd )
+
+        loadSelectedLevelHighScore ( model, cmd ) =
+            case model.selectedLevelId of
+                Just levelId ->
+                    case Session.getHighScore levelId model.session of
+                        NotAsked ->
+                            case Session.getToken model.session of
+                                Just _ ->
+                                    ( model.session
+                                        |> Session.loadingHighScore levelId
+                                        |> setSession model
+                                    , Cmd.batch
+                                        [ cmd
+                                        , HighScore.loadFromServer levelId LoadedHighScore
+                                        ]
+                                    )
+
+                                Nothing ->
+                                    ( model, cmd )
+
+                        _ ->
+                            ( model, cmd )
+
+                Nothing ->
+                    ( model, cmd )
+    in
+    flip (List.foldl (flip (|>)))
+        [ loadCampaign
+        , loadLevels
+        , loadSolutionBooks
+        , loadSolutions
+        , loadSelectedLevelDraftBook
+        , loadSelectedLevelDrafts
+        , loadSelectedLevelHighScore
+        ]
 
 
 getSession : Model -> Session
@@ -196,25 +276,18 @@ update msg model =
     in
     case msg of
         SelectLevel selectedLevelId ->
-            let
-                ( newModel, loadCmd ) =
-                    load { model | selectedLevelId = Just selectedLevelId }
-
-                changeUrlCmd =
-                    Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
-
-                cmd =
-                    Cmd.batch
-                        [ changeUrlCmd
-                        , loadCmd
-                        ]
-            in
-            ( newModel, cmd )
+            load
+                ( { model
+                    | selectedLevelId = Just selectedLevelId
+                  }
+                , Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
+                )
 
         ClickedOpenDraft draftId ->
-            ( model
-            , Route.pushUrl model.session.key (Route.EditDraft draftId)
-            )
+            load
+                ( model
+                , Route.pushUrl model.session.key (Route.EditDraft draftId)
+                )
 
         ClickedGenerateDraft ->
             case
@@ -313,9 +386,11 @@ localStorageResponseUpdate ( key, value ) model =
         onCampaign result =
             case result of
                 Ok (Just campaign) ->
-                    Session.withCampaign campaign session
-                        |> setSession model
-                        |> load
+                    load
+                        ( Session.withCampaign campaign session
+                            |> setSession model
+                        , Cmd.none
+                        )
 
                 -- TODO
                 Ok Nothing ->
@@ -331,9 +406,11 @@ localStorageResponseUpdate ( key, value ) model =
         onLevel result =
             case result of
                 Ok (Just level) ->
-                    Session.withLevel level session
-                        |> setSession model
-                        |> load
+                    load
+                        ( Session.withLevel level session
+                            |> setSession model
+                        , Cmd.none
+                        )
 
                 -- TODO
                 Ok Nothing ->
@@ -349,9 +426,11 @@ localStorageResponseUpdate ( key, value ) model =
         onDraftBook result =
             case result of
                 Ok draftBook ->
-                    Session.withDraftBook draftBook session
-                        |> setSession model
-                        |> load
+                    load
+                        ( Session.withDraftBook draftBook session
+                            |> setSession model
+                        , Cmd.none
+                        )
 
                 Err error ->
                     ( { model
@@ -363,12 +442,30 @@ localStorageResponseUpdate ( key, value ) model =
         onDraft result =
             case result of
                 Ok (Just draft) ->
-                    Session.withDraft draft session
-                        |> setSession model
-                        |> load
+                    load
+                        ( Session.withDraft draft session
+                            |> setSession model
+                        , Cmd.none
+                        )
 
                 Ok Nothing ->
                     ( model, Cmd.none )
+
+                Err error ->
+                    ( { model
+                        | error = Just (Json.Decode.errorToString error)
+                      }
+                    , Ports.Console.errorString (Json.Decode.errorToString error)
+                    )
+
+        onSolutionBook result =
+            case result of
+                Ok solutionBook ->
+                    load
+                        ( Session.withSolutionBook solutionBook session
+                            |> setSession model
+                        , Cmd.none
+                        )
 
                 Err error ->
                     ( { model
@@ -383,6 +480,7 @@ localStorageResponseUpdate ( key, value ) model =
             , Level.localStorageResponse onLevel
             , DraftBook.localStorageResponse onDraftBook
             , Draft.localStorageResponse onDraft
+            , SolutionBook.localStorageResponse onSolutionBook
             ]
         |> Maybe.withDefault
             ( model

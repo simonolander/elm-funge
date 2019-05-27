@@ -11,6 +11,8 @@ module Data.Session exposing
     , getDraftBook
     , getHighScore
     , getLevel
+    , getSolution
+    , getSolutionBook
     , getToken
     , highScoreError
     , highScoreLoading
@@ -23,6 +25,12 @@ module Data.Session exposing
     , setDraftCache
     , setHighScoreCache
     , setLevelCache
+    , setSolutionBookCache
+    , setSolutionCache
+    , solutionBookError
+    , solutionBookLoading
+    , solutionError
+    , solutionLoading
     , withCampaign
     , withCampaigns
     , withDraft
@@ -32,6 +40,9 @@ module Data.Session exposing
     , withHighScoreResult
     , withLevel
     , withLevels
+    , withSolution
+    , withSolutionBook
+    , withSolutions
     , withUser
     , withoutLevel
     )
@@ -48,6 +59,9 @@ import Data.HighScore exposing (HighScore)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult exposing (RequestResult)
+import Data.Solution exposing (Solution)
+import Data.SolutionBook as SolutionBook exposing (SolutionBook)
+import Data.SolutionId exposing (SolutionId)
 import Data.User as User exposing (User)
 import Http
 import RemoteData exposing (RemoteData(..), WebData)
@@ -58,9 +72,11 @@ type alias Session =
     , user : User
     , levels : Cache LevelId Level
     , drafts : Cache DraftId Draft
+    , solutions : Cache SolutionId Solution
     , campaigns : Cache CampaignId Campaign
     , highScores : Cache LevelId HighScore
     , draftBooks : Cache LevelId DraftBook
+    , solutionBooks : Cache LevelId SolutionBook
     }
 
 
@@ -70,9 +86,11 @@ init key =
     , user = User.guest
     , levels = Cache.empty
     , drafts = Cache.empty
+    , solutions = Cache.empty
     , campaigns = Cache.empty
     , highScores = Cache.empty
     , draftBooks = Cache.empty
+    , solutionBooks = Cache.empty
     }
 
 
@@ -179,6 +197,52 @@ draftError levelId error session =
     session.drafts
         |> Cache.failure levelId error
         |> setDraftCache session
+
+
+
+-- SOLUTION CACHE
+
+
+setSolutionCache : Session -> Cache LevelId Solution -> Session
+setSolutionCache session cache =
+    { session | solutions = cache }
+
+
+getSolution : LevelId -> Session -> WebData Solution
+getSolution levelId session =
+    Cache.get levelId session.solutions
+
+
+withSolution : Solution -> Session -> Session
+withSolution solution session =
+    { session
+        | solutions =
+            session.solutions
+                |> Cache.insert solution.id solution
+        , solutionBooks =
+            session.solutionBooks
+                |> Cache.withDefault solution.levelId (SolutionBook.empty solution.levelId)
+                |> Cache.map solution.levelId (SolutionBook.withSolutionId solution.id)
+    }
+
+
+withSolutions : List Solution -> Session -> Session
+withSolutions solutions session =
+    List.foldl withSolution session solutions
+
+
+solutionLoading : LevelId -> Session -> Session
+solutionLoading levelId session =
+    session.solutions
+        |> Cache.loading levelId
+        |> setSolutionCache session
+
+
+solutionError : LevelId -> Http.Error -> Session -> Session
+solutionError levelId error session =
+    session.solutions
+        |> Cache.failure levelId error
+        |> setSolutionCache session
 
 
 
@@ -306,3 +370,39 @@ loadingHighScore levelId session =
         | highScores =
             Cache.loading levelId session.highScores
     }
+
+
+
+-- SOLUTION BOOK CACHE
+
+
+setSolutionBookCache : Session -> Cache LevelId SolutionBook -> Session
+setSolutionBookCache session cache =
+    { session | solutionBooks = cache }
+
+
+getSolutionBook : LevelId -> Session -> WebData SolutionBook
+getSolutionBook levelId session =
+    Cache.get levelId session.solutionBooks
+
+
+withSolutionBook : SolutionBook -> Session -> Session
+withSolutionBook solutionBook session =
+    session.solutionBooks
+        |> Cache.withDefault solutionBook.levelId solutionBook
+        |> Cache.map solutionBook.levelId (SolutionBook.withSolutionIds solutionBook.solutionIds)
+        |> setSolutionBookCache session
+
+
+solutionBookLoading : LevelId -> Session -> Session
+solutionBookLoading levelId session =
+    session.solutionBooks
+        |> Cache.loading levelId
+        |> setSolutionBookCache session
+
+
+solutionBookError : LevelId -> Http.Error -> Session -> Session
+solutionBookError levelId error session =
+    session.solutionBooks
+        |> Cache.failure levelId error
+        |> setSolutionBookCache session

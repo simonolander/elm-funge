@@ -14,5 +14,5 @@ const app = Elm.Main.init({
 
 // registerServiceWorker();
 
-localStoragePorts.register(app.ports, null);
+localStoragePorts.register(app.ports);
 consolePorts.register(app.ports);
