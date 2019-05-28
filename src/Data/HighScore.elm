@@ -6,6 +6,7 @@ import Data.RequestResult as RequestResult exposing (RequestResult)
 import Dict exposing (Dict)
 import Extra.Decode
 import Extra.Encode
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Url.Builder
@@ -66,7 +67,7 @@ decoder =
 -- REST
 
 
-loadFromServer : LevelId -> (RequestResult LevelId HighScore -> msg) -> Cmd msg
+loadFromServer : LevelId -> (RequestResult LevelId Http.Error HighScore -> msg) -> Cmd msg
 loadFromServer levelId toMsg =
     let
         path =

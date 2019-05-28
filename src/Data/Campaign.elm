@@ -2,6 +2,8 @@ module Data.Campaign exposing (Campaign, decoder, empty, encode, loadFromLocalSt
 
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.LevelId as LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult exposing (RequestResult)
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
@@ -58,12 +60,13 @@ saveToLocalStorage campaign =
         )
 
 
-localStorageResponse : (Result Decode.Error (Maybe Campaign) -> a) -> ( String, Encode.Value ) -> Maybe a
+localStorageResponse : (RequestResult CampaignId Decode.Error (Maybe Campaign) -> a) -> ( String, Encode.Value ) -> Maybe a
 localStorageResponse onResult ( key, value ) =
     case String.split "." key of
-        "campaigns" :: _ :: [] ->
+        "campaigns" :: campaignId :: [] ->
             value
                 |> Decode.decodeValue (Decode.nullable decoder)
+                |> RequestResult.constructor campaignId
                 |> onResult
                 |> Just
 

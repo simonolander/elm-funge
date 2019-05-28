@@ -249,14 +249,14 @@ solutionError levelId error session =
 -- CAMPAIGN CACHE
 
 
-setCampaignCache : Session -> Cache LevelId Campaign -> Session
+setCampaignCache : Session -> Cache CampaignId Campaign -> Session
 setCampaignCache session cache =
     { session | campaigns = cache }
 
 
-getCampaign : LevelId -> Session -> WebData Campaign
-getCampaign levelId session =
-    Cache.get levelId session.campaigns
+getCampaign : CampaignId -> Session -> WebData Campaign
+getCampaign campaignId session =
+    Cache.get campaignId session.campaigns
 
 
 withCampaigns : List Campaign -> Session -> Session
@@ -271,17 +271,17 @@ withCampaign campaign session =
         |> setCampaignCache session
 
 
-campaignLoading : LevelId -> Session -> Session
-campaignLoading levelId session =
+campaignLoading : CampaignId -> Session -> Session
+campaignLoading campaignId session =
     session.campaigns
-        |> Cache.loading levelId
+        |> Cache.loading campaignId
         |> setCampaignCache session
 
 
-campaignError : LevelId -> Http.Error -> Session -> Session
-campaignError levelId error session =
+campaignError : CampaignId -> Http.Error -> Session -> Session
+campaignError campaignId error session =
     session.campaigns
-        |> Cache.failure levelId error
+        |> Cache.failure campaignId error
         |> setCampaignCache session
 
 
@@ -306,7 +306,7 @@ withHighScore highScore session =
         |> setHighScoreCache session
 
 
-withHighScoreResult : RequestResult LevelId HighScore -> Session -> Session
+withHighScoreResult : RequestResult LevelId Http.Error HighScore -> Session -> Session
 withHighScoreResult { request, result } session =
     { session
         | highScores =

@@ -7,6 +7,7 @@ import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult
 import Data.Session as Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
@@ -222,7 +223,7 @@ localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd M
 localStorageResponseUpdate ( key, value ) model =
     let
         onCampaign result =
-            case result of
+            case result.result of
                 Ok (Just campaign) ->
                     load { model | session = Session.withCampaign campaign model.session }
 
@@ -242,7 +243,11 @@ localStorageResponseUpdate ( key, value ) model =
                     ( newModel, cmd )
 
                 Err error ->
-                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
+                    ( model.session
+                        |> Session.campaignError result.request (RequestResult.badBody error)
+                        |> setSession { model | error = Just (Decode.errorToString error) }
+                    , Ports.Console.errorString (Decode.errorToString error)
+                    )
 
         onLevel result =
             case result of

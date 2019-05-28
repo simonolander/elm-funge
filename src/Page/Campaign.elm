@@ -12,7 +12,7 @@ import Data.DraftId as DraftId exposing (DraftId)
 import Data.HighScore as HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.RequestResult exposing (RequestResult)
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution
 import Data.SolutionBook as SolutionBook
@@ -259,7 +259,7 @@ type Msg
     = SelectLevel LevelId
     | LoadedLevels (Result Http.Error (List Level))
     | LoadedDrafts (Result Http.Error (List Draft))
-    | LoadedHighScore (RequestResult LevelId HighScore)
+    | LoadedHighScore (RequestResult LevelId Http.Error HighScore)
     | ClickedOpenDraft DraftId
     | ClickedGenerateDraft
     | GeneratedDraft Draft
@@ -384,7 +384,7 @@ localStorageResponseUpdate ( key, value ) model =
             model.session
 
         onCampaign result =
-            case result of
+            case result.result of
                 Ok (Just campaign) ->
                     load
                         ( Session.withCampaign campaign session
@@ -392,15 +392,26 @@ localStorageResponseUpdate ( key, value ) model =
                         , Cmd.none
                         )
 
-                -- TODO
                 Ok Nothing ->
-                    ( model, Cmd.none )
+                    let
+                        errorMessage =
+                            "Campaign " ++ result.request ++ " not found"
+                    in
+                    ( model.session
+                        |> Session.campaignError result.request RequestResult.notFound
+                        |> setSession { model | error = Just errorMessage }
+                    , Ports.Console.errorString errorMessage
+                    )
 
                 Err error ->
-                    ( { model
-                        | error = Just (Json.Decode.errorToString error)
-                      }
-                    , Ports.Console.errorString (Json.Decode.errorToString error)
+                    let
+                        errorMessage =
+                            Json.Decode.errorToString error
+                    in
+                    ( model.session
+                        |> Session.campaignError result.request (RequestResult.badBody error)
+                        |> setSession { model | error = Just errorMessage }
+                    , Ports.Console.errorString errorMessage
                     )
 
         onLevel result =
