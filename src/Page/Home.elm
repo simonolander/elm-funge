@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Home exposing (Model, Msg, getSession, init, subscriptions, update, view)
 
 import Api.Auth0 as Auth0
 import Browser exposing (Document)
@@ -46,11 +46,6 @@ type alias Msg =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
     ( model, Cmd.none )
 
 

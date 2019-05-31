@@ -1,4 +1,4 @@
-module Page.Blueprints exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Blueprints exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
@@ -14,6 +14,7 @@ import Element.Background as Background
 import Element.Input as Input
 import Extra.String
 import Html exposing (Html)
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.Console
@@ -53,17 +54,28 @@ init selectedLevelId session =
             , error = Nothing
             }
     in
-    load model
+    load ( model, Cmd.none )
 
 
-load : Model -> ( Model, Cmd Msg )
-load model =
+load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load ( model, cmd ) =
     case Session.getCampaign CampaignId.blueprints model.session of
         NotAsked ->
             ( model.session
                 |> Session.campaignLoading campaignId
                 |> setSession model
-            , Campaign.loadFromLocalStorage campaignId
+            , Cmd.batch [ cmd, Campaign.loadFromLocalStorage campaignId ]
+            )
+
+        Failure (Http.BadStatus 404) ->
+            let
+                campaign =
+                    Campaign.empty campaignId
+            in
+            ( model.session
+                |> Session.withCampaign campaign
+                |> setSession model
+            , Cmd.batch [ cmd, Campaign.saveToLocalStorage campaign ]
             )
 
         Success campaign ->
@@ -77,11 +89,12 @@ load model =
                 |> setSession model
             , notAskedLevelIds
                 |> List.map Level.loadFromLocalStorage
+                |> (::) cmd
                 |> Cmd.batch
             )
 
         _ ->
-            ( model, Cmd.none )
+            ( model, cmd )
 
 
 getSession : Model -> Session
@@ -217,59 +230,6 @@ update msg model =
                         ]
             in
             ( newModel, cmd )
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
-    let
-        onCampaign result =
-            case result.result of
-                Ok (Just campaign) ->
-                    load { model | session = Session.withCampaign campaign model.session }
-
-                Ok Nothing ->
-                    let
-                        campaign =
-                            Campaign.empty campaignId
-
-                        newModel =
-                            { model
-                                | session = Session.withCampaign campaign model.session
-                            }
-
-                        cmd =
-                            Campaign.saveToLocalStorage campaign
-                    in
-                    ( newModel, cmd )
-
-                Err error ->
-                    ( model.session
-                        |> Session.campaignError result.request (RequestResult.badBody error)
-                        |> setSession { model | error = Just (Decode.errorToString error) }
-                    , Ports.Console.errorString (Decode.errorToString error)
-                    )
-
-        onLevel result =
-            case result of
-                Ok (Just level) ->
-                    let
-                        newModel =
-                            { model | session = Session.withLevel level model.session }
-                    in
-                    ( newModel, Cmd.none )
-
-                Ok Nothing ->
-                    ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
-
-                Err error ->
-                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
-    in
-    ( key, value )
-        |> LocalStorage.oneOf
-            [ Level.localStorageResponse onLevel
-            , Campaign.localStorageResponse onCampaign
-            ]
-        |> Maybe.withDefault ( model, Cmd.none )
 
 
 

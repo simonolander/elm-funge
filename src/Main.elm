@@ -5,19 +5,23 @@ import Api.GCP
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
+import Data.Campaign
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.User as User exposing (User)
 import Html
 import Http
+import Json.Decode as Decode
 import Json.Encode as Encode
 import Levels
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
-import Page.Campaign as Levels
+import Page.Campaign as Campaign
 import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
 import Page.Login as Login
+import Ports.Console
 import Ports.LocalStorage
 import Route
 import Set exposing (Set)
@@ -34,7 +38,7 @@ type alias Flags =
 
 type Model
     = Home Home.Model
-    | Levels Levels.Model
+    | Campaign Campaign.Model
     | Execution Execution.Model
     | Draft Draft.Model
     | Blueprint Blueprint.Model
@@ -131,9 +135,9 @@ view model =
         Home mdl ->
             Home.view mdl
 
-        Levels mdl ->
-            Levels.view mdl
-                |> msgMap LevelsMsg
+        Campaign mdl ->
+            Campaign.view mdl
+                |> msgMap CampaignMsg
 
         Execution mdl ->
             Execution.view mdl
@@ -163,7 +167,7 @@ view model =
 type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
-    | LevelsMsg Levels.Msg
+    | CampaignMsg Campaign.Msg
     | ExecutionMsg Execution.Msg
     | DraftMsg Draft.Msg
     | HomeMsg Home.Msg
@@ -183,8 +187,8 @@ update msg model =
                 Home mdl ->
                     Home.getSession mdl
 
-                Levels mdl ->
-                    Levels.getSession mdl
+                Campaign mdl ->
+                    Campaign.getSession mdl
 
                 Execution mdl ->
                     Execution.getSession mdl
@@ -244,9 +248,9 @@ update msg model =
             Draft.update message mdl
                 |> updateWith Draft DraftMsg
 
-        ( LevelsMsg message, Levels mdl ) ->
-            Levels.update message mdl
-                |> updateWith Levels LevelsMsg
+        ( CampaignMsg message, Campaign mdl ) ->
+            Campaign.update message mdl
+                |> updateWith Campaign CampaignMsg
 
         ( HomeMsg message, Home mdl ) ->
             Home.update message mdl
@@ -285,8 +289,8 @@ changeUrl url session =
                 |> updateWith Home HomeMsg
 
         Just (Route.Campaign campaignId maybeLevelId) ->
-            Levels.init campaignId maybeLevelId session
-                |> updateWith Levels LevelsMsg
+            Campaign.init campaignId maybeLevelId session
+                |> updateWith Campaign CampaignMsg
 
         Just (Route.EditDraft draftId) ->
             Draft.init draftId session
@@ -311,14 +315,92 @@ changeUrl url session =
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
 localStorageResponseUpdate response model =
+    let
+        onSingle :
+            { name : String
+            , success : value -> Session -> Session
+            , failure : String -> Http.Error -> Session -> Session
+            , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error (Maybe value))
+            }
+            -> ( { model | session : Session }, Cmd msg )
+            -> ( { model | session : Session }, Cmd msg )
+        onSingle { name, success, failure, transform } ( mdl, cmd ) =
+            case transform response of
+                Just { request, result } ->
+                    case result of
+                        Ok (Just campaign) ->
+                            ( { mdl | session = success campaign mdl.session }
+                            , cmd
+                            )
+
+                        Ok Nothing ->
+                            let
+                                errorMessage =
+                                    name ++ " " ++ request ++ " not found"
+                            in
+                            ( { mdl | session = failure request RequestResult.notFound mdl.session }
+                            , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
+                            )
+
+                        Err error ->
+                            let
+                                errorMessage =
+                                    Decode.errorToString error
+                            in
+                            ( { mdl | session = failure request (RequestResult.badBody error) mdl.session }
+                            , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
+                            )
+
+                Nothing ->
+                    ( mdl, cmd )
+
+        onCollection :
+            { success : value -> Session -> Session
+            , failure : String -> Http.Error -> Session -> Session
+            , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error value)
+            }
+            -> ( { model | session : Session }, Cmd msg )
+            -> ( { model | session : Session }, Cmd msg )
+        onCollection { transform, success, failure } ( mdl, cmd ) =
+            case transform response of
+                Just { request, result } ->
+                    case result of
+                        Ok collection ->
+                            ( { mdl | session = success collection mdl.session }
+                            , cmd
+                            )
+
+                        Err error ->
+                            ( { mdl | session = failure request (RequestResult.badBody error) mdl.session }
+                            , Cmd.batch [ cmd, Ports.Console.errorString (Decode.errorToString error) ]
+                            )
+
+                Nothing ->
+                    ( mdl, cmd )
+
+        onCampaign : ( { model | session : Session }, Cmd msg ) -> ( { model | session : Session }, Cmd msg )
+        onCampaign =
+            onSingle
+                { name = "Campaign"
+                , success = Session.withCampaign
+                , failure = Session.campaignError
+                , transform = Data.Campaign.localStorageResponse
+                }
+
+        onResponse : { model | session : Session } -> ( { model | session : Session }, Cmd msg )
+        onResponse mdl =
+            ( mdl, Cmd.none )
+                |> onCampaign
+    in
     case model of
         Home mdl ->
-            Home.localStorageResponseUpdate response mdl
+            onResponse mdl
                 |> updateWith Home HomeMsg
 
-        Levels mdl ->
-            Levels.localStorageResponseUpdate response mdl
-                |> updateWith Levels LevelsMsg
+        Campaign mdl ->
+            onResponse mdl
+                |> Campaign.load
+                |> updateWith Campaign CampaignMsg
 
         Execution mdl ->
             Execution.localStorageResponseUpdate response mdl
@@ -329,7 +411,8 @@ localStorageResponseUpdate response model =
                 |> updateWith Draft DraftMsg
 
         Blueprints mdl ->
-            Blueprints.localStorageResponseUpdate response mdl
+            onResponse mdl
+                |> Blueprints.load
                 |> updateWith Blueprints BlueprintsMsg
 
         Blueprint mdl ->
@@ -353,8 +436,8 @@ subscriptions model =
                 Home _ ->
                     Sub.none
 
-                Levels mdl ->
-                    Sub.map LevelsMsg (Levels.subscriptions mdl)
+                Campaign mdl ->
+                    Sub.map CampaignMsg (Campaign.subscriptions mdl)
 
                 Execution mdl ->
                     Sub.map ExecutionMsg (Execution.subscriptions mdl)

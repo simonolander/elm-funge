@@ -1,4 +1,4 @@
-module Page.Campaign exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Campaign exposing (Model, Msg, getSession, init, load, localStorageResponseConsumers, localStorageResponseUpdate, subscriptions, update, view)
 
 import Api.GCP as GCP
 import Basics.Extra exposing (flip)
@@ -377,42 +377,16 @@ update msg model =
             ( newModel, cmd )
 
 
+localStorageResponseConsumers : List (( Model, Cmd Msg ) -> (String -> Encode.Value) -> ( Model, Cmd Msg ))
+localStorageResponseConsumers =
+    []
+
+
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
 localStorageResponseUpdate ( key, value ) model =
     let
         session =
             model.session
-
-        onCampaign result =
-            case result.result of
-                Ok (Just campaign) ->
-                    load
-                        ( Session.withCampaign campaign session
-                            |> setSession model
-                        , Cmd.none
-                        )
-
-                Ok Nothing ->
-                    let
-                        errorMessage =
-                            "Campaign " ++ result.request ++ " not found"
-                    in
-                    ( model.session
-                        |> Session.campaignError result.request RequestResult.notFound
-                        |> setSession { model | error = Just errorMessage }
-                    , Ports.Console.errorString errorMessage
-                    )
-
-                Err error ->
-                    let
-                        errorMessage =
-                            Json.Decode.errorToString error
-                    in
-                    ( model.session
-                        |> Session.campaignError result.request (RequestResult.badBody error)
-                        |> setSession { model | error = Just errorMessage }
-                    , Ports.Console.errorString errorMessage
-                    )
 
         onLevel result =
             case result of
@@ -487,8 +461,7 @@ localStorageResponseUpdate ( key, value ) model =
     in
     ( key, value )
         |> LocalStorage.oneOf
-            [ Campaign.localStorageResponse onCampaign
-            , Level.localStorageResponse onLevel
+            [ Level.localStorageResponse onLevel
             , DraftBook.localStorageResponse onDraftBook
             , Draft.localStorageResponse onDraft
             , SolutionBook.localStorageResponse onSolutionBook

@@ -60,14 +60,13 @@ saveToLocalStorage campaign =
         )
 
 
-localStorageResponse : (RequestResult CampaignId Decode.Error (Maybe Campaign) -> a) -> ( String, Encode.Value ) -> Maybe a
-localStorageResponse onResult ( key, value ) =
+localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult CampaignId Decode.Error (Maybe Campaign))
+localStorageResponse ( key, value ) =
     case String.split "." key of
         "campaigns" :: campaignId :: [] ->
             value
                 |> Decode.decodeValue (Decode.nullable decoder)
                 |> RequestResult.constructor campaignId
-                |> onResult
                 |> Just
 
         _ ->
