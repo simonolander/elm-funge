@@ -12,6 +12,7 @@ import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionPointer exposing (InstructionPointer)
+import Data.Int16 as Int16 exposing (Int16)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Output exposing (Output)
@@ -388,49 +389,49 @@ stepExecution execution =
         execution
 
 
-pop : List Int -> ( Int, List Int )
+pop : List Int16 -> ( Int16, List Int16 )
 pop list =
     case list of
         head :: tail ->
             ( head, tail )
 
         _ ->
-            ( 0, [] )
+            ( Int16.zero, [] )
 
 
-peek : List Int -> Int
+peek : List Int16 -> Int16
 peek list =
     List.head list
-        |> Maybe.withDefault 0
+        |> Maybe.withDefault Int16.zero
 
 
-pop2 : List Int -> ( Int, Int, List Int )
+pop2 : List Int16 -> ( Int16, Int16, List Int16 )
 pop2 list =
     case list of
         [] ->
-            ( 0, 0, [] )
+            ( Int16.zero, Int16.zero, [] )
 
         a :: [] ->
-            ( a, 0, [] )
+            ( a, Int16.zero, [] )
 
         a :: b :: tail ->
             ( a, b, tail )
 
 
-peek2 : List Int -> ( Int, Int )
+peek2 : List Int16 -> ( Int16, Int16 )
 peek2 list =
     case list of
         [] ->
-            ( 0, 0 )
+            ( Int16.zero, Int16.zero )
 
         a :: [] ->
-            ( a, 0 )
+            ( a, Int16.zero )
 
         a :: b :: _ ->
             ( a, b )
 
 
-popOp : (Int -> Int) -> Stack -> Stack
+popOp : (Int16 -> Int16) -> Stack -> Stack
 popOp operation stack =
     let
         ( a, stack1 ) =
@@ -439,7 +440,7 @@ popOp operation stack =
     operation a :: stack1
 
 
-popOp2 : (Int -> Int -> Int) -> Stack -> Stack
+popOp2 : (Int16 -> Int16 -> Int16) -> Stack -> Stack
 popOp2 operation stack =
     let
         ( a, b, stack1 ) =
@@ -448,12 +449,12 @@ popOp2 operation stack =
     operation a b :: stack1
 
 
-peekOp : (Int -> Int) -> Stack -> Stack
+peekOp : (Int16 -> Int16) -> Stack -> Stack
 peekOp operation stack =
     operation (peek stack) :: stack
 
 
-peekOp2 : (Int -> Int -> Int) -> Stack -> Stack
+peekOp2 : (Int16 -> Int16 -> Int16) -> Stack -> Stack
 peekOp2 operation stack =
     let
         ( a, b ) =
@@ -538,7 +539,7 @@ stepExecutionStep executionStep =
         Branch trueDirection falseDirection ->
             let
                 newDirection =
-                    if peek stack /= 0 then
+                    if peek stack /= Int16.zero then
                         trueDirection
 
                     else
@@ -595,12 +596,12 @@ stepExecutionStep executionStep =
 
         Negate ->
             { movedExecutionStep
-                | stack = popOp negate stack
+                | stack = popOp Int16.negate stack
             }
 
         Abs ->
             { movedExecutionStep
-                | stack = popOp abs stack
+                | stack = popOp Int16.abs stack
             }
 
         Not ->
@@ -608,43 +609,43 @@ stepExecutionStep executionStep =
                 | stack =
                     popOp
                         (\a ->
-                            if a == 0 then
-                                1
+                            if a == Int16.zero then
+                                Int16.one
 
                             else
-                                0
+                                Int16.zero
                         )
                         stack
             }
 
         Increment ->
             { movedExecutionStep
-                | stack = popOp ((+) 1) stack
+                | stack = popOp (Int16.add Int16.one) stack
             }
 
         Decrement ->
             { movedExecutionStep
-                | stack = popOp (\value -> value - 1) stack
+                | stack = popOp (Int16.subtract Int16.one) stack
             }
 
         Add ->
             { movedExecutionStep
-                | stack = popOp2 (+) stack
+                | stack = popOp2 Int16.add stack
             }
 
         Subtract ->
             { movedExecutionStep
-                | stack = popOp2 (-) stack
+                | stack = popOp2 Int16.subtract stack
             }
 
         Multiply ->
             { movedExecutionStep
-                | stack = popOp2 (*) stack
+                | stack = popOp2 Int16.multiply stack
             }
 
         Divide ->
             { movedExecutionStep
-                | stack = popOp2 (//) stack
+                | stack = popOp2 Int16.divide stack
             }
 
         Equals ->
@@ -653,10 +654,10 @@ stepExecutionStep executionStep =
                     popOp2
                         (\a b ->
                             if a == b then
-                                1
+                                Int16.one
 
                             else
-                                0
+                                Int16.zero
                         )
                         stack
             }
@@ -666,11 +667,11 @@ stepExecutionStep executionStep =
                 | stack =
                     peekOp2
                         (\a b ->
-                            if a < b then
-                                1
+                            if Int16.isLessThan a b then
+                                Int16.one
 
                             else
-                                0
+                                Int16.zero
                         )
                         stack
             }
@@ -680,11 +681,11 @@ stepExecutionStep executionStep =
                 | stack =
                     popOp2
                         (\a b ->
-                            if a /= 0 && b /= 0 then
-                                1
+                            if a /= Int16.zero && b /= Int16.zero then
+                                Int16.one
 
                             else
-                                0
+                                Int16.zero
                         )
                         stack
             }
@@ -694,11 +695,11 @@ stepExecutionStep executionStep =
                 | stack =
                     popOp2
                         (\a b ->
-                            if a /= 0 || b /= 0 then
-                                1
+                            if a /= Int16.zero || b /= Int16.zero then
+                                Int16.one
 
                             else
-                                0
+                                Int16.zero
                         )
                         stack
             }
@@ -708,11 +709,11 @@ stepExecutionStep executionStep =
                 | stack =
                     popOp2
                         (\a b ->
-                            if (a /= 0) /= (b /= 0) then
-                                1
+                            if (a /= Int16.zero) /= (b /= Int16.zero) then
+                                Int16.one
 
                             else
-                                0
+                                Int16.zero
                         )
                         stack
             }
@@ -1177,7 +1178,7 @@ viewIOSidebar execution model =
 
                 valuesView =
                     values
-                        |> List.map String.fromInt
+                        |> List.map Int16.toString
                         |> List.map
                             (\value ->
                                 el
@@ -1230,7 +1231,7 @@ viewIOSidebar execution model =
 
                 expectedView =
                     expected
-                        |> List.map String.fromInt
+                        |> List.map Int16.toString
                         |> List.map
                             (\value ->
                                 el
@@ -1264,7 +1265,7 @@ viewIOSidebar execution model =
                                             rgb 0.5 0 0
                                         )
                                     ]
-                                    (text (String.fromInt value))
+                                    (text (Int16.toString value))
                             )
                         |> column
                             [ width fill

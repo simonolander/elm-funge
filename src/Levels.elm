@@ -6,6 +6,7 @@ import Data.CampaignId as CampaignId
 import Data.Direction exposing (Direction(..))
 import Data.Instruction as Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
+import Data.Int16 as Int16
 import Data.Level exposing (Level)
 
 
@@ -17,7 +18,9 @@ levelTest =
     , name = "test"
     , description = [ "For testing purposes" ]
     , io =
-        { input = List.range 980 1020
+        { input =
+            List.range 980 1020
+                |> List.map Int16.constructor
         , output = []
         }
     , initialBoard =
@@ -31,7 +34,7 @@ levelTest =
             , JustInstruction Increment
             , JustInstruction Read
             , JustInstruction Print
-            , JustInstruction (PushToStack 15433)
+            , JustInstruction (PushToStack Int16.zero)
             , PushValueToStack "0"
             , JustInstruction Add
             , JustInstruction SendToBottom
@@ -51,8 +54,12 @@ levelDoubleTheFun =
     , name = "Double the fun"
     , description = [ "> Read a number n from input", "> Output n * 2", "The last input is 0 and should not be printed" ]
     , io =
-        { input = [ 1, 8, 19, 3, 5, 31, 9, 0 ]
-        , output = [ 2, 16, 38, 6, 10, 62, 18 ]
+        { input =
+            [ 1, 8, 19, 3, 5, 31, 9, 0 ]
+                |> List.map Int16.constructor
+        , output =
+            [ 2, 16, 38, 6, 10, 62, 18 ]
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 4 4
@@ -80,7 +87,9 @@ level123 =
     , description = [ "> Output the numbers 1, 2, and 3" ]
     , io =
         { input = []
-        , output = [ 1, 2, 3 ]
+        , output =
+            [ 1, 2, 3 ]
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 4 4
@@ -107,12 +116,15 @@ levelCountDown =
     , name = "Count down"
     , description = [ "> Read a number n from input", "> Output all the numbers from n to 0", "The last input is 0 and should not be printed" ]
     , io =
-        { input = [ 7, 3, 10, 0 ]
+        { input =
+            [ 7, 3, 10, 0 ]
+                |> List.map Int16.constructor
         , output =
             [ 7, 3, 10 ]
                 |> List.map (List.range 0)
                 |> List.map List.reverse
                 |> List.concat
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 7 7
@@ -139,9 +151,12 @@ levelSomeSums =
     , name = "Some sums"
     , description = [ "> Read two numbers a and b from input", "> Output a + b", "The last input is 0 and should not be printed" ]
     , io =
-        { input = [ 1, 5, 13, 10, 11, 10, 8, 8, 0 ]
+        { input =
+            [ 1, 5, 13, 10, 11, 10, 8, 8, 0 ]
+                |> List.map Int16.constructor
         , output =
             [ 6, 23, 21, 16 ]
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 7 7
@@ -174,11 +189,15 @@ levelOneMinusTheOther =
             input =
                 [ 18, 4, 9, 17, 13, 13, 12, 1, 17, 3 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> listPairs
                 |> List.map (\( a, b ) -> a - b)
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 7 7
@@ -211,10 +230,14 @@ levelPowersOfTwo =
             input =
                 [ 1, 4, 3, 2, 5, 6 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> List.map ((^) 2)
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 8 8
@@ -247,10 +270,14 @@ levelTriangularNumbers =
             input =
                 [ 5, 13, 7, 11, 1, 10, 3 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> List.map (\n -> n * (n + 1) // 2)
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 8 8
@@ -283,10 +310,14 @@ levelSignalAmplifier =
             input =
                 [ 24, 145, 49, 175, 166, 94, 38, 90, 165, 211 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> List.map ((+) 10)
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 5 5
@@ -320,11 +351,15 @@ levelMultiplier =
             input =
                 [ 12, 2, 6, 6, 5, 7, 1, 1, 7, 11, 6, 3 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> listPairs
                 |> List.map (\( x, y ) -> x * y)
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 7 7
@@ -359,11 +394,15 @@ levelDivideAndConquer =
             input =
                 [ 12, 1, 8, 2, 8, 8, 11, 2, 5, 7, 10, 4 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> listPairs
                 |> List.map (\( x, y ) -> x // y)
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 7 7
@@ -378,7 +417,7 @@ levelDivideAndConquer =
             , JustInstruction SendToBottom
             , JustInstruction Read
             , JustInstruction Print
-            , JustInstruction (PushToStack 0)
+            , JustInstruction (PushToStack Int16.zero)
             , JustInstruction JumpForward
             , JustInstruction PopFromStack
             , BranchAnyDirection Left Right
@@ -399,10 +438,14 @@ levelSequenceReverser =
             input =
                 [ -19, -2, 94, -5, 19, 7, 33, -92, 29, -39 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> List.reverse
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 5 5
@@ -436,10 +479,14 @@ levelSequenceSorter =
             input =
                 [ 1, 4, 3, 7, 11, 15, 4, 14, 4, 10, 8, 7 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> List.sort
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 7 7
@@ -475,7 +522,10 @@ levelLessIsMore =
             input =
                 [ 6, 15, 11, 3, 9, 7, 15, 15, 3, 7 ]
         in
-        { input = input ++ [ 0 ]
+        { input =
+            input
+                ++ [ 0 ]
+                |> List.map Int16.constructor
         , output =
             input
                 |> listPairs
@@ -487,6 +537,7 @@ levelLessIsMore =
                         else
                             b
                     )
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 8 8
@@ -655,7 +706,7 @@ levelLabyrinth5 =
             |> Board.set { x = 2, y = 3 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 4, y = 3 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 0, y = 4 } (Instruction.Exception "Don't hit the exceptions")
-            |> Board.set { x = 4, y = 2 } (PushToStack 1)
+            |> Board.set { x = 4, y = 2 } (PushToStack Int16.one)
             |> Board.set { x = 3, y = 4 } (Branch Right Up)
             |> Board.set { x = 4, y = 4 } Terminate
     , instructionTools =
@@ -690,7 +741,7 @@ levelLabyrinth6 =
             |> Board.set { x = 3, y = 2 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 2, y = 2 } (Instruction.Exception "Don't hit the exceptions")
             |> Board.set { x = 2, y = 1 } (Instruction.Exception "Don't hit the exceptions")
-            |> Board.set { x = 3, y = 1 } (PushToStack 1)
+            |> Board.set { x = 3, y = 1 } (PushToStack Int16.one)
             |> Board.set { x = 2, y = 3 } (Branch Right Up)
             |> Board.set { x = 3, y = 3 } Terminate
     , instructionTools =
@@ -750,7 +801,9 @@ levelLabyrinth8 =
     , description = [ "> Output 1, 2, 3, 4", "> Terminate the program" ]
     , io =
         { input = []
-        , output = [ 1, 2, 3, 4 ]
+        , output =
+            [ 1, 2, 3, 4 ]
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 5 5
@@ -809,7 +862,9 @@ levelLabyrinth10 =
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
         { input = []
-        , output = [ 1 ]
+        , output =
+            [ 1 ]
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 5 5
@@ -845,7 +900,9 @@ levelLabyrinth11 =
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
     , io =
         { input = []
-        , output = [ 1 ]
+        , output =
+            [ 1 ]
+                |> List.map Int16.constructor
         }
     , initialBoard =
         Board.empty 5 5

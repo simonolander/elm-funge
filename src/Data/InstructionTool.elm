@@ -2,6 +2,7 @@ module Data.InstructionTool exposing (InstructionTool(..), all, decoder, encode,
 
 import Data.Direction exposing (Direction(..))
 import Data.Instruction as Instruction exposing (Instruction(..))
+import Data.Int16 as Int16
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
 import Json.Encode exposing (Value, object, string)
 
@@ -40,7 +41,7 @@ getInstruction instructionTool =
 
         PushValueToStack value ->
             value
-                |> String.toInt
+                |> Int16.fromString
                 |> Maybe.map PushToStack
                 |> Maybe.withDefault (Instruction.Exception (value ++ " is not a number"))
 

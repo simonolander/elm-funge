@@ -7,7 +7,6 @@ import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.RequestResult as RequestResult
 import Data.Session as Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
@@ -15,10 +14,7 @@ import Element.Input as Input
 import Extra.String
 import Html exposing (Html)
 import Http
-import Json.Decode as Decode
-import Json.Encode as Encode
 import Ports.Console
-import Ports.LocalStorage as LocalStorage
 import Random
 import RemoteData exposing (RemoteData(..))
 import Route

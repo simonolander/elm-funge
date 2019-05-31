@@ -9,6 +9,7 @@ import Data.CampaignId as CampaignId
 import Data.IO as IO
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
+import Data.Int16 as Int16
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -99,11 +100,11 @@ load =
                             , height = String.fromInt (Board.height level.initialBoard)
                             , input =
                                 level.io.input
-                                    |> List.map String.fromInt
+                                    |> List.map Int16.toString
                                     |> String.join ","
                             , output =
                                 level.io.output
-                                    |> List.map String.fromInt
+                                    |> List.map Int16.toString
                                     |> String.join ","
                             , enabledInstructionTools =
                                 InstructionTool.all
@@ -129,11 +130,11 @@ initWithLevel level model =
         , height = String.fromInt (Board.height level.initialBoard)
         , input =
             level.io.input
-                |> List.map String.fromInt
+                |> List.map Int16.toString
                 |> String.join ","
         , output =
             level.io.output
-                |> List.map String.fromInt
+                |> List.map Int16.toString
                 |> String.join ","
         , enabledInstructionTools =
             InstructionTool.all
@@ -249,10 +250,8 @@ update msg model =
                             inputString
                                 |> String.split ","
                                 |> List.map String.trim
-                                |> List.map String.toInt
+                                |> List.map Int16.fromString
                                 |> Maybe.Extra.values
-                                |> List.filter (flip (>=) IO.constraints.min)
-                                |> List.filter (flip (<=) IO.constraints.max)
 
                         newLevel =
                             input
@@ -276,10 +275,8 @@ update msg model =
                             outputString
                                 |> String.split ","
                                 |> List.map String.trim
-                                |> List.map String.toInt
+                                |> List.map Int16.fromString
                                 |> Maybe.Extra.values
-                                |> List.filter (flip (>=) IO.constraints.min)
-                                |> List.filter (flip (<=) IO.constraints.max)
 
                         newLevel =
                             output

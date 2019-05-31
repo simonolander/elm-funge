@@ -1,6 +1,7 @@
 module Data.Instruction exposing (Instruction(..), allSimple, decoder, encode)
 
 import Data.Direction as Direction exposing (Direction)
+import Data.Int16 as Int16 exposing (Int16)
 import Json.Decode as Decode exposing (Decoder, andThen, fail, field, succeed)
 import Json.Encode exposing (Value, int, object, string)
 
@@ -8,7 +9,7 @@ import Json.Encode exposing (Value, int, object, string)
 type Instruction
     = NoOp
     | ChangeDirection Direction
-    | PushToStack Int
+    | PushToStack Int16
     | PopFromStack
     | JumpForward
     | Duplicate
@@ -83,7 +84,7 @@ encode instruction =
         PushToStack value ->
             object
                 [ ( "tag", string "PushToStack" )
-                , ( "value", int value )
+                , ( "value", Int16.encode value )
                 ]
 
         PopFromStack ->
@@ -201,7 +202,7 @@ decoder =
                         |> Decode.map ChangeDirection
 
                 "PushToStack" ->
-                    field "value" Decode.int
+                    field "value" Int16.decoder
                         |> Decode.map PushToStack
 
                 "PopFromStack" ->

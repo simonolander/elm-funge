@@ -2,6 +2,7 @@ module InstructionView exposing (description, view)
 
 import Data.Direction exposing (Direction(..))
 import Data.Instruction exposing (Instruction(..))
+import Data.Int16 as Int16
 import Element exposing (..)
 import Element.Font as Font
 
@@ -115,7 +116,7 @@ description instruction =
             message
 
         PushToStack value ->
-            "Push " ++ String.fromInt value ++ " to the stack"
+            "Push " ++ Int16.toString value ++ " to the stack"
 
         Negate ->
             "TODO: Negate the top value of the stack"
@@ -326,7 +327,7 @@ view attributes instruction =
                 }
 
         PushToStack value ->
-            String.fromInt value
+            Int16.toString value
                 |> text
                 |> el ([ Font.size 26, centerY ] ++ attributes)
 
