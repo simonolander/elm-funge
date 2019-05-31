@@ -437,6 +437,7 @@ localStorageResponseUpdate response model =
                 |> onDraft
                 |> onDraftBook
                 |> onSolutionBook
+                |> onSolution
     in
     case model of
         Home mdl ->

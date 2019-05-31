@@ -1,4 +1,4 @@
-module Data.DraftId exposing (DraftId, decoder, encode, generate, toString, urlParser)
+module Data.DraftId exposing (DraftId, decoder, encode, generator, toString, urlParser)
 
 import Array
 import Json.Decode as Decode
@@ -25,8 +25,8 @@ toString id =
 -- RANDOM
 
 
-generate : Random.Generator DraftId
-generate =
+generator : Random.Generator DraftId
+generator =
     let
         chars =
             --            "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

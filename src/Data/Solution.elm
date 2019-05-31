@@ -4,6 +4,7 @@ import Data.Board as Board exposing (Board)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Score as Score exposing (Score)
+import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId as SolutionId exposing (SolutionId)
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -114,7 +115,10 @@ saveToLocalStorage solution =
         value =
             encode solution
     in
-    Ports.LocalStorage.storageSetItem ( key, value )
+    Cmd.batch
+        [ Ports.LocalStorage.storageSetItem ( key, value )
+        , SolutionBook.saveToLocalStorage solution.id solution.levelId
+        ]
 
 
 localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error (Maybe Solution))

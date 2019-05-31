@@ -16,6 +16,7 @@ import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Output exposing (Output)
 import Data.Session as Session exposing (Session)
+import Data.Solution as Solution exposing (Solution)
 import Data.Stack exposing (Stack)
 import Element exposing (..)
 import Element.Background as Background
@@ -29,6 +30,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Ports.LocalStorage
+import Random
 import RemoteData exposing (RemoteData(..))
 import Route
 import Time
@@ -220,6 +222,7 @@ type Msg
     | ClickedPause
     | ClickedNavigateBack
     | ClickedNavigateBrowseLevels
+    | GeneratedSolution Solution
     | Tick
 
 
@@ -274,6 +277,12 @@ update msg model =
                 Tick ->
                     stepModel execution model
 
+                GeneratedSolution solution ->
+                    ( Session.withSolution solution model.session
+                        |> setSession model
+                    , Solution.saveToLocalStorage solution
+                    )
+
         Nothing ->
             ( model, Cmd.none )
 
@@ -292,47 +301,46 @@ stepModel oldExecution model =
                 Paused
 
         ( session, saveDraftCmd ) =
-            case
-                model.session
-                    |> Session.getDraft model.draftId
-                    |> RemoteData.toMaybe
-            of
-                Just oldDraft ->
-                    if isSolved execution then
-                        let
-                            numberOfSteps =
-                                History.current execution.executionHistory
-                                    |> .stepCount
+            if isSolved execution then
+                let
+                    numberOfSteps =
+                        History.current execution.executionHistory
+                            |> .stepCount
 
-                            initialNumberOfInstructions =
-                                Board.count ((/=) NoOp) execution.level.initialBoard
+                    initialNumberOfInstructions =
+                        Board.count ((/=) NoOp) execution.level.initialBoard
 
-                            totalNumberOfInstructions =
-                                History.first execution.executionHistory
-                                    |> .board
-                                    |> Board.count ((/=) NoOp)
+                    totalNumberOfInstructions =
+                        History.first execution.executionHistory
+                            |> .board
+                            |> Board.count ((/=) NoOp)
 
-                            numberOfInstructions =
-                                totalNumberOfInstructions - initialNumberOfInstructions
+                    numberOfInstructions =
+                        totalNumberOfInstructions - initialNumberOfInstructions
 
-                            score =
-                                { numberOfSteps = numberOfSteps
-                                , numberOfInstructions = numberOfInstructions
-                                }
+                    score =
+                        { numberOfSteps = numberOfSteps
+                        , numberOfInstructions = numberOfInstructions
+                        }
 
-                            newDraft =
-                                { oldDraft | maybeScore = Just score }
+                    initialBoard =
+                        execution.executionHistory
+                            |> History.first
+                            |> .board
 
-                            newSession =
-                                Session.withDraft newDraft model.session
-                        in
-                        ( newSession, Draft.saveToLocalStorage newDraft )
+                    generateSolutionCmd =
+                        Random.generate
+                            GeneratedSolution
+                            (Solution.generator
+                                execution.level.id
+                                score
+                                initialBoard
+                            )
+                in
+                ( model.session, generateSolutionCmd )
 
-                    else
-                        ( model.session, Cmd.none )
-
-                Nothing ->
-                    ( model.session, Cmd.none )
+            else
+                ( model.session, Cmd.none )
 
         newModel =
             { model

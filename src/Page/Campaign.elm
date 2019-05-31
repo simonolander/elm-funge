@@ -10,6 +10,7 @@ import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.HighScore as HighScore exposing (HighScore)
+import Data.History as History
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
@@ -487,14 +488,11 @@ viewLevels campaign model =
 
                 solved =
                     level.id
-                        |> flip Session.getDraftBook model.session
-                        |> RemoteData.map .draftIds
-                        |> RemoteData.map Set.toList
-                        |> RemoteData.withDefault []
-                        |> List.map (flip Session.getDraft model.session)
-                        |> List.map (RemoteData.map .maybeScore)
-                        |> List.map (RemoteData.map Maybe.Extra.isJust)
-                        |> List.any ((==) (Success True))
+                        |> flip Session.getSolutionBook model.session
+                        |> RemoteData.map .solutionIds
+                        |> RemoteData.map Set.isEmpty
+                        |> RemoteData.withDefault True
+                        |> not
 
                 onPress =
                     Just (SelectLevel level.id)
@@ -565,36 +563,28 @@ viewSidebar level model =
 
         solvedStatusView =
             let
+                loadingText =
+                    "Loading solutions..."
+
+                solvedText =
+                    "Solved"
+
+                notSolvedText =
+                    "Not solved"
+
                 solvedStatus =
                     case
-                        Session.getDraftBook level.id model.session
+                        Session.getSolutionBook level.id model.session
                     of
-                        Success draftBook ->
-                            let
-                                drafts =
-                                    draftBook.draftIds
-                                        |> Set.toList
-                                        |> List.map (flip Session.getDraft model.session)
-
-                                anySolved =
-                                    drafts
-                                        |> Extra.RemoteData.successes
-                                        |> List.any (.maybeScore >> Maybe.Extra.isJust)
-
-                                anyLoading =
-                                    List.any RemoteData.isLoading drafts
-                            in
-                            if anySolved then
-                                "Solved"
-
-                            else if anyLoading then
-                                "Loading drafts..."
+                        Success solutionBook ->
+                            if Set.isEmpty solutionBook.solutionIds then
+                                notSolvedText
 
                             else
-                                "Not solved"
+                                solvedText
 
                         _ ->
-                            "Loading drafts..."
+                            loadingText
             in
             paragraph
                 [ width fill
@@ -655,6 +645,16 @@ viewDrafts level session =
 
                         Success draft ->
                             let
+                                maybeSolution =
+                                    Session.getSolutionBook level.id session
+                                        |> RemoteData.map .solutionIds
+                                        |> RemoteData.map Set.toList
+                                        |> RemoteData.withDefault []
+                                        |> List.map (flip Session.getSolution session)
+                                        |> Extra.RemoteData.successes
+                                        |> List.filter (.board >> (==) (History.current draft.boardHistory))
+                                        |> List.head
+
                                 attrs =
                                     [ width fill
                                     , padding 10
@@ -667,7 +667,7 @@ viewDrafts level session =
                                         ]
                                     , htmlAttribute
                                         (Html.Attributes.class
-                                            (if Maybe.Extra.isJust draft.maybeScore then
+                                            (if Maybe.Extra.isJust maybeSolution then
                                                 "solved"
 
                                              else
@@ -702,7 +702,8 @@ viewDrafts level session =
                                         , spaceEvenly
                                         ]
                                         [ text "Steps: "
-                                        , draft.maybeScore
+                                        , maybeSolution
+                                            |> Maybe.map .score
                                             |> Maybe.map .numberOfSteps
                                             |> Maybe.map String.fromInt
                                             |> Maybe.withDefault "N/A"

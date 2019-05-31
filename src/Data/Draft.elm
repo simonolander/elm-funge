@@ -1,4 +1,4 @@
-module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadFromLocalStorage, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo, withScore)
+module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadFromLocalStorage, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo)
 
 import Data.Board as Board exposing (Board)
 import Data.DraftBook as DraftBook
@@ -8,7 +8,6 @@ import Data.Instruction as Instruction
 import Data.Level exposing (Level)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
-import Data.Score as Score exposing (Score)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -18,7 +17,6 @@ import Random
 type alias Draft =
     { id : DraftId
     , boardHistory : History Board
-    , maybeScore : Maybe Score
     , levelId : LevelId
     }
 
@@ -27,14 +25,6 @@ pushBoard : Board -> Draft -> Draft
 pushBoard board draft =
     { draft
         | boardHistory = History.push board draft.boardHistory
-        , maybeScore = Nothing
-    }
-
-
-withScore : Score -> Draft -> Draft
-withScore score draft =
-    { draft
-        | maybeScore = Just score
     }
 
 
@@ -74,12 +64,11 @@ getInstructionCount initialBoard draft =
 
 generator : Level -> Random.Generator Draft
 generator level =
-    DraftId.generate
+    DraftId.generator
         |> Random.map
             (\id ->
                 { id = id
                 , boardHistory = History.singleton level.initialBoard
-                , maybeScore = Nothing
                 , levelId = level.id
                 }
             )
@@ -95,11 +84,6 @@ encode draft =
         [ ( "id", DraftId.encode draft.id )
         , ( "levelId", LevelId.encode draft.levelId )
         , ( "board", Board.encode (History.current draft.boardHistory) )
-        , ( "maybeScore"
-          , draft.maybeScore
-                |> Maybe.map Score.encode
-                |> Maybe.withDefault Encode.null
-          )
         ]
 
 
@@ -114,16 +98,11 @@ decoder =
                             Decode.field "board" Board.decoder
                                 |> Decode.andThen
                                     (\board ->
-                                        Decode.field "maybeScore" (Decode.nullable Score.decoder)
-                                            |> Decode.andThen
-                                                (\maybeScore ->
-                                                    Decode.succeed
-                                                        { id = id
-                                                        , boardHistory = History.singleton board
-                                                        , maybeScore = maybeScore
-                                                        , levelId = levelId
-                                                        }
-                                                )
+                                        Decode.succeed
+                                            { id = id
+                                            , boardHistory = History.singleton board
+                                            , levelId = levelId
+                                            }
                                     )
                         )
             )
