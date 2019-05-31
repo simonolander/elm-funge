@@ -6,8 +6,13 @@ import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Campaign
+import Data.Draft
+import Data.DraftBook
+import Data.Level
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
+import Data.Solution
+import Data.SolutionBook
 import Data.User as User exposing (User)
 import Html
 import Http
@@ -378,7 +383,6 @@ localStorageResponseUpdate response model =
                 Nothing ->
                     ( mdl, cmd )
 
-        onCampaign : ( { model | session : Session }, Cmd msg ) -> ( { model | session : Session }, Cmd msg )
         onCampaign =
             onSingle
                 { name = "Campaign"
@@ -387,10 +391,52 @@ localStorageResponseUpdate response model =
                 , transform = Data.Campaign.localStorageResponse
                 }
 
+        onLevel =
+            onSingle
+                { name = "Level"
+                , success = Session.withLevel
+                , failure = Session.levelError
+                , transform = Data.Level.localStorageResponse
+                }
+
+        onDraft =
+            onSingle
+                { name = "Draft"
+                , success = Session.withDraft
+                , failure = Session.draftError
+                , transform = Data.Draft.localStorageResponse
+                }
+
+        onSolution =
+            onSingle
+                { name = "Solution"
+                , success = Session.withSolution
+                , failure = Session.solutionError
+                , transform = Data.Solution.localStorageResponse
+                }
+
+        onDraftBook =
+            onCollection
+                { success = Session.withDraftBook
+                , failure = Session.draftBookError
+                , transform = Data.DraftBook.localStorageResponse
+                }
+
+        onSolutionBook =
+            onCollection
+                { success = Session.withSolutionBook
+                , failure = Session.solutionBookError
+                , transform = Data.SolutionBook.localStorageResponse
+                }
+
         onResponse : { model | session : Session } -> ( { model | session : Session }, Cmd msg )
         onResponse mdl =
             ( mdl, Cmd.none )
                 |> onCampaign
+                |> onLevel
+                |> onDraft
+                |> onDraftBook
+                |> onSolutionBook
     in
     case model of
         Home mdl ->
@@ -403,11 +449,13 @@ localStorageResponseUpdate response model =
                 |> updateWith Campaign CampaignMsg
 
         Execution mdl ->
-            Execution.localStorageResponseUpdate response mdl
+            onResponse mdl
+                |> Execution.load
                 |> updateWith Execution ExecutionMsg
 
         Draft mdl ->
-            Draft.localStorageResponseUpdate response mdl
+            onResponse mdl
+                |> Draft.load
                 |> updateWith Draft DraftMsg
 
         Blueprints mdl ->
@@ -416,11 +464,12 @@ localStorageResponseUpdate response model =
                 |> updateWith Blueprints BlueprintsMsg
 
         Blueprint mdl ->
-            Blueprint.localStorageResponseUpdate response mdl
+            onResponse mdl
+                |> Blueprint.load
                 |> updateWith Blueprint BlueprintMsg
 
         Login mdl ->
-            Login.localStorageResponseUpdate response mdl
+            onResponse mdl
                 |> updateWith Login LoginMsg
 
 

@@ -1,4 +1,4 @@
-module Page.Execution exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Execution exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -13,6 +13,7 @@ import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionPointer exposing (InstructionPointer)
 import Data.Level as Level exposing (Level)
+import Data.LevelId exposing (LevelId)
 import Data.Output exposing (Output)
 import Data.Session as Session exposing (Session)
 import Data.Stack exposing (Stack)
@@ -66,6 +67,7 @@ type ExecutionState
 type alias Model =
     { session : Session
     , draftId : DraftId
+    , loadedLevelId : Maybe LevelId
     , execution : Maybe Execution
     , state : ExecutionState
     , error : Maybe String
@@ -78,45 +80,70 @@ init draftId session =
         model =
             { session = session
             , draftId = draftId
+            , loadedLevelId = Nothing
             , state = Paused
             , execution = Nothing
             , error = Nothing
             }
     in
-    load model
+    load ( model, Cmd.none )
 
 
-load : Model -> ( Model, Cmd Msg )
-load model =
-    case Session.getDraft model.draftId model.session of
-        NotAsked ->
-            ( model.session
-                |> Session.draftLoading model.draftId
-                |> setSession model
-            , Draft.loadFromLocalStorage model.draftId
-            )
-
-        Success draft ->
-            case Session.getLevel draft.levelId model.session of
+load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load =
+    let
+        loadDraft ( model, cmd ) =
+            case Session.getDraft model.draftId model.session of
                 NotAsked ->
                     ( model.session
-                        |> Session.levelLoading draft.levelId
+                        |> Session.draftLoading model.draftId
                         |> setSession model
-                    , Level.loadFromLocalStorage draft.levelId
-                    )
-
-                Success level ->
-                    ( { model
-                        | execution = Just (initialExecution level draft)
-                      }
-                    , Cmd.none
+                    , Cmd.batch [ cmd, Draft.loadFromLocalStorage model.draftId ]
                     )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( model, cmd )
 
-        _ ->
-            ( model, Cmd.none )
+        loadLevel ( model, cmd ) =
+            case
+                Session.getDraft model.draftId model.session
+                    |> RemoteData.toMaybe
+            of
+                Just draft ->
+                    case Session.getLevel draft.levelId model.session of
+                        NotAsked ->
+                            ( model.session
+                                |> Session.levelLoading draft.levelId
+                                |> setSession model
+                            , Cmd.batch [ cmd, Level.loadFromLocalStorage draft.levelId ]
+                            )
+
+                        Success level ->
+                            if
+                                model.loadedLevelId
+                                    |> Maybe.map ((==) level.id)
+                                    |> Maybe.withDefault False
+                            then
+                                ( model, cmd )
+
+                            else
+                                ( { model
+                                    | execution = Just (initialExecution level draft)
+                                    , loadedLevelId = Just level.id
+                                  }
+                                , cmd
+                                )
+
+                        _ ->
+                            ( model, cmd )
+
+                Nothing ->
+                    ( model, cmd )
+    in
+    flip (List.foldl (flip (|>)))
+        [ loadDraft
+        , loadLevel
+        ]
 
 
 getSession : Model -> Session
@@ -249,46 +276,6 @@ update msg model =
 
         Nothing ->
             ( model, Cmd.none )
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
-    let
-        session =
-            getSession model
-
-        onDraft result =
-            case result of
-                Ok (Just draft) ->
-                    Session.withDraft draft session
-                        |> setSession model
-                        |> load
-
-                Ok Nothing ->
-                    ( { model | error = Just ("Draft not found: " ++ key) }, Cmd.none )
-
-                Err error ->
-                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
-
-        onLevel result =
-            case result of
-                Ok (Just level) ->
-                    Session.withLevel level session
-                        |> setSession model
-                        |> load
-
-                Ok Nothing ->
-                    ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
-
-                Err error ->
-                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
-    in
-    ( key, value )
-        |> Ports.LocalStorage.oneOf
-            [ Draft.localStorageResponse onDraft
-            , Level.localStorageResponse onLevel
-            ]
-        |> Maybe.withDefault ( model, Cmd.none )
 
 
 stepModel : Execution -> Model -> ( Model, Cmd Msg )

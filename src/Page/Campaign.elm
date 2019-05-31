@@ -1,4 +1,4 @@
-module Page.Campaign exposing (Model, Msg, getSession, init, load, localStorageResponseConsumers, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Campaign exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
 import Api.GCP as GCP
 import Basics.Extra exposing (flip)
@@ -24,11 +24,7 @@ import Extra.RemoteData
 import Extra.String exposing (fromHttpError)
 import Html.Attributes
 import Http
-import Json.Decode
-import Json.Encode as Encode
 import Maybe.Extra
-import Ports.Console
-import Ports.LocalStorage as LocalStorage exposing (Key)
 import Random
 import RemoteData exposing (RemoteData(..))
 import Result exposing (Result)
@@ -375,101 +371,6 @@ update msg model =
                         ]
             in
             ( newModel, cmd )
-
-
-localStorageResponseConsumers : List (( Model, Cmd Msg ) -> (String -> Encode.Value) -> ( Model, Cmd Msg ))
-localStorageResponseConsumers =
-    []
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
-    let
-        session =
-            model.session
-
-        onLevel result =
-            case result of
-                Ok (Just level) ->
-                    load
-                        ( Session.withLevel level session
-                            |> setSession model
-                        , Cmd.none
-                        )
-
-                -- TODO
-                Ok Nothing ->
-                    ( model, Cmd.none )
-
-                Err error ->
-                    ( { model
-                        | error = Just (Json.Decode.errorToString error)
-                      }
-                    , Ports.Console.errorString (Json.Decode.errorToString error)
-                    )
-
-        onDraftBook result =
-            case result of
-                Ok draftBook ->
-                    load
-                        ( Session.withDraftBook draftBook session
-                            |> setSession model
-                        , Cmd.none
-                        )
-
-                Err error ->
-                    ( { model
-                        | error = Just (Json.Decode.errorToString error)
-                      }
-                    , Ports.Console.errorString (Json.Decode.errorToString error)
-                    )
-
-        onDraft result =
-            case result of
-                Ok (Just draft) ->
-                    load
-                        ( Session.withDraft draft session
-                            |> setSession model
-                        , Cmd.none
-                        )
-
-                Ok Nothing ->
-                    ( model, Cmd.none )
-
-                Err error ->
-                    ( { model
-                        | error = Just (Json.Decode.errorToString error)
-                      }
-                    , Ports.Console.errorString (Json.Decode.errorToString error)
-                    )
-
-        onSolutionBook result =
-            case result of
-                Ok solutionBook ->
-                    load
-                        ( Session.withSolutionBook solutionBook session
-                            |> setSession model
-                        , Cmd.none
-                        )
-
-                Err error ->
-                    ( { model
-                        | error = Just (Json.Decode.errorToString error)
-                      }
-                    , Ports.Console.errorString (Json.Decode.errorToString error)
-                    )
-    in
-    ( key, value )
-        |> LocalStorage.oneOf
-            [ Level.localStorageResponse onLevel
-            , DraftBook.localStorageResponse onDraftBook
-            , Draft.localStorageResponse onDraft
-            , SolutionBook.localStorageResponse onSolutionBook
-            ]
-        |> Maybe.withDefault
-            ( model
-            , Ports.Console.errorString ("No matching localStorageResponse for key: " ++ key)
-            )
 
 
 

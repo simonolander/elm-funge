@@ -7,6 +7,7 @@ import Data.IO as IO exposing (IO)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.LevelId as LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
@@ -96,13 +97,13 @@ removeFromLocalStorage levelId =
     LocalStorage.storageRemoveItem (localStorageKey levelId)
 
 
-localStorageResponse : (Result Decode.Error (Maybe Level) -> a) -> ( String, Encode.Value ) -> Maybe a
-localStorageResponse onResult ( key, value ) =
+localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error (Maybe Level))
+localStorageResponse ( key, value ) =
     case String.split "." key of
-        "levels" :: _ :: [] ->
+        "levels" :: levelId :: [] ->
             value
                 |> Decode.decodeValue (Decode.nullable decoder)
-                |> onResult
+                |> RequestResult.constructor levelId
                 |> Just
 
         _ ->

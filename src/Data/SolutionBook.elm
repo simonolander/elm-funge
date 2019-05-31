@@ -2,6 +2,7 @@ module Data.SolutionBook exposing (SolutionBook, decoder, empty, encode, loadFro
 
 import Basics.Extra exposing (flip)
 import Data.LevelId as LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.SolutionId as SolutionId exposing (SolutionId)
 import Extra.Decode
 import Extra.Encode
@@ -96,12 +97,12 @@ loadFromLocalStorage levelId =
     Ports.LocalStorage.storageGetItem key
 
 
-localStorageResponse : (Result Decode.Error SolutionBook -> a) -> ( String, Encode.Value ) -> Maybe a
-localStorageResponse onResult ( key, value ) =
+localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error SolutionBook)
+localStorageResponse ( key, value ) =
     case String.split "." key of
         "levels" :: levelId :: "solutionBook" :: [] ->
             let
-                decoder_ =
+                localStorageDecoder =
                     SolutionId.decoder
                         |> Extra.Decode.set
                         |> Decode.map (flip withSolutionIds (empty levelId))
@@ -109,8 +110,8 @@ localStorageResponse onResult ( key, value ) =
                         |> Decode.map (Maybe.withDefault (empty levelId))
             in
             value
-                |> Decode.decodeValue decoder_
-                |> onResult
+                |> Decode.decodeValue localStorageDecoder
+                |> RequestResult.constructor levelId
                 |> Just
 
         _ ->

@@ -1,4 +1,4 @@
-module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadDraftIdsFromLocalStorage, loadFromLocalStorage, localStorageDraftIdsResponse, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo, withScore)
+module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadFromLocalStorage, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo, withScore)
 
 import Data.Board as Board exposing (Board)
 import Data.DraftBook as DraftBook
@@ -7,6 +7,7 @@ import Data.History as History exposing (History)
 import Data.Instruction as Instruction
 import Data.Level exposing (Level)
 import Data.LevelId as LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Score as Score exposing (Score)
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -164,35 +165,13 @@ loadFromLocalStorage draftId =
     Ports.LocalStorage.storageGetItem key
 
 
-loadDraftIdsFromLocalStorage : LevelId -> Cmd msg
-loadDraftIdsFromLocalStorage levelId =
-    let
-        key =
-            String.join "." [ "levels", levelId, "draftIds" ]
-    in
-    Ports.LocalStorage.storageGetItem key
-
-
-localStorageResponse : (Result Decode.Error (Maybe Draft) -> a) -> ( String, Encode.Value ) -> Maybe a
-localStorageResponse onResult ( key, value ) =
+localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId Decode.Error (Maybe Draft))
+localStorageResponse ( key, value ) =
     case String.split "." key of
-        "drafts" :: _ :: [] ->
+        "drafts" :: draftId :: [] ->
             value
                 |> Decode.decodeValue (Decode.nullable decoder)
-                |> onResult
-                |> Just
-
-        _ ->
-            Nothing
-
-
-localStorageDraftIdsResponse : (Result Decode.Error (List DraftId) -> a) -> ( String, Encode.Value ) -> Maybe a
-localStorageDraftIdsResponse onResult ( key, value ) =
-    case String.split "." key of
-        "levels" :: _ :: "draftIds" :: [] ->
-            value
-                |> Decode.decodeValue (Decode.list DraftId.decoder)
-                |> onResult
+                |> RequestResult.constructor draftId
                 |> Just
 
         _ ->

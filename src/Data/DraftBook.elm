@@ -3,6 +3,7 @@ module Data.DraftBook exposing (DraftBook, decoder, empty, encode, loadFromLocal
 import Basics.Extra exposing (flip)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.LevelId as LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Extra.Decode
 import Extra.Encode
 import Json.Decode as Decode
@@ -96,12 +97,12 @@ loadFromLocalStorage levelId =
     Ports.LocalStorage.storageGetItem key
 
 
-localStorageResponse : (Result Decode.Error DraftBook -> a) -> ( String, Encode.Value ) -> Maybe a
-localStorageResponse onResult ( key, value ) =
+localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error DraftBook)
+localStorageResponse ( key, value ) =
     case String.split "." key of
         "levels" :: levelId :: "draftBook" :: [] ->
             let
-                decoder_ =
+                localStorageDecoder =
                     DraftId.decoder
                         |> Extra.Decode.set
                         |> Decode.map (flip withDraftIds (empty levelId))
@@ -109,8 +110,8 @@ localStorageResponse onResult ( key, value ) =
                         |> Decode.map (Maybe.withDefault (empty levelId))
             in
             value
-                |> Decode.decodeValue decoder_
-                |> onResult
+                |> Decode.decodeValue localStorageDecoder
+                |> RequestResult.constructor levelId
                 |> Just
 
         _ ->

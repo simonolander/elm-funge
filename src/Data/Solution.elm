@@ -1,7 +1,8 @@
-module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, saveToLocalStorage)
+module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, localStorageResponse, saveToLocalStorage)
 
 import Data.Board as Board exposing (Board)
 import Data.LevelId as LevelId exposing (LevelId)
+import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Score as Score exposing (Score)
 import Data.SolutionId as SolutionId exposing (SolutionId)
 import Json.Decode as Decode
@@ -114,3 +115,16 @@ saveToLocalStorage solution =
             encode solution
     in
     Ports.LocalStorage.storageSetItem ( key, value )
+
+
+localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error (Maybe Solution))
+localStorageResponse ( key, value ) =
+    case String.split "." key of
+        "solutions" :: solutionId :: [] ->
+            value
+                |> Decode.decodeValue (Decode.nullable decoder)
+                |> RequestResult.constructor solutionId
+                |> Just
+
+        _ ->
+            Nothing

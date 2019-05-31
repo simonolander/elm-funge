@@ -1,4 +1,4 @@
-module Page.Blueprint exposing (Model, Msg, getSession, init, localStorageResponseUpdate, subscriptions, update, view)
+module Page.Blueprint exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -12,17 +12,13 @@ import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
-import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Extra.Array
 import Extra.String
 import InstructionToolView
-import Json.Decode as Decode
-import Json.Encode as Encode
 import Maybe.Extra
-import Ports.LocalStorage
 import RemoteData exposing (RemoteData(..))
 import Route
 import View.Board
@@ -43,6 +39,7 @@ import ViewComponents
 type alias Model =
     { session : Session
     , levelId : LevelId
+    , loadedLevelId : Maybe LevelId
     , width : String
     , height : String
     , input : String
@@ -60,6 +57,7 @@ init levelId session =
         model =
             { session = session
             , levelId = levelId
+            , loadedLevelId = Nothing
             , width = ""
             , height = ""
             , input = ""
@@ -70,43 +68,57 @@ init levelId session =
             , enabledInstructionTools = Array.empty
             }
     in
-    load model
+    load ( model, Cmd.none )
 
 
-load : Model -> ( Model, Cmd Msg )
-load model =
-    case Session.getLevel model.levelId model.session of
-        Success level ->
-            ( { model
-                | levelId = level.id
-                , width = String.fromInt (Board.width level.initialBoard)
-                , height = String.fromInt (Board.height level.initialBoard)
-                , input =
-                    level.io.input
-                        |> List.map String.fromInt
-                        |> String.join ","
-                , output =
-                    level.io.output
-                        |> List.map String.fromInt
-                        |> String.join ","
-                , enabledInstructionTools =
-                    InstructionTool.all
-                        |> List.filter ((/=) (JustInstruction NoOp))
-                        |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
-                        |> Array.fromList
-              }
-            , Cmd.none
-            )
+load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load =
+    let
+        loadLevel ( model, cmd ) =
+            case Session.getLevel model.levelId model.session of
+                NotAsked ->
+                    ( model.session
+                        |> Session.levelLoading model.levelId
+                        |> setSession model
+                    , Cmd.batch [ cmd, Level.loadFromLocalStorage model.levelId ]
+                    )
 
-        NotAsked ->
-            ( model.session
-                |> Session.levelLoading model.levelId
-                |> setSession model
-            , Level.loadFromLocalStorage model.levelId
-            )
+                Success level ->
+                    if
+                        model.loadedLevelId
+                            |> Maybe.map ((==) level.id)
+                            |> Maybe.withDefault False
+                    then
+                        ( model, cmd )
 
-        _ ->
-            ( model, Cmd.none )
+                    else
+                        ( { model
+                            | levelId = level.id
+                            , loadedLevelId = Just level.id
+                            , width = String.fromInt (Board.width level.initialBoard)
+                            , height = String.fromInt (Board.height level.initialBoard)
+                            , input =
+                                level.io.input
+                                    |> List.map String.fromInt
+                                    |> String.join ","
+                            , output =
+                                level.io.output
+                                    |> List.map String.fromInt
+                                    |> String.join ","
+                            , enabledInstructionTools =
+                                InstructionTool.all
+                                    |> List.filter ((/=) (JustInstruction NoOp))
+                                    |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
+                                    |> Array.fromList
+                          }
+                        , cmd
+                        )
+
+                _ ->
+                    ( model, cmd )
+    in
+    flip (List.foldl (flip (|>)))
+        [ loadLevel ]
 
 
 initWithLevel : Level -> Model -> ( Model, Cmd Msg )
@@ -336,28 +348,6 @@ update msg model =
 
         Nothing ->
             ( model, Cmd.none )
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
-    let
-        onLevel result =
-            case result of
-                Ok (Just level) ->
-                    Session.withLevel level model.session
-                        |> setSession model
-                        |> initWithLevel level
-
-                Ok Nothing ->
-                    ( { model | error = Just ("Level not found: " ++ key) }, Cmd.none )
-
-                Err error ->
-                    ( { model | error = Just (Decode.errorToString error) }, Cmd.none )
-    in
-    ( key, value )
-        |> Ports.LocalStorage.oneOf
-            [ Level.localStorageResponse onLevel ]
-        |> Maybe.withDefault ( model, Cmd.none )
 
 
 
