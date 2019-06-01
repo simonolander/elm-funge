@@ -859,6 +859,21 @@ viewLoaded execution model =
 
         header =
             View.Header.view model.session
+
+        modal =
+            case getExceptionMessage execution of
+                Just message ->
+                    Just (viewExceptionModal execution model message)
+
+                Nothing ->
+                    if isSolved execution then
+                        Just (viewVictoryModal execution)
+
+                    else if History.current execution.executionHistory |> .terminated then
+                        Just (viewWrongOutputModal execution)
+
+                    else
+                        Nothing
     in
     View.Scewn.view
         { west = Just west
@@ -866,7 +881,7 @@ viewLoaded execution model =
         , east = Just east
         , center = Just main
         , south = Nothing
-        , modal = Nothing
+        , modal = modal
         }
 
 
@@ -1039,38 +1054,8 @@ viewBoard execution model =
                     , Background.color (rgb 0 0 0)
                     , padding 10
                     ]
-
-        boardWithModalView =
-            case getExceptionMessage execution of
-                Just message ->
-                    boardView
-                        |> el
-                            [ width (fillPortion 3)
-                            , height fill
-                            , inFront (viewExceptionModal execution model message)
-                            ]
-
-                Nothing ->
-                    if isSolved execution then
-                        boardView
-                            |> el
-                                [ width (fillPortion 3)
-                                , height fill
-                                , inFront (viewVictoryModal execution)
-                                ]
-
-                    else if History.current execution.executionHistory |> .terminated then
-                        boardView
-                            |> el
-                                [ width (fillPortion 3)
-                                , height fill
-                                , inFront (viewWrongOutputModal execution)
-                                ]
-
-                    else
-                        boardView
     in
-    boardWithModalView
+    boardView
 
 
 viewExceptionModal : Execution -> Model -> String -> Element Msg
