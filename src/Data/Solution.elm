@@ -1,11 +1,14 @@
-module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, localStorageResponse, saveToLocalStorage)
+module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, saveToServer)
 
+import Api.GCP as GCP
+import Data.AuthorizationToken exposing (AuthorizationToken)
 import Data.Board as Board exposing (Board)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Score as Score exposing (Score)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId as SolutionId exposing (SolutionId)
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -132,3 +135,12 @@ localStorageResponse ( key, value ) =
 
         _ ->
             Nothing
+
+
+
+-- SERVER
+
+
+saveToServer : (Result Http.Error () -> msg) -> Solution -> AuthorizationToken -> Cmd msg
+saveToServer toMsg solution token =
+    GCP.post token [ "solutions" ] [] (Http.expectWhatever toMsg) (encode solution)

@@ -29,8 +29,10 @@ import Extra.String
 import Http
 import InstructionView
 import Maybe.Extra
+import Ports.Console
 import Random
 import RemoteData exposing (RemoteData(..))
+import Result as Http
 import Route
 import Time
 import View.ErrorScreen
@@ -223,6 +225,7 @@ type Msg
     | ClickedNavigateBack
     | ClickedNavigateBrowseLevels
     | GeneratedSolution Solution
+    | SavedSolutionToServer (Result Http.Error ())
     | Tick
 
 
@@ -280,8 +283,23 @@ update msg model =
                 GeneratedSolution solution ->
                     ( Session.withSolution solution model.session
                         |> setSession model
-                    , Solution.saveToLocalStorage solution
+                    , Cmd.batch
+                        [ Solution.saveToLocalStorage solution
+                        , Session.getToken model.session
+                            |> Maybe.map (Solution.saveToServer SavedSolutionToServer solution)
+                            |> Maybe.withDefault Cmd.none
+                        ]
                     )
+
+                SavedSolutionToServer result ->
+                    case result of
+                        Http.Ok _ ->
+                            ( model, Cmd.none )
+
+                        Http.Err error ->
+                            ( model
+                            , Ports.Console.errorString (Extra.String.fromHttpError error)
+                            )
 
         Nothing ->
             ( model, Cmd.none )

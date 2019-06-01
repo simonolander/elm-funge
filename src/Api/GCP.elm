@@ -1,10 +1,9 @@
-module Api.GCP exposing (get, getDrafts, getLevels, getUserInfo, publishSolution, saveDraft, verifyIdentityToken)
+module Api.GCP exposing (get, getDrafts, getLevels, getUserInfo, post, saveDraft, verifyIdentityToken)
 
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.Solution as Solution exposing (Solution)
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
@@ -60,21 +59,6 @@ saveDraft token draft toMsg =
     authorizedPost url token body expect
 
 
-publishSolution : AuthorizationToken -> Solution -> (Result Http.Error () -> msg) -> Cmd msg
-publishSolution token solution toMsg =
-    let
-        url =
-            Url.Builder.crossOrigin gcpPrePath [ "solutions" ] []
-
-        expect =
-            Http.expectWhatever toMsg
-
-        body =
-            Solution.encode solution
-    in
-    authorizedPost url token body expect
-
-
 getUserInfo : AuthorizationToken -> (Result Http.Error UserInfo -> msg) -> Cmd msg
 getUserInfo authorizationToken toMsg =
     let
@@ -112,6 +96,15 @@ get path queryParameters decoder toMsg =
         { url = url
         , expect = expect
         }
+
+
+post : AuthorizationToken -> List String -> List Url.Builder.QueryParameter -> Http.Expect msg -> Encode.Value -> Cmd msg
+post authorizationToken path queryParameters expect value =
+    authorizedPost
+        (buildUrl path queryParameters)
+        authorizationToken
+        value
+        expect
 
 
 
