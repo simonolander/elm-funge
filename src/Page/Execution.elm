@@ -25,17 +25,18 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import ExecutionControlView
-import Html.Attributes
+import Extra.String
+import Http
 import InstructionView
-import Json.Decode as Decode
-import Json.Encode as Encode
 import Maybe.Extra
-import Ports.LocalStorage
 import Random
 import RemoteData exposing (RemoteData(..))
 import Route
 import Time
+import View.ErrorScreen
+import View.Header
 import View.LoadingScreen
+import View.Scewn
 import ViewComponents
 
 
@@ -73,7 +74,6 @@ type alias Model =
     , loadedLevelId : Maybe LevelId
     , execution : Maybe Execution
     , state : ExecutionState
-    , error : Maybe String
     }
 
 
@@ -86,7 +86,6 @@ init draftId session =
             , loadedLevelId = Nothing
             , state = Paused
             , execution = Nothing
-            , error = Nothing
             }
     in
     load ( model, Cmd.none )
@@ -793,17 +792,43 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            case model.error of
-                Just error ->
-                    View.LoadingScreen.view error
+            case Session.getDraft model.draftId model.session of
+                NotAsked ->
+                    View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not asked :/")
 
-                Nothing ->
-                    case model.execution of
-                        Just execution ->
-                            viewLoaded execution model
+                Loading ->
+                    View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ "...")
 
-                        Nothing ->
-                            View.LoadingScreen.view "Loading draft..."
+                Failure error ->
+                    let
+                        errorMessage =
+                            case error of
+                                Http.BadStatus 404 ->
+                                    "Draft " ++ model.draftId ++ " not found"
+
+                                _ ->
+                                    Extra.String.fromHttpError error
+                    in
+                    View.ErrorScreen.view errorMessage
+
+                Success draft ->
+                    case Session.getLevel draft.levelId model.session of
+                        NotAsked ->
+                            View.ErrorScreen.view ("Level " ++ draft.levelId ++ " not asked :/")
+
+                        Loading ->
+                            View.LoadingScreen.view ("Loading level " ++ draft.levelId ++ "...")
+
+                        Failure error ->
+                            View.ErrorScreen.view (Extra.String.fromHttpError error)
+
+                        Success _ ->
+                            case model.execution of
+                                Just execution ->
+                                    viewLoaded execution model
+
+                                Nothing ->
+                                    View.LoadingScreen.view "Initializing execution..."
 
         body =
             layout
@@ -823,32 +848,26 @@ view model =
 viewLoaded : Execution -> Model -> Element Msg
 viewLoaded execution model =
     let
-        boardView =
+        main =
             viewBoard execution model
 
-        executionSideBarView =
+        west =
             viewExecutionSidebar execution model
 
-        ioSidebarView =
+        east =
             viewIOSidebar execution model
 
-        content =
-            column
-                [ width fill
-                , height fill
-                ]
-                [ row
-                    [ width fill
-                    , height fill
-                    , htmlAttribute (Html.Attributes.style "height" "90%") -- hack
-                    ]
-                    [ executionSideBarView
-                    , boardView
-                    , ioSidebarView
-                    ]
-                ]
+        header =
+            View.Header.view model.session
     in
-    content
+    View.Scewn.view
+        { west = Just west
+        , north = Just header
+        , east = Just east
+        , center = Just main
+        , south = Nothing
+        , modal = Nothing
+        }
 
 
 viewExecutionSidebar : Execution -> Model -> Element Msg
@@ -1167,6 +1186,24 @@ viewIOSidebar execution model =
         executionStep =
             History.current execution.executionHistory
 
+        characterWidth =
+            6
+
+        maxCharacters =
+            12
+
+        paddingWidth =
+            5
+
+        borderWidth =
+            3
+
+        columnWidth =
+            characterWidth * maxCharacters + paddingWidth * 2 + borderWidth * 2
+
+        totalWidth =
+            4 * columnWidth + 10 * paddingWidth
+
         viewSingle label values =
             let
                 labelView =
@@ -1188,18 +1225,18 @@ viewIOSidebar execution model =
                                     (text value)
                             )
                         |> column
-                            [ width fill
+                            [ width (px columnWidth)
                             , height fill
                             , Font.alignRight
-                            , padding 5
+                            , padding paddingWidth
                             , spacing 2
                             , scrollbars
-                            , Border.width 3
+                            , Border.width borderWidth
                             ]
             in
             column
                 [ height fill
-                , padding 5
+                , padding paddingWidth
                 ]
                 [ labelView
                 , valuesView
@@ -1212,13 +1249,13 @@ viewIOSidebar execution model =
                         correct a b =
                             case ( a, b ) of
                                 ( ha :: ta, hb :: tb ) ->
-                                    ( hb, ha == hb ) :: correct ta tb
+                                    ( Int16.toString hb, ha == hb ) :: correct ta tb
 
                                 ( _, [] ) ->
                                     []
 
                                 ( [], bb ) ->
-                                    List.map (\h -> ( h, False )) bb
+                                    List.map (\h -> ( Int16.toString h, False )) bb
                     in
                     correct expected (List.reverse actual)
 
@@ -1241,13 +1278,13 @@ viewIOSidebar execution model =
                                     (text value)
                             )
                         |> column
-                            [ width fill
+                            [ width (px columnWidth)
                             , height fill
                             , Font.alignRight
-                            , padding 5
+                            , padding paddingWidth
                             , spacing 2
                             , scrollbars
-                            , Border.width 3
+                            , Border.width borderWidth
                             ]
 
                 actualView =
@@ -1257,6 +1294,7 @@ viewIOSidebar execution model =
                                 el
                                     [ Font.alignRight
                                     , width fill
+                                    , alignRight
                                     , Background.color
                                         (if correct then
                                             rgba 0 0 0 0
@@ -1265,27 +1303,32 @@ viewIOSidebar execution model =
                                             rgb 0.5 0 0
                                         )
                                     ]
-                                    (text (Int16.toString value))
+                                    (text value)
                             )
                         |> column
-                            [ width fill
+                            [ width (px columnWidth)
                             , height fill
                             , Font.alignRight
-                            , padding 5
+                            , padding paddingWidth
                             , spacing 2
                             , scrollbars
-                            , Border.widthEach { left = 0, top = 3, right = 3, bottom = 3 }
+                            , Border.widthEach
+                                { left = 0
+                                , top = borderWidth
+                                , right = borderWidth
+                                , bottom = borderWidth
+                                }
                             ]
             in
             column
                 [ height fill
-                , width fill
+                , width shrink
                 , padding 5
                 ]
                 [ labelView
                 , row
                     [ height fill
-                    , width fill
+                    , width shrink
                     ]
                     [ expectedView, actualView ]
                 ]
@@ -1300,12 +1343,13 @@ viewIOSidebar execution model =
             viewDouble "Output" execution.level.io.output executionStep.output
     in
     row
-        [ width (fillPortion 1)
+        [ width (px totalWidth)
         , height fill
         , Background.color (rgb 0.08 0.08 0.08)
-        , spacing 10
+        , spacing paddingWidth
         , Font.color (rgb 1 1 1)
-        , padding 5
+        , padding paddingWidth
+        , scrollbars
         ]
         [ inputView, stackView, outputView ]
 
