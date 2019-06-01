@@ -8,14 +8,26 @@ import View.Layout
 
 view : String -> Element msg
 view message =
-    text message
-        |> List.singleton
-        |> paragraph
+    column
+        [ centerX
+        , centerY
+        , spacing 20
+        ]
+        [ paragraph
             [ width shrink
             , centerX
             , centerY
             , Font.size 28
             ]
+            [ text message ]
+        , image
+            [ width (px 36)
+            , centerX
+            ]
+            { src = "assets/spinner.svg"
+            , description = "Loading animation"
+            }
+        ]
 
 
 layout : String -> Html.Html msg

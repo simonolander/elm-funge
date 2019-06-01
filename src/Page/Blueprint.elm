@@ -369,7 +369,7 @@ view model =
                     View.ErrorScreen.view "Not asked :/"
 
                 Loading ->
-                    View.LoadingScreen.view ("Loading level " ++ model.levelId ++ "...")
+                    View.LoadingScreen.view ("Loading level " ++ model.levelId)
 
                 Failure error ->
                     View.ErrorScreen.view (Extra.String.fromHttpError error)

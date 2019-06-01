@@ -1,4 +1,4 @@
-module View.Box exposing (nonInteractive, simpleError, simpleNonInteractive)
+module View.Box exposing (nonInteractive, simpleError, simpleLoading, simpleNonInteractive)
 
 import Element exposing (..)
 import Element.Border as Border
@@ -22,13 +22,32 @@ nonInteractive element =
         element
 
 
+simpleLoading : String -> Element msg
+simpleLoading message =
+    paragraph
+        [ Font.color color.font.subtle
+        , Font.center
+        ]
+        [ image
+            [ width (px 20)
+            , alignRight
+            ]
+            { src = "assets/spinner.svg"
+            , description = "Loading animation"
+            }
+        , text message
+        ]
+        |> nonInteractive
+
+
 simpleNonInteractive : String -> Element msg
 simpleNonInteractive message =
     paragraph
         [ Font.color color.font.subtle
         , Font.center
         ]
-        [ text message ]
+        [ text message
+        ]
         |> nonInteractive
 
 

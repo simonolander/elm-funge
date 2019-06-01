@@ -371,7 +371,7 @@ view model =
                             View.ErrorScreen.view ("Not asked for draft: " ++ model.draftId)
 
                         Loading ->
-                            View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ "...")
+                            View.LoadingScreen.view ("Loading draft " ++ model.draftId)
 
                         Failure error ->
                             View.ErrorScreen.view (Extra.String.fromHttpError error)
@@ -382,7 +382,7 @@ view model =
                                     View.ErrorScreen.view ("Not asked for level: " ++ draft.levelId)
 
                                 Loading ->
-                                    View.LoadingScreen.view ("Loading level " ++ draft.levelId ++ "...")
+                                    View.LoadingScreen.view ("Loading level " ++ draft.levelId)
 
                                 Failure error ->
                                     View.ErrorScreen.view (Extra.String.fromHttpError error)

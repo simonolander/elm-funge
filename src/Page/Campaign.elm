@@ -404,7 +404,7 @@ view model =
                             View.LoadingScreen.view "Not asked for campaign"
 
                         Loading ->
-                            View.LoadingScreen.view "Loading campaign..."
+                            View.LoadingScreen.view "Loading campaign"
 
                         Failure error ->
                             View.ErrorScreen.view (Extra.String.fromHttpError error)
@@ -514,10 +514,10 @@ viewLevels campaign model =
         viewLevelWebData webData =
             case webData of
                 NotAsked ->
-                    View.Box.simpleNonInteractive "Not asked :/"
+                    View.Box.simpleLoading "Not asked :/"
 
                 Loading ->
-                    View.Box.simpleNonInteractive "Loading level..."
+                    View.Box.simpleLoading "Loading level..."
 
                 Failure error ->
                     View.Box.simpleError (Extra.String.fromHttpError error)
@@ -616,10 +616,10 @@ viewDrafts : Level -> Session -> Element Msg
 viewDrafts level session =
     case Session.getDraftBook level.id session of
         NotAsked ->
-            View.Box.simpleNonInteractive "Not asked"
+            View.Box.simpleLoading "Not asked"
 
         Loading ->
-            View.Box.simpleNonInteractive "Loading drafts"
+            View.Box.simpleLoading "Loading drafts"
 
         Failure error ->
             View.Box.simpleError (Extra.String.fromHttpError error)
@@ -635,10 +635,10 @@ viewDrafts level session =
                 viewDraft index draftId =
                     case Session.getDraft draftId session of
                         NotAsked ->
-                            View.Box.simpleNonInteractive "Not asked"
+                            View.Box.simpleLoading "Not asked"
 
                         Loading ->
-                            View.Box.simpleNonInteractive ("Loading draft " ++ String.fromInt (index + 1))
+                            View.Box.simpleLoading ("Loading draft " ++ String.fromInt (index + 1))
 
                         Failure error ->
                             View.Box.simpleError (Extra.String.fromHttpError error)

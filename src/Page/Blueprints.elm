@@ -258,7 +258,7 @@ view model =
                             View.ErrorScreen.layout "Not asked :/"
 
                         Loading ->
-                            View.LoadingScreen.layout ("Loading " ++ campaignId ++ "...")
+                            View.LoadingScreen.layout ("Loading " ++ campaignId)
 
                         Failure error ->
                             View.ErrorScreen.layout (Extra.String.fromHttpError error)

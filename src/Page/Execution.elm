@@ -815,7 +815,7 @@ view model =
                     View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not asked :/")
 
                 Loading ->
-                    View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ "...")
+                    View.LoadingScreen.view ("Loading draft " ++ model.draftId)
 
                 Failure error ->
                     let
@@ -835,7 +835,7 @@ view model =
                             View.ErrorScreen.view ("Level " ++ draft.levelId ++ " not asked :/")
 
                         Loading ->
-                            View.LoadingScreen.view ("Loading level " ++ draft.levelId ++ "...")
+                            View.LoadingScreen.view ("Loading level " ++ draft.levelId)
 
                         Failure error ->
                             View.ErrorScreen.view (Extra.String.fromHttpError error)
@@ -846,7 +846,7 @@ view model =
                                     viewLoaded execution model
 
                                 Nothing ->
-                                    View.LoadingScreen.view "Initializing execution..."
+                                    View.LoadingScreen.view "Initializing execution"
 
         body =
             layout

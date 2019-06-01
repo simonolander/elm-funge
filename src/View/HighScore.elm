@@ -106,22 +106,12 @@ success highScore =
 
 loading : Element msg
 loading =
-    paragraph
-        [ Font.color color.font.subtle
-        , Font.center
-        ]
-        [ text "Loading high scores..." ]
-        |> View.Box.nonInteractive
+    View.Box.simpleLoading "Loading high scores"
 
 
 notAsked : Element msg
 notAsked =
-    paragraph
-        [ Font.color color.font.subtle
-        , Font.center
-        ]
-        [ text "Not asked" ]
-        |> View.Box.nonInteractive
+    View.Box.simpleNonInteractive "Not asked"
 
 
 failure : Error -> Element msg
