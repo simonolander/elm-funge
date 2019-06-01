@@ -1123,10 +1123,16 @@ viewVictoryModal execution =
                 |> History.current
                 |> .stepCount
 
+        numberOfInitialInstructions =
+            execution.level
+                |> .initialBoard
+                |> Board.count ((/=) NoOp)
+
         numberOfInstructions =
             History.first execution.executionHistory
                 |> .board
                 |> Board.count ((/=) NoOp)
+                |> flip (-) numberOfInitialInstructions
 
         viewRow ( label, value ) =
             row [ width fill, spaceEvenly ]
