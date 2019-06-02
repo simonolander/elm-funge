@@ -31,7 +31,7 @@ import InstructionView
 import Maybe.Extra
 import Ports.Console
 import Random
-import RemoteData exposing (RemoteData(..))
+import RemoteData exposing (RemoteData(..), WebData)
 import Result as Http
 import Route
 import Time
@@ -76,6 +76,7 @@ type alias Model =
     , loadedLevelId : Maybe LevelId
     , execution : Maybe Execution
     , state : ExecutionState
+    , saveSolutionRequest : WebData ()
     }
 
 
@@ -88,6 +89,7 @@ init draftId session =
             , loadedLevelId = Nothing
             , state = Paused
             , execution = Nothing
+            , saveSolutionRequest = NotAsked
             }
     in
     load ( model, Cmd.none )
@@ -281,20 +283,28 @@ update msg model =
                     stepModel execution model
 
                 GeneratedSolution solution ->
-                    ( Session.withSolution solution model.session
-                        |> setSession model
-                    , Cmd.batch
-                        [ Solution.saveToLocalStorage solution
-                        , Session.getToken model.session
-                            |> Maybe.map (Solution.saveToServer SavedSolutionToServer solution)
-                            |> Maybe.withDefault Cmd.none
-                        ]
-                    )
+                    case Session.getToken model.session of
+                        Just token ->
+                            ( { model
+                                | session = Session.withSolution solution model.session
+                                , saveSolutionRequest = Loading
+                              }
+                            , Cmd.batch
+                                [ Solution.saveToLocalStorage solution
+                                , Solution.saveToServer SavedSolutionToServer solution token
+                                ]
+                            )
+
+                        Nothing ->
+                            ( Session.withSolution solution model.session
+                                |> setSession model
+                            , Solution.saveToLocalStorage solution
+                            )
 
                 SavedSolutionToServer result ->
                     case result of
-                        Http.Ok _ ->
-                            ( model, Cmd.none )
+                        Http.Ok () ->
+                            ( { model | saveSolutionRequest = Success () }, Cmd.none )
 
                         Http.Err error ->
                             ( model

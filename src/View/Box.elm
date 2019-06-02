@@ -33,7 +33,7 @@ simpleLoading message =
             , alignRight
             ]
             { src = "assets/spinner.svg"
-            , description = "Loading animation"
+            , description = ""
             }
         , text message
         ]
