@@ -114,7 +114,7 @@ function register(ports, log) {
         var response = getLocalStorageItem(key);
 
         log('storageGetItemResponse', key, response);
-        setTimeout(() => {ports.storageGetItemResponse.send([key, response])}, 2000);
+        setTimeout(() => {ports.storageGetItemResponse.send([key, response])}, 500);
     }
 
     function storageSetItem(_ref) {
