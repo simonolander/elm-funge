@@ -3,6 +3,7 @@ module Api.Auth0 exposing (LoginResponse, getUserInfo, login, loginResponseFromU
 import Dict
 import Http
 import Maybe.Extra
+import Route exposing (Route)
 import Url exposing (Url)
 import Url.Builder
 
@@ -50,6 +51,7 @@ type alias LoginResponse =
     { accessToken : String
     , expiresIn : Int
     , tokenType : String
+    , route : Route
     }
 
 
@@ -82,20 +84,27 @@ loginResponseFromUrl url =
 
         maybeTokenType =
             Dict.get "token_type" queryParameters
+
+        maybeUrl =
+            Dict.get "state" queryParameters
+                |> Maybe.andThen Url.percentDecode
+                |> Maybe.map (\path -> { url | fragment = Just path })
+                |> Maybe.andThen Route.fromUrl
     in
-    case ( maybeAccessToken, maybeExpiresIn, maybeTokenType ) of
-        ( Just accessToken, Just expiresIn, Just tokenType ) ->
+    case ( ( maybeAccessToken, maybeExpiresIn ), ( maybeTokenType, maybeUrl ) ) of
+        ( ( Just accessToken, Just expiresIn ), ( Just tokenType, Just route ) ) ->
             Just
                 { accessToken = accessToken
                 , expiresIn = expiresIn
                 , tokenType = tokenType
+                , route = route
                 }
 
         _ ->
             Nothing
 
 
-login =
+login url =
     Url.Builder.crossOrigin prePath
         [ "authorize" ]
         [ Url.Builder.string "client_id" clientId
@@ -103,6 +112,7 @@ login =
         , Url.Builder.string "redirect_uri" redirectUri
         , Url.Builder.string "scope" scope
         , Url.Builder.string "audience" audience
+        , Url.Builder.string "state" (Maybe.withDefault "" url.fragment)
         ]
 
 

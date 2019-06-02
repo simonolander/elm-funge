@@ -21,7 +21,7 @@ view session =
                     }
 
                  else
-                    { url = Api.Auth0.login
+                    { url = Api.Auth0.login session.url
                     , label = text "Sign in"
                     }
                 )

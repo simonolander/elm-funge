@@ -43,6 +43,7 @@ module Data.Session exposing
     , withSolution
     , withSolutionBook
     , withSolutions
+    , withUrl
     , withUser
     , withoutLevel
     )
@@ -65,10 +66,12 @@ import Data.SolutionId exposing (SolutionId)
 import Data.User as User exposing (User)
 import Http
 import RemoteData exposing (RemoteData(..), WebData)
+import Url exposing (Url)
 
 
 type alias Session =
     { key : Key
+    , url : Url
     , user : User
     , levels : Cache LevelId Level
     , drafts : Cache DraftId Draft
@@ -80,9 +83,10 @@ type alias Session =
     }
 
 
-init : Key -> Session
-init key =
+init : Key -> Url -> Session
+init key url =
     { key = key
+    , url = url
     , user = User.guest
     , levels = Cache.empty
     , drafts = Cache.empty
@@ -104,6 +108,11 @@ withUser user session =
 getToken : Session -> Maybe AuthorizationToken
 getToken =
     .user >> User.getToken
+
+
+withUrl : Url -> Session -> Session
+withUrl url session =
+    { session | url = url }
 
 
 

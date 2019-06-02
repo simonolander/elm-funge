@@ -91,26 +91,29 @@ init flags url key =
                         }
                     )
 
-        sessionWithLevels =
-            Session.init key
-                |> Session.withLevels levels
-                |> Session.withCampaigns campaigns
-
-        ( sessionWithUser, sessionCmd ) =
+        ( user, sessionCmd ) =
             case Auth0.loginResponseFromUrl url of
                 Just loginResponse ->
-                    ( sessionWithLevels
-                        |> Session.withUser (User.authorizedUser (AuthorizationToken.fromString loginResponse.accessToken))
-                    , Api.GCP.verifyIdentityToken (AuthorizationToken.fromString loginResponse.accessToken) VerifyTokenResponse
+                    ( Just (User.authorizedUser (AuthorizationToken.fromString loginResponse.accessToken))
+                    , Cmd.batch
+                        [ Route.replaceUrl key loginResponse.route
+                        , Api.GCP.verifyIdentityToken (AuthorizationToken.fromString loginResponse.accessToken) VerifyTokenResponse
+                        ]
                     )
 
                 Nothing ->
-                    ( sessionWithLevels
+                    ( Nothing
                     , Cmd.none
                     )
 
+        session =
+            Session.init key url
+                |> Session.withLevels levels
+                |> Session.withCampaigns campaigns
+                |> Maybe.withDefault identity (Maybe.map Session.withUser user)
+
         ( model, pageCmd ) =
-            changeUrl url sessionWithUser
+            changeUrl url session
 
         cmd =
             Cmd.batch
@@ -283,7 +286,11 @@ updateWith modelMap cmdMap ( model, cmd ) =
 
 
 changeUrl : Url.Url -> Session -> ( Model, Cmd Msg )
-changeUrl url session =
+changeUrl url oldSession =
+    let
+        session =
+            Session.withUrl url oldSession
+    in
     case Route.fromUrl url of
         Nothing ->
             Home.init session
