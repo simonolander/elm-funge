@@ -1,8 +1,10 @@
-module View.Box exposing (nonInteractive, simpleError, simpleLoading, simpleNonInteractive)
+module View.Box exposing (link, nonInteractive, simpleError, simpleLoading, simpleNonInteractive)
 
 import Element exposing (..)
+import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Route
 import View.Constant exposing (color)
 
 
@@ -18,6 +20,20 @@ nonInteractive element =
         , Border.width 3
         , padding 10
         , width fill
+        ]
+        element
+
+
+interactive : Element msg -> Element msg
+interactive element =
+    el
+        [ width fill
+        , Border.width 4
+        , Border.color (rgb 1 1 1)
+        , padding 10
+        , mouseOver [ Background.color (rgba 1 1 1 0.5) ]
+        , Background.color (rgb 0 0 0)
+        , Font.color (rgb 1 1 1)
         ]
         element
 
@@ -59,3 +75,15 @@ simpleError message =
         ]
         [ text message ]
         |> nonInteractive
+
+
+simpleInteractive message =
+    interactive (paragraph [ Font.center, width fill ] [ text message ])
+
+
+link : String -> Route.Route -> Element msg
+link message route =
+    Route.link
+        [ width fill ]
+        (simpleInteractive message)
+        route

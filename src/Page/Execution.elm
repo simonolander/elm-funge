@@ -35,6 +35,7 @@ import RemoteData exposing (RemoteData(..), WebData)
 import Result as Http
 import Route
 import Time
+import View.Box
 import View.ErrorScreen
 import View.Header
 import View.LoadingScreen
@@ -224,7 +225,6 @@ type Msg
     | ClickedRun
     | ClickedFastForward
     | ClickedPause
-    | ClickedNavigateBack
     | ClickedNavigateBrowseLevels
     | GeneratedSolution Solution
     | SavedSolutionToServer (Result Http.Error ())
@@ -258,9 +258,6 @@ update msg model =
 
                 ClickedPause ->
                     ( { model | state = Paused }, Cmd.none )
-
-                ClickedNavigateBack ->
-                    ( model, Route.back model.session.key )
 
                 ClickedNavigateBrowseLevels ->
                     let
@@ -898,7 +895,7 @@ viewLoaded execution model =
                         Just (viewVictoryModal execution)
 
                     else if History.current execution.executionHistory |> .terminated then
-                        Just (viewWrongOutputModal execution)
+                        Just (viewWrongOutputModal model execution)
 
                     else
                         Nothing
@@ -927,11 +924,6 @@ viewExecutionSidebar execution model =
         descriptionView =
             ViewComponents.descriptionTextbox []
                 execution.level.description
-
-        backButtonView =
-            ViewComponents.textButton []
-                (Just ClickedNavigateBack)
-                "Back"
 
         viewButton : ExecutionControlView.ExecutionControlInstruction -> Maybe Msg -> Element Msg
         viewButton executionControlInstruction onPress =
@@ -1000,11 +992,6 @@ viewExecutionSidebar execution model =
             , descriptionView
             ]
         , executionControlInstructionsView
-        , el
-            [ width fill
-            , alignBottom
-            ]
-            backButtonView
         ]
 
 
@@ -1105,17 +1092,14 @@ viewExceptionModal execution model exceptionMessage =
         , paragraph
             []
             [ text exceptionMessage ]
-        , ViewComponents.textButton
-            [ Background.color (rgb 0 0 0)
-            , Font.color (rgb 1 1 1)
-            ]
-            (Just ClickedNavigateBack)
+        , View.Box.link
             "Back to editor"
+            (Route.EditDraft model.draftId)
         ]
 
 
-viewWrongOutputModal : Execution -> Element Msg
-viewWrongOutputModal execution =
+viewWrongOutputModal : Model -> Execution -> Element Msg
+viewWrongOutputModal model execution =
     column
         [ centerX
         , centerY
@@ -1134,12 +1118,9 @@ viewWrongOutputModal execution =
         , paragraph
             []
             [ text "The program terminated, but the output is incorrect." ]
-        , ViewComponents.textButton
-            [ Background.color (rgb 0 0 0)
-            , Font.color (rgb 1 1 1)
-            ]
-            (Just ClickedNavigateBack)
+        , View.Box.link
             "Back to editor"
+            (Route.EditDraft model.draftId)
         ]
 
 

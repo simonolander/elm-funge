@@ -13,7 +13,6 @@ import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
 import Data.Position exposing (Position)
 import Data.Session as Session exposing (Session)
-import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -23,10 +22,10 @@ import Extra.String
 import Http
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
-import Ports.LocalStorage
 import RemoteData exposing (RemoteData(..))
 import Route
 import View.Board
+import View.Box
 import View.ErrorScreen
 import View.Header
 import View.InstructionTools
@@ -523,11 +522,6 @@ viewSidebar model =
             descriptionTextbox []
                 level.description
 
-        backButton =
-            textButton []
-                (Just ClickedBack)
-                "Back"
-
         undoButtonView =
             textButton []
                 (Just EditUndo)
@@ -581,6 +575,5 @@ viewSidebar model =
             , redoButtonView
             , clearButtonView
             , importExportButtonView
-            , el [ alignBottom, width fill ] backButton
             ]
         ]
