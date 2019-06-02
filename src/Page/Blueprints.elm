@@ -359,7 +359,7 @@ viewCampaign campaign model =
 
                         -- TODO Maybe different cases for loading, error and not asked?
                         Nothing ->
-                            View.LevelButton.loading
+                            View.LevelButton.loading levelId
 
                 levelButtons =
                     List.map levelButton campaign.levelIds

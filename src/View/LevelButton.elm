@@ -1,12 +1,14 @@
 module View.LevelButton exposing (Parameters, default, internal, loading, view)
 
 import Data.Level exposing (Level)
+import Data.LevelId exposing (LevelId)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
+import View.Constant exposing (color)
 
 
 type alias Parameters msg =
@@ -26,9 +28,32 @@ default =
     }
 
 
-loading : Element msg
-loading =
-    internal default "" "Loading..."
+loading : LevelId -> Element msg
+loading levelId =
+    column
+        [ padding 20
+        , Border.width 3
+        , Border.color color.font.subtle
+        , width (px 256)
+        , spaceEvenly
+        , height (px 181)
+        ]
+        [ el [ centerX ]
+            (image
+                [ width (px 30)
+                ]
+                { src = "assets/spinner.svg"
+                , description = ""
+                }
+            )
+        , el [ centerX ]
+            (paragraph
+                [ Font.color
+                    (rgb 0.2 0.2 0.2)
+                ]
+                [ text levelId ]
+            )
+        ]
 
 
 view : Parameters msg -> Level -> Element msg
