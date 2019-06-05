@@ -76,7 +76,7 @@ async function post(req: Request, res: Response): Promise<Response> {
                 messages: [`Requested level id ${draftRequest} does not match existing level id ${existingLevelId}`]
             }, res)
         }
-        Firestore.getDraftDocument(existingDraft.docs[0].id)
+        return Firestore.getDraftDocument(existingDraft.docs[0].id)
             .then(ref => ref.set({
                 board: draftRequest.board
             }, {merge: true}))

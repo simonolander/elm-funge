@@ -4,6 +4,7 @@ import * as Level from "../data/PostLevelRequest";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from '../service/firestore'
+import {JsonDecoder} from "ts.data.json";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
@@ -20,9 +21,18 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
 }
 
 async function get(req: Request, res: Response): Promise<Response> {
-    const offset = Number.parseInt(req.query.offset || 0);
-    const limit = Number.parseInt(req.query.limit || 50);
-    return Firestore.getLevels({offset, limit})
+    const requestResult = decode(
+        req.query,
+        JsonDecoder.object({
+            campaignId: JsonDecoder.string,
+            offset: JsonDecoder.number,
+            limit: JsonDecoder.number
+        }, "GetLevelsRequest"));
+    if (requestResult.tag === "failure") {
+        return EndpointException.send(requestResult.error, res);
+    }
+
+    return Firestore.getLevels(requestResult.value)
         .then(data => res.send(data));
 }
 

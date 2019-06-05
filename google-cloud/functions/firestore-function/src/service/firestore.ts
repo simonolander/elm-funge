@@ -57,11 +57,20 @@ export async function getDraftDocument(id) {
 
 export const getLevelById = getById("levels");
 
-export async function getLevels(parameters: { offset?: number, limit?: number } = {}) {
-    return firestore.collection('levels')
-        .offset(parameters.offset)
-        .limit(parameters.limit)
-        .get()
+export async function getLevels(parameters: { campaignId: string, offset?: number, limit?: number }) {
+    const {campaignId, offset, limit} = parameters;
+    let query = firestore.collection('levels')
+        .where("campaignId", "==", campaignId);
+
+    if (typeof offset === "number") {
+        query = query.offset(offset);
+    }
+
+    if (typeof limit === "number") {
+        query = query.offset(limit);
+    }
+
+    return query.get();
 }
 
 
