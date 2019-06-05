@@ -46,7 +46,7 @@ export async function addDraft(draft: Draft) {
         .add(draft);
 }
 
-export async function getDraftDocument(id) {
+export async function getDraftDocument(id: string) {
     return firestore.collection("drafts")
         .doc(id);
 }
