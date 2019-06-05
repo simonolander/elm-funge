@@ -235,21 +235,31 @@ class InstructionToolSchema extends AnyOfSchema {
     }
 }
 
+const idSchema = new StringSchema({minLength: 1});
+
+const positionSchema = new ObjectSchema({
+    x: new IntegerSchema({minValue: 0}),
+    y: new IntegerSchema({minValue: 0})
+});
+
+const boardInstructionSchema = new ObjectSchema({
+   position: positionSchema,
+   instruction: new InstructionSchema
+});
+
 const boardSchema = new ObjectSchema({
     width: new IntegerSchema({minValue: 1}),
     height: new IntegerSchema({minValue: 1}),
     instructions: new ArraySchema({
-        each: new ObjectSchema({
-            x: new IntegerSchema({minValue: 0}),
-            y: new IntegerSchema({minValue: 0}),
-            instruction: new InstructionSchema
-        })
+        each: boardInstructionSchema
     })
 });
 
+const levelIdSchema = idSchema;
+
 const levelSchema = new ObjectSchema({
     version: new IntegerSchema({minValue: 0}),
-    id: new StringSchema,
+    id: levelIdSchema,
     name: new StringSchema,
     description: new ArraySchema({
         each: new StringSchema
@@ -271,23 +281,28 @@ const scoreSchema = new ObjectSchema({
     numberOfInstructions: new IntegerSchema({minValue: 0})
 });
 
+const solutionIdSchema = idSchema;
+
 const solutionSchema = new ObjectSchema({
-    id: new StringSchema({minLength: 1}),
-    levelId: new StringSchema({minLength: 1}),
+    id: solutionIdSchema,
+    levelId: levelIdSchema,
     score: scoreSchema,
     board: boardSchema
 });
 
+const draftIdSchema = idSchema;
+
 const draftSchema = new ObjectSchema({
-    id: new StringSchema({minLength: 1}),
-    levelId: new StringSchema({minLength: 1}),
+    id: draftIdSchema,
+    levelId: levelIdSchema,
     board: boardSchema
 });
 
 exports.levelSchema = levelSchema;
 exports.solutionSchema = solutionSchema;
 exports.draftSchema = draftSchema;
+exports.boardSchema = boardSchema;
 
 exports.requestHighscore = new ObjectSchema({
-    levelId: new StringSchema()
+    levelId: levelIdSchema
 });
