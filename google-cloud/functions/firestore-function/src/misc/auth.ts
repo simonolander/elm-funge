@@ -1,7 +1,7 @@
 import {Request} from "express";
 import * as Result from "../data/Result";
 import {EndpointException} from "../data/EndpointException";
-import {jwt} from 'jsonwebtoken'
+import * as jwt from 'jsonwebtoken'
 
 const AMAZON_COGNITO_PEM =
     `-----BEGIN PUBLIC KEY-----
@@ -55,8 +55,14 @@ export function verifyJwt(req: Request): Result.Result<string, EndpointException
             messages: [`Failed failed to extract authorization header, invalid type: ${type}`]
         });
     }
-    const tokenObject = jwt.verify(token, pem, {algorithm: 'RS256', audience: audience, issuer: issuer});
-    const subject = tokenObject['sub'];
+    const tokenObject: any = jwt.verify(token, pem, {algorithms: ['RS256'], audience: audience, issuer: issuer});
+    if (typeof tokenObject !== 'object') {
+        return Result.failure({
+            status: 403,
+            messages: [`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`]
+        });
+    }
+    const subject = tokenObject["sub"];
     if (typeof subject !== 'string') {
         return Result.failure({
             status: 403,
