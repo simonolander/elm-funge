@@ -1,7 +1,68 @@
 import * as Direction from "./Direction";
 import {JsonDecoder} from "ts.data.json";
-import Decoder = JsonDecoder.Decoder;
 import * as Int16 from "./Int16";
+
+export function compareFn(a: Instruction, b: Instruction) {
+    if (a.tag !== b.tag) {
+        return a.tag < b.tag ? -1 : 1;
+    }
+
+    let c;
+    switch (a.tag) {
+        case "ChangeDirection":
+            c = b as ChangeDirection;
+            return a.direction === c.direction
+                ? 0
+                : a.direction < c.direction ? -1 : 1;
+        case "PushToStack":
+            c = b as PushToStack;
+            return a.value === c.value
+                ? 0
+                : a.value < c.value ? -1 : 1;
+        case "Branch":
+            c = b as Branch;
+            return a.trueDirection < c.trueDirection
+                ? -1
+                : a.trueDirection > c.trueDirection
+                    ? 1
+                    : a.falseDirection < c.falseDirection
+                        ? -1
+                        : a.falseDirection > c.falseDirection
+                            ? 1
+                            : 0;
+        case "Exception":
+            c = b as Exception;
+            return a.exceptionMessage === c.exceptionMessage
+                ? 0
+                : a.exceptionMessage < c.exceptionMessage ? -1 : 1;
+        case "NoOp":
+        case "PopFromStack":
+        case "JumpForward":
+        case "Duplicate":
+        case "Swap":
+        case "Negate":
+        case "Abs":
+        case "Not":
+        case "Increment":
+        case "Decrement":
+        case "Add":
+        case "Subtract":
+        case "Multiply":
+        case "Divide":
+        case "Equals":
+        case "CompareLessThan":
+        case "And":
+        case "Or":
+        case "XOr":
+        case "Read":
+        case "Print":
+        case "Terminate":
+        case "SendToBottom":
+            return 0;
+    }
+}
+
+import Decoder = JsonDecoder.Decoder;
 
 export type Instruction
     = NoOp
