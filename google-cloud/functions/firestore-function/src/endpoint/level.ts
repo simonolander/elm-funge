@@ -5,6 +5,7 @@ import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from '../service/firestore'
 import {JsonDecoder} from "ts.data.json";
+import {decoder} from "../data/Integer";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
@@ -25,8 +26,14 @@ async function get(req: Request, res: Response): Promise<Response> {
         req.query,
         JsonDecoder.object({
             campaignId: JsonDecoder.string,
-            offset: JsonDecoder.number,
-            limit: JsonDecoder.number
+            offset: JsonDecoder.oneOf([
+                decoder({minValue: 0, fromString: true}),
+                JsonDecoder.isUndefined(50)
+            ], "offset"),
+            limit: JsonDecoder.oneOf([
+                decoder({minValue: 0, fromString: true}),
+                JsonDecoder.isUndefined(0)
+            ], "limit"),
         }, "GetLevelsRequest"));
     if (requestResult.tag === "failure") {
         return EndpointException.send(requestResult.error, res);
