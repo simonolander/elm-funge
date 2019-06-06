@@ -3,18 +3,18 @@ import * as Result from "../data/Result";
 import {EndpointException} from "../data/EndpointException";
 import * as jwt from 'jsonwebtoken'
 
-const AMAZON_COGNITO_PEM =
-    `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnw9jJN1VszovM0H9M0SA
-QB2MvXCGRsdz0WaApl5VYOrCrXOcHsvDzZ4CDup+NJvRMLFbLK8fUMqrZPnY5Qnp
-keF6ZSiX+axHF8531+puvsDeDyYOeX/Ysjaftw5aq9bHcSkEbH5zqKWifClfbFvO
-0cS/bY9T5+astotPH8n87KMG/KMcZOVtOcOhYusb/oIrct40t3z18VfPB+kMQtUK
-4ekt0yf1J543kAY+nBjkyie9/bMyBhjGXJZcly4fRimhatrUgSn/S4BWgPyIzVWP
-6ywgwfDPVQzVgyWQrz5tSLRX5dPLe2zZYkdnTVFWBxynebpg5ZPUoQk+J08/lPLy
-0wIDAQAB
------END PUBLIC KEY-----`;
-const AMAZON_COGNITO_AUD = '1mu4rr1moo02tobp2m4oe80pn8';
-const AMAZON_COGNITO_ISS = 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_BbVWFzVcU';
+// const AMAZON_COGNITO_PEM =
+//     `-----BEGIN PUBLIC KEY-----
+// MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnw9jJN1VszovM0H9M0SA
+// QB2MvXCGRsdz0WaApl5VYOrCrXOcHsvDzZ4CDup+NJvRMLFbLK8fUMqrZPnY5Qnp
+// keF6ZSiX+axHF8531+puvsDeDyYOeX/Ysjaftw5aq9bHcSkEbH5zqKWifClfbFvO
+// 0cS/bY9T5+astotPH8n87KMG/KMcZOVtOcOhYusb/oIrct40t3z18VfPB+kMQtUK
+// 4ekt0yf1J543kAY+nBjkyie9/bMyBhjGXJZcly4fRimhatrUgSn/S4BWgPyIzVWP
+// 6ywgwfDPVQzVgyWQrz5tSLRX5dPLe2zZYkdnTVFWBxynebpg5ZPUoQk+J08/lPLy
+// 0wIDAQAB
+// -----END PUBLIC KEY-----`;
+// const AMAZON_COGNITO_AUD = '1mu4rr1moo02tobp2m4oe80pn8';
+// const AMAZON_COGNITO_ISS = 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_BbVWFzVcU';
 
 const AUTH0_PEM =
     `-----BEGIN PUBLIC KEY-----
