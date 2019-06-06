@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 cd "$(dirname "$0")"
-cd functions/firestore-function
+cd functions
 npm install
 tsc
 gcloud functions deploy drafts --runtime nodejs8 --trigger-http
