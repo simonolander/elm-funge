@@ -40,7 +40,7 @@ async function get(req: Request, res: Response): Promise<Response> {
     }
 
     return Firestore.getLevels(requestResult.value)
-        .then(data => res.send(data));
+        .then(snapshot => res.send(snapshot.docs.map(doc => doc.data())));
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
@@ -58,5 +58,5 @@ async function post(req: Request, res: Response): Promise<Response> {
         createdTime: new Date().getTime(),
         authorId: user.id
     })
-        .then(data => res.send(data));
+        .then(() => res.send());
 }

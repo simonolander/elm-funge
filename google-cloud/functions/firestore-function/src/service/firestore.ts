@@ -62,11 +62,11 @@ export async function getLevels(parameters: { campaignId: string, offset?: numbe
     let query = firestore.collection('levels')
         .where("campaignId", "==", campaignId);
 
-    if (typeof offset === "number") {
+    if (typeof offset !== "undefined") {
         query = query.offset(offset);
     }
 
-    if (typeof limit === "number") {
+    if (typeof limit !== "undefined") {
         query = query.offset(limit);
     }
 
@@ -85,12 +85,12 @@ export async function addLevel(level: Level) {
 
 export const getSolutionById = getById("solutions");
 
-export async function getSolutions(parameters: { levelId: string, authorId?: string }) {
+export async function getSolutions({levelId, authorId}: { levelId: string, authorId?: string }) {
     let query = firestore.collection("solutions")
-        .where("levelId", "==", parameters.levelId);
+        .where("levelId", "==", levelId);
 
-    if (typeof parameters.authorId === "undefined") {
-        query = query.where("authorId", "==", parameters.authorId);
+    if (typeof authorId !== "undefined") {
+        query = query.where("authorId", "==", authorId);
     }
 
     return query.get();
