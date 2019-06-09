@@ -18,12 +18,25 @@ async function route(req: Request, res: Response, endpoint: (req: Request, res: 
         }
     } catch (error) {
         console.error(error);
-        return res.status(500)
-            .send({
-                status: 500,
-                messages: ["An error occured when performing the request"],
-                error: error
-            })
+        if (error instanceof Error) {
+            return res.status(500)
+                .send({
+                    status: 500,
+                    messages: [
+                        `Unexpected ${error.name} error occured when performing the request`,
+                        error.message
+                    ],
+                    stack: error.stack
+                })
+        }
+        else {
+            return res.status(500)
+                .send({
+                    status: 500,
+                    messages: [`An unexpected error occured when performing the request`],
+                    error: error
+                })
+        }
     }
 }
 

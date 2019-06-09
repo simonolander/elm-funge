@@ -16,8 +16,7 @@ export async function getUserBySubject(subject: string) {
         .then(snapshot =>
             snapshot.empty
                 ? usersCollection.add({subjectAuth0: subject})
-                    .then(ref => ref.get())
-                : snapshot.docs[0]);
+                : usersCollection.doc(snapshot.docs[0].id));
 }
 
 function getById(collectionName: string): (id: string) => Promise<FirebaseFirestore.QuerySnapshot> {

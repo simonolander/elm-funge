@@ -1,7 +1,6 @@
 module Main exposing (main)
 
 import Api.Auth0 as Auth0
-import Api.GCP
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
@@ -14,6 +13,8 @@ import Data.Session as Session exposing (Session)
 import Data.Solution
 import Data.SolutionBook
 import Data.User as User exposing (User)
+import Data.UserInfo as UserInfo exposing (UserInfo)
+import Extra.String
 import Html
 import Http
 import Json.Decode as Decode
@@ -38,7 +39,10 @@ import Url exposing (Url)
 
 
 type alias Flags =
-    ()
+    { width : Int
+    , height : Int
+    , accessToken : Maybe String
+    }
 
 
 type Model
@@ -74,22 +78,26 @@ main =
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        levels =
-            Levels.levels
+        withTestData =
+            let
+                levels =
+                    Levels.levels
 
-        campaigns =
-            List.map .campaignId levels
-                |> Set.fromList
-                |> Set.toList
-                |> List.map
-                    (\campaignId ->
-                        { id = campaignId
-                        , levelIds =
-                            levels
-                                |> List.filter (.campaignId >> (==) campaignId)
-                                |> List.map .id
-                        }
-                    )
+                campaigns =
+                    List.map .campaignId levels
+                        |> Set.fromList
+                        |> Set.toList
+                        |> List.map
+                            (\campaignId ->
+                                { id = campaignId
+                                , levelIds =
+                                    levels
+                                        |> List.filter (.campaignId >> (==) campaignId)
+                                        |> List.map .id
+                                }
+                            )
+            in
+            Session.withLevels levels >> Session.withCampaigns campaigns
 
         ( user, sessionCmd ) =
             case Auth0.loginResponseFromUrl url of
@@ -97,7 +105,7 @@ init flags url key =
                     ( Just (User.authorizedUser (AuthorizationToken.fromString loginResponse.accessToken))
                     , Cmd.batch
                         [ Route.replaceUrl key loginResponse.route
-                        , Api.GCP.verifyIdentityToken (AuthorizationToken.fromString loginResponse.accessToken) VerifyTokenResponse
+                        , UserInfo.loadFromServer (AuthorizationToken.fromString loginResponse.accessToken) VerifyTokenResponse
                         ]
                     )
 
@@ -108,8 +116,7 @@ init flags url key =
 
         session =
             Session.init key url
-                |> Session.withLevels levels
-                |> Session.withCampaigns campaigns
+                |> withTestData
                 |> Maybe.withDefault identity (Maybe.map Session.withUser user)
 
         ( model, pageCmd ) =
@@ -183,7 +190,7 @@ type Msg
     | BlueprintMsg Blueprint.Msg
     | LoginMsg Login.Msg
     | Ignored
-    | VerifyTokenResponse (Result Http.Error ())
+    | VerifyTokenResponse (RequestResult AuthorizationToken Http.Error UserInfo)
     | LocalStorageResponse ( String, Encode.Value )
 
 
@@ -241,12 +248,12 @@ update msg model =
             localStorageResponseUpdate response mdl
 
         ( VerifyTokenResponse response, _ ) ->
-            case response of
-                Ok () ->
-                    ( model, Cmd.none )
+            case response.result of
+                Ok value ->
+                    ( model, Ports.Console.log (UserInfo.encode value) )
 
                 Err error ->
-                    ( model, Cmd.none )
+                    ( model, Ports.Console.errorString (Extra.String.fromHttpError error) )
 
         ( ExecutionMsg message, Execution mdl ) ->
             Execution.update message mdl

@@ -1,7 +1,7 @@
 import {Request} from "express";
 import * as Result from "../data/Result";
 import {EndpointException} from "../data/EndpointException";
-import * as jwt from 'jsonwebtoken'
+import {JsonWebTokenError, NotBeforeError, TokenExpiredError, verify} from "jsonwebtoken";
 
 // const AMAZON_COGNITO_PEM =
 //     `-----BEGIN PUBLIC KEY-----
@@ -34,46 +34,81 @@ const issuer = AUTH0_ISS;
 const pem = AUTH0_PEM;
 
 export function verifyJwt(req: Request): Result.Result<string, EndpointException> {
-    const authorizationHeader = req.get('Authorization');
-    if (typeof authorizationHeader !== 'string') {
-        return Result.failure({
-            status: 403,
-            messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]
+    try {
+        const authorizationHeader = req.get('Authorization');
+        if (typeof authorizationHeader !== 'string') {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]
+            });
+        }
+        const splits = authorizationHeader.split(' ');
+        if (splits.length !== 2) {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]
+            });
+        }
+        const [type, token] = splits;
+        if (type !== 'Bearer') {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed failed to extract authorization header, invalid type: ${type}`]
+            });
+        }
+        const tokenObject: any = verify(token, pem, {
+            algorithms: ['RS256'],
+            audience: audience,
+            issuer: issuer
         });
+        if (typeof tokenObject !== 'object') {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`]
+            });
+        }
+        const subject = tokenObject["sub"];
+        if (typeof subject !== 'string') {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed to verify jwt, invalid subject: ${subject}`]
+            });
+        }
+        if (subject.length === 0) {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed to verify jwt, subject is empty`]
+            });
+        }
+        return Result.success(subject);
+    } catch (e) {
+        if (e instanceof TokenExpiredError) {
+            return Result.failure({
+                status: 403,
+                messages: [
+                    `Token expired at ${e.expiredAt.toISOString()}`,
+                    e.message
+                ]
+            });
+        } else if (e instanceof NotBeforeError) {
+            return Result.failure({
+                status: 403,
+                messages: [
+                    `Token is not valid before ${e.date.toISOString()}`,
+                    e.message
+                ]
+            });
+
+        } else if (e instanceof JsonWebTokenError) {
+            return Result.failure({
+                status: 403,
+                messages: [
+                    `There was an error with the token`,
+                    e.message
+                ]
+            });
+        } else {
+            throw e;
+        }
     }
-    const splits = authorizationHeader.split(' ');
-    if (splits.length !== 2) {
-        return Result.failure({
-            status: 403,
-            messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]
-        });
-    }
-    const [type, token] = splits;
-    if (type !== 'Bearer') {
-        return Result.failure({
-            status: 403,
-            messages: [`Failed failed to extract authorization header, invalid type: ${type}`]
-        });
-    }
-    const tokenObject: any = jwt.verify(token, pem, {algorithms: ['RS256'], audience: audience, issuer: issuer});
-    if (typeof tokenObject !== 'object') {
-        return Result.failure({
-            status: 403,
-            messages: [`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`]
-        });
-    }
-    const subject = tokenObject["sub"];
-    if (typeof subject !== 'string') {
-        return Result.failure({
-            status: 403,
-            messages: [`Failed to verify jwt, invalid subject: ${subject}`]
-        });
-    }
-    if (subject.length === 0) {
-        return Result.failure({
-            status: 403,
-            messages: [`Failed to verify jwt, subject is empty`]
-        });
-    }
-    return Result.success(subject);
 }

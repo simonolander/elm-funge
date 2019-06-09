@@ -8,7 +8,8 @@ const app = Elm.Main.init({
   node: document.getElementById('root'),
   flags: {
     width: window.innerWidth,
-    height: window.innerHeight
+    height: window.innerHeight,
+    accessToken: localStorage.getItem("accessToken"),
   }
 });
 

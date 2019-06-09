@@ -10,10 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/firestore": "1.1.0",
-    "@types/express": "^4.16.1",
-    "@types/jsonwebtoken": "^8.3.2",
-    "express": "^4.17.1",
     "jsonwebtoken": "8.5.1",
     "ts.data.json": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.16.1",
+    "@types/jsonwebtoken": "^8.3.2"
   }
 }

@@ -1,10 +1,9 @@
-module Api.GCP exposing (get, getDrafts, getLevels, getUserInfo, post, saveDraft, verifyIdentityToken)
+module Api.GCP exposing (authorizedGet, get, getDrafts, getLevels, post, saveDraft)
 
 import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
-import Data.UserInfo as UserInfo exposing (UserInfo)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -41,7 +40,7 @@ getDrafts token toMsg =
         expect =
             Http.expectJson toMsg (Decode.list Draft.decoder)
     in
-    authorizedGet url token expect
+    internalAuthorizedGet url token expect
 
 
 saveDraft : AuthorizationToken -> Draft -> (Result Http.Error () -> msg) -> Cmd msg
@@ -59,30 +58,6 @@ saveDraft token draft toMsg =
     authorizedPost url token body expect
 
 
-getUserInfo : AuthorizationToken -> (Result Http.Error UserInfo -> msg) -> Cmd msg
-getUserInfo authorizationToken toMsg =
-    let
-        url =
-            Url.Builder.crossOrigin gcpPrePath [ "userInfo" ] []
-
-        expect =
-            Http.expectJson toMsg UserInfo.decoder
-    in
-    authorizedGet url authorizationToken expect
-
-
-verifyIdentityToken : AuthorizationToken -> (Result Http.Error () -> msg) -> Cmd msg
-verifyIdentityToken authorizationToken toMsg =
-    let
-        url =
-            Url.Builder.crossOrigin gcpPrePath [ "userInfo" ] []
-
-        expect =
-            Http.expectWhatever toMsg
-    in
-    authorizedGet url authorizationToken expect
-
-
 get : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> Cmd msg
 get path queryParameters decoder toMsg =
     let
@@ -96,6 +71,18 @@ get path queryParameters decoder toMsg =
         { url = url
         , expect = expect
         }
+
+
+authorizedGet : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> AuthorizationToken -> Cmd msg
+authorizedGet path queryParameters decoder toMsg accessToken =
+    let
+        url =
+            buildUrl path queryParameters
+
+        expect =
+            Http.expectJson toMsg decoder
+    in
+    internalAuthorizedGet url accessToken expect
 
 
 post : AuthorizationToken -> List String -> List Url.Builder.QueryParameter -> Http.Expect msg -> Encode.Value -> Cmd msg
@@ -126,8 +113,8 @@ authorizationHeader token =
     Http.header "Authorization" ("Bearer " ++ AuthorizationToken.toString token)
 
 
-authorizedGet : String -> AuthorizationToken -> Http.Expect msg -> Cmd msg
-authorizedGet url token expect =
+internalAuthorizedGet : String -> AuthorizationToken -> Http.Expect msg -> Cmd msg
+internalAuthorizedGet url token expect =
     Http.request
         { method = "GET"
         , headers = [ authorizationHeader token ]

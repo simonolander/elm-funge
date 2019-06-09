@@ -1,9 +1,9 @@
-module Api.Auth0 exposing (LoginResponse, getUserInfo, login, loginResponseFromUrl, logout)
+module Api.Auth0 exposing (LoginResponse, login, loginResponseFromUrl, logout)
 
 import Dict
-import Http
 import Maybe.Extra
 import Route exposing (Route)
+import Set
 import Url exposing (Url)
 import Url.Builder
 
@@ -21,7 +21,9 @@ clientId =
 
 
 responseType =
-    "token"
+    String.join " "
+        [ "token"
+        ]
 
 
 redirectUri =
@@ -33,9 +35,15 @@ returnTo =
 
 
 scope =
-    String.join " "
+    Set.fromList
         [ "openid"
         , "profile"
+        , "read:drafts"
+        , "read:blueprints"
+        , "edit:drafts"
+        , "edit:blueprints"
+        , "submit:solutions"
+        , "publish:blueprints"
         ]
 
 
@@ -50,7 +58,6 @@ audience =
 type alias LoginResponse =
     { accessToken : String
     , expiresIn : Int
-    , tokenType : String
     , route : Route
     }
 
@@ -58,14 +65,14 @@ type alias LoginResponse =
 loginResponseFromUrl : Url -> Maybe LoginResponse
 loginResponseFromUrl url =
     let
-        queryParameters =
+        fragmentParameters =
             url.fragment
                 |> Maybe.withDefault ""
                 |> String.split "&"
                 |> List.map (String.split "=")
                 |> List.map
                     (\list ->
-                        case list of
+                        case list |> Debug.log "fragment" of
                             key :: value :: [] ->
                                 Just ( key, value )
 
@@ -76,27 +83,24 @@ loginResponseFromUrl url =
                 |> Dict.fromList
 
         maybeAccessToken =
-            Dict.get "access_token" queryParameters
+            Dict.get "access_token" fragmentParameters
 
         maybeExpiresIn =
-            Dict.get "expires_in" queryParameters
+            Dict.get "expires_in" fragmentParameters
                 |> Maybe.andThen String.toInt
 
-        maybeTokenType =
-            Dict.get "token_type" queryParameters
-
-        maybeUrl =
-            Dict.get "state" queryParameters
+        route =
+            Dict.get "state" fragmentParameters
                 |> Maybe.andThen Url.percentDecode
                 |> Maybe.map (\path -> { url | fragment = Just path })
                 |> Maybe.andThen Route.fromUrl
+                |> Maybe.withDefault Route.Home
     in
-    case ( ( maybeAccessToken, maybeExpiresIn ), ( maybeTokenType, maybeUrl ) ) of
-        ( ( Just accessToken, Just expiresIn ), ( Just tokenType, Just route ) ) ->
+    case ( maybeAccessToken, maybeExpiresIn ) of
+        ( Just accessToken, Just expiresIn ) ->
             Just
                 { accessToken = accessToken
                 , expiresIn = expiresIn
-                , tokenType = tokenType
                 , route = route
                 }
 
@@ -110,7 +114,7 @@ login url =
         [ Url.Builder.string "client_id" clientId
         , Url.Builder.string "response_type" responseType
         , Url.Builder.string "redirect_uri" redirectUri
-        , Url.Builder.string "scope" scope
+        , Url.Builder.string "scope" (scope |> Set.toList |> String.join " ")
         , Url.Builder.string "audience" audience
         , Url.Builder.string "state" (Maybe.withDefault "" url.fragment)
         ]
@@ -122,20 +126,3 @@ logout =
         [ Url.Builder.string "client_id" clientId
         , Url.Builder.string "returnTo" returnTo
         ]
-
-
-getUserInfo accessToken toMsg =
-    Http.request
-        { method = "GET"
-        , headers =
-            [ Http.header "Authorization" ("Bearer " ++ accessToken)
-            ]
-        , url =
-            Url.Builder.crossOrigin prePath
-                [ "userinfo" ]
-                []
-        , body = Http.emptyBody
-        , expect = Http.expectWhatever toMsg
-        , timeout = Nothing
-        , tracker = Nothing
-        }
