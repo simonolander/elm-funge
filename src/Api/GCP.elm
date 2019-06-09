@@ -1,6 +1,6 @@
 module Api.GCP exposing (authorizedGet, get, getDrafts, getLevels, post, saveDraft)
 
-import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
+import Data.AccessToken as AccessToken exposing (AccessToken)
 import Data.Draft as Draft exposing (Draft)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
@@ -31,7 +31,7 @@ getLevel levelId toMsg =
         }
 
 
-getDrafts : AuthorizationToken -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
+getDrafts : AccessToken -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
 getDrafts token toMsg =
     let
         url =
@@ -43,7 +43,7 @@ getDrafts token toMsg =
     internalAuthorizedGet url token expect
 
 
-saveDraft : AuthorizationToken -> Draft -> (Result Http.Error () -> msg) -> Cmd msg
+saveDraft : AccessToken -> Draft -> (Result Http.Error () -> msg) -> Cmd msg
 saveDraft token draft toMsg =
     let
         url =
@@ -73,7 +73,7 @@ get path queryParameters decoder toMsg =
         }
 
 
-authorizedGet : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> AuthorizationToken -> Cmd msg
+authorizedGet : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> AccessToken -> Cmd msg
 authorizedGet path queryParameters decoder toMsg accessToken =
     let
         url =
@@ -85,11 +85,11 @@ authorizedGet path queryParameters decoder toMsg accessToken =
     internalAuthorizedGet url accessToken expect
 
 
-post : AuthorizationToken -> List String -> List Url.Builder.QueryParameter -> Http.Expect msg -> Encode.Value -> Cmd msg
-post authorizationToken path queryParameters expect value =
+post : AccessToken -> List String -> List Url.Builder.QueryParameter -> Http.Expect msg -> Encode.Value -> Cmd msg
+post accessToken path queryParameters expect value =
     authorizedPost
         (buildUrl path queryParameters)
-        authorizationToken
+        accessToken
         value
         expect
 
@@ -108,12 +108,12 @@ gcpPrePath =
     "https://us-central1-luminous-cubist-234816.cloudfunctions.net"
 
 
-authorizationHeader : AuthorizationToken -> Http.Header
+authorizationHeader : AccessToken -> Http.Header
 authorizationHeader token =
-    Http.header "Authorization" ("Bearer " ++ AuthorizationToken.toString token)
+    Http.header "Authorization" ("Bearer " ++ AccessToken.toString token)
 
 
-internalAuthorizedGet : String -> AuthorizationToken -> Http.Expect msg -> Cmd msg
+internalAuthorizedGet : String -> AccessToken -> Http.Expect msg -> Cmd msg
 internalAuthorizedGet url token expect =
     Http.request
         { method = "GET"
@@ -126,7 +126,7 @@ internalAuthorizedGet url token expect =
         }
 
 
-authorizedPost : String -> AuthorizationToken -> Encode.Value -> Http.Expect msg -> Cmd msg
+authorizedPost : String -> AccessToken -> Encode.Value -> Http.Expect msg -> Cmd msg
 authorizedPost url token body expect =
     Http.request
         { method = "POST"

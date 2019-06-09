@@ -3,7 +3,7 @@ module Main exposing (main)
 import Api.Auth0 as Auth0
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
-import Data.AuthorizationToken as AuthorizationToken exposing (AuthorizationToken)
+import Data.AccessToken as AccessToken exposing (AccessToken)
 import Data.Campaign
 import Data.Draft
 import Data.DraftBook
@@ -102,10 +102,10 @@ init flags url key =
         ( user, sessionCmd ) =
             case Auth0.loginResponseFromUrl url of
                 Just loginResponse ->
-                    ( Just (User.authorizedUser (AuthorizationToken.fromString loginResponse.accessToken))
+                    ( Just (User.authorizedUser (AccessToken.fromString loginResponse.accessToken))
                     , Cmd.batch
                         [ Route.replaceUrl key loginResponse.route
-                        , UserInfo.loadFromServer (AuthorizationToken.fromString loginResponse.accessToken) VerifyTokenResponse
+                        , UserInfo.loadFromServer (AccessToken.fromString loginResponse.accessToken) VerifyTokenResponse
                         ]
                     )
 
@@ -190,7 +190,7 @@ type Msg
     | BlueprintMsg Blueprint.Msg
     | LoginMsg Login.Msg
     | Ignored
-    | VerifyTokenResponse (RequestResult AuthorizationToken Http.Error UserInfo)
+    | VerifyTokenResponse (RequestResult AccessToken Http.Error UserInfo)
     | LocalStorageResponse ( String, Encode.Value )
 
 

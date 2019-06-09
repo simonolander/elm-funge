@@ -1,16 +1,16 @@
 module Data.User exposing (User, authorizedUser, getToken, guest, isLoggedIn)
 
-import Data.AuthorizationToken exposing (AuthorizationToken)
+import Data.AccessToken exposing (AccessToken)
 
 
 type User
     = Guest
     | AuthenticatedUser
-        { token : AuthorizationToken
+        { token : AccessToken
         }
 
 
-getToken : User -> Maybe AuthorizationToken
+getToken : User -> Maybe AccessToken
 getToken user =
     case user of
         Guest ->
@@ -20,7 +20,7 @@ getToken user =
             Just token
 
 
-authorizedUser : AuthorizationToken -> User
+authorizedUser : AccessToken -> User
 authorizedUser token =
     AuthenticatedUser
         { token = token

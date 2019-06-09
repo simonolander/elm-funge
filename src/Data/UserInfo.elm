@@ -1,13 +1,14 @@
 module Data.UserInfo exposing (UserInfo, decoder, encode, loadFromServer)
 
 import Api.GCP as GCP
-import Data.AuthorizationToken exposing (AuthorizationToken)
+import Data.AccessToken exposing (AccessToken)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Http
 import Json.Decode
 import Json.Encode
 import Json.Encode.Extra
 import Maybe.Extra
+import Url exposing (Url)
 
 
 type alias UserInfo =
@@ -16,7 +17,7 @@ type alias UserInfo =
     , familyName : Maybe String
     , nickname : Maybe String
     , name : Maybe String
-    , picture : Maybe String
+    , picture : Maybe Url
     , locale : Maybe String
     , updatedAt : Maybe String
     }
@@ -42,7 +43,7 @@ encode userInfo =
         , ( "family_name", Json.Encode.Extra.maybe Json.Encode.string userInfo.familyName )
         , ( "nickname", Json.Encode.Extra.maybe Json.Encode.string userInfo.nickname )
         , ( "name", Json.Encode.Extra.maybe Json.Encode.string userInfo.name )
-        , ( "picture", Json.Encode.Extra.maybe Json.Encode.string userInfo.picture )
+        , ( "picture", Json.Encode.Extra.maybe Json.Encode.string (Maybe.map Url.toString userInfo.picture) )
         , ( "locale", Json.Encode.Extra.maybe Json.Encode.string userInfo.locale )
         , ( "updated_at", Json.Encode.Extra.maybe Json.Encode.string userInfo.updatedAt )
         ]
@@ -80,7 +81,7 @@ decoder =
                                                                                                         , familyName = familyName
                                                                                                         , nickname = nickname
                                                                                                         , name = name
-                                                                                                        , picture = picture
+                                                                                                        , picture = Maybe.andThen Url.fromString picture
                                                                                                         , locale = locale
                                                                                                         , updatedAt = updatedAt
                                                                                                         }
@@ -98,7 +99,7 @@ decoder =
 -- REST
 
 
-loadFromServer : AuthorizationToken -> (RequestResult AuthorizationToken Http.Error UserInfo -> msg) -> Cmd msg
+loadFromServer : AccessToken -> (RequestResult AccessToken Http.Error UserInfo -> msg) -> Cmd msg
 loadFromServer accessToken toMsg =
     let
         path =

@@ -49,7 +49,7 @@ module Data.Session exposing
     )
 
 import Browser.Navigation exposing (Key)
-import Data.AuthorizationToken exposing (AuthorizationToken)
+import Data.AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
 import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
@@ -105,7 +105,7 @@ withUser user session =
     }
 
 
-getToken : Session -> Maybe AuthorizationToken
+getToken : Session -> Maybe AccessToken
 getToken =
     .user >> User.getToken
 

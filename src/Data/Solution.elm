@@ -1,7 +1,7 @@
 module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, saveToServer)
 
 import Api.GCP as GCP
-import Data.AuthorizationToken exposing (AuthorizationToken)
+import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
@@ -141,6 +141,6 @@ localStorageResponse ( key, value ) =
 -- SERVER
 
 
-saveToServer : (Result Http.Error () -> msg) -> Solution -> AuthorizationToken -> Cmd msg
+saveToServer : (Result Http.Error () -> msg) -> Solution -> AccessToken -> Cmd msg
 saveToServer toMsg solution token =
     GCP.post token [ "solutions" ] [] (Http.expectWhatever toMsg) (encode solution)
