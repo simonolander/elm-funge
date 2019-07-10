@@ -1,12 +1,15 @@
 module Data.User exposing (User, authorizedUser, getToken, guest, isLoggedIn)
 
 import Data.AccessToken exposing (AccessToken)
+import Data.UserInfo exposing (UserInfo)
+import RemoteData exposing (WebData)
 
 
 type User
     = Guest
     | AuthenticatedUser
         { token : AccessToken
+        , userInfo : WebData UserInfo
         }
 
 
@@ -20,10 +23,11 @@ getToken user =
             Just token
 
 
-authorizedUser : AccessToken -> User
-authorizedUser token =
+authorizedUser : AccessToken -> WebData UserInfo -> User
+authorizedUser token userInfo =
     AuthenticatedUser
         { token = token
+        , userInfo = userInfo
         }
 
 

@@ -29,6 +29,7 @@ import Page.Home as Home
 import Page.Login as Login
 import Ports.Console
 import Ports.LocalStorage
+import RemoteData exposing (RemoteData(..))
 import Route
 import Set exposing (Set)
 import Url exposing (Url)
@@ -42,6 +43,7 @@ type alias Flags =
     { width : Int
     , height : Int
     , accessToken : Maybe String
+    , currentTimeMillis : Int
     }
 
 
@@ -99,20 +101,32 @@ init flags url key =
             in
             Session.withLevels levels >> Session.withCampaigns campaigns
 
-        ( user, sessionCmd ) =
+        ( user, accessTokenCmd ) =
             case Auth0.loginResponseFromUrl url of
                 Just loginResponse ->
-                    ( Just (User.authorizedUser (AccessToken.fromString loginResponse.accessToken))
+                    let
+                        accessToken =
+                            AccessToken.fromString loginResponse.accessToken
+                    in
+                    ( Just (User.authorizedUser accessToken Loading)
                     , Cmd.batch
                         [ Route.replaceUrl key loginResponse.route
-                        , UserInfo.loadFromServer (AccessToken.fromString loginResponse.accessToken) VerifyTokenResponse
+                        , UserInfo.loadFromServer accessToken GotUserInfoResponse
+                        , AccessToken.saveToLocalStorage accessToken
                         ]
                     )
 
                 Nothing ->
-                    ( Nothing
-                    , Cmd.none
-                    )
+                    case flags.accessToken of
+                        Just accessToken ->
+                            ( Just (User.authorizedUser (AccessToken.fromString accessToken) Loading)
+                            , UserInfo.loadFromServer (AccessToken.fromString accessToken) GotUserInfoResponse
+                            )
+
+                        Nothing ->
+                            ( Nothing
+                            , Cmd.none
+                            )
 
         session =
             Session.init key url
@@ -125,7 +139,7 @@ init flags url key =
         cmd =
             Cmd.batch
                 [ pageCmd
-                , sessionCmd
+                , accessTokenCmd
                 ]
     in
     ( model, cmd )
@@ -190,7 +204,7 @@ type Msg
     | BlueprintMsg Blueprint.Msg
     | LoginMsg Login.Msg
     | Ignored
-    | VerifyTokenResponse (RequestResult AccessToken Http.Error UserInfo)
+    | GotUserInfoResponse (RequestResult AccessToken Http.Error UserInfo)
     | LocalStorageResponse ( String, Encode.Value )
 
 
@@ -198,27 +212,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         session =
-            case model of
-                Home mdl ->
-                    Home.getSession mdl
-
-                Campaign mdl ->
-                    Campaign.getSession mdl
-
-                Execution mdl ->
-                    Execution.getSession mdl
-
-                Draft mdl ->
-                    Draft.getSession mdl
-
-                Blueprints mdl ->
-                    Blueprints.getSession mdl
-
-                Blueprint mdl ->
-                    Blueprint.getSession mdl
-
-                Login mdl ->
-                    Login.getSession mdl
+            getSession model
     in
     case ( msg, model ) of
         ( Ignored, _ ) ->
@@ -247,13 +241,28 @@ update msg model =
         ( LocalStorageResponse response, mdl ) ->
             localStorageResponseUpdate response mdl
 
-        ( VerifyTokenResponse response, _ ) ->
+        ( GotUserInfoResponse response, mdl ) ->
+            let
+                accessToken =
+                    response.request
+            in
             case response.result of
-                Ok value ->
-                    ( model, Ports.Console.log (UserInfo.encode value) )
+                Ok userInfo ->
+                    let
+                        newUser =
+                            User.authorizedUser accessToken (Success userInfo)
 
+                        newSession =
+                            getSession mdl
+                                |> Session.withUser newUser
+                    in
+                    ( withSession newSession mdl
+                    , Ports.Console.log (UserInfo.encode userInfo)
+                    )
+
+                -- TODO
                 Err error ->
-                    ( model, Ports.Console.errorString (Extra.String.fromHttpError error) )
+                    ( mdl, Ports.Console.errorString (Extra.String.fromHttpError error) )
 
         ( ExecutionMsg message, Execution mdl ) ->
             Execution.update message mdl
@@ -525,3 +534,57 @@ subscriptions model =
         [ specificSubscriptions
         , localStorageSubscriptions
         ]
+
+
+
+-- SESSION
+
+
+getSession : Model -> Session
+getSession model =
+    case model of
+        Home mdl ->
+            Home.getSession mdl
+
+        Campaign mdl ->
+            Campaign.getSession mdl
+
+        Execution mdl ->
+            Execution.getSession mdl
+
+        Draft mdl ->
+            Draft.getSession mdl
+
+        Blueprints mdl ->
+            Blueprints.getSession mdl
+
+        Blueprint mdl ->
+            Blueprint.getSession mdl
+
+        Login mdl ->
+            Login.getSession mdl
+
+
+withSession : Session -> Model -> Model
+withSession session model =
+    case model of
+        Home mdl ->
+            Home { mdl | session = session }
+
+        Campaign mdl ->
+            Campaign { mdl | session = session }
+
+        Execution mdl ->
+            Execution { mdl | session = session }
+
+        Draft mdl ->
+            Draft { mdl | session = session }
+
+        Blueprints mdl ->
+            Blueprints { mdl | session = session }
+
+        Blueprint mdl ->
+            Blueprint { mdl | session = session }
+
+        Login mdl ->
+            Login { mdl | session = session }

@@ -10,6 +10,7 @@ const app = Elm.Main.init({
     width: window.innerWidth,
     height: window.innerHeight,
     accessToken: localStorage.getItem("accessToken"),
+    currentTimeMillis: Date.now(),
   }
 });
 
