@@ -1,4 +1,4 @@
-module Data.UserInfo exposing (UserInfo, decoder, encode, loadFromServer)
+module Data.UserInfo exposing (UserInfo, decoder, encode, getUserName, loadFromServer)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -25,9 +25,10 @@ type alias UserInfo =
 
 getUserName : UserInfo -> String
 getUserName userInfo =
-    userInfo.familyName
+    userInfo.name
         |> Maybe.Extra.orElse userInfo.givenName
-        |> Maybe.Extra.orElse userInfo.givenName
+        |> Maybe.Extra.orElse userInfo.familyName
+        |> Maybe.Extra.orElse userInfo.nickname
         |> Maybe.withDefault "No name"
 
 

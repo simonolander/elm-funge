@@ -1,8 +1,8 @@
-module Data.User exposing (User, authorizedUser, getToken, guest, isLoggedIn)
+module Data.User exposing (User, authorizedUser, getToken, getUserInfo, guest, isLoggedIn)
 
 import Data.AccessToken exposing (AccessToken)
 import Data.UserInfo exposing (UserInfo)
-import RemoteData exposing (WebData)
+import RemoteData exposing (RemoteData(..), WebData)
 
 
 type User
@@ -21,6 +21,16 @@ getToken user =
 
         AuthenticatedUser { token } ->
             Just token
+
+
+getUserInfo : User -> WebData UserInfo
+getUserInfo user =
+    case user of
+        Guest ->
+            NotAsked
+
+        AuthenticatedUser { userInfo } ->
+            userInfo
 
 
 authorizedUser : AccessToken -> WebData UserInfo -> User

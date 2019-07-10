@@ -5,9 +5,10 @@ import Basics.Extra exposing (flip)
 import Data.CampaignId as CampaignId
 import Data.Session as Session
 import Data.User as User
+import Data.UserInfo as UserInfo
 import Element exposing (..)
 import Element.Background as Background
-import RemoteData
+import RemoteData exposing (RemoteData(..))
 import Route
 
 
@@ -21,9 +22,16 @@ view session =
                     [ Background.color (rgb 0.5 0.5 0.5) ]
                 ]
                 (if User.isLoggedIn session.user then
-                    { url = Api.Auth0.logout
-                    , label = text "Sign out"
-                    }
+                    case User.getUserInfo session.user of
+                        Success userInfo ->
+                            { url = Api.Auth0.logout
+                            , label = text ("Sign out " ++ UserInfo.getUserName userInfo)
+                            }
+
+                        _ ->
+                            { url = Api.Auth0.logout
+                            , label = text "Sign out"
+                            }
 
                  else
                     { url = Api.Auth0.login session.url

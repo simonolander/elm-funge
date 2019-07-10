@@ -20,6 +20,7 @@ import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Levels
+import Maybe.Extra
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
 import Page.Campaign as Campaign
@@ -117,10 +118,18 @@ init flags url key =
                     )
 
                 Nothing ->
-                    case flags.accessToken of
-                        Just accessToken ->
-                            ( Just (User.authorizedUser (AccessToken.fromString accessToken) Loading)
-                            , UserInfo.loadFromServer (AccessToken.fromString accessToken) GotUserInfoResponse
+                    case
+                        flags.accessToken
+                            |> Maybe.map (Decode.decodeString AccessToken.decoder)
+                    of
+                        Just (Ok accessToken) ->
+                            ( Just (User.authorizedUser accessToken Loading)
+                            , UserInfo.loadFromServer accessToken GotUserInfoResponse
+                            )
+
+                        Just (Err error) ->
+                            ( Nothing
+                            , Ports.Console.errorString (Decode.errorToString error)
                             )
 
                         Nothing ->
@@ -231,8 +240,20 @@ update msg model =
                             )
 
                 Browser.External href ->
+                    let
+                        cmd =
+                            [ if href == Auth0.logout then
+                                Just (Ports.LocalStorage.storageClear ())
+
+                              else
+                                Nothing
+                            , Just (Navigation.load href)
+                            ]
+                                |> Maybe.Extra.values
+                                |> Cmd.batch
+                    in
                     ( model
-                    , Navigation.load href
+                    , cmd
                     )
 
         ( ChangedUrl url, _ ) ->
