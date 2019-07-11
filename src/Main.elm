@@ -276,9 +276,15 @@ update msg model =
                         newSession =
                             getSession mdl
                                 |> Session.withUser newUser
+
+                        cmd =
+                            Cmd.batch
+                                [ UserInfo.saveToLocalStorage userInfo
+                                , Ports.Console.log (UserInfo.encode userInfo)
+                                ]
                     in
                     ( withSession newSession mdl
-                    , Ports.Console.log (UserInfo.encode userInfo)
+                    , cmd
                     )
 
                 -- TODO

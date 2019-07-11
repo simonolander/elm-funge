@@ -18,3 +18,12 @@ const app = Elm.Main.init({
 
 localStoragePorts.register(app.ports);
 consolePorts.register(app.ports);
+
+
+window.localStorageDump = function () {
+  var v = {};
+  for (var i = 0; i < localStorage.length; ++i) {
+    v[localStorage.key(i)] = JSON.parse(localStorage.getItem(localStorage.key(i)));
+  }
+  return v;
+};

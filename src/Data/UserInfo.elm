@@ -1,4 +1,4 @@
-module Data.UserInfo exposing (UserInfo, decoder, encode, getUserName, loadFromServer)
+module Data.UserInfo exposing (UserInfo, decoder, encode, getUserName, loadFromServer, saveToLocalStorage)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -8,11 +8,12 @@ import Json.Decode
 import Json.Encode
 import Json.Encode.Extra
 import Maybe.Extra
+import Ports.LocalStorage as LocalStorage
 import Url exposing (Url)
 
 
 type alias UserInfo =
-    { sub : Maybe String
+    { sub : String
     , givenName : Maybe String
     , familyName : Maybe String
     , nickname : Maybe String
@@ -29,7 +30,7 @@ getUserName userInfo =
         |> Maybe.Extra.orElse userInfo.givenName
         |> Maybe.Extra.orElse userInfo.familyName
         |> Maybe.Extra.orElse userInfo.nickname
-        |> Maybe.withDefault "No name"
+        |> Maybe.withDefault userInfo.sub
 
 
 
@@ -39,7 +40,7 @@ getUserName userInfo =
 encode : UserInfo -> Json.Encode.Value
 encode userInfo =
     Json.Encode.object
-        [ ( "sub", Json.Encode.Extra.maybe Json.Encode.string userInfo.sub )
+        [ ( "sub", Json.Encode.string userInfo.sub )
         , ( "given_name", Json.Encode.Extra.maybe Json.Encode.string userInfo.givenName )
         , ( "family_name", Json.Encode.Extra.maybe Json.Encode.string userInfo.familyName )
         , ( "nickname", Json.Encode.Extra.maybe Json.Encode.string userInfo.nickname )
@@ -52,28 +53,28 @@ encode userInfo =
 
 decoder : Json.Decode.Decoder UserInfo
 decoder =
-    Json.Decode.field "sub" (Json.Decode.nullable Json.Decode.string)
+    Json.Decode.field "sub" Json.Decode.string
         |> Json.Decode.andThen
             (\sub ->
-                Json.Decode.field "given_name" (Json.Decode.nullable Json.Decode.string)
+                Json.Decode.maybe (Json.Decode.field "given_name" Json.Decode.string)
                     |> Json.Decode.andThen
                         (\givenName ->
-                            Json.Decode.field "family_name" (Json.Decode.nullable Json.Decode.string)
+                            Json.Decode.maybe (Json.Decode.field "family_name" Json.Decode.string)
                                 |> Json.Decode.andThen
                                     (\familyName ->
-                                        Json.Decode.field "nickname" (Json.Decode.nullable Json.Decode.string)
+                                        Json.Decode.maybe (Json.Decode.field "nickname" Json.Decode.string)
                                             |> Json.Decode.andThen
                                                 (\nickname ->
-                                                    Json.Decode.field "name" (Json.Decode.nullable Json.Decode.string)
+                                                    Json.Decode.maybe (Json.Decode.field "name" Json.Decode.string)
                                                         |> Json.Decode.andThen
                                                             (\name ->
-                                                                Json.Decode.field "picture" (Json.Decode.nullable Json.Decode.string)
+                                                                Json.Decode.maybe (Json.Decode.field "picture" Json.Decode.string)
                                                                     |> Json.Decode.andThen
                                                                         (\picture ->
-                                                                            Json.Decode.field "locale" (Json.Decode.nullable Json.Decode.string)
+                                                                            Json.Decode.maybe (Json.Decode.field "locale" Json.Decode.string)
                                                                                 |> Json.Decode.andThen
                                                                                     (\locale ->
-                                                                                        Json.Decode.field "updated_at" (Json.Decode.nullable Json.Decode.string)
+                                                                                        Json.Decode.maybe (Json.Decode.field "updated_at" Json.Decode.string)
                                                                                             |> Json.Decode.andThen
                                                                                                 (\updatedAt ->
                                                                                                     Json.Decode.succeed
@@ -107,3 +108,37 @@ loadFromServer accessToken toMsg =
             [ "userInfo" ]
     in
     GCP.authorizedGet path [] decoder (RequestResult.constructor accessToken >> toMsg) accessToken
+
+
+
+-- LOCAL STORAGE
+
+
+localStorageKey : LocalStorage.Key
+localStorageKey =
+    "userInfo"
+
+
+loadFromLocalStorage : Cmd msg
+loadFromLocalStorage =
+    LocalStorage.storageGetItem localStorageKey
+
+
+saveToLocalStorage : UserInfo -> Cmd msg
+saveToLocalStorage campaign =
+    LocalStorage.storageSetItem
+        ( localStorageKey
+        , encode campaign
+        )
+
+
+localStorageResponse : ( String, Json.Encode.Value ) -> Maybe (RequestResult String Json.Decode.Error (Maybe UserInfo))
+localStorageResponse ( key, value ) =
+    if key == localStorageKey then
+        value
+            |> Json.Decode.decodeValue (Json.Decode.nullable decoder)
+            |> RequestResult.constructor "userInfo"
+            |> Just
+
+    else
+        Nothing
