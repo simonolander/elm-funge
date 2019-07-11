@@ -33,7 +33,7 @@ const audience = AUTH0_AUD;
 const issuer = AUTH0_ISS;
 const pem = AUTH0_PEM;
 
-export function verifyJwt(req: Request): Result.Result<string, EndpointException> {
+export function verifyJwt(req: Request, scopes: string[]): Result.Result<string, EndpointException> {
     try {
         const authorizationHeader = req.get('Authorization');
         if (typeof authorizationHeader !== 'string') {
@@ -78,6 +78,21 @@ export function verifyJwt(req: Request): Result.Result<string, EndpointException
             return Result.failure({
                 status: 403,
                 messages: [`Failed to verify jwt, subject is empty`]
+            });
+        }
+        const scope = tokenObject["scope"];
+        if (typeof scope !== "string") {
+            return Result.failure({
+                status: 403,
+                messages: [`Failed to verify jwt, malformed scope: ${typeof scope}`]
+            });
+        }
+        const presentScopes = scope.split(" ");
+        const missingScopes = scopes.filter(scope => presentScopes.indexOf(scope) === -1);
+        if (missingScopes.length !== 0) {
+            return Result.failure({
+                status: 403,
+                messages: missingScopes.map(scope => `Failed to verify jwt, missing scope: ${scope}`)
             });
         }
         return Result.success(subject);

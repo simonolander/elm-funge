@@ -44,7 +44,8 @@ async function get(req: Request, res: Response): Promise<Response> {
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
-    const authResult = verifyJwt(req);
+    const scopes = ["openid", "publish:blueprints"]; // TODO What is this method doing?
+    const authResult = verifyJwt(req, scopes);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }

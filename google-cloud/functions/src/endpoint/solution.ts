@@ -20,7 +20,8 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
-    const authResult = verifyJwt(req);
+    const scopes = ["openid", "submit:solutions"];
+    const authResult = verifyJwt(req, scopes);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
