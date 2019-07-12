@@ -53,48 +53,49 @@ encode userInfo =
 
 decoder : Json.Decode.Decoder UserInfo
 decoder =
+    let
+        updatedAtDecode sub givenName picture familyName nickname name locale updatedAt =
+            Json.Decode.succeed
+                { sub = sub
+                , givenName = givenName
+                , picture = picture
+                , familyName = familyName
+                , nickname = nickname
+                , name = name
+                , locale = locale
+                , updatedAt = updatedAt
+                }
+
+        localeDecode sub givenName picture familyName nickname name locale =
+            Json.Decode.maybe (Json.Decode.field "updated_at" Json.Decode.string)
+                |> Json.Decode.andThen (updatedAtDecode sub givenName picture familyName nickname name locale)
+
+        nameDecode sub givenName picture familyName nickname name =
+            Json.Decode.maybe (Json.Decode.field "locale" Json.Decode.string)
+                |> Json.Decode.andThen (localeDecode sub givenName picture familyName nickname name)
+
+        nicknameDecode sub givenName picture familyName nickname =
+            Json.Decode.maybe (Json.Decode.field "name" Json.Decode.string)
+                |> Json.Decode.andThen (nameDecode sub givenName picture familyName nickname)
+
+        familyNameDecode sub givenName picture familyName =
+            Json.Decode.maybe (Json.Decode.field "nickname" Json.Decode.string)
+                |> Json.Decode.andThen (nicknameDecode sub givenName picture familyName)
+
+        pictureDecode sub givenName picture =
+            Json.Decode.maybe (Json.Decode.field "family_name" Json.Decode.string)
+                |> Json.Decode.andThen (familyNameDecode sub givenName picture)
+
+        givenNameDecode sub givenName =
+            Json.Decode.maybe (Json.Decode.field "picture" Json.Decode.string)
+                |> Json.Decode.andThen (pictureDecode sub givenName)
+
+        subDecode sub =
+            Json.Decode.maybe (Json.Decode.field "given_name" Json.Decode.string)
+                |> Json.Decode.andThen (givenNameDecode sub)
+    in
     Json.Decode.field "sub" Json.Decode.string
-        |> Json.Decode.andThen
-            (\sub ->
-                Json.Decode.maybe (Json.Decode.field "given_name" Json.Decode.string)
-                    |> Json.Decode.andThen
-                        (\givenName ->
-                            Json.Decode.maybe (Json.Decode.field "family_name" Json.Decode.string)
-                                |> Json.Decode.andThen
-                                    (\familyName ->
-                                        Json.Decode.maybe (Json.Decode.field "nickname" Json.Decode.string)
-                                            |> Json.Decode.andThen
-                                                (\nickname ->
-                                                    Json.Decode.maybe (Json.Decode.field "name" Json.Decode.string)
-                                                        |> Json.Decode.andThen
-                                                            (\name ->
-                                                                Json.Decode.maybe (Json.Decode.field "picture" Json.Decode.string)
-                                                                    |> Json.Decode.andThen
-                                                                        (\picture ->
-                                                                            Json.Decode.maybe (Json.Decode.field "locale" Json.Decode.string)
-                                                                                |> Json.Decode.andThen
-                                                                                    (\locale ->
-                                                                                        Json.Decode.maybe (Json.Decode.field "updated_at" Json.Decode.string)
-                                                                                            |> Json.Decode.andThen
-                                                                                                (\updatedAt ->
-                                                                                                    Json.Decode.succeed
-                                                                                                        { sub = sub
-                                                                                                        , givenName = givenName
-                                                                                                        , familyName = familyName
-                                                                                                        , nickname = nickname
-                                                                                                        , name = name
-                                                                                                        , picture = Maybe.andThen Url.fromString picture
-                                                                                                        , locale = locale
-                                                                                                        , updatedAt = updatedAt
-                                                                                                        }
-                                                                                                )
-                                                                                    )
-                                                                        )
-                                                            )
-                                                )
-                                    )
-                        )
-            )
+        |> Json.Decode.andThen subDecode
 
 
 
