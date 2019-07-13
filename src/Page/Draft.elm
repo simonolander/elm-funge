@@ -11,7 +11,9 @@ import Data.History as History
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
+import Data.LevelId exposing (LevelId)
 import Data.Position exposing (Position)
+import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
@@ -90,11 +92,26 @@ load =
         loadDraft ( model, cmd ) =
             case Session.getDraft model.draftId model.session of
                 NotAsked ->
-                    ( model.session
-                        |> Session.draftLoading model.draftId
-                        |> setSession model
-                    , Cmd.batch [ cmd, Draft.loadFromLocalStorage model.draftId ]
-                    )
+                    case Session.getAccessToken model.session of
+                        Just accessToken ->
+                            ( model.session
+                                |> Session.draftLoading model.draftId
+                                |> setSession model
+                            , Cmd.batch
+                                [ cmd
+                                , Draft.loadFromServer accessToken LoadedDraft model.draftId
+                                ]
+                            )
+
+                        Nothing ->
+                            ( model.session
+                                |> Session.draftLoading model.draftId
+                                |> setSession model
+                            , Cmd.batch
+                                [ cmd
+                                , Draft.loadFromLocalStorage model.draftId
+                                ]
+                            )
 
                 _ ->
                     ( model, cmd )
@@ -107,11 +124,26 @@ load =
                 Just draft ->
                     case Session.getLevel draft.levelId model.session of
                         NotAsked ->
-                            ( model.session
-                                |> Session.levelLoading draft.levelId
-                                |> setSession model
-                            , Cmd.batch [ cmd, Level.loadFromLocalStorage draft.levelId ]
-                            )
+                            case Session.getAccessToken model.session of
+                                Just accessToken ->
+                                    ( model.session
+                                        |> Session.levelLoading draft.levelId
+                                        |> setSession model
+                                    , Cmd.batch
+                                        [ cmd
+                                        , Level.loadFromServer accessToken LoadedLevel draft.levelId
+                                        ]
+                                    )
+
+                                Nothing ->
+                                    ( model.session
+                                        |> Session.levelLoading draft.levelId
+                                        |> setSession model
+                                    , Cmd.batch
+                                        [ cmd
+                                        , Level.loadFromLocalStorage draft.levelId
+                                        ]
+                                    )
 
                         _ ->
                             ( model, cmd )
@@ -152,8 +184,8 @@ type Msg
     | InstructionToolReplaced Int InstructionTool
     | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
-    | LoadedDrafts (Result Http.Error (List Draft))
-    | LoadedLevels (Result Http.Error (List Level))
+    | LoadedDraft (RequestResult DraftId Http.Error Draft)
+    | LoadedLevel (RequestResult LevelId Http.Error Level)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -318,13 +350,24 @@ update msg model =
                 Nothing ->
                     unchanged
 
-        -- TODO
-        LoadedDrafts result ->
-            unchanged
+        LoadedDraft requestResult ->
+            load <|
+                case requestResult.result of
+                    Ok draft ->
+                        ( Session.withDraft draft model.session
+                            |> setSession model
+                        , Cmd.none
+                        )
+
+                    Err error ->
+                        ( Session.draftError requestResult.request error model.session
+                            |> setSession model
+                        , Cmd.none
+                        )
 
         -- TODO
-        LoadedLevels result ->
-            unchanged
+        LoadedLevel result ->
+            Debug.todo "LoadedLevel not implemented"
 
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )

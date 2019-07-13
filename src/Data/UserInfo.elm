@@ -88,6 +88,7 @@ decoder =
 
         givenNameDecode sub givenName =
             Json.Decode.maybe (Json.Decode.field "picture" Json.Decode.string)
+                |> Json.Decode.map (Maybe.andThen Url.fromString)
                 |> Json.Decode.andThen (pictureDecode sub givenName)
 
         subDecode sub =

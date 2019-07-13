@@ -1,6 +1,26 @@
-module Data.Level exposing (Level, constraints, decoder, encode, generator, loadFromLocalStorage, localStorageKey, localStorageResponse, removeFromLocalStorage, saveToLocalStorage, withDescription, withIO, withInitialBoard, withInstructionTool, withInstructionTools, withName)
+module Data.Level exposing
+    ( Level
+    , constraints
+    , decoder
+    , encode
+    , generator
+    , loadFromLocalStorage
+    , loadFromServer
+    , localStorageKey
+    , localStorageResponse
+    , removeFromLocalStorage
+    , saveToLocalStorage
+    , withDescription
+    , withIO
+    , withInitialBoard
+    , withInstructionTool
+    , withInstructionTools
+    , withName
+    )
 
+import Api.GCP as GCP
 import Array exposing (Array)
+import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.IO as IO exposing (IO)
@@ -8,10 +28,12 @@ import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
 import Random
+import Url.Builder
 
 
 type alias Level =
@@ -263,3 +285,19 @@ decoder =
                                 ++ String.fromInt version
                             )
             )
+
+
+
+-- REST
+
+
+loadFromServer : AccessToken -> (RequestResult LevelId Http.Error Level -> msg) -> LevelId -> Cmd msg
+loadFromServer accessToken toMsg levelId =
+    let
+        path =
+            [ "levels" ]
+
+        queryParameters =
+            [ Url.Builder.string "levelId" levelId ]
+    in
+    GCP.authorizedGet path queryParameters decoder (RequestResult.constructor levelId >> toMsg) accessToken

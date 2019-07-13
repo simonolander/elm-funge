@@ -280,7 +280,7 @@ update msg model =
                     stepModel execution model
 
                 GeneratedSolution solution ->
-                    case Session.getToken model.session of
+                    case Session.getAccessToken model.session of
                         Just token ->
                             ( { model
                                 | session = Session.withSolution solution model.session

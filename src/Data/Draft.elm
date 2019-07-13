@@ -1,5 +1,7 @@
-module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadFromLocalStorage, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo)
+module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadAllFromServer, loadFromLocalStorage, loadFromServer, loadFromServerByLevelId, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo)
 
+import Api.GCP as GCP
+import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
 import Data.DraftBook as DraftBook
 import Data.DraftId as DraftId exposing (DraftId)
@@ -8,10 +10,12 @@ import Data.Instruction as Instruction
 import Data.Level exposing (Level)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
 import Random
+import Url.Builder
 
 
 type alias Draft =
@@ -155,3 +159,43 @@ localStorageResponse ( key, value ) =
 
         _ ->
             Nothing
+
+
+
+-- REST
+
+
+loadAllFromServer : AccessToken -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
+loadAllFromServer accessToken toMsg =
+    let
+        path =
+            [ "drafts" ]
+
+        queryParameters =
+            []
+    in
+    GCP.authorizedGet path queryParameters (Decode.list decoder) toMsg accessToken
+
+
+loadFromServer : AccessToken -> (RequestResult DraftId Http.Error Draft -> msg) -> DraftId -> Cmd msg
+loadFromServer accessToken toMsg draftId =
+    let
+        path =
+            [ "drafts" ]
+
+        queryParameters =
+            [ Url.Builder.string "draftId" draftId ]
+    in
+    GCP.authorizedGet path queryParameters decoder (RequestResult.constructor draftId >> toMsg) accessToken
+
+
+loadFromServerByLevelId : AccessToken -> (RequestResult LevelId Http.Error (List Draft) -> msg) -> LevelId -> Cmd msg
+loadFromServerByLevelId accessToken toMsg levelId =
+    let
+        path =
+            [ "drafts" ]
+
+        queryParameters =
+            [ Url.Builder.string "levelId" levelId ]
+    in
+    GCP.authorizedGet path queryParameters (Decode.list decoder) (RequestResult.constructor levelId >> toMsg) accessToken

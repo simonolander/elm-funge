@@ -4,6 +4,7 @@ import * as PostDraftRequest from "../data/PostDraftRequest";
 import {verifyJwt} from "../misc/auth";
 import * as Firestore from '../service/firestore'
 import {decode} from "../misc/json";
+import * as GetDraftRequest from "../data/GetDraftRequest";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
@@ -26,10 +27,36 @@ async function get(req: Request, res: Response): Promise<Response> {
         return EndpointException.send(authResult.error, res);
     }
     const subject = authResult.value;
-    return Firestore.getUserBySubject(subject)
-        .then(ref => Firestore.getDrafts({authorId: ref.id}))
-        .then(ref => ref.docs.map(doc => doc.data()))
-        .then(data => res.send(data));
+    const result = decode(req.query, GetDraftRequest.decoder);
+    if (result.tag === "failure") {
+        return EndpointException.send(result.error, res);
+    }
+    const {draftId, levelId} = result.value;
+    if (typeof draftId !== "undefined") {
+        return Firestore.getUserBySubject(subject)
+            .then(ref => Firestore.getDrafts({
+                authorId: ref.id,
+                draftId: draftId
+            }))
+            .then(ref => ref.docs.map(doc => doc.data()))
+            .then(data =>
+                data.length !== 0
+                    ? res.send(data[0])
+                    : res.status(404).send())
+    } else if (typeof levelId !== "undefined") {
+        return Firestore.getUserBySubject(subject)
+            .then(ref => Firestore.getDrafts({
+                authorId: ref.id,
+                levelId: levelId
+            }))
+            .then(ref => ref.docs.map(doc => doc.data()))
+            .then(data => res.send(data));
+    } else {
+        return Firestore.getUserBySubject(subject)
+            .then(ref => Firestore.getDrafts({authorId: ref.id}))
+            .then(ref => ref.docs.map(doc => doc.data()))
+            .then(data => res.send(data));
+    }
 }
 
 async function post(req: Request, res: Response): Promise<Response> {

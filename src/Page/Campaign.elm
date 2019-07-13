@@ -207,7 +207,7 @@ load =
                 Just levelId ->
                     case Session.getHighScore levelId model.session of
                         NotAsked ->
-                            case Session.getToken model.session of
+                            case Session.getAccessToken model.session of
                                 Just _ ->
                                     ( model.session
                                         |> Session.loadingHighScore levelId
@@ -306,9 +306,9 @@ update msg model =
                                 |> List.map .id
 
                         cmd =
-                            case Session.getToken session of
+                            case Session.getAccessToken session of
                                 Just token ->
-                                    GCP.getDrafts token LoadedDrafts
+                                    Draft.loadAllFromServer token LoadedDrafts
 
                                 Nothing ->
                                     levelIds
@@ -594,7 +594,7 @@ viewSidebar level model =
                 ]
 
         highScore =
-            if Maybe.Extra.isJust (Session.getToken model.session) then
+            if Maybe.Extra.isJust (Session.getAccessToken model.session) then
                 Session.getHighScore level.id model.session
                     |> View.HighScore.view
 

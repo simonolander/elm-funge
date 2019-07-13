@@ -1,61 +1,15 @@
-module Api.GCP exposing (authorizedGet, get, getDrafts, getLevels, post, saveDraft)
+module Api.GCP exposing
+    ( authorizedGet
+    , get
+    , post
+    )
 
 import Data.AccessToken as AccessToken exposing (AccessToken)
-import Data.Draft as Draft exposing (Draft)
-import Data.Level as Level exposing (Level)
-import Data.LevelId exposing (LevelId)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Result exposing (Result)
 import Url.Builder
-
-
-
--- PUBLIC
-
-
-getLevels : (Result Http.Error (List Level) -> msg) -> Cmd msg
-getLevels toMsg =
-    Http.get
-        { url = Url.Builder.crossOrigin gcpPrePath [ "levels" ] []
-        , expect = Http.expectJson toMsg (Decode.list Level.decoder)
-        }
-
-
-getLevel : LevelId -> (Result Http.Error (Maybe Level) -> msg) -> Cmd msg
-getLevel levelId toMsg =
-    Http.get
-        { url = Url.Builder.crossOrigin gcpPrePath [ "levels" ] [ Url.Builder.string "levelId" levelId ]
-        , expect = Http.expectJson toMsg (Decode.nullable Level.decoder)
-        }
-
-
-getDrafts : AccessToken -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
-getDrafts token toMsg =
-    let
-        url =
-            Url.Builder.crossOrigin gcpPrePath [ "drafts" ] []
-
-        expect =
-            Http.expectJson toMsg (Decode.list Draft.decoder)
-    in
-    internalAuthorizedGet url token expect
-
-
-saveDraft : AccessToken -> Draft -> (Result Http.Error () -> msg) -> Cmd msg
-saveDraft token draft toMsg =
-    let
-        url =
-            Url.Builder.crossOrigin gcpPrePath [ "drafts" ] []
-
-        expect =
-            Http.expectWhatever toMsg
-
-        body =
-            Draft.encode draft
-    in
-    authorizedPost url token body expect
 
 
 get : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> Cmd msg

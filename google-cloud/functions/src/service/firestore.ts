@@ -34,10 +34,16 @@ function getById(collectionName: string): (id: string) => Promise<FirebaseFirest
 
 export const getDraftById = getById("drafts");
 
-export async function getDrafts(parameters: { authorId: string }) {
-    return firestore.collection("drafts")
-        .where("authorId", "==", parameters.authorId)
-        .get();
+export async function getDrafts(parameters: { authorId: string, draftId?: string, levelId?: string}) {
+    let query = firestore.collection("drafts")
+        .where("authorId", "==", parameters.authorId);
+    if (typeof parameters.draftId !== "undefined") {
+        query = query.where("id", "==", parameters.draftId);
+    }
+    if (typeof parameters.levelId !== "undefined") {
+        query = query.where("levelId", "==", parameters.levelId);
+    }
+    return query.get();
 }
 
 export async function addDraft(draft: Draft) {

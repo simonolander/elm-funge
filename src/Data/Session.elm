@@ -6,6 +6,7 @@ module Data.Session exposing
     , draftBookLoading
     , draftError
     , draftLoading
+    , getAccessToken
     , getCampaign
     , getDraft
     , getDraftBook
@@ -13,7 +14,6 @@ module Data.Session exposing
     , getLevel
     , getSolution
     , getSolutionBook
-    , getToken
     , highScoreError
     , highScoreLoading
     , init
@@ -105,8 +105,8 @@ withUser user session =
     }
 
 
-getToken : Session -> Maybe AccessToken
-getToken =
+getAccessToken : Session -> Maybe AccessToken
+getAccessToken =
     .user >> User.getToken
 
 
@@ -166,12 +166,12 @@ levelError levelId error session =
 -- DRAFT CACHE
 
 
-setDraftCache : Session -> Cache LevelId Draft -> Session
+setDraftCache : Session -> Cache DraftId Draft -> Session
 setDraftCache session cache =
     { session | drafts = cache }
 
 
-getDraft : LevelId -> Session -> WebData Draft
+getDraft : DraftId -> Session -> WebData Draft
 getDraft levelId session =
     Cache.get levelId session.drafts
 
@@ -194,14 +194,14 @@ withDrafts drafts session =
     List.foldl withDraft session drafts
 
 
-draftLoading : LevelId -> Session -> Session
+draftLoading : DraftId -> Session -> Session
 draftLoading levelId session =
     session.drafts
         |> Cache.loading levelId
         |> setDraftCache session
 
 
-draftError : LevelId -> Http.Error -> Session -> Session
+draftError : DraftId -> Http.Error -> Session -> Session
 draftError levelId error session =
     session.drafts
         |> Cache.failure levelId error
