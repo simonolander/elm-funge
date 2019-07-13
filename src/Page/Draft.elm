@@ -24,6 +24,7 @@ import Extra.String
 import Http
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
+import Ports.Console
 import RemoteData exposing (RemoteData(..))
 import Route
 import View.Board
@@ -186,6 +187,7 @@ type Msg
     | InstructionPlaced Position Instruction
     | LoadedDraft (RequestResult DraftId Http.Error Draft)
     | LoadedLevel (RequestResult LevelId Http.Error Level)
+    | GotSaveDraftToServerResponse (RequestResult Draft Http.Error ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -369,12 +371,30 @@ update msg model =
         LoadedLevel result ->
             Debug.todo "LoadedLevel not implemented"
 
+        GotSaveDraftToServerResponse requestResult ->
+            case requestResult.result of
+                Ok _ ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( model
+                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    )
+
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )
 updateDraft draft model =
     let
         cmd =
-            Draft.saveToLocalStorage draft
+            case Session.getAccessToken model.session of
+                Just accessToken ->
+                    Cmd.batch
+                        [ Draft.saveToServer accessToken GotSaveDraftToServerResponse draft
+                        , Draft.saveToLocalStorage draft
+                        ]
+
+                Nothing ->
+                    Draft.saveToLocalStorage draft
     in
     ( { model
         | session = Session.withDraft draft model.session

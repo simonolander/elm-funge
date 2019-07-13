@@ -1,4 +1,4 @@
-module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadAllFromServer, loadFromLocalStorage, loadFromServer, loadFromServerByLevelId, localStorageResponse, pushBoard, redo, saveToLocalStorage, undo)
+module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadAllFromServer, loadFromLocalStorage, loadFromServer, loadFromServerByLevelId, localStorageResponse, pushBoard, redo, saveToLocalStorage, saveToServer, undo)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -199,3 +199,22 @@ loadFromServerByLevelId accessToken toMsg levelId =
             [ Url.Builder.string "levelId" levelId ]
     in
     GCP.authorizedGet path queryParameters (Decode.list decoder) (RequestResult.constructor levelId >> toMsg) accessToken
+
+
+saveToServer : AccessToken -> (RequestResult Draft Http.Error () -> msg) -> Draft -> Cmd msg
+saveToServer accessToken toMsg draft =
+    let
+        path =
+            [ "drafts" ]
+
+        expect =
+            Http.expectWhatever (RequestResult.constructor draft >> toMsg)
+
+        value =
+            Encode.object
+                [ ( "id", DraftId.encode draft.id )
+                , ( "levelId", LevelId.encode draft.levelId )
+                , ( "board", Board.encode (History.current draft.boardHistory) )
+                ]
+    in
+    GCP.post accessToken path [] expect value

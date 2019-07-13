@@ -20,6 +20,10 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
     }
 }
 
+/**
+ * draftId: string | undefined
+ * levelId: string | undefined
+ */
 async function get(req: Request, res: Response): Promise<Response> {
     const scopes = ["openid", "read:drafts"];
     const authResult = verifyJwt(req, scopes);
