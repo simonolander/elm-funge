@@ -1,4 +1,4 @@
-module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, saveToServer)
+module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, loadFromServerByLevelId, localStorageResponse, saveToLocalStorage, saveToServer)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -13,6 +13,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
 import Random
+import Url.Builder
 
 
 type alias Solution =
@@ -138,9 +139,21 @@ localStorageResponse ( key, value ) =
 
 
 
--- SERVER
+-- REST
 
 
 saveToServer : (Result Http.Error () -> msg) -> Solution -> AccessToken -> Cmd msg
 saveToServer toMsg solution token =
     GCP.post token [ "solutions" ] [] (Http.expectWhatever toMsg) (encode solution)
+
+
+loadFromServerByLevelId : AccessToken -> (RequestResult LevelId Http.Error (List Solution) -> msg) -> LevelId -> Cmd msg
+loadFromServerByLevelId accessToken toMsg levelId =
+    let
+        path =
+            [ "solutions" ]
+
+        queryParameters =
+            [ Url.Builder.string "levelId" levelId ]
+    in
+    GCP.authorizedGet path queryParameters (Decode.list decoder) (RequestResult.constructor levelId >> toMsg) accessToken

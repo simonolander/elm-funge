@@ -139,7 +139,7 @@ init flags url key =
 
         session =
             Session.init key url
-                |> withTestData
+                --                |> withTestData
                 |> Maybe.withDefault identity (Maybe.map Session.withUser user)
 
         ( model, pageCmd ) =

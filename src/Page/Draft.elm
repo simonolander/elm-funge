@@ -125,26 +125,14 @@ load =
                 Just draft ->
                     case Session.getLevel draft.levelId model.session of
                         NotAsked ->
-                            case Session.getAccessToken model.session of
-                                Just accessToken ->
-                                    ( model.session
-                                        |> Session.levelLoading draft.levelId
-                                        |> setSession model
-                                    , Cmd.batch
-                                        [ cmd
-                                        , Level.loadFromServer accessToken LoadedLevel draft.levelId
-                                        ]
-                                    )
-
-                                Nothing ->
-                                    ( model.session
-                                        |> Session.levelLoading draft.levelId
-                                        |> setSession model
-                                    , Cmd.batch
-                                        [ cmd
-                                        , Level.loadFromLocalStorage draft.levelId
-                                        ]
-                                    )
+                            ( model.session
+                                |> Session.levelLoading draft.levelId
+                                |> setSession model
+                            , Cmd.batch
+                                [ cmd
+                                , Level.loadFromServer LoadedLevel draft.levelId
+                                ]
+                            )
 
                         _ ->
                             ( model, cmd )

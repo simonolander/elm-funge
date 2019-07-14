@@ -6,6 +6,7 @@ module Data.Level exposing
     , generator
     , loadFromLocalStorage
     , loadFromServer
+    , loadFromServerByCampaignId
     , localStorageKey
     , localStorageResponse
     , removeFromLocalStorage
@@ -291,8 +292,8 @@ decoder =
 -- REST
 
 
-loadFromServer : AccessToken -> (RequestResult LevelId Http.Error Level -> msg) -> LevelId -> Cmd msg
-loadFromServer accessToken toMsg levelId =
+loadFromServer : (RequestResult LevelId Http.Error Level -> msg) -> LevelId -> Cmd msg
+loadFromServer toMsg levelId =
     let
         path =
             [ "levels" ]
@@ -300,4 +301,16 @@ loadFromServer accessToken toMsg levelId =
         queryParameters =
             [ Url.Builder.string "levelId" levelId ]
     in
-    GCP.authorizedGet path queryParameters decoder (RequestResult.constructor levelId >> toMsg) accessToken
+    GCP.get path queryParameters decoder (RequestResult.constructor levelId >> toMsg)
+
+
+loadFromServerByCampaignId : (RequestResult CampaignId Http.Error (List Level) -> msg) -> CampaignId -> Cmd msg
+loadFromServerByCampaignId toMsg campaignId =
+    let
+        path =
+            [ "levels" ]
+
+        queryParameters =
+            [ Url.Builder.string "campaignId" campaignId ]
+    in
+    GCP.get path queryParameters (Decode.list decoder) (RequestResult.constructor campaignId >> toMsg)

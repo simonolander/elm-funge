@@ -1,6 +1,5 @@
 module Page.Campaign exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
-import Api.GCP as GCP
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Cache as Cache
@@ -8,14 +7,14 @@ import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
-import Data.DraftId as DraftId exposing (DraftId)
+import Data.DraftId exposing (DraftId)
 import Data.HighScore as HighScore exposing (HighScore)
 import Data.History as History
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
-import Data.Solution as Solution
+import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
 import Element exposing (..)
 import Element.Background as Background
@@ -26,6 +25,7 @@ import Extra.String exposing (fromHttpError)
 import Html.Attributes
 import Http
 import Maybe.Extra
+import Ports.Console
 import Random
 import RemoteData exposing (RemoteData(..))
 import Result exposing (Result)
@@ -71,10 +71,20 @@ load =
         loadCampaign ( model, cmd ) =
             case Session.getCampaign model.campaignId model.session of
                 NotAsked ->
+                    let
+                        loadCampaignRemotely =
+                            Level.loadFromServerByCampaignId GotLoadLevelsByCampaignIdResponse model.campaignId
+
+                        loadCampaignLocally =
+                            Campaign.loadFromLocalStorage model.campaignId
+                    in
                     ( model.session
                         |> Session.campaignLoading model.campaignId
                         |> setSession model
-                    , Campaign.loadFromLocalStorage model.campaignId
+                    , Cmd.batch
+                        [ cmd
+                        , loadCampaignRemotely
+                        ]
                     )
 
                 _ ->
@@ -96,6 +106,7 @@ load =
                         |> List.foldl Session.levelLoading model.session
                         |> setSession model
                     , notAskedLevelIds
+                        -- TODO Load from server if accessToken?
                         |> List.map Level.loadFromLocalStorage
                         |> (::) cmd
                         |> Cmd.batch
@@ -115,12 +126,20 @@ load =
                         notAskedLevelIds =
                             campaign.levelIds
                                 |> List.filter (flip Cache.isNotAsked model.session.solutionBooks)
+
+                        loadSolutionBook =
+                            case Session.getAccessToken model.session of
+                                Just accessToken ->
+                                    Solution.loadFromServerByLevelId accessToken GotLoadSolutionsByLevelIdResponse
+
+                                Nothing ->
+                                    SolutionBook.loadFromLocalStorage
                     in
                     ( notAskedLevelIds
                         |> List.foldl Session.solutionBookLoading model.session
                         |> setSession model
                     , notAskedLevelIds
-                        |> List.map SolutionBook.loadFromLocalStorage
+                        |> List.map loadSolutionBook
                         |> (::) cmd
                         |> Cmd.batch
                     )
@@ -254,9 +273,10 @@ setSession model session =
 
 type Msg
     = SelectLevel LevelId
-    | LoadedLevels (Result Http.Error (List Level))
-    | LoadedDrafts (Result Http.Error (List Draft))
     | LoadedHighScore (RequestResult LevelId Http.Error HighScore)
+    | GotLoadAllDraftsResponse (Result Http.Error (List Draft))
+    | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId Http.Error (List Level))
+    | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId Http.Error (List Solution))
     | ClickedOpenDraft DraftId
     | ClickedGenerateDraft
     | GeneratedDraft Draft
@@ -297,38 +317,7 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        LoadedLevels result ->
-            case result of
-                Ok levels ->
-                    let
-                        levelIds =
-                            levels
-                                |> List.map .id
-
-                        cmd =
-                            case Session.getAccessToken session of
-                                Just token ->
-                                    Draft.loadAllFromServer token LoadedDrafts
-
-                                Nothing ->
-                                    levelIds
-                                        |> List.map Level.loadFromLocalStorage
-                                        |> Cmd.batch
-                    in
-                    ( { model
-                        | session = Session.withLevels levels session
-                      }
-                    , cmd
-                    )
-
-                Err error ->
-                    ( { model
-                        | error = Just (fromHttpError error)
-                      }
-                    , Cmd.none
-                    )
-
-        LoadedDrafts result ->
+        GotLoadAllDraftsResponse result ->
             case result of
                 Ok drafts ->
                     ( { model
@@ -372,6 +361,72 @@ update msg model =
                         ]
             in
             ( newModel, cmd )
+
+        GotLoadLevelsByCampaignIdResponse requestResult ->
+            case requestResult.result of
+                Ok levels ->
+                    let
+                        campaign =
+                            { id = requestResult.request
+                            , levelIds = List.map .id levels
+                            }
+
+                        saveCampaignLocallyCmd =
+                            Campaign.saveToLocalStorage campaign
+
+                        saveLevelsLocallyCmd =
+                            levels
+                                |> List.map Level.saveToLocalStorage
+                                |> Cmd.batch
+
+                        cmd =
+                            Cmd.batch
+                                [ saveCampaignLocallyCmd
+                                , saveLevelsLocallyCmd
+                                ]
+                    in
+                    ( model.session
+                        |> Session.withCampaign campaign
+                        |> Session.withLevels levels
+                        |> setSession model
+                    , cmd
+                    )
+
+                -- TODO
+                Err error ->
+                    ( model
+                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    )
+
+        GotLoadSolutionsByLevelIdResponse requestResult ->
+            case requestResult.result of
+                Ok solutions ->
+                    let
+                        solutionBook =
+                            { levelId = requestResult.request
+                            , solutionIds =
+                                solutions
+                                    |> List.map .id
+                                    |> Set.fromList
+                            }
+
+                        cmd =
+                            solutions
+                                |> List.map Solution.saveToLocalStorage
+                                |> Cmd.batch
+                    in
+                    ( model.session
+                        |> Session.withSolutionBook solutionBook
+                        |> Session.withSolutions solutions
+                        |> setSession model
+                    , cmd
+                    )
+
+                -- TODO
+                Err error ->
+                    ( model
+                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    )
 
 
 
