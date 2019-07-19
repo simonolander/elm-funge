@@ -1,15 +1,15 @@
-import {Firestore} from '@google-cloud/firestore'
+import {Firestore} from "@google-cloud/firestore"
 import {Solution} from "../data/Solution";
 import {Draft} from "../data/Draft";
 import {Level} from "../data/Level";
 
-const PROJECT_ID = 'luminous-cubist-234816';
+const PROJECT_ID = "luminous-cubist-234816";
 const firestore: Firestore = new Firestore({
     projectId: PROJECT_ID
 });
 
 export async function getUserBySubject(subject: string) {
-    const usersCollection = firestore.collection('users');
+    const usersCollection = firestore.collection("users");
     return usersCollection.where("subjectAuth0", "==", subject)
         .limit(1)
         .get()
@@ -64,7 +64,7 @@ export const getLevelById = getById("levels");
 
 export async function getLevels(parameters: { campaignId: string, offset?: number, limit?: number }) {
     const {campaignId, offset, limit} = parameters;
-    let query = firestore.collection('levels')
+    let query = firestore.collection("levels")
         .where("campaignId", "==", campaignId);
 
     if (typeof offset !== "undefined") {
@@ -80,12 +80,45 @@ export async function getLevels(parameters: { campaignId: string, offset?: numbe
 
 
 export async function addLevel(level: Level) {
-    return firestore.collection('levels')
+    return firestore.collection("levels")
         .add(level)
 }
 
 /**
- * Solutions
+ * BLUEPRINTS
+ */
+
+export const getBlueprintById = getById("blueprints");
+
+export async function getBlueprints(parameters: { authorId: string, offset?: number, limit?: number }) {
+    const {authorId, offset, limit} = parameters;
+    let query = firestore.collection("blueprints")
+        .where("authorId", "==", authorId);
+
+    if (typeof offset !== "undefined") {
+        query = query.offset(offset);
+    }
+
+    if (typeof limit !== "undefined") {
+        query = query.offset(limit);
+    }
+
+    return query.get();
+}
+
+
+export async function addBlueprint(blueprint: Level) {
+    return firestore.collection("blueprints")
+        .add(blueprint)
+}
+
+export async function getBlueprintDocument(id: string) {
+    return firestore.collection("blueprints")
+        .doc(id);
+}
+
+/**
+ * SOLUTIONS
  */
 
 export const getSolutionById = getById("solutions");

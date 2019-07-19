@@ -11,6 +11,15 @@ const app = Elm.Main.init({
     height: window.innerHeight,
     accessToken: localStorage.getItem("accessToken"),
     currentTimeMillis: Date.now(),
+    localStorageEntries: function () {
+      const entries = [];
+      for (let i = 0; i < localStorage.length; ++i) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        entries.push([key, JSON.parse(value)]);
+      }
+      return entries;
+    }(),
   }
 });
 

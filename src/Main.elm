@@ -1,13 +1,16 @@
 module Main exposing (main)
 
 import Api.Auth0 as Auth0
+import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AccessToken as AccessToken exposing (AccessToken)
+import Data.Cache as Cache
 import Data.Campaign
 import Data.Draft
 import Data.DraftBook
 import Data.Level
+import Data.RemoteCache as RemoteCache
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.Solution
@@ -27,6 +30,7 @@ import Page.Campaign as Campaign
 import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
+import Page.Initialize as Initialize
 import Page.Login as Login
 import Ports.Console
 import Ports.LocalStorage
@@ -45,6 +49,7 @@ type alias Flags =
     , height : Int
     , accessToken : Maybe String
     , currentTimeMillis : Int
+    , localStorageEntries : List ( String, Encode.Value )
     }
 
 
@@ -56,6 +61,7 @@ type Model
     | Blueprint Blueprint.Model
     | Blueprints Blueprints.Model
     | Login Login.Model
+    | Initialize Initialize.Model
 
 
 
@@ -101,57 +107,13 @@ init flags url key =
                             )
             in
             Session.withLevels levels >> Session.withCampaigns campaigns
-
-        ( user, accessTokenCmd ) =
-            case Auth0.loginResponseFromUrl url of
-                Just loginResponse ->
-                    let
-                        accessToken =
-                            AccessToken.fromString loginResponse.accessToken
-                    in
-                    ( Just (User.authorizedUser accessToken Loading)
-                    , Cmd.batch
-                        [ Route.replaceUrl key loginResponse.route
-                        , UserInfo.loadFromServer accessToken GotUserInfoResponse
-                        , AccessToken.saveToLocalStorage accessToken
-                        ]
-                    )
-
-                Nothing ->
-                    case
-                        flags.accessToken
-                            |> Maybe.map (Decode.decodeString AccessToken.decoder)
-                    of
-                        Just (Ok accessToken) ->
-                            ( Just (User.authorizedUser accessToken Loading)
-                            , UserInfo.loadFromServer accessToken GotUserInfoResponse
-                            )
-
-                        Just (Err error) ->
-                            ( Nothing
-                            , Ports.Console.errorString (Decode.errorToString error)
-                            )
-
-                        Nothing ->
-                            ( Nothing
-                            , Cmd.none
-                            )
-
-        session =
-            Session.init key url
-                --                |> withTestData
-                |> Maybe.withDefault identity (Maybe.map Session.withUser user)
-
-        ( model, pageCmd ) =
-            changeUrl url session
-
-        cmd =
-            Cmd.batch
-                [ pageCmd
-                , accessTokenCmd
-                ]
     in
-    ( model, cmd )
+    { navigationKey = key
+    , url = url
+    , localStorageEntries = flags.localStorageEntries
+    }
+        |> Initialize.init
+        |> updateWith Initialize InitializeMsg
 
 
 
@@ -197,6 +159,10 @@ view model =
             Login.view mdl
                 |> msgMap LoginMsg
 
+        Initialize mdl ->
+            Initialize.view mdl
+                |> msgMap InitializeMsg
+
 
 
 -- UPDATE
@@ -212,8 +178,8 @@ type Msg
     | BlueprintsMsg Blueprints.Msg
     | BlueprintMsg Blueprint.Msg
     | LoginMsg Login.Msg
+    | InitializeMsg Initialize.Msg
     | Ignored
-    | GotUserInfoResponse (RequestResult AccessToken Http.Error UserInfo)
     | LocalStorageResponse ( String, Encode.Value )
 
 
@@ -262,35 +228,6 @@ update msg model =
         ( LocalStorageResponse response, mdl ) ->
             localStorageResponseUpdate response mdl
 
-        ( GotUserInfoResponse response, mdl ) ->
-            let
-                accessToken =
-                    response.request
-            in
-            case response.result of
-                Ok userInfo ->
-                    let
-                        newUser =
-                            User.authorizedUser accessToken (Success userInfo)
-
-                        newSession =
-                            getSession mdl
-                                |> Session.withUser newUser
-
-                        cmd =
-                            Cmd.batch
-                                [ UserInfo.saveToLocalStorage userInfo
-                                , Ports.Console.log (UserInfo.encode userInfo)
-                                ]
-                    in
-                    ( withSession newSession mdl
-                    , cmd
-                    )
-
-                -- TODO
-                Err error ->
-                    ( mdl, Ports.Console.errorString (Extra.String.fromHttpError error) )
-
         ( ExecutionMsg message, Execution mdl ) ->
             Execution.update message mdl
                 |> updateWith Execution ExecutionMsg
@@ -318,6 +255,10 @@ update msg model =
         ( LoginMsg message, Login mdl ) ->
             Login.update message mdl
                 |> updateWith Login LoginMsg
+
+        ( InitializeMsg message, Initialize mdl ) ->
+            Initialize.update message mdl
+                |> updateWith Initialize InitializeMsg
 
         ( message, mdl ) ->
             Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
@@ -523,6 +464,11 @@ localStorageResponseUpdate response model =
             onResponse mdl
                 |> updateWith Login LoginMsg
 
+        Initialize mdl ->
+            onResponse mdl
+                |> Initialize.load
+                |> updateWith Initialize InitializeMsg
+
 
 
 -- SUBSCRIPTIONS
@@ -553,6 +499,9 @@ subscriptions model =
 
                 Login mdl ->
                     Sub.map LoginMsg (Login.subscriptions mdl)
+
+                Initialize mdl ->
+                    Sub.map InitializeMsg (Initialize.subscriptions mdl)
 
         localStorageSubscriptions =
             Ports.LocalStorage.storageGetItemResponse LocalStorageResponse
@@ -591,6 +540,9 @@ getSession model =
         Login mdl ->
             Login.getSession mdl
 
+        Initialize mdl ->
+            mdl.session
+
 
 withSession : Session -> Model -> Model
 withSession session model =
@@ -615,3 +567,6 @@ withSession session model =
 
         Login mdl ->
             Login { mdl | session = session }
+
+        Initialize mdl ->
+            Initialize { mdl | session = session }

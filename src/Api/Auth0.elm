@@ -1,5 +1,6 @@
 module Api.Auth0 exposing (LoginResponse, login, loginResponseFromUrl, logout)
 
+import Data.AccessToken as AccessToken exposing (AccessToken)
 import Dict
 import Maybe.Extra
 import Route exposing (Route)
@@ -56,7 +57,7 @@ audience =
 
 
 type alias LoginResponse =
-    { accessToken : String
+    { accessToken : AccessToken
     , expiresIn : Int
     , route : Route
     }
@@ -84,6 +85,7 @@ loginResponseFromUrl url =
 
         maybeAccessToken =
             Dict.get "access_token" fragmentParameters
+                |> Maybe.map AccessToken.fromString
 
         maybeExpiresIn =
             Dict.get "expires_in" fragmentParameters

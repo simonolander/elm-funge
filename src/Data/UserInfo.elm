@@ -1,4 +1,4 @@
-module Data.UserInfo exposing (UserInfo, decoder, encode, getUserName, loadFromServer, saveToLocalStorage)
+module Data.UserInfo exposing (UserInfo, decoder, encode, getUserName, loadFromServer, localStorageResponse, saveToLocalStorage)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)

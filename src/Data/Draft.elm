@@ -1,4 +1,4 @@
-module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadAllFromServer, loadFromLocalStorage, loadFromServer, loadFromServerByLevelId, localStorageResponse, pushBoard, redo, saveToLocalStorage, saveToServer, undo)
+module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadAllFromServer, loadFromLocalStorage, loadFromServer, loadFromServerByLevelId, loadRemoteFromLocalStorage, localRemoteStorageResponse, localStorageResponse, pushBoard, redo, saveRemoteToLocalStorage, saveToLocalStorage, saveToServer, undo)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -152,6 +152,51 @@ localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId 
 localStorageResponse ( key, value ) =
     case String.split "." key of
         "drafts" :: draftId :: [] ->
+            value
+                |> Decode.decodeValue (Decode.nullable decoder)
+                |> RequestResult.constructor draftId
+                |> Just
+
+        _ ->
+            Nothing
+
+
+remoteKey : DraftId -> Ports.LocalStorage.Key
+remoteKey draftId =
+    String.join "."
+        [ localStorageKey draftId
+        , "remote"
+        ]
+
+
+saveRemoteToLocalStorage : Draft -> Cmd msg
+saveRemoteToLocalStorage draft =
+    let
+        key =
+            remoteKey draft.id
+
+        value =
+            encode draft
+    in
+    Cmd.batch
+        [ Ports.LocalStorage.storageSetItem ( key, value )
+        , DraftBook.saveToLocalStorage draft.id draft.levelId
+        ]
+
+
+loadRemoteFromLocalStorage : DraftId -> Cmd msg
+loadRemoteFromLocalStorage draftId =
+    let
+        key =
+            remoteKey draftId
+    in
+    Ports.LocalStorage.storageGetItem key
+
+
+localRemoteStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId Decode.Error (Maybe Draft))
+localRemoteStorageResponse ( key, value ) =
+    case String.split "." key of
+        "drafts" :: draftId :: "remote" :: [] ->
             value
                 |> Decode.decodeValue (Decode.nullable decoder)
                 |> RequestResult.constructor draftId

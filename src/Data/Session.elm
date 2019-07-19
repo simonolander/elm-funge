@@ -35,6 +35,7 @@ module Data.Session exposing
     , withCampaigns
     , withDraft
     , withDraftBook
+    , withDraftCache
     , withDrafts
     , withHighScore
     , withHighScoreResult
@@ -48,6 +49,7 @@ module Data.Session exposing
     , withoutLevel
     )
 
+import Basics.Extra exposing (flip)
 import Browser.Navigation exposing (Key)
 import Data.AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
@@ -59,6 +61,7 @@ import Data.DraftId exposing (DraftId)
 import Data.HighScore exposing (HighScore)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
+import Data.RemoteCache as RemoteCache exposing (RemoteCache)
 import Data.RequestResult exposing (RequestResult)
 import Data.Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
@@ -74,7 +77,7 @@ type alias Session =
     , url : Url
     , user : User
     , levels : Cache LevelId Level
-    , drafts : Cache DraftId Draft
+    , drafts : RemoteCache DraftId Draft
     , solutions : Cache SolutionId Solution
     , campaigns : Cache CampaignId Campaign
     , highScores : Cache LevelId HighScore
@@ -89,7 +92,7 @@ init key url =
     , url = url
     , user = User.guest
     , levels = Cache.empty
-    , drafts = Cache.empty
+    , drafts = RemoteCache.empty
     , solutions = Cache.empty
     , campaigns = Cache.empty
     , highScores = Cache.empty
@@ -113,6 +116,13 @@ getAccessToken =
 withUrl : Url -> Session -> Session
 withUrl url session =
     { session | url = url }
+
+
+withDraftCache : RemoteCache DraftId Draft -> Session -> Session
+withDraftCache cache session =
+    { session
+        | drafts = cache
+    }
 
 
 
@@ -166,22 +176,23 @@ levelError levelId error session =
 -- DRAFT CACHE
 
 
-setDraftCache : Session -> Cache DraftId Draft -> Session
+setDraftCache : Session -> RemoteCache DraftId Draft -> Session
 setDraftCache session cache =
     { session | drafts = cache }
 
 
 getDraft : DraftId -> Session -> WebData Draft
 getDraft levelId session =
-    Cache.get levelId session.drafts
+    Cache.get levelId session.drafts.local
 
 
 withDraft : Draft -> Session -> Session
 withDraft draft session =
     { session
         | drafts =
-            session.drafts
+            session.drafts.local
                 |> Cache.insert draft.id draft
+                |> flip RemoteCache.withLocal session.drafts
         , draftBooks =
             session.draftBooks
                 |> Cache.withDefault draft.levelId (DraftBook.empty draft.levelId)
@@ -196,15 +207,17 @@ withDrafts drafts session =
 
 draftLoading : DraftId -> Session -> Session
 draftLoading levelId session =
-    session.drafts
+    session.drafts.local
         |> Cache.loading levelId
+        |> flip RemoteCache.withLocal session.drafts
         |> setDraftCache session
 
 
 draftError : DraftId -> Http.Error -> Session -> Session
 draftError levelId error session =
-    session.drafts
+    session.drafts.local
         |> Cache.failure levelId error
+        |> flip RemoteCache.withLocal session.drafts
         |> setDraftCache session
 
 

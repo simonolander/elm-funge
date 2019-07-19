@@ -5,6 +5,7 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
+import Data.Cache as Cache
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.History as History
@@ -13,6 +14,7 @@ import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Position exposing (Position)
+import Data.RemoteCache as RemoteCache
 import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Element exposing (..)
@@ -21,11 +23,11 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Extra.String
-import Http
+import Http exposing (Error(..))
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 import Ports.Console
-import RemoteData exposing (RemoteData(..))
+import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import View.Board
 import View.Box
@@ -100,7 +102,7 @@ load =
                                 |> setSession model
                             , Cmd.batch
                                 [ cmd
-                                , Draft.loadFromServer accessToken LoadedDraft model.draftId
+                                , Draft.loadFromServer accessToken GotLoadDraftResponse model.draftId
                                 ]
                             )
 
@@ -173,7 +175,7 @@ type Msg
     | InstructionToolReplaced Int InstructionTool
     | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
-    | LoadedDraft (RequestResult DraftId Http.Error Draft)
+    | GotLoadDraftResponse (RequestResult DraftId Http.Error Draft)
     | LoadedLevel (RequestResult LevelId Http.Error Level)
     | GotSaveDraftToServerResponse (RequestResult Draft Http.Error ())
 
@@ -340,7 +342,7 @@ update msg model =
                 Nothing ->
                     unchanged
 
-        LoadedDraft requestResult ->
+        GotLoadDraftResponse requestResult ->
             load <|
                 case requestResult.result of
                     Ok draft ->

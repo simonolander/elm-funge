@@ -2,6 +2,7 @@ module View.Header exposing (view)
 
 import Api.Auth0
 import Basics.Extra exposing (flip)
+import Data.Cache as Cache
 import Data.CampaignId as CampaignId
 import Data.Session as Session
 import Data.User as User
@@ -71,8 +72,8 @@ parentRoute session =
 
         Just (Route.EditDraft draftId) ->
             case
-                draftId
-                    |> flip Session.getDraft session
+                session.drafts.local
+                    |> Cache.get draftId
                     |> RemoteData.toMaybe
                     |> Maybe.map .levelId
                     |> Maybe.map (flip Session.getLevel session)

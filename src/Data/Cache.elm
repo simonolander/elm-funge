@@ -1,6 +1,7 @@
-module Data.Cache exposing (Cache, empty, failure, fromResult, get, insert, isNotAsked, loading, map, remove, setInsert, withDefault)
+module Data.Cache exposing (Cache, empty, failure, fromRequestResults, fromResult, fromResultDict, get, insert, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault)
 
 import Basics.Extra exposing (flip)
+import Data.RequestResult exposing (RequestResult)
 import Dict exposing (Dict)
 import Http
 import RemoteData exposing (RemoteData(..), WebData)
@@ -19,9 +20,31 @@ get key cache =
         |> Maybe.withDefault NotAsked
 
 
+keys : Cache comparable value -> List comparable
+keys cache =
+    cache
+        |> getDict
+        |> Dict.keys
+
+
 empty : Cache comparable value
 empty =
     Cache Dict.empty
+
+
+fromRequestResults : List (RequestResult comparable Http.Error value) -> Cache comparable value
+fromRequestResults requestResults =
+    List.foldl insertRequestResult empty requestResults
+
+
+fromResultDict : Dict comparable (Result Http.Error value) -> Cache comparable value
+fromResultDict dict =
+    Cache (Dict.map (always RemoteData.fromResult) dict)
+
+
+insertRequestResult : RequestResult comparable Http.Error value -> Cache comparable value -> Cache comparable value
+insertRequestResult requestResult cache =
+    insertInternal requestResult.request (RemoteData.fromResult requestResult.result) cache
 
 
 insert : comparable -> value -> Cache comparable value -> Cache comparable value

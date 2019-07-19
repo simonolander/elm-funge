@@ -207,7 +207,7 @@ load =
                         notAskedDraftIds =
                             draftBook.draftIds
                                 |> Set.toList
-                                |> List.filter (flip Cache.isNotAsked model.session.drafts)
+                                |> List.filter (flip Cache.isNotAsked model.session.drafts.local)
                     in
                     ( notAskedDraftIds
                         |> List.foldl Session.draftLoading model.session

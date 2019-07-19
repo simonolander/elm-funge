@@ -1,4 +1,4 @@
-module Data.User exposing (User, authorizedUser, getToken, getUserInfo, guest, isLoggedIn)
+module Data.User exposing (User, authorizedUser, getToken, getUserInfo, guest, isLoggedIn, isOnline, withOnline, withUserInfo, withUserInfoWebData)
 
 import Data.AccessToken exposing (AccessToken)
 import Data.UserInfo exposing (UserInfo)
@@ -10,6 +10,7 @@ type User
     | AuthenticatedUser
         { token : AccessToken
         , userInfo : WebData UserInfo
+        , online : Bool
         }
 
 
@@ -38,6 +39,7 @@ authorizedUser token userInfo =
     AuthenticatedUser
         { token = token
         , userInfo = userInfo
+        , online = False
         }
 
 
@@ -54,3 +56,38 @@ isLoggedIn user =
 
         AuthenticatedUser _ ->
             True
+
+
+isOnline : User -> Bool
+isOnline user =
+    case user of
+        Guest ->
+            False
+
+        AuthenticatedUser { online } ->
+            online
+
+
+withUserInfo : UserInfo -> User -> User
+withUserInfo =
+    Success >> withUserInfoWebData
+
+
+withUserInfoWebData : WebData UserInfo -> User -> User
+withUserInfoWebData webData user =
+    case user of
+        Guest ->
+            Guest
+
+        AuthenticatedUser record ->
+            AuthenticatedUser { record | userInfo = webData }
+
+
+withOnline : Bool -> User -> User
+withOnline online user =
+    case user of
+        Guest ->
+            Guest
+
+        AuthenticatedUser record ->
+            AuthenticatedUser { record | online = online }

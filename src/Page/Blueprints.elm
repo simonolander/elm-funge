@@ -2,6 +2,7 @@ module Page.Blueprints exposing (Model, Msg, getSession, init, load, subscriptio
 
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Data.Blueprint as Blueprint
 import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId exposing (CampaignId)
@@ -57,11 +58,23 @@ load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 load ( model, cmd ) =
     case Session.getCampaign CampaignId.blueprints model.session of
         NotAsked ->
-            ( model.session
-                |> Session.campaignLoading campaignId
-                |> setSession model
-            , Cmd.batch [ cmd, Campaign.loadFromLocalStorage campaignId ]
-            )
+            case Session.getAccessToken model.session of
+                Just accessToken ->
+                    ( model.session
+                        |> Session.campaignLoading campaignId
+                        |> setSession model
+                    , Cmd.batch
+                        [ cmd
+                        , Blueprint.loadAllFromServer accessToken GotLoadBlueprintsResponse
+                        ]
+                    )
+
+                Nothing ->
+                    ( model.session
+                        |> Session.campaignLoading campaignId
+                        |> setSession model
+                    , Cmd.batch [ cmd, Campaign.loadFromLocalStorage campaignId ]
+                    )
 
         Failure (Http.BadStatus 404) ->
             let
@@ -114,6 +127,7 @@ type Msg
     | LevelNameChanged String
     | LevelDeleted LevelId
     | LevelDescriptionChanged String
+    | GotLoadBlueprintsResponse (Result Http.Error (List Level))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -226,6 +240,39 @@ update msg model =
                         ]
             in
             ( newModel, cmd )
+
+        GotLoadBlueprintsResponse result ->
+            case result of
+                Ok blueprints ->
+                    let
+                        campaign =
+                            { id = campaignId
+                            , levelIds =
+                                blueprints
+                                    |> List.map .id
+                            }
+
+                        cmd =
+                            Cmd.batch
+                                [ Campaign.saveToLocalStorage campaign
+                                , blueprints
+                                    |> List.map Level.saveToLocalStorage
+                                    |> Cmd.batch
+                                ]
+                    in
+                    ( model.session
+                        |> Session.withCampaign campaign
+                        |> Session.withLevels blueprints
+                        |> setSession model
+                    , cmd
+                    )
+
+                Err error ->
+                    ( model.session
+                        |> Session.campaignError campaignId error
+                        |> setSession model
+                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    )
 
 
 
