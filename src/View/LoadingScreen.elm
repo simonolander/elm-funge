@@ -18,6 +18,7 @@ view message =
             , centerX
             , centerY
             , Font.size 28
+            , Font.center
             ]
             [ text message ]
         , image

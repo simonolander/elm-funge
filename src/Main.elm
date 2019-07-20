@@ -1,23 +1,16 @@
 module Main exposing (main)
 
 import Api.Auth0 as Auth0
-import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
-import Data.AccessToken as AccessToken exposing (AccessToken)
-import Data.Cache as Cache
 import Data.Campaign
 import Data.Draft
 import Data.DraftBook
 import Data.Level
-import Data.RemoteCache as RemoteCache
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.Solution
 import Data.SolutionBook
-import Data.User as User exposing (User)
-import Data.UserInfo as UserInfo exposing (UserInfo)
-import Extra.String
 import Html
 import Http
 import Json.Decode as Decode
@@ -34,7 +27,6 @@ import Page.Initialize as Initialize
 import Page.Login as Login
 import Ports.Console
 import Ports.LocalStorage
-import RemoteData exposing (RemoteData(..))
 import Route
 import Set exposing (Set)
 import Url exposing (Url)
@@ -47,7 +39,6 @@ import Url exposing (Url)
 type alias Flags =
     { width : Int
     , height : Int
-    , accessToken : Maybe String
     , currentTimeMillis : Int
     , localStorageEntries : List ( String, Encode.Value )
     }

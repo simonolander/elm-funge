@@ -110,16 +110,32 @@ loginResponseFromUrl url =
             Nothing
 
 
+login : Maybe Url -> String
 login url =
+    let
+        path =
+            [ "authorize" ]
+
+        scopes =
+            scope
+                |> Set.toList
+                |> String.join " "
+
+        parameters =
+            Maybe.Extra.values
+                [ Just (Url.Builder.string "client_id" clientId)
+                , Just (Url.Builder.string "response_type" responseType)
+                , Just (Url.Builder.string "redirect_uri" redirectUri)
+                , Just (Url.Builder.string "scope" scopes)
+                , Just (Url.Builder.string "audience" audience)
+                , url
+                    |> Maybe.andThen .fragment
+                    |> Maybe.map (Url.Builder.string "state")
+                ]
+    in
     Url.Builder.crossOrigin prePath
-        [ "authorize" ]
-        [ Url.Builder.string "client_id" clientId
-        , Url.Builder.string "response_type" responseType
-        , Url.Builder.string "redirect_uri" redirectUri
-        , Url.Builder.string "scope" (scope |> Set.toList |> String.join " ")
-        , Url.Builder.string "audience" audience
-        , Url.Builder.string "state" (Maybe.withDefault "" url.fragment)
-        ]
+        path
+        parameters
 
 
 logout =

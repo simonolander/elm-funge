@@ -1,4 +1,4 @@
-module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl)
+module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl, toUrl)
 
 import Basics.Extra exposing (flip)
 import Browser.Navigation as Navigation
@@ -27,6 +27,11 @@ fromUrl url =
         , fragment = Nothing
     }
         |> Parser.parse parser
+
+
+toUrl : Route -> Maybe Url
+toUrl =
+    toString >> Url.fromString
 
 
 link : List (Element.Attribute msg) -> Element.Element msg -> Route -> Element.Element msg

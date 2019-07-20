@@ -21,6 +21,9 @@ import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Dict exposing (Dict)
+import Element exposing (..)
+import Element.Background as Background
+import Element.Font as Font
 import Extra.Result
 import Extra.String
 import Http
@@ -31,7 +34,11 @@ import Ports.Console
 import RemoteData
 import Route exposing (Route)
 import Url
+import View.Constant exposing (color)
+import View.ErrorScreen
+import View.Layout
 import View.LoadingScreen
+import ViewComponents
 
 
 
@@ -175,7 +182,6 @@ load =
                 _ ->
                     ( model, cmd )
 
-        loadDrafts : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
         loadDrafts ( model, cmd ) =
             case model.accessTokenState of
                 Verified accessToken ->
@@ -214,10 +220,30 @@ load =
 
                 _ ->
                     ( model, cmd )
+
+        finish ( model, cmd ) =
+            case model.accessTokenState of
+                Missing ->
+                    ( model
+                    , Cmd.batch
+                        [ cmd
+                        , Route.replaceUrl model.session.key model.route
+                        ]
+                    )
+
+                Expired _ ->
+                    ( model, cmd )
+
+                Verifying _ ->
+                    ( model, cmd )
+
+                Verified accessToken ->
+                    Debug.todo "Check that all the conflicts are solved"
     in
     flip (List.foldl (flip (|>)))
         [ loadUserData
         , loadDrafts
+        , finish
         ]
 
 
@@ -288,7 +314,7 @@ update msg model =
             ( mdl, cmd )
     in
     load <|
-        case msg of
+        case msg |> Debug.log "GotUserInfoResponse" of
             GotUserInfoResponse { result } ->
                 let
                     modelWithActualUserInfo =
@@ -318,9 +344,32 @@ update msg model =
                                     )
 
                             Nothing ->
-                                ( modelWithActualUserInfo
-                                , Cmd.none
-                                )
+                                let
+                                    localStorageClean =
+                                        modelWithActualUserInfo.localDrafts
+                                            |> Dict.isEmpty
+                                            |> not
+
+                                    -- TODO Check blueprints
+                                in
+                                if localStorageClean then
+                                    ( { modelWithActualUserInfo
+                                        | expectedUserInfo = Just actualUserInfo
+                                        , accessTokenState =
+                                            case modelWithActualUserInfo.accessTokenState of
+                                                Verifying accessToken ->
+                                                    Verified accessToken
+
+                                                _ ->
+                                                    modelWithActualUserInfo.accessTokenState
+                                      }
+                                    , UserInfo.saveToLocalStorage actualUserInfo
+                                    )
+
+                                else
+                                    ( modelWithActualUserInfo
+                                    , Cmd.none
+                                    )
 
                     Err error ->
                         let
@@ -471,12 +520,68 @@ subscriptions =
 -- VIEW
 
 
-view : Model -> Document msg
+view : Model -> Document Msg
 view model =
     let
-        a =
-            3
+        element =
+            case model.accessTokenState of
+                Missing ->
+                    View.ErrorScreen.layout "Missing access token"
+
+                Expired _ ->
+                    viewExpiredAccessToken model
+                        |> View.Layout.layout
+
+                Verifying _ ->
+                    case model.actualUserInfo of
+                        RemoteData.NotAsked ->
+                            View.ErrorScreen.layout "Todo: User info not asked"
+
+                        RemoteData.Loading ->
+                            View.LoadingScreen.layout "Verifying access token"
+
+                        RemoteData.Failure e ->
+                            View.ErrorScreen.layout (Extra.String.fromHttpError e)
+
+                        RemoteData.Success actualUserInfo ->
+                            View.ErrorScreen.layout "Todo: got user info"
+
+                Verified _ ->
+                    View.ErrorScreen.layout "Access token verified"
     in
-    { title = "Home"
-    , body = [ View.LoadingScreen.layout "Some loading text" ]
+    { title = "Initializing"
+    , body = [ element ]
     }
+
+
+viewExpiredAccessToken : Model -> Element Msg
+viewExpiredAccessToken model =
+    column
+        [ centerX
+        , centerY
+        , spacing 20
+        ]
+        [ image
+            [ width (px 72)
+            , centerX
+            ]
+            { src = "assets/instruction-images/exception.svg"
+            , description = "Loading animation"
+            }
+        , paragraph
+            [ width shrink
+            , centerX
+            , centerY
+            , Font.center
+            , Font.size 28
+            , Font.color color.font.error
+            ]
+            [ text "Your credentials are either expired or invalid." ]
+        , link
+            [ width (px 300)
+            , centerX
+            ]
+            { label = ViewComponents.textButton [] Nothing "Sign in"
+            , url = Auth0.login (Route.toUrl model.route)
+            }
+        ]
