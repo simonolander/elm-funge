@@ -1,4 +1,4 @@
-module Data.RequestResult exposing (RequestResult, badBody, constructor, convertToHttpError, notFound, toTuple)
+module Data.RequestResult exposing (RequestResult, badBody, constructor, convertToHttpError, extractMaybe, notFound, toTuple)
 
 import Http
 import Json.Decode
@@ -30,6 +30,19 @@ badBody =
 toTuple : RequestResult request error data -> ( request, Result error data )
 toTuple { request, result } =
     ( request, result )
+
+
+extractMaybe : RequestResult request error (Maybe data) -> Maybe (RequestResult request error data)
+extractMaybe { request, result } =
+    case result of
+        Ok (Just value) ->
+            Just { request = request, result = Ok value }
+
+        Ok Nothing ->
+            Nothing
+
+        Err error ->
+            Just { request = request, result = Err error }
 
 
 convertToHttpError : RequestResult request Json.Decode.Error (Maybe value) -> RequestResult request Http.Error value
