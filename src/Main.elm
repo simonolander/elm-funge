@@ -15,7 +15,6 @@ import Html
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Levels
 import Maybe.Extra
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
@@ -28,7 +27,6 @@ import Page.Login as Login
 import Ports.Console
 import Ports.LocalStorage
 import Route
-import Set exposing (Set)
 import Url exposing (Url)
 
 
@@ -77,28 +75,6 @@ main =
 
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
-    let
-        withTestData =
-            let
-                levels =
-                    Levels.levels
-
-                campaigns =
-                    List.map .campaignId levels
-                        |> Set.fromList
-                        |> Set.toList
-                        |> List.map
-                            (\campaignId ->
-                                { id = campaignId
-                                , levelIds =
-                                    levels
-                                        |> List.filter (.campaignId >> (==) campaignId)
-                                        |> List.map .id
-                                }
-                            )
-            in
-            Session.withLevels levels >> Session.withCampaigns campaigns
-    in
     { navigationKey = key
     , url = url
     , localStorageEntries = flags.localStorageEntries

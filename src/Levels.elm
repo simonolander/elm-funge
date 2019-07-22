@@ -1,4 +1,4 @@
-module Levels exposing (levels)
+module Levels exposing (levels, withTestLevels)
 
 import Array
 import Data.Board as Board
@@ -8,6 +8,8 @@ import Data.Instruction as Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Int16 as Int16
 import Data.Level exposing (Level)
+import Data.Session as Session
+import Set
 
 
 levelTest : Level
@@ -991,6 +993,25 @@ levels =
         --     lvls |> list JsonUtils.encodeLevel |> JsonUtils.toString |> Debug.log "levels:"
     in
     lvls
+
+
+withTestLevels =
+    let
+        campaigns =
+            List.map .campaignId levels
+                |> Set.fromList
+                |> Set.toList
+                |> List.map
+                    (\campaignId ->
+                        { id = campaignId
+                        , levelIds =
+                            levels
+                                |> List.filter (.campaignId >> (==) campaignId)
+                                |> List.map .id
+                        }
+                    )
+    in
+    Session.withLevels levels >> Session.withCampaigns campaigns
 
 
 listPairs : List a -> List ( a, a )

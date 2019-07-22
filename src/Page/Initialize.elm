@@ -31,6 +31,7 @@ import Extra.String
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Levels
 import Maybe.Extra
 import Ports.Console
 import RemoteData
@@ -140,7 +141,9 @@ init { navigationKey, localStorageEntries, url } =
                 |> Dict.fromList
 
         model =
-            { session = Session.init navigationKey url
+            { session =
+                Session.init navigationKey url
+                    |> Levels.withTestLevels
             , route = route
             , accessTokenState =
                 accessToken
