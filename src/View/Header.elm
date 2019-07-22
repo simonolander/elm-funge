@@ -9,12 +9,18 @@ import Data.User as User
 import Data.UserInfo as UserInfo
 import Element exposing (..)
 import Element.Background as Background
+import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
 import Route
 
 
 view session =
     let
+        online =
+            session.user
+                |> User.getToken
+                |> Maybe.Extra.isJust
+
         loginButton =
             link
                 [ alignRight
@@ -22,17 +28,10 @@ view session =
                 , mouseOver
                     [ Background.color (rgb 0.5 0.5 0.5) ]
                 ]
-                (if User.isLoggedIn session.user then
-                    case User.getUserInfo session.user of
-                        Success userInfo ->
-                            { url = Api.Auth0.logout
-                            , label = text ("Sign out " ++ UserInfo.getUserName userInfo)
-                            }
-
-                        _ ->
-                            { url = Api.Auth0.logout
-                            , label = text "Sign out"
-                            }
+                (if online then
+                    { url = Api.Auth0.logout
+                    , label = text "Sign out"
+                    }
 
                  else
                     { url = Api.Auth0.login (Just session.url)
@@ -54,12 +53,34 @@ view session =
 
                 Nothing ->
                     none
+
+        userInfo =
+            session.user
+                |> User.getUserInfo
+                |> Maybe.map UserInfo.getUserName
+                |> Maybe.map
+                    (\userName ->
+                        if online then
+                            userName
+
+                        else
+                            userName ++ " (offline)"
+                    )
+                |> Maybe.withDefault "Guest"
+                |> text
+                |> el
+                    [ alignRight
+                    , padding 20
+                    ]
     in
     row
         [ width fill
         , Background.color (rgb 0.1 0.1 0.1)
         ]
-        [ backButton, loginButton ]
+        [ backButton
+        , userInfo
+        , loginButton
+        ]
 
 
 parentRoute session =

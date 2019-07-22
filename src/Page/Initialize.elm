@@ -17,13 +17,15 @@ import Data.AccessToken as AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
+import Data.RemoteCache exposing (RemoteCache)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
+import Data.User as User
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Dict exposing (Dict)
 import Element exposing (..)
-import Element.Background as Background
 import Element.Font as Font
+import Element.Input as Input
 import Extra.Result
 import Extra.String
 import Http
@@ -59,7 +61,10 @@ type AccessTokenState
     = Missing
     | Expired AccessToken
     | Verifying AccessToken
-    | Verified AccessToken
+    | Verified
+        { accessToken : AccessToken
+        , userInfo : UserInfo
+        }
 
 
 type alias Model =
@@ -184,7 +189,7 @@ load =
 
         loadDrafts ( model, cmd ) =
             case model.accessTokenState of
-                Verified accessToken ->
+                Verified { accessToken } ->
                     let
                         loadingDraftIds =
                             model.localDrafts
@@ -213,7 +218,7 @@ load =
                     , Cmd.batch
                         [ cmd
                         , loadingDraftIds
-                            |> List.map (Draft.loadFromServer accessToken GotDraftResponse)
+                            |> List.map (Draft.loadFromServer accessToken GotDraftLoadResponse)
                             |> Cmd.batch
                         ]
                     )
@@ -221,10 +226,20 @@ load =
                 _ ->
                     ( model, cmd )
 
+        finish : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
         finish ( model, cmd ) =
             case model.accessTokenState of
                 Missing ->
-                    ( model
+                    let
+                        user =
+                            model.session.user
+                                |> User.withUserInfo model.expectedUserInfo
+
+                        session =
+                            model.session
+                                |> Session.withUser user
+                    in
+                    ( { model | session = session }
                     , Cmd.batch
                         [ cmd
                         , Route.replaceUrl model.session.key model.route
@@ -237,8 +252,47 @@ load =
                 Verifying _ ->
                     ( model, cmd )
 
-                Verified accessToken ->
-                    Debug.todo "Check that all the conflicts are solved"
+                Verified { accessToken, userInfo } ->
+                    let
+                        hasDraftConflicts =
+                            Dict.keys model.localDrafts
+                                |> List.map (\draftId -> ( Dict.get draftId model.localDrafts, Dict.get draftId model.expectedDrafts ))
+                                |> List.filter (\( local, expected ) -> local /= expected)
+                                |> List.isEmpty
+                                |> not
+                    in
+                    if hasDraftConflicts then
+                        ( model, cmd )
+
+                    else
+                        let
+                            user =
+                                User.authorizedUser accessToken userInfo
+
+                            draftCache : RemoteCache DraftId Draft
+                            draftCache =
+                                { local =
+                                    model.localDrafts
+                                        |> Dict.map (always (Result.mapError RequestResult.badBody))
+                                        |> Cache.fromResultDict
+                                , oldRemote =
+                                    model.expectedDrafts
+                                        |> Dict.map (always (Result.mapError RequestResult.badBody))
+                                        |> Cache.fromResultDict
+                                , newRemote = model.actualDrafts
+                                }
+
+                            session =
+                                model.session
+                                    |> Session.withUser user
+                                    |> Session.withDraftCache draftCache
+                        in
+                        ( { model | session = session }
+                        , Cmd.batch
+                            [ cmd
+                            , Route.replaceUrl model.session.key model.route
+                            ]
+                        )
     in
     flip (List.foldl (flip (|>)))
         [ loadUserData
@@ -291,7 +345,7 @@ withExpiredAccessToken model =
                 Verifying accessToken ->
                     Expired accessToken
 
-                Verified accessToken ->
+                Verified { accessToken } ->
                     Expired accessToken
     }
 
@@ -302,8 +356,9 @@ withExpiredAccessToken model =
 
 type Msg
     = GotUserInfoResponse (RequestResult AccessToken Http.Error UserInfo)
-    | GotDraftResponse (RequestResult DraftId Http.Error Draft)
+    | GotDraftLoadResponse (RequestResult DraftId Http.Error Draft)
     | GotDraftSaveResponse (RequestResult Draft Http.Error ())
+    | ClickedContinueOffline
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -322,18 +377,24 @@ update msg model =
                 in
                 case result of
                     Ok actualUserInfo ->
+                        let
+                            verified =
+                                case modelWithActualUserInfo.accessTokenState of
+                                    Verifying accessToken ->
+                                        Verified
+                                            { accessToken = accessToken
+                                            , userInfo = actualUserInfo
+                                            }
+
+                                    _ ->
+                                        modelWithActualUserInfo.accessTokenState
+                        in
                         case modelWithActualUserInfo.expectedUserInfo of
                             Just expectedUserInfo ->
                                 if expectedUserInfo.sub == actualUserInfo.sub then
                                     ( { modelWithActualUserInfo
                                         | expectedUserInfo = Just actualUserInfo
-                                        , accessTokenState =
-                                            case modelWithActualUserInfo.accessTokenState of
-                                                Verifying accessToken ->
-                                                    Verified accessToken
-
-                                                _ ->
-                                                    modelWithActualUserInfo.accessTokenState
+                                        , accessTokenState = verified
                                       }
                                     , UserInfo.saveToLocalStorage actualUserInfo
                                     )
@@ -348,20 +409,13 @@ update msg model =
                                     localStorageClean =
                                         modelWithActualUserInfo.localDrafts
                                             |> Dict.isEmpty
-                                            |> not
 
                                     -- TODO Check blueprints
                                 in
                                 if localStorageClean then
                                     ( { modelWithActualUserInfo
                                         | expectedUserInfo = Just actualUserInfo
-                                        , accessTokenState =
-                                            case modelWithActualUserInfo.accessTokenState of
-                                                Verifying accessToken ->
-                                                    Verified accessToken
-
-                                                _ ->
-                                                    modelWithActualUserInfo.accessTokenState
+                                        , accessTokenState = verified
                                       }
                                     , UserInfo.saveToLocalStorage actualUserInfo
                                     )
@@ -386,7 +440,7 @@ update msg model =
                                     ( Verifying accessToken, Http.BadStatus 403 ) ->
                                         Expired accessToken
 
-                                    ( Verified accessToken, Http.BadStatus 403 ) ->
+                                    ( Verified { accessToken }, Http.BadStatus 403 ) ->
                                         Expired accessToken
 
                                     _ ->
@@ -399,7 +453,7 @@ update msg model =
                         , Ports.Console.errorString (Extra.String.fromHttpError error)
                         )
 
-            GotDraftResponse requestResult ->
+            GotDraftLoadResponse requestResult ->
                 let
                     { request, result } =
                         requestResult
@@ -421,7 +475,7 @@ update msg model =
 
                                 else
                                     case ( modelWithActualDraft.accessTokenState, Dict.get request modelWithActualDraft.expectedDrafts ) of
-                                        ( Verified accessToken, Just (Ok expectedDraft) ) ->
+                                        ( Verified { accessToken }, Just (Ok expectedDraft) ) ->
                                             if actualDraft == expectedDraft then
                                                 modelWithActualDraft
                                                     |> withSavingDraft localDraft
@@ -454,7 +508,7 @@ update msg model =
                                     ( Verifying accessToken, Http.BadStatus 403 ) ->
                                         Expired accessToken
 
-                                    ( Verified accessToken, Http.BadStatus 403 ) ->
+                                    ( Verified { accessToken }, Http.BadStatus 403 ) ->
                                         Expired accessToken
 
                                     _ ->
@@ -501,6 +555,13 @@ update msg model =
                                 , Ports.Console.errorString (Extra.String.fromHttpError error)
                                 )
 
+            ClickedContinueOffline ->
+                ( { model
+                    | accessTokenState = Missing
+                  }
+                , Cmd.none
+                )
+
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
 localStorageResponseUpdate ( key, value ) model =
@@ -538,18 +599,25 @@ view model =
                             View.ErrorScreen.layout "Todo: User info not asked"
 
                         RemoteData.Loading ->
-                            View.LoadingScreen.layout "Verifying access token"
+                            View.LoadingScreen.layout "Verifying credentials"
 
-                        RemoteData.Failure e ->
-                            View.ErrorScreen.layout (Extra.String.fromHttpError e)
+                        RemoteData.Failure error ->
+                            viewHttpError model error
+                                |> View.Layout.layout
 
                         RemoteData.Success actualUserInfo ->
-                            View.ErrorScreen.layout "Todo: got user info"
+                            [ "User info doesn't match. Expected sub"
+                            , Maybe.map .sub model.expectedUserInfo |> Maybe.withDefault "<Nothing>"
+                            , ", but actually it was"
+                            , actualUserInfo.sub
+                            ]
+                                |> String.join " "
+                                |> View.ErrorScreen.layout
 
                 Verified _ ->
                     View.ErrorScreen.layout "Access token verified"
     in
-    { title = "Initializing"
+    { title = "Synchronizing"
     , body = [ element ]
     }
 
@@ -585,3 +653,20 @@ viewExpiredAccessToken model =
             , url = Auth0.login (Route.toUrl model.route)
             }
         ]
+
+
+viewHttpError : Model -> Http.Error -> Element Msg
+viewHttpError model error =
+    case error of
+        Http.NetworkError ->
+            column
+                []
+                [ text "Unable to connect to server"
+                , Input.button [] { onPress = Just ClickedContinueOffline, label = text "Continue offline" }
+                ]
+
+        Http.BadStatus 403 ->
+            viewExpiredAccessToken model
+
+        _ ->
+            View.ErrorScreen.view (Extra.String.fromHttpError error)
