@@ -6,6 +6,7 @@ import Data.Blueprint as Blueprint
 import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId exposing (CampaignId)
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError(..))
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
@@ -18,6 +19,7 @@ import Http
 import Ports.Console
 import Random
 import RemoteData exposing (RemoteData(..))
+import Result exposing (Result)
 import Route
 import View.ErrorScreen
 import View.LevelButton
@@ -76,7 +78,7 @@ load ( model, cmd ) =
                     , Cmd.batch [ cmd, Campaign.loadFromLocalStorage campaignId ]
                     )
 
-        Failure (Http.BadStatus 404) ->
+        Failure NotFound ->
             let
                 campaign =
                     Campaign.empty campaignId
@@ -127,7 +129,7 @@ type Msg
     | LevelNameChanged String
     | LevelDeleted LevelId
     | LevelDescriptionChanged String
-    | GotLoadBlueprintsResponse (Result Http.Error (List Level))
+    | GotLoadBlueprintsResponse (Result DetailedHttpError (List Level))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -271,7 +273,7 @@ update msg model =
                     ( model.session
                         |> Session.campaignError campaignId error
                         |> setSession model
-                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    , Ports.Console.errorString (DetailedHttpError.toString error)
                     )
 
 
@@ -308,7 +310,7 @@ view model =
                             View.LoadingScreen.layout ("Loading " ++ campaignId)
 
                         Failure error ->
-                            View.ErrorScreen.layout (Extra.String.fromHttpError error)
+                            View.ErrorScreen.layout (DetailedHttpError.toString error)
 
                         Success campaign ->
                             viewCampaign campaign model

@@ -3,6 +3,7 @@ module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLoc
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
+import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Score as Score exposing (Score)
@@ -142,18 +143,19 @@ localStorageResponse ( key, value ) =
 -- REST
 
 
-saveToServer : (Result Http.Error () -> msg) -> Solution -> AccessToken -> Cmd msg
-saveToServer toMsg solution token =
-    GCP.post token [ "solutions" ] [] (Http.expectWhatever toMsg) (encode solution)
+saveToServer : (Result DetailedHttpError () -> msg) -> Solution -> AccessToken -> Cmd msg
+saveToServer toMsg solution accessToken =
+    GCP.post (Decode.succeed ())
+        |> GCP.withPath [ "solutions" ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.withBody (encode solution)
+        |> GCP.request toMsg
 
 
-loadFromServerByLevelId : AccessToken -> (RequestResult LevelId Http.Error (List Solution) -> msg) -> LevelId -> Cmd msg
+loadFromServerByLevelId : AccessToken -> (RequestResult LevelId DetailedHttpError (List Solution) -> msg) -> LevelId -> Cmd msg
 loadFromServerByLevelId accessToken toMsg levelId =
-    let
-        path =
-            [ "solutions" ]
-
-        queryParameters =
-            [ Url.Builder.string "levelId" levelId ]
-    in
-    GCP.authorizedGet path queryParameters (Decode.list decoder) (RequestResult.constructor levelId >> toMsg) accessToken
+    GCP.get (Decode.list decoder)
+        |> GCP.withPath [ "solutions" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request (RequestResult.constructor levelId >> toMsg)

@@ -1,93 +1,162 @@
 module Api.GCP exposing
-    ( authorizedGet
+    ( RequestBuilder
     , get
     , post
+    , request
+    , withAccessToken
+    , withBody
+    , withPath
+    , withQueryParameters
+    , withTimeout
+    , withTracker
     )
 
 import Data.AccessToken as AccessToken exposing (AccessToken)
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Http exposing (Expect, Header)
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Result exposing (Result)
+import Maybe.Extra
 import Url.Builder
 
 
-get : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> Cmd msg
-get path queryParameters decoder toMsg =
+type alias RequestBuilder response =
+    { method : String
+    , path : List String
+    , queryParameters : List Url.Builder.QueryParameter
+    , accessToken : Maybe AccessToken
+    , body : Maybe Encode.Value
+    , decoder : Decode.Decoder response
+    , timeout : Maybe Float
+    , tracker : Maybe String
+    }
+
+
+get : Decode.Decoder response -> RequestBuilder response
+get decoder =
+    { method = "GET"
+    , path = []
+    , queryParameters = []
+    , accessToken = Nothing
+    , body = Nothing
+    , decoder = decoder
+    , timeout = Nothing
+    , tracker = Nothing
+    }
+
+
+post : Decode.Decoder response -> RequestBuilder response
+post decoder =
     let
+        empty =
+            get decoder
+    in
+    { empty | method = "POST" }
+
+
+withPath : List String -> RequestBuilder response -> RequestBuilder response
+withPath path builder =
+    { builder | path = path }
+
+
+withQueryParameters : List Url.Builder.QueryParameter -> RequestBuilder response -> RequestBuilder response
+withQueryParameters queryParameters builder =
+    { builder | queryParameters = queryParameters }
+
+
+withAccessToken : AccessToken -> RequestBuilder response -> RequestBuilder response
+withAccessToken accessToken builder =
+    { builder | accessToken = Just accessToken }
+
+
+withBody : Encode.Value -> RequestBuilder response -> RequestBuilder response
+withBody body builder =
+    { builder | body = Just body }
+
+
+withTimeout : Float -> RequestBuilder response -> RequestBuilder response
+withTimeout timeout builder =
+    { builder | timeout = Just timeout }
+
+
+withTracker : String -> RequestBuilder response -> RequestBuilder response
+withTracker tracker builder =
+    { builder | tracker = Just tracker }
+
+
+request : (Result DetailedHttpError response -> msg) -> RequestBuilder response -> Cmd msg
+request toMsg builder =
+    let
+        headers =
+            let
+                authorizationHeader =
+                    case builder.accessToken of
+                        Just accessToken ->
+                            Just (Http.header "Authorization" ("Bearer " ++ AccessToken.toString accessToken))
+
+                        Nothing ->
+                            Nothing
+            in
+            Maybe.Extra.values
+                [ authorizationHeader ]
+
         url =
-            buildUrl path queryParameters
+            Url.Builder.crossOrigin
+                "https://us-central1-luminous-cubist-234816.cloudfunctions.net"
+                builder.path
+                builder.queryParameters
+
+        body =
+            builder.body
+                |> Maybe.map Http.jsonBody
+                |> Maybe.withDefault Http.emptyBody
 
         expect =
-            Http.expectJson toMsg decoder
+            expectDetailedJson toMsg builder.decoder
     in
-    Http.get
-        { url = url
+    Http.request
+        { method = builder.method
+        , headers = headers
+        , url = url
+        , body = body
         , expect = expect
+        , timeout = builder.timeout
+        , tracker = builder.tracker
         }
-
-
-authorizedGet : List String -> List Url.Builder.QueryParameter -> Decode.Decoder a -> (Result Http.Error a -> msg) -> AccessToken -> Cmd msg
-authorizedGet path queryParameters decoder toMsg accessToken =
-    let
-        url =
-            buildUrl path queryParameters
-
-        expect =
-            Http.expectJson toMsg decoder
-    in
-    internalAuthorizedGet url accessToken expect
-
-
-post : AccessToken -> List String -> List Url.Builder.QueryParameter -> Http.Expect msg -> Encode.Value -> Cmd msg
-post accessToken path queryParameters expect value =
-    authorizedPost
-        (buildUrl path queryParameters)
-        accessToken
-        value
-        expect
 
 
 
 -- PRIVATE
 
 
-buildUrl : List String -> List Url.Builder.QueryParameter -> String
-buildUrl =
-    Url.Builder.crossOrigin gcpPrePath
+expectDetailedJson : (Result DetailedHttpError a -> msg) -> Decode.Decoder a -> Http.Expect msg
+expectDetailedJson toMsg decoder =
+    let
+        toResult response =
+            case response of
+                Http.BadUrl_ url ->
+                    Err (DetailedHttpError.BadUrl url)
 
+                Http.Timeout_ ->
+                    Err DetailedHttpError.Timeout
 
-gcpPrePath : String
-gcpPrePath =
-    "https://us-central1-luminous-cubist-234816.cloudfunctions.net"
+                Http.NetworkError_ ->
+                    Err DetailedHttpError.NetworkError
 
+                Http.BadStatus_ metadata body ->
+                    case metadata.statusCode of
+                        404 ->
+                            Err DetailedHttpError.NotFound
 
-authorizationHeader : AccessToken -> Http.Header
-authorizationHeader token =
-    Http.header "Authorization" ("Bearer " ++ AccessToken.toString token)
+                        _ ->
+                            Err (DetailedHttpError.BadStatus metadata.statusCode)
 
+                Http.GoodStatus_ metadata body ->
+                    case Decode.decodeString decoder body of
+                        Ok value ->
+                            Ok value
 
-internalAuthorizedGet : String -> AccessToken -> Http.Expect msg -> Cmd msg
-internalAuthorizedGet url token expect =
-    Http.request
-        { method = "GET"
-        , headers = [ authorizationHeader token ]
-        , url = url
-        , body = Http.emptyBody
-        , expect = expect
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-authorizedPost : String -> AccessToken -> Encode.Value -> Http.Expect msg -> Cmd msg
-authorizedPost url token body expect =
-    Http.request
-        { method = "POST"
-        , headers = [ authorizationHeader token ]
-        , url = url
-        , body = Http.jsonBody body
-        , expect = expect
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+                        Err err ->
+                            Err (DetailedHttpError.BadBody metadata.statusCode (Decode.errorToString err))
+    in
+    Http.expectStringResponse toMsg toResult

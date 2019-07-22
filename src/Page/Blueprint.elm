@@ -6,6 +6,7 @@ import Browser exposing (Document)
 import Data.Board as Board
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
 import Data.CampaignId as CampaignId
+import Data.DetailedHttpError as DetailedHttpError
 import Data.IO as IO
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
@@ -372,7 +373,7 @@ view model =
                     View.LoadingScreen.view ("Loading level " ++ model.levelId)
 
                 Failure error ->
-                    View.ErrorScreen.view (Extra.String.fromHttpError error)
+                    View.ErrorScreen.view (DetailedHttpError.toString error)
 
                 Success level ->
                     viewBlueprint level model

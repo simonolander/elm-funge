@@ -1,6 +1,6 @@
-module Data.RequestResult exposing (RequestResult, badBody, constructor, convertToHttpError, extractMaybe, notFound, toTuple)
+module Data.RequestResult exposing (RequestResult, badBody, constructor, convertToHttpError, extractMaybe, toTuple)
 
-import Http
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Json.Decode
 
 
@@ -17,14 +17,9 @@ constructor request result =
     }
 
 
-notFound : Http.Error
-notFound =
-    Http.BadStatus 404
-
-
-badBody : Json.Decode.Error -> Http.Error
+badBody : Json.Decode.Error -> DetailedHttpError
 badBody =
-    Json.Decode.errorToString >> Http.BadBody
+    Json.Decode.errorToString >> DetailedHttpError.BadBody 0
 
 
 toTuple : RequestResult request error data -> ( request, Result error data )
@@ -45,7 +40,7 @@ extractMaybe { request, result } =
             Just { request = request, result = Err error }
 
 
-convertToHttpError : RequestResult request Json.Decode.Error (Maybe value) -> RequestResult request Http.Error value
+convertToHttpError : RequestResult request Json.Decode.Error (Maybe value) -> RequestResult request DetailedHttpError value
 convertToHttpError { request, result } =
     { request = request
     , result =
@@ -54,7 +49,7 @@ convertToHttpError { request, result } =
                 Ok value
 
             Ok Nothing ->
-                Err notFound
+                Err DetailedHttpError.NotFound
 
             Err error ->
                 Err (badBody error)

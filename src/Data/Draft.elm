@@ -3,6 +3,7 @@ module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCou
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
+import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.DraftBook as DraftBook
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.History as History exposing (History)
@@ -210,51 +211,35 @@ localRemoteStorageResponse ( key, value ) =
 -- REST
 
 
-loadAllFromServer : AccessToken -> (Result Http.Error (List Draft) -> msg) -> Cmd msg
+loadAllFromServer : AccessToken -> (Result DetailedHttpError (List Draft) -> msg) -> Cmd msg
 loadAllFromServer accessToken toMsg =
-    let
-        path =
-            [ "drafts" ]
-
-        queryParameters =
-            []
-    in
-    GCP.authorizedGet path queryParameters (Decode.list decoder) toMsg accessToken
+    GCP.get (Decode.list decoder)
+        |> GCP.withPath [ "drafts" ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request toMsg
 
 
-loadFromServer : AccessToken -> (RequestResult DraftId Http.Error Draft -> msg) -> DraftId -> Cmd msg
+loadFromServer : AccessToken -> (RequestResult DraftId DetailedHttpError Draft -> msg) -> DraftId -> Cmd msg
 loadFromServer accessToken toMsg draftId =
-    let
-        path =
-            [ "drafts" ]
-
-        queryParameters =
-            [ Url.Builder.string "draftId" draftId ]
-    in
-    GCP.authorizedGet path queryParameters decoder (RequestResult.constructor draftId >> toMsg) accessToken
+    GCP.get decoder
+        |> GCP.withPath [ "drafts" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "draftId" draftId ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request (RequestResult.constructor draftId >> toMsg)
 
 
-loadFromServerByLevelId : AccessToken -> (RequestResult LevelId Http.Error (List Draft) -> msg) -> LevelId -> Cmd msg
+loadFromServerByLevelId : AccessToken -> (RequestResult LevelId DetailedHttpError (List Draft) -> msg) -> LevelId -> Cmd msg
 loadFromServerByLevelId accessToken toMsg levelId =
-    let
-        path =
-            [ "drafts" ]
-
-        queryParameters =
-            [ Url.Builder.string "levelId" levelId ]
-    in
-    GCP.authorizedGet path queryParameters (Decode.list decoder) (RequestResult.constructor levelId >> toMsg) accessToken
+    GCP.get (Decode.list decoder)
+        |> GCP.withPath [ "drafts" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request (RequestResult.constructor levelId >> toMsg)
 
 
-saveToServer : AccessToken -> (RequestResult Draft Http.Error () -> msg) -> Draft -> Cmd msg
+saveToServer : AccessToken -> (RequestResult Draft DetailedHttpError () -> msg) -> Draft -> Cmd msg
 saveToServer accessToken toMsg draft =
     let
-        path =
-            [ "drafts" ]
-
-        expect =
-            Http.expectWhatever (RequestResult.constructor draft >> toMsg)
-
         value =
             Encode.object
                 [ ( "id", DraftId.encode draft.id )
@@ -262,4 +247,8 @@ saveToServer accessToken toMsg draft =
                 , ( "board", Board.encode (History.current draft.boardHistory) )
                 ]
     in
-    GCP.post accessToken path [] expect value
+    GCP.post (Decode.succeed ())
+        |> GCP.withPath [ "drafts" ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.withBody value
+        |> GCP.request (RequestResult.constructor draft >> toMsg)

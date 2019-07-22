@@ -1,12 +1,12 @@
 module Data.HighScore exposing (HighScore, decoder, encode, loadFromServer)
 
 import Api.GCP as GCP
+import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Dict exposing (Dict)
 import Extra.Decode
 import Extra.Encode
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Url.Builder
@@ -67,13 +67,9 @@ decoder =
 -- REST
 
 
-loadFromServer : LevelId -> (RequestResult LevelId Http.Error HighScore -> msg) -> Cmd msg
+loadFromServer : LevelId -> (RequestResult LevelId DetailedHttpError HighScore -> msg) -> Cmd msg
 loadFromServer levelId toMsg =
-    let
-        path =
-            [ "highScores" ]
-
-        query =
-            [ Url.Builder.string "levelId" levelId ]
-    in
-    GCP.get path query decoder (RequestResult.constructor levelId >> toMsg)
+    GCP.get decoder
+        |> GCP.withPath [ "highScores" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.request (RequestResult.constructor levelId >> toMsg)

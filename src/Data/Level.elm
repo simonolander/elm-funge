@@ -21,15 +21,14 @@ module Data.Level exposing
 
 import Api.GCP as GCP
 import Array exposing (Array)
-import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
 import Data.CampaignId as CampaignId exposing (CampaignId)
+import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.IO as IO exposing (IO)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
@@ -292,25 +291,17 @@ decoder =
 -- REST
 
 
-loadFromServer : (RequestResult LevelId Http.Error Level -> msg) -> LevelId -> Cmd msg
+loadFromServer : (RequestResult LevelId DetailedHttpError Level -> msg) -> LevelId -> Cmd msg
 loadFromServer toMsg levelId =
-    let
-        path =
-            [ "levels" ]
-
-        queryParameters =
-            [ Url.Builder.string "levelId" levelId ]
-    in
-    GCP.get path queryParameters decoder (RequestResult.constructor levelId >> toMsg)
+    GCP.get decoder
+        |> GCP.withPath [ "levels" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.request (RequestResult.constructor levelId >> toMsg)
 
 
-loadFromServerByCampaignId : (RequestResult CampaignId Http.Error (List Level) -> msg) -> CampaignId -> Cmd msg
+loadFromServerByCampaignId : (RequestResult CampaignId DetailedHttpError (List Level) -> msg) -> CampaignId -> Cmd msg
 loadFromServerByCampaignId toMsg campaignId =
-    let
-        path =
-            [ "levels" ]
-
-        queryParameters =
-            [ Url.Builder.string "campaignId" campaignId ]
-    in
-    GCP.get path queryParameters (Decode.list decoder) (RequestResult.constructor campaignId >> toMsg)
+    GCP.get (Decode.list decoder)
+        |> GCP.withPath [ "levels" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "campaignId" campaignId ]
+        |> GCP.request (RequestResult.constructor campaignId >> toMsg)

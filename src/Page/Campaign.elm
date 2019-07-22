@@ -5,6 +5,7 @@ import Browser exposing (Document)
 import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
@@ -21,9 +22,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Extra.RemoteData
-import Extra.String exposing (fromHttpError)
 import Html.Attributes
-import Http
 import Maybe.Extra
 import Ports.Console
 import Random
@@ -273,10 +272,10 @@ setSession model session =
 
 type Msg
     = SelectLevel LevelId
-    | LoadedHighScore (RequestResult LevelId Http.Error HighScore)
-    | GotLoadAllDraftsResponse (Result Http.Error (List Draft))
-    | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId Http.Error (List Level))
-    | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId Http.Error (List Solution))
+    | LoadedHighScore (RequestResult LevelId DetailedHttpError HighScore)
+    | GotLoadAllDraftsResponse (Result DetailedHttpError (List Draft))
+    | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId DetailedHttpError (List Level))
+    | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Solution))
     | ClickedOpenDraft DraftId
     | ClickedGenerateDraft
     | GeneratedDraft Draft
@@ -328,7 +327,7 @@ update msg model =
 
                 Err error ->
                     ( { model
-                        | error = Just (fromHttpError error)
+                        | error = Just (DetailedHttpError.toString error)
                       }
                     , Cmd.none
                     )
@@ -395,7 +394,7 @@ update msg model =
                 -- TODO
                 Err error ->
                     ( model
-                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    , Ports.Console.errorString (DetailedHttpError.toString error)
                     )
 
         GotLoadSolutionsByLevelIdResponse requestResult ->
@@ -425,7 +424,7 @@ update msg model =
                 -- TODO
                 Err error ->
                     ( model
-                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    , Ports.Console.errorString (DetailedHttpError.toString error)
                     )
 
 
@@ -462,7 +461,7 @@ view model =
                             View.LoadingScreen.view "Loading campaign"
 
                         Failure error ->
-                            View.ErrorScreen.view (Extra.String.fromHttpError error)
+                            View.ErrorScreen.view (DetailedHttpError.toString error)
 
                         Success campaign ->
                             viewCampaign campaign model
@@ -520,7 +519,7 @@ viewCampaign campaign model =
                     viewTemporarySidebar "Loading level..."
 
                 Just (Failure error) ->
-                    viewTemporarySidebar (Extra.String.fromHttpError error)
+                    viewTemporarySidebar (DetailedHttpError.toString error)
 
                 Nothing ->
                     viewTemporarySidebar "Select a level"
@@ -575,7 +574,7 @@ viewLevels campaign model =
                     View.Box.simpleLoading "Loading level..."
 
                 Failure error ->
-                    View.Box.simpleError (Extra.String.fromHttpError error)
+                    View.Box.simpleError (DetailedHttpError.toString error)
 
                 Success level ->
                     viewLevel level
@@ -677,7 +676,7 @@ viewDrafts level session =
             View.Box.simpleLoading "Loading drafts"
 
         Failure error ->
-            View.Box.simpleError (Extra.String.fromHttpError error)
+            View.Box.simpleError (DetailedHttpError.toString error)
 
         Success draftBook ->
             let
@@ -696,7 +695,7 @@ viewDrafts level session =
                             View.Box.simpleLoading ("Loading draft " ++ String.fromInt (index + 1))
 
                         Failure error ->
-                            View.Box.simpleError (Extra.String.fromHttpError error)
+                            View.Box.simpleError (DetailedHttpError.toString error)
 
                         Success draft ->
                             let

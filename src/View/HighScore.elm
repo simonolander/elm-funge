@@ -1,16 +1,16 @@
 module View.HighScore exposing (view)
 
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.HighScore exposing (HighScore)
 import Dict
 import Element exposing (..)
 import Element.Font as Font
-import Http exposing (Error(..))
-import RemoteData exposing (WebData)
+import RemoteData exposing (RemoteData)
 import View.Box
 import View.Constant exposing (color)
 
 
-view : WebData HighScore -> Element msg
+view : RemoteData DetailedHttpError HighScore -> Element msg
 view remoteData =
     --    let
     --        remoteData =
@@ -114,25 +114,11 @@ notAsked =
     View.Box.simpleNonInteractive "Not asked"
 
 
-failure : Error -> Element msg
+failure : DetailedHttpError -> Element msg
 failure error =
     let
         errorMessage =
-            case error of
-                BadUrl message ->
-                    message
-
-                Timeout ->
-                    "Timeout"
-
-                NetworkError ->
-                    "Network error"
-
-                BadStatus status ->
-                    String.fromInt status
-
-                BadBody message ->
-                    message
+            DetailedHttpError.toString error
     in
     paragraph
         [ Font.color color.font.error

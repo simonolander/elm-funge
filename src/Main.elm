@@ -4,6 +4,7 @@ import Api.Auth0 as Auth0
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Campaign
+import Data.DetailedHttpError exposing (DetailedHttpError(..))
 import Data.Draft
 import Data.DraftBook
 import Data.Level
@@ -12,7 +13,6 @@ import Data.Session as Session exposing (Session)
 import Data.Solution
 import Data.SolutionBook
 import Html
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -282,7 +282,7 @@ localStorageResponseUpdate response model =
         onSingle :
             { name : String
             , success : value -> Session -> Session
-            , failure : String -> Http.Error -> Session -> Session
+            , failure : String -> DetailedHttpError -> Session -> Session
             , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error (Maybe value))
             }
             -> ( { model | session : Session }, Cmd msg )
@@ -301,7 +301,7 @@ localStorageResponseUpdate response model =
                                 errorMessage =
                                     name ++ " " ++ request ++ " not found"
                             in
-                            ( { mdl | session = failure request RequestResult.notFound mdl.session }
+                            ( { mdl | session = failure request NotFound mdl.session }
                             , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
                             )
 
@@ -319,7 +319,7 @@ localStorageResponseUpdate response model =
 
         onCollection :
             { success : value -> Session -> Session
-            , failure : String -> Http.Error -> Session -> Session
+            , failure : String -> DetailedHttpError -> Session -> Session
             , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error value)
             }
             -> ( { model | session : Session }, Cmd msg )

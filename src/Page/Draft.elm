@@ -6,6 +6,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
 import Data.Cache as Cache
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.History as History
@@ -175,9 +176,9 @@ type Msg
     | InstructionToolReplaced Int InstructionTool
     | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
-    | GotLoadDraftResponse (RequestResult DraftId Http.Error Draft)
-    | LoadedLevel (RequestResult LevelId Http.Error Level)
-    | GotSaveDraftToServerResponse (RequestResult Draft Http.Error ())
+    | GotLoadDraftResponse (RequestResult DraftId DetailedHttpError Draft)
+    | LoadedLevel (RequestResult LevelId DetailedHttpError Level)
+    | GotSaveDraftToServerResponse (RequestResult Draft DetailedHttpError ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -368,7 +369,7 @@ update msg model =
 
                 Err error ->
                     ( model
-                    , Ports.Console.errorString (Extra.String.fromHttpError error)
+                    , Ports.Console.errorString (DetailedHttpError.toString error)
                     )
 
 
@@ -426,7 +427,7 @@ view model =
                             View.LoadingScreen.view ("Loading draft " ++ model.draftId)
 
                         Failure error ->
-                            View.ErrorScreen.view (Extra.String.fromHttpError error)
+                            View.ErrorScreen.view (DetailedHttpError.toString error)
 
                         Success draft ->
                             case Session.getLevel draft.levelId session of
@@ -437,7 +438,7 @@ view model =
                                     View.LoadingScreen.view ("Loading level " ++ draft.levelId)
 
                                 Failure error ->
-                                    View.ErrorScreen.view (Extra.String.fromHttpError error)
+                                    View.ErrorScreen.view (DetailedHttpError.toString error)
 
                                 Success level ->
                                     viewLoaded

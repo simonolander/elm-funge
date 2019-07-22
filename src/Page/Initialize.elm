@@ -15,6 +15,7 @@ import Browser exposing (Document)
 import Browser.Navigation
 import Data.AccessToken as AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.RemoteCache exposing (RemoteCache)
@@ -50,12 +51,12 @@ import ViewComponents
 
 type InitializationError
     = NetworkMissing
-    | ServerError Http.Error
+    | ServerError DetailedHttpError
 
 
 type Saving a
     = Saving a
-    | Saved (Result Http.Error a)
+    | Saved (Result DetailedHttpError a)
 
 
 type AccessTokenState
@@ -73,7 +74,7 @@ type alias Model =
     , route : Route
     , accessTokenState : AccessTokenState
     , expectedUserInfo : Maybe UserInfo
-    , actualUserInfo : RemoteData.WebData UserInfo
+    , actualUserInfo : RemoteData.RemoteData DetailedHttpError UserInfo
     , localDrafts : Dict DraftId (Result Decode.Error Draft)
     , expectedDrafts : Dict DraftId (Result Decode.Error Draft)
     , actualDrafts : Cache DraftId Draft
@@ -319,7 +320,7 @@ withSavingDraft draft model =
     { model | savingDrafts = Dict.insert draft.id (Saving draft) model.savingDrafts }
 
 
-withSavedDraft : RequestResult Draft Http.Error any -> Model -> Model
+withSavedDraft : RequestResult Draft DetailedHttpError any -> Model -> Model
 withSavedDraft { request, result } model =
     case result of
         Ok _ ->
@@ -358,9 +359,9 @@ withExpiredAccessToken model =
 
 
 type Msg
-    = GotUserInfoResponse (RequestResult AccessToken Http.Error UserInfo)
-    | GotDraftLoadResponse (RequestResult DraftId Http.Error Draft)
-    | GotDraftSaveResponse (RequestResult Draft Http.Error ())
+    = GotUserInfoResponse (Result DetailedHttpError UserInfo)
+    | GotDraftLoadResponse (RequestResult DraftId DetailedHttpError Draft)
+    | GotDraftSaveResponse (RequestResult Draft DetailedHttpError ())
     | ClickedContinueOffline
 
 
@@ -373,7 +374,7 @@ update msg model =
     in
     load <|
         case msg |> Debug.log "GotUserInfoResponse" of
-            GotUserInfoResponse { result } ->
+            GotUserInfoResponse result ->
                 let
                     modelWithActualUserInfo =
                         { model | actualUserInfo = RemoteData.fromResult result }
@@ -432,7 +433,7 @@ update msg model =
                         let
                             initializationError =
                                 case error of
-                                    Http.NetworkError ->
+                                    DetailedHttpError.NetworkError ->
                                         NetworkMissing
 
                                     _ ->
@@ -440,10 +441,10 @@ update msg model =
 
                             newAccessTokenState =
                                 case ( modelWithActualUserInfo.accessTokenState, error ) of
-                                    ( Verifying accessToken, Http.BadStatus 403 ) ->
+                                    ( Verifying accessToken, DetailedHttpError.InvalidAccessToken ) ->
                                         Expired accessToken
 
-                                    ( Verified { accessToken }, Http.BadStatus 403 ) ->
+                                    ( Verified { accessToken }, DetailedHttpError.InvalidAccessToken ) ->
                                         Expired accessToken
 
                                     _ ->
@@ -453,7 +454,7 @@ update msg model =
                             | accessTokenState = newAccessTokenState
                             , error = Just initializationError
                           }
-                        , Ports.Console.errorString (Extra.String.fromHttpError error)
+                        , Ports.Console.errorString (DetailedHttpError.toString error)
                         )
 
             GotDraftLoadResponse requestResult ->
@@ -497,32 +498,37 @@ update msg model =
                                     |> withCmd Cmd.none
 
                     Err error ->
-                        let
-                            initializationError =
-                                case error of
-                                    Http.NetworkError ->
-                                        NetworkMissing
+                        case error of
+                            DetailedHttpError.NotFound ->
+                                Debug.todo "TODO Draft doesn't exist on server"
 
-                                    _ ->
-                                        ServerError error
+                            _ ->
+                                let
+                                    initializationError =
+                                        case error of
+                                            DetailedHttpError.NetworkError ->
+                                                NetworkMissing
 
-                            newAccessTokenState =
-                                case ( modelWithActualDraft.accessTokenState, error ) of
-                                    ( Verifying accessToken, Http.BadStatus 403 ) ->
-                                        Expired accessToken
+                                            _ ->
+                                                ServerError error
 
-                                    ( Verified { accessToken }, Http.BadStatus 403 ) ->
-                                        Expired accessToken
+                                    newAccessTokenState =
+                                        case ( modelWithActualDraft.accessTokenState, error ) of
+                                            ( Verifying accessToken, DetailedHttpError.InvalidAccessToken ) ->
+                                                Expired accessToken
 
-                                    _ ->
-                                        modelWithActualDraft.accessTokenState
-                        in
-                        ( { modelWithActualDraft
-                            | accessTokenState = newAccessTokenState
-                            , error = Just initializationError
-                          }
-                        , Ports.Console.errorString (Extra.String.fromHttpError error)
-                        )
+                                            ( Verified { accessToken }, DetailedHttpError.InvalidAccessToken ) ->
+                                                Expired accessToken
+
+                                            _ ->
+                                                modelWithActualDraft.accessTokenState
+                                in
+                                ( { modelWithActualDraft
+                                    | accessTokenState = newAccessTokenState
+                                    , error = Just initializationError
+                                  }
+                                , Ports.Console.errorString (DetailedHttpError.toString error)
+                                )
 
             GotDraftSaveResponse requestResult ->
                 let
@@ -547,15 +553,15 @@ update msg model =
 
                     Err error ->
                         case error of
-                            Http.BadStatus 403 ->
+                            DetailedHttpError.InvalidAccessToken ->
                                 ( modelWithSavedDraft
                                     |> withExpiredAccessToken
-                                , Ports.Console.errorString (Extra.String.fromHttpError error)
+                                , Ports.Console.errorString (DetailedHttpError.toString error)
                                 )
 
                             _ ->
                                 ( modelWithSavedDraft
-                                , Ports.Console.errorString (Extra.String.fromHttpError error)
+                                , Ports.Console.errorString (DetailedHttpError.toString error)
                                 )
 
             ClickedContinueOffline ->
@@ -658,18 +664,18 @@ viewExpiredAccessToken model =
         ]
 
 
-viewHttpError : Model -> Http.Error -> Element Msg
+viewHttpError : Model -> DetailedHttpError -> Element Msg
 viewHttpError model error =
     case error of
-        Http.NetworkError ->
+        DetailedHttpError.NetworkError ->
             column
                 []
                 [ text "Unable to connect to server"
                 , Input.button [] { onPress = Just ClickedContinueOffline, label = text "Continue offline" }
                 ]
 
-        Http.BadStatus 403 ->
+        DetailedHttpError.InvalidAccessToken ->
             viewExpiredAccessToken model
 
         _ ->
-            View.ErrorScreen.view (Extra.String.fromHttpError error)
+            View.ErrorScreen.view (DetailedHttpError.toString error)

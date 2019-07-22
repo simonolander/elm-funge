@@ -5,6 +5,7 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
 import Data.CampaignId as CampaignId
+import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Direction exposing (Direction(..))
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
@@ -227,7 +228,7 @@ type Msg
     | ClickedPause
     | ClickedNavigateBrowseLevels
     | GeneratedSolution Solution
-    | SavedSolutionToServer (Result Http.Error ())
+    | SavedSolutionToServer (Result DetailedHttpError ())
     | Tick
 
 
@@ -305,7 +306,7 @@ update msg model =
 
                         Http.Err error ->
                             ( model
-                            , Ports.Console.errorString (Extra.String.fromHttpError error)
+                            , Ports.Console.errorString (DetailedHttpError.toString error)
                             )
 
         Nothing ->
@@ -828,11 +829,11 @@ view model =
                     let
                         errorMessage =
                             case error of
-                                Http.BadStatus 404 ->
+                                DetailedHttpError.NotFound ->
                                     "Draft " ++ model.draftId ++ " not found"
 
                                 _ ->
-                                    Extra.String.fromHttpError error
+                                    DetailedHttpError.toString error
                     in
                     View.ErrorScreen.view errorMessage
 
@@ -845,7 +846,7 @@ view model =
                             View.LoadingScreen.view ("Loading level " ++ draft.levelId)
 
                         Failure error ->
-                            View.ErrorScreen.view (Extra.String.fromHttpError error)
+                            View.ErrorScreen.view (DetailedHttpError.toString error)
 
                         Success _ ->
                             case model.execution of

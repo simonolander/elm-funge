@@ -1,18 +1,18 @@
 module Data.Cache exposing (Cache, empty, failure, fromRequestResults, fromResult, fromResultDict, get, insert, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault)
 
 import Basics.Extra exposing (flip)
+import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.RequestResult exposing (RequestResult)
 import Dict exposing (Dict)
-import Http
-import RemoteData exposing (RemoteData(..), WebData)
+import RemoteData exposing (RemoteData(..))
 import Set exposing (Set)
 
 
 type Cache comparable value
-    = Cache (Dict comparable (WebData value))
+    = Cache (Dict comparable (RemoteData DetailedHttpError value))
 
 
-get : comparable -> Cache comparable value -> WebData value
+get : comparable -> Cache comparable value -> RemoteData DetailedHttpError value
 get key cache =
     cache
         |> getDict
@@ -32,17 +32,17 @@ empty =
     Cache Dict.empty
 
 
-fromRequestResults : List (RequestResult comparable Http.Error value) -> Cache comparable value
+fromRequestResults : List (RequestResult comparable DetailedHttpError value) -> Cache comparable value
 fromRequestResults requestResults =
     List.foldl insertRequestResult empty requestResults
 
 
-fromResultDict : Dict comparable (Result Http.Error value) -> Cache comparable value
+fromResultDict : Dict comparable (Result DetailedHttpError value) -> Cache comparable value
 fromResultDict dict =
     Cache (Dict.map (always RemoteData.fromResult) dict)
 
 
-insertRequestResult : RequestResult comparable Http.Error value -> Cache comparable value -> Cache comparable value
+insertRequestResult : RequestResult comparable DetailedHttpError value -> Cache comparable value -> Cache comparable value
 insertRequestResult requestResult cache =
     insertInternal requestResult.request (RemoteData.fromResult requestResult.result) cache
 
@@ -60,7 +60,7 @@ remove key cache =
         |> Cache
 
 
-failure : comparable -> Http.Error -> Cache comparable value -> Cache comparable value
+failure : comparable -> DetailedHttpError -> Cache comparable value -> Cache comparable value
 failure key error =
     insertInternal key (Failure error)
 
@@ -81,7 +81,7 @@ isNotAsked key cache =
 -- ADVANCED
 
 
-fromResult : comparable -> Result Http.Error value -> Cache comparable value -> Cache comparable value
+fromResult : comparable -> Result DetailedHttpError value -> Cache comparable value -> Cache comparable value
 fromResult key result =
     insertInternal key (RemoteData.fromResult result)
 
@@ -115,12 +115,12 @@ map key function cache =
 -- INTERNAL
 
 
-getDict : Cache comparable value -> Dict comparable (WebData value)
+getDict : Cache comparable value -> Dict comparable (RemoteData DetailedHttpError value)
 getDict (Cache dict) =
     dict
 
 
-insertInternal : comparable -> WebData value -> Cache comparable value -> Cache comparable value
+insertInternal : comparable -> RemoteData DetailedHttpError value -> Cache comparable value -> Cache comparable value
 insertInternal key webData cache =
     cache
         |> getDict

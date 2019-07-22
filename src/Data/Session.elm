@@ -55,6 +55,7 @@ import Data.AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
 import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
+import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
@@ -67,8 +68,7 @@ import Data.Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId exposing (SolutionId)
 import Data.User as User exposing (User)
-import Http
-import RemoteData exposing (RemoteData(..), WebData)
+import RemoteData exposing (RemoteData(..))
 import Url exposing (Url)
 
 
@@ -134,7 +134,7 @@ setLevelCache session cache =
     { session | levels = cache }
 
 
-getLevel : LevelId -> Session -> WebData Level
+getLevel : LevelId -> Session -> RemoteData DetailedHttpError Level
 getLevel levelId session =
     Cache.get levelId session.levels
 
@@ -165,7 +165,7 @@ levelLoading levelId session =
         |> setLevelCache session
 
 
-levelError : LevelId -> Http.Error -> Session -> Session
+levelError : LevelId -> DetailedHttpError -> Session -> Session
 levelError levelId error session =
     session.levels
         |> Cache.failure levelId error
@@ -181,7 +181,7 @@ setDraftCache session cache =
     { session | drafts = cache }
 
 
-getDraft : DraftId -> Session -> WebData Draft
+getDraft : DraftId -> Session -> RemoteData DetailedHttpError Draft
 getDraft levelId session =
     Cache.get levelId session.drafts.local
 
@@ -213,7 +213,7 @@ draftLoading levelId session =
         |> setDraftCache session
 
 
-draftError : DraftId -> Http.Error -> Session -> Session
+draftError : DraftId -> DetailedHttpError -> Session -> Session
 draftError levelId error session =
     session.drafts.local
         |> Cache.failure levelId error
@@ -230,7 +230,7 @@ setSolutionCache session cache =
     { session | solutions = cache }
 
 
-getSolution : LevelId -> Session -> WebData Solution
+getSolution : LevelId -> Session -> RemoteData DetailedHttpError Solution
 getSolution levelId session =
     Cache.get levelId session.solutions
 
@@ -260,7 +260,7 @@ solutionLoading levelId session =
         |> setSolutionCache session
 
 
-solutionError : LevelId -> Http.Error -> Session -> Session
+solutionError : LevelId -> DetailedHttpError -> Session -> Session
 solutionError levelId error session =
     session.solutions
         |> Cache.failure levelId error
@@ -276,7 +276,7 @@ setCampaignCache session cache =
     { session | campaigns = cache }
 
 
-getCampaign : CampaignId -> Session -> WebData Campaign
+getCampaign : CampaignId -> Session -> RemoteData DetailedHttpError Campaign
 getCampaign campaignId session =
     Cache.get campaignId session.campaigns
 
@@ -300,7 +300,7 @@ campaignLoading campaignId session =
         |> setCampaignCache session
 
 
-campaignError : CampaignId -> Http.Error -> Session -> Session
+campaignError : CampaignId -> DetailedHttpError -> Session -> Session
 campaignError campaignId error session =
     session.campaigns
         |> Cache.failure campaignId error
@@ -316,7 +316,7 @@ setHighScoreCache session cache =
     { session | highScores = cache }
 
 
-getHighScore : LevelId -> Session -> WebData HighScore
+getHighScore : LevelId -> Session -> RemoteData DetailedHttpError HighScore
 getHighScore levelId session =
     Cache.get levelId session.highScores
 
@@ -328,7 +328,7 @@ withHighScore highScore session =
         |> setHighScoreCache session
 
 
-withHighScoreResult : RequestResult LevelId Http.Error HighScore -> Session -> Session
+withHighScoreResult : RequestResult LevelId DetailedHttpError HighScore -> Session -> Session
 withHighScoreResult { request, result } session =
     { session
         | highScores =
@@ -343,7 +343,7 @@ highScoreLoading levelId session =
         |> setHighScoreCache session
 
 
-highScoreError : LevelId -> Http.Error -> Session -> Session
+highScoreError : LevelId -> DetailedHttpError -> Session -> Session
 highScoreError levelId error session =
     session.highScores
         |> Cache.failure levelId error
@@ -359,7 +359,7 @@ setDraftBookCache session cache =
     { session | draftBooks = cache }
 
 
-getDraftBook : LevelId -> Session -> WebData DraftBook
+getDraftBook : LevelId -> Session -> RemoteData DetailedHttpError DraftBook
 getDraftBook levelId session =
     Cache.get levelId session.draftBooks
 
@@ -379,7 +379,7 @@ draftBookLoading levelId session =
         |> setDraftBookCache session
 
 
-draftBookError : LevelId -> Http.Error -> Session -> Session
+draftBookError : LevelId -> DetailedHttpError -> Session -> Session
 draftBookError levelId error session =
     session.draftBooks
         |> Cache.failure levelId error
@@ -403,7 +403,7 @@ setSolutionBookCache session cache =
     { session | solutionBooks = cache }
 
 
-getSolutionBook : LevelId -> Session -> WebData SolutionBook
+getSolutionBook : LevelId -> Session -> RemoteData DetailedHttpError SolutionBook
 getSolutionBook levelId session =
     Cache.get levelId session.solutionBooks
 
@@ -423,7 +423,7 @@ solutionBookLoading levelId session =
         |> setSolutionBookCache session
 
 
-solutionBookError : LevelId -> Http.Error -> Session -> Session
+solutionBookError : LevelId -> DetailedHttpError -> Session -> Session
 solutionBookError levelId error session =
     session.solutionBooks
         |> Cache.failure levelId error
