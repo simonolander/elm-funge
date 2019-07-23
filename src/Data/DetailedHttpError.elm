@@ -29,8 +29,8 @@ toString detailedHttpError =
         InvalidAccessToken ->
             "InvalidAccessToken"
 
-        BadStatus int ->
-            "BadStatus int"
+        BadStatus status ->
+            "BadStatus: " ++ String.fromInt status
 
-        BadBody int string ->
-            "BadBody int string"
+        BadBody int error ->
+            "BadBody: " ++ error

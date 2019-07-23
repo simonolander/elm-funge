@@ -148,6 +148,9 @@ expectDetailedJson toMsg decoder =
                         404 ->
                             Err DetailedHttpError.NotFound
 
+                        403 ->
+                            Err DetailedHttpError.InvalidAccessToken
+
                         _ ->
                             Err (DetailedHttpError.BadStatus metadata.statusCode)
 

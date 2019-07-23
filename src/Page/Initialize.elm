@@ -28,8 +28,6 @@ import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Extra.Result
-import Extra.String
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Levels
@@ -310,9 +308,17 @@ withSession session model =
     { model | session = session }
 
 
-withError : InitializationError -> Model -> Model
-withError initializationError model =
-    { model | error = Just initializationError }
+withError : DetailedHttpError -> Model -> Model
+withError error model =
+    { model
+        | error =
+            case error of
+                DetailedHttpError.NetworkError ->
+                    Just NetworkMissing
+
+                _ ->
+                    Just (ServerError error)
+    }
 
 
 withSavingDraft : Draft -> Model -> Model
@@ -500,35 +506,27 @@ update msg model =
                     Err error ->
                         case error of
                             DetailedHttpError.NotFound ->
-                                Debug.todo "TODO Draft doesn't exist on server"
+                                case ( model.accessTokenState, Dict.get request model.localDrafts ) of
+                                    ( Verified { accessToken }, Just (Ok localDraft) ) ->
+                                        modelWithActualDraft
+                                            |> withSavingDraft localDraft
+                                            |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
+
+                                    _ ->
+                                        modelWithActualDraft
+                                            |> withError error
+                                            |> withCmd (Ports.Console.errorString "509c6a8b-2df8-4ecc-bb32-90067b6e7893")
+
+                            DetailedHttpError.InvalidAccessToken ->
+                                modelWithActualDraft
+                                    |> withExpiredAccessToken
+                                    |> withError error
+                                    |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
 
                             _ ->
-                                let
-                                    initializationError =
-                                        case error of
-                                            DetailedHttpError.NetworkError ->
-                                                NetworkMissing
-
-                                            _ ->
-                                                ServerError error
-
-                                    newAccessTokenState =
-                                        case ( modelWithActualDraft.accessTokenState, error ) of
-                                            ( Verifying accessToken, DetailedHttpError.InvalidAccessToken ) ->
-                                                Expired accessToken
-
-                                            ( Verified { accessToken }, DetailedHttpError.InvalidAccessToken ) ->
-                                                Expired accessToken
-
-                                            _ ->
-                                                modelWithActualDraft.accessTokenState
-                                in
-                                ( { modelWithActualDraft
-                                    | accessTokenState = newAccessTokenState
-                                    , error = Just initializationError
-                                  }
-                                , Ports.Console.errorString (DetailedHttpError.toString error)
-                                )
+                                modelWithActualDraft
+                                    |> withError error
+                                    |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
 
             GotDraftSaveResponse requestResult ->
                 let
@@ -624,7 +622,7 @@ view model =
                                 |> View.ErrorScreen.layout
 
                 Verified _ ->
-                    View.ErrorScreen.layout "Access token verified"
+                    View.ErrorScreen.layout ("Access token verified: \n\n" ++ Debug.toString model)
     in
     { title = "Synchronizing"
     , body = [ element ]
