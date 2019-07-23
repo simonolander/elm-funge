@@ -234,7 +234,7 @@ load =
                                         |> flip withSession model
                                     , Cmd.batch
                                         [ cmd
-                                        , HighScore.loadFromServer levelId LoadedHighScore
+                                        , HighScore.loadFromServer levelId GotLoadHighScoreResponse
                                         ]
                                     )
 
@@ -274,7 +274,7 @@ withSession session model =
 
 type Msg
     = SelectLevel LevelId
-    | LoadedHighScore (RequestResult LevelId DetailedHttpError HighScore)
+    | GotLoadHighScoreResponse (RequestResult LevelId DetailedHttpError HighScore)
     | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId DetailedHttpError (List Level))
     | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Solution))
     | GotSaveDraftResponse (RequestResult Draft DetailedHttpError ())
@@ -317,7 +317,7 @@ update msg model =
                     _ ->
                         ( model, Cmd.none )
 
-            LoadedHighScore requestResult ->
+            GotLoadHighScoreResponse requestResult ->
                 let
                     newSession =
                         Session.withHighScoreResult requestResult session
