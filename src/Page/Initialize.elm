@@ -277,11 +277,11 @@ load =
                                     model.localDrafts
                                         |> Dict.map (always (Result.mapError RequestResult.badBody))
                                         |> Cache.fromResultDict
-                                , oldRemote =
+                                , expected =
                                     model.expectedDrafts
                                         |> Dict.map (always (Result.mapError RequestResult.badBody))
                                         |> Cache.fromResultDict
-                                , newRemote = model.actualDrafts
+                                , actual = model.actualDrafts
                                 }
 
                             session =

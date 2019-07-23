@@ -4,6 +4,7 @@ import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
+import Data.Cache as Cache
 import Data.CampaignId as CampaignId
 import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Direction exposing (Direction(..))
@@ -17,6 +18,7 @@ import Data.Int16 as Int16 exposing (Int16)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Output exposing (Output)
+import Data.RemoteCache as RemoteCache
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.Stack exposing (Stack)
@@ -101,10 +103,11 @@ load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 load =
     let
         loadDraft ( model, cmd ) =
-            case Session.getDraft model.draftId model.session of
+            case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
-                    ( model.session
-                        |> Session.draftLoading model.draftId
+                    ( model.session.drafts
+                        |> RemoteCache.withLocalLoading model.draftId
+                        |> flip Session.withDraftCache model.session
                         |> setSession model
                     , Cmd.batch [ cmd, Draft.loadFromLocalStorage model.draftId ]
                     )
@@ -114,7 +117,7 @@ load =
 
         loadLevel ( model, cmd ) =
             case
-                Session.getDraft model.draftId model.session
+                Cache.get model.draftId model.session.drafts.local
                     |> RemoteData.toMaybe
             of
                 Just draft ->
@@ -263,8 +266,7 @@ update msg model =
                 ClickedNavigateBrowseLevels ->
                     let
                         levelId =
-                            model.session
-                                |> Session.getDraft model.draftId
+                            Cache.get model.draftId model.session.drafts.local
                                 |> RemoteData.toMaybe
                                 |> Maybe.map .levelId
 
@@ -818,7 +820,7 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            case Session.getDraft model.draftId model.session of
+            case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
                     View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not asked :/")
 

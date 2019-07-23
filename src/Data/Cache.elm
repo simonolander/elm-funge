@@ -1,4 +1,4 @@
-module Data.Cache exposing (Cache, empty, failure, fromRequestResults, fromResult, fromResultDict, get, insert, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault)
+module Data.Cache exposing (Cache, empty, failure, fromRequestResults, fromResult, fromResultDict, get, insert, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault, withResult)
 
 import Basics.Extra exposing (flip)
 import Data.DetailedHttpError exposing (DetailedHttpError)
@@ -50,6 +50,11 @@ insertRequestResult requestResult cache =
 insert : comparable -> value -> Cache comparable value -> Cache comparable value
 insert key value =
     insertInternal key (Success value)
+
+
+withResult : comparable -> Result DetailedHttpError value -> Cache comparable value -> Cache comparable value
+withResult key result cache =
+    insertInternal key (RemoteData.fromResult result) cache
 
 
 remove : comparable -> Cache comparable value -> Cache comparable value

@@ -1,4 +1,23 @@
-module Data.Draft exposing (Draft, decoder, encode, generator, getInstructionCount, loadAllFromServer, loadFromLocalStorage, loadFromServer, loadFromServerByLevelId, loadRemoteFromLocalStorage, localRemoteStorageResponse, localStorageResponse, pushBoard, redo, saveRemoteToLocalStorage, saveToLocalStorage, saveToServer, undo)
+module Data.Draft exposing
+    ( Draft
+    , decoder
+    , encode
+    , generator
+    , getInstructionCount
+    , loadAllFromServer
+    , loadFromLocalStorage
+    , loadFromServer
+    , loadFromServerByLevelId
+    , loadRemoteFromLocalStorage
+    , localRemoteStorageResponse
+    , localStorageResponse
+    , pushBoard
+    , redo
+    , saveRemoteToLocalStorage
+    , saveToLocalStorage
+    , saveToServer
+    , undo
+    )
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -11,7 +30,6 @@ import Data.Instruction as Instruction
 import Data.Level exposing (Level)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -239,16 +257,8 @@ loadFromServerByLevelId accessToken toMsg levelId =
 
 saveToServer : AccessToken -> (RequestResult Draft DetailedHttpError () -> msg) -> Draft -> Cmd msg
 saveToServer accessToken toMsg draft =
-    let
-        value =
-            Encode.object
-                [ ( "id", DraftId.encode draft.id )
-                , ( "levelId", LevelId.encode draft.levelId )
-                , ( "board", Board.encode (History.current draft.boardHistory) )
-                ]
-    in
     GCP.post (Decode.succeed ())
         |> GCP.withPath [ "drafts" ]
         |> GCP.withAccessToken accessToken
-        |> GCP.withBody value
+        |> GCP.withBody (encode draft)
         |> GCP.request (RequestResult.constructor draft >> toMsg)

@@ -4,11 +4,8 @@ module Data.Session exposing
     , campaignLoading
     , draftBookError
     , draftBookLoading
-    , draftError
-    , draftLoading
     , getAccessToken
     , getCampaign
-    , getDraft
     , getDraftBook
     , getHighScore
     , getLevel
@@ -22,7 +19,6 @@ module Data.Session exposing
     , loadingHighScore
     , setCampaignCache
     , setDraftBookCache
-    , setDraftCache
     , setHighScoreCache
     , setLevelCache
     , setSolutionBookCache
@@ -33,10 +29,9 @@ module Data.Session exposing
     , solutionLoading
     , withCampaign
     , withCampaigns
-    , withDraft
     , withDraftBook
+    , withDraftBookCache
     , withDraftCache
-    , withDrafts
     , withHighScore
     , withHighScoreResult
     , withLevel
@@ -120,9 +115,12 @@ withUrl url session =
 
 withDraftCache : RemoteCache DraftId Draft -> Session -> Session
 withDraftCache cache session =
-    { session
-        | drafts = cache
-    }
+    { session | drafts = cache }
+
+
+withDraftBookCache : Cache LevelId DraftBook -> Session -> Session
+withDraftBookCache cache session =
+    { session | draftBooks = cache }
 
 
 
@@ -170,55 +168,6 @@ levelError levelId error session =
     session.levels
         |> Cache.failure levelId error
         |> setLevelCache session
-
-
-
--- DRAFT CACHE
-
-
-setDraftCache : Session -> RemoteCache DraftId Draft -> Session
-setDraftCache session cache =
-    { session | drafts = cache }
-
-
-getDraft : DraftId -> Session -> RemoteData DetailedHttpError Draft
-getDraft levelId session =
-    Cache.get levelId session.drafts.local
-
-
-withDraft : Draft -> Session -> Session
-withDraft draft session =
-    { session
-        | drafts =
-            session.drafts.local
-                |> Cache.insert draft.id draft
-                |> flip RemoteCache.withLocal session.drafts
-        , draftBooks =
-            session.draftBooks
-                |> Cache.withDefault draft.levelId (DraftBook.empty draft.levelId)
-                |> Cache.map draft.levelId (DraftBook.withDraftId draft.id)
-    }
-
-
-withDrafts : List Draft -> Session -> Session
-withDrafts drafts session =
-    List.foldl withDraft session drafts
-
-
-draftLoading : DraftId -> Session -> Session
-draftLoading levelId session =
-    session.drafts.local
-        |> Cache.loading levelId
-        |> flip RemoteCache.withLocal session.drafts
-        |> setDraftCache session
-
-
-draftError : DraftId -> DetailedHttpError -> Session -> Session
-draftError levelId error session =
-    session.drafts.local
-        |> Cache.failure levelId error
-        |> flip RemoteCache.withLocal session.drafts
-        |> setDraftCache session
 
 
 

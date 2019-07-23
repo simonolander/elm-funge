@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Api.Auth0 as Auth0
+import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Campaign
@@ -8,6 +9,7 @@ import Data.DetailedHttpError exposing (DetailedHttpError(..))
 import Data.Draft
 import Data.DraftBook
 import Data.Level
+import Data.RemoteCache as RemoteCache
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.Solution
@@ -360,8 +362,16 @@ localStorageResponseUpdate response model =
         onDraft =
             onSingle
                 { name = "Draft"
-                , success = Session.withDraft
-                , failure = Session.draftError
+                , success =
+                    \draft session ->
+                        session.drafts
+                            |> RemoteCache.withLocalValue draft.id draft
+                            |> flip Session.withDraftCache session
+                , failure =
+                    \draftId error session ->
+                        session.drafts
+                            |> RemoteCache.withLocalResult draftId (Err error)
+                            |> flip Session.withDraftCache session
                 , transform = Data.Draft.localStorageResponse
                 }
 
