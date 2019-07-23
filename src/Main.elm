@@ -148,7 +148,6 @@ type Msg
     | BlueprintMsg Blueprint.Msg
     | LoginMsg Login.Msg
     | InitializeMsg Initialize.Msg
-    | Ignored
     | LocalStorageResponse ( String, Encode.Value )
 
 
@@ -159,9 +158,6 @@ update msg model =
             getSession model
     in
     case ( msg, model ) of
-        ( Ignored, _ ) ->
-            ( model, Cmd.none )
-
         ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
