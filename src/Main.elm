@@ -148,79 +148,79 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
-        ( ClickedLink urlRequest, _ ) ->
-            case urlRequest of
-                Browser.Internal url ->
-                    case url.fragment of
-                        Nothing ->
-                            ( model, Cmd.none )
+    load <|
+        case ( msg, model ) of
+            ( ClickedLink urlRequest, _ ) ->
+                case urlRequest of
+                    Browser.Internal url ->
+                        case url.fragment of
+                            Nothing ->
+                                ( model, Cmd.none )
 
-                        Just _ ->
-                            ( model
-                            , Navigation.pushUrl (getSession model).key (Url.toString url)
-                            )
+                            Just _ ->
+                                ( model
+                                , Navigation.pushUrl (getSession model).key (Url.toString url)
+                                )
 
-                Browser.External href ->
-                    let
-                        cmd =
-                            [ if href == Auth0.logout then
-                                Just (Ports.LocalStorage.storageClear ())
+                    Browser.External href ->
+                        let
+                            cmd =
+                                [ if href == Auth0.logout then
+                                    Just (Ports.LocalStorage.storageClear ())
 
-                              else
-                                Nothing
-                            , Just (Navigation.load href)
-                            ]
-                                |> Maybe.Extra.values
-                                |> Cmd.batch
-                    in
-                    ( model
-                    , cmd
-                    )
+                                  else
+                                    Nothing
+                                , Just (Navigation.load href)
+                                ]
+                                    |> Maybe.Extra.values
+                                    |> Cmd.batch
+                        in
+                        ( model
+                        , cmd
+                        )
 
-        ( ChangedUrl url, _ ) ->
-            changeUrl url (getSession model)
+            ( ChangedUrl url, _ ) ->
+                changeUrl url (getSession model)
 
-        ( LocalStorageResponse response, mdl ) ->
-            localStorageResponseUpdate response mdl
+            ( LocalStorageResponse response, mdl ) ->
+                localStorageResponseUpdate response mdl
 
-        ( ExecutionMsg message, Execution mdl ) ->
-            Execution.update message mdl
-                |> updateWith Execution ExecutionMsg
+            ( ExecutionMsg message, Execution mdl ) ->
+                Execution.update message mdl
+                    |> updateWith Execution ExecutionMsg
 
-        ( DraftMsg message, Draft mdl ) ->
-            Draft.update message mdl
-                |> updateWith Draft DraftMsg
+            ( DraftMsg message, Draft mdl ) ->
+                Draft.update message mdl
+                    |> updateWith Draft DraftMsg
 
-        ( CampaignMsg message, Campaign mdl ) ->
-            Campaign.update message mdl
-                |> updateWith Campaign CampaignMsg
+            ( CampaignMsg message, Campaign mdl ) ->
+                Campaign.update message mdl
+                    |> updateWith Campaign CampaignMsg
 
-        ( CampaignMsg (Campaign.SessionMsg message), mdl ) ->
-            mdl
-                |> getSession
-                |> SessionUpdate.update message
-                |> updateWith (flip withSession mdl) CampaignMsg
-                |> load
+            ( CampaignMsg (Campaign.SessionMsg message), mdl ) ->
+                mdl
+                    |> getSession
+                    |> SessionUpdate.update message
+                    |> updateWith (flip withSession mdl) CampaignMsg
 
-        ( HomeMsg message, Home mdl ) ->
-            Home.update message mdl
-                |> updateWith Home HomeMsg
+            ( HomeMsg message, Home mdl ) ->
+                Home.update message mdl
+                    |> updateWith Home HomeMsg
 
-        ( BlueprintsMsg message, Blueprints mdl ) ->
-            Blueprints.update message mdl
-                |> updateWith Blueprints BlueprintsMsg
+            ( BlueprintsMsg message, Blueprints mdl ) ->
+                Blueprints.update message mdl
+                    |> updateWith Blueprints BlueprintsMsg
 
-        ( BlueprintMsg message, Blueprint mdl ) ->
-            Blueprint.update message mdl
-                |> updateWith Blueprint BlueprintMsg
+            ( BlueprintMsg message, Blueprint mdl ) ->
+                Blueprint.update message mdl
+                    |> updateWith Blueprint BlueprintMsg
 
-        ( InitializeMsg message, Initialize mdl ) ->
-            Initialize.update message mdl
-                |> updateWith Initialize InitializeMsg
+            ( InitializeMsg message, Initialize mdl ) ->
+                Initialize.update message mdl
+                    |> updateWith Initialize InitializeMsg
 
-        ( message, mdl ) ->
-            Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
+            ( message, mdl ) ->
+                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
 
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
@@ -234,34 +234,35 @@ changeUrl url oldSession =
         session =
             Session.withUrl url oldSession
     in
-    case Route.fromUrl url of
-        Nothing ->
-            Home.init session
-                |> updateWith Home HomeMsg
+    load <|
+        case Route.fromUrl url of
+            Nothing ->
+                Home.init session
+                    |> updateWith Home HomeMsg
 
-        Just Route.Home ->
-            Home.init session
-                |> updateWith Home HomeMsg
+            Just Route.Home ->
+                Home.init session
+                    |> updateWith Home HomeMsg
 
-        Just (Route.Campaign campaignId maybeLevelId) ->
-            Campaign.init campaignId maybeLevelId session
-                |> updateWith Campaign CampaignMsg
+            Just (Route.Campaign campaignId maybeLevelId) ->
+                Campaign.init campaignId maybeLevelId session
+                    |> updateWith Campaign CampaignMsg
 
-        Just (Route.EditDraft draftId) ->
-            Draft.init draftId session
-                |> updateWith Draft DraftMsg
+            Just (Route.EditDraft draftId) ->
+                Draft.init draftId session
+                    |> updateWith Draft DraftMsg
 
-        Just (Route.ExecuteDraft draftId) ->
-            Execution.init draftId session
-                |> updateWith Execution ExecutionMsg
+            Just (Route.ExecuteDraft draftId) ->
+                Execution.init draftId session
+                    |> updateWith Execution ExecutionMsg
 
-        Just (Route.Blueprints maybeLevelId) ->
-            Blueprints.init maybeLevelId session
-                |> updateWith Blueprints BlueprintsMsg
+            Just (Route.Blueprints maybeLevelId) ->
+                Blueprints.init maybeLevelId session
+                    |> updateWith Blueprints BlueprintsMsg
 
-        Just (Route.Blueprint levelId) ->
-            Blueprint.init levelId session
-                |> updateWith Blueprint BlueprintMsg
+            Just (Route.Blueprint levelId) ->
+                Blueprint.init levelId session
+                    |> updateWith Blueprint BlueprintMsg
 
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
@@ -487,41 +488,35 @@ getSession model =
 
 load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 load ( mainModel, cmd ) =
-    case mainModel of
-        Home model ->
-            Home.load ( model, Cmd.none )
-                |> updateWith Home HomeMsg
-                |> withExtraCmd cmd
+    withExtraCmd cmd <|
+        case mainModel of
+            Home model ->
+                Home.load model
+                    |> updateWith Home HomeMsg
 
-        Campaign model ->
-            Campaign.load ( model, Cmd.none )
-                |> updateWith Campaign CampaignMsg
-                |> withExtraCmd cmd
+            Campaign model ->
+                Campaign.load model
+                    |> updateWith Campaign CampaignMsg
 
-        Execution model ->
-            Execution.load ( model, Cmd.none )
-                |> updateWith Execution ExecutionMsg
-                |> withExtraCmd cmd
+            Execution model ->
+                Execution.load model
+                    |> updateWith Execution ExecutionMsg
 
-        Draft model ->
-            Draft.load ( model, Cmd.none )
-                |> updateWith Draft DraftMsg
-                |> withExtraCmd cmd
+            Draft model ->
+                Draft.load model
+                    |> updateWith Draft DraftMsg
 
-        Blueprint model ->
-            Blueprint.load ( model, Cmd.none )
-                |> updateWith Blueprint BlueprintMsg
-                |> withExtraCmd cmd
+            Blueprint model ->
+                Blueprint.load model
+                    |> updateWith Blueprint BlueprintMsg
 
-        Blueprints model ->
-            Blueprints.load ( model, Cmd.none )
-                |> updateWith Blueprints BlueprintsMsg
-                |> withExtraCmd cmd
+            Blueprints model ->
+                Blueprints.load model
+                    |> updateWith Blueprints BlueprintsMsg
 
-        Initialize model ->
-            Initialize.load ( model, Cmd.none )
-                |> updateWith Initialize InitializeMsg
-                |> withExtraCmd cmd
+            Initialize model ->
+                Initialize.load model
+                    |> updateWith Initialize InitializeMsg
 
 
 withSession : Session -> Model -> Model

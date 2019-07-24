@@ -28,6 +28,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import ExecutionControlView
+import Extra.Cmd exposing (noCmd)
 import Extra.String
 import Http
 import InstructionView
@@ -96,26 +97,26 @@ init draftId session =
             , saveSolutionRequest = NotAsked
             }
     in
-    load ( model, Cmd.none )
+    ( model, Cmd.none )
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load : Model -> ( Model, Cmd Msg )
 load =
     let
-        loadDraft ( model, cmd ) =
+        loadDraft model =
             case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
                     ( model.session.drafts
                         |> RemoteCache.withLocalLoading model.draftId
                         |> flip Session.withDraftCache model.session
                         |> setSession model
-                    , Cmd.batch [ cmd, Draft.loadFromLocalStorage model.draftId ]
+                    , Draft.loadFromLocalStorage model.draftId
                     )
 
                 _ ->
-                    ( model, cmd )
+                    noCmd model
 
-        loadLevel ( model, cmd ) =
+        loadLevel model =
             case
                 Cache.get model.draftId model.session.drafts.local
                     |> RemoteData.toMaybe
@@ -126,7 +127,7 @@ load =
                             ( model.session
                                 |> Session.levelLoading draft.levelId
                                 |> setSession model
-                            , Cmd.batch [ cmd, Level.loadFromLocalStorage draft.levelId ]
+                            , Level.loadFromLocalStorage draft.levelId
                             )
 
                         Success level ->
@@ -135,23 +136,23 @@ load =
                                     |> Maybe.map ((==) level.id)
                                     |> Maybe.withDefault False
                             then
-                                ( model, cmd )
+                                ( model, Cmd.none )
 
                             else
                                 ( { model
                                     | execution = Just (initialExecution level draft)
                                     , loadedLevelId = Just level.id
                                   }
-                                , cmd
+                                , Cmd.none
                                 )
 
                         _ ->
-                            ( model, cmd )
+                            ( model, Cmd.none )
 
                 Nothing ->
-                    ( model, cmd )
+                    ( model, Cmd.none )
     in
-    flip (List.foldl (flip (|>)))
+    Extra.Cmd.fold
         [ loadDraft
         , loadLevel
         ]

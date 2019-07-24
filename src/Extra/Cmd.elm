@@ -28,8 +28,8 @@ bind function ( value, cmd ) =
     withExtraCmd cmd (function value)
 
 
-fold : List (m -> ( m, Cmd msg )) -> ( m, Cmd msg ) -> ( m, Cmd msg )
-fold functions acc =
+fold : List (m -> ( m, Cmd msg )) -> m -> ( m, Cmd msg )
+fold functions model =
     functions
         |> List.map bind
-        |> List.foldl (flip (|>)) acc
+        |> List.foldl (flip (|>)) (noCmd model)

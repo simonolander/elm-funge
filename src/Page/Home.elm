@@ -6,6 +6,7 @@ import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
+import Extra.Cmd exposing (noCmd)
 import Json.Encode as Encode
 import Route exposing (Route)
 import View.Header
@@ -36,9 +37,9 @@ getSession { session } =
     session
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load : Model -> ( Model, Cmd Msg )
 load =
-    identity
+    noCmd
 
 
 

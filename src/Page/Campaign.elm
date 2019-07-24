@@ -70,10 +70,10 @@ init campaignId selectedLevelId session =
             , error = Nothing
             }
     in
-    load ( model, Cmd.none )
+    ( model, Cmd.none )
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load : Model -> ( Model, Cmd Msg )
 load =
     let
         loadCampaign model =
@@ -277,74 +277,73 @@ update msg model =
         generateDraft levelId =
             Random.generate GeneratedDraft (Draft.generator levelId)
     in
-    load <|
-        case msg of
-            SelectLevel selectedLevelId ->
-                ( { model
-                    | selectedLevelId = Just selectedLevelId
-                  }
-                , Route.replaceUrl model.session.key (Route.Campaign model.campaignId (Just selectedLevelId))
-                )
+    case msg of
+        SelectLevel selectedLevelId ->
+            ( { model
+                | selectedLevelId = Just selectedLevelId
+              }
+            , Route.replaceUrl model.session.key (Route.Campaign model.campaignId (Just selectedLevelId))
+            )
 
-            ClickedOpenDraft draftId ->
-                ( model
-                , Route.pushUrl model.session.key (Route.EditDraft draftId)
-                )
+        ClickedOpenDraft draftId ->
+            ( model
+            , Route.pushUrl model.session.key (Route.EditDraft draftId)
+            )
 
-            ClickedGenerateDraft ->
-                case
-                    model.selectedLevelId
-                        |> Maybe.map (flip Session.getLevel model.session)
-                of
-                    Just (Success level) ->
-                        ( model, generateDraft level )
+        ClickedGenerateDraft ->
+            case
+                model.selectedLevelId
+                    |> Maybe.map (flip Session.getLevel model.session)
+            of
+                Just (Success level) ->
+                    ( model, generateDraft level )
 
-                    _ ->
-                        ( model, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
-            GeneratedDraft draft ->
-                let
-                    draftCache =
-                        model.session.drafts
-                            |> RemoteCache.withLocalValue draft.id draft
+        GeneratedDraft draft ->
+            let
+                draftCache =
+                    model.session.drafts
+                        |> RemoteCache.withLocalValue draft.id draft
 
-                    draftBook =
-                        Cache.get draft.levelId model.session.draftBooks
-                            |> RemoteData.toMaybe
-                            |> Maybe.withDefault (DraftBook.empty draft.levelId)
-                            |> DraftBook.withDraftId draft.id
+                draftBook =
+                    Cache.get draft.levelId model.session.draftBooks
+                        |> RemoteData.toMaybe
+                        |> Maybe.withDefault (DraftBook.empty draft.levelId)
+                        |> DraftBook.withDraftId draft.id
 
-                    draftBookCache =
-                        model.session.draftBooks
-                            |> Cache.insert draft.levelId draftBook
+                draftBookCache =
+                    model.session.draftBooks
+                        |> Cache.insert draft.levelId draftBook
 
-                    newModel =
-                        model.session
-                            |> Session.withDraftCache draftCache
-                            |> Session.withDraftBookCache draftBookCache
-                            |> flip withSession model
+                newModel =
+                    model.session
+                        |> Session.withDraftCache draftCache
+                        |> Session.withDraftBookCache draftBookCache
+                        |> flip withSession model
 
-                    saveDraftToServerCmd =
-                        case Session.getAccessToken model.session of
-                            Just accessToken ->
-                                Just (Draft.saveToServer accessToken (SessionMsg << GotSaveDraftResponse) draft)
+                saveDraftToServerCmd =
+                    case Session.getAccessToken model.session of
+                        Just accessToken ->
+                            Just (Draft.saveToServer accessToken (SessionMsg << GotSaveDraftResponse) draft)
 
-                            Nothing ->
-                                Nothing
+                        Nothing ->
+                            Nothing
 
-                    cmd =
-                        [ Just (Draft.saveToLocalStorage draft)
-                        , saveDraftToServerCmd
-                        , Just (Route.pushUrl model.session.key (Route.EditDraft draft.id))
-                        ]
-                            |> Maybe.Extra.values
-                            |> Cmd.batch
-                in
-                ( newModel, cmd )
+                cmd =
+                    [ Just (Draft.saveToLocalStorage draft)
+                    , saveDraftToServerCmd
+                    , Just (Route.pushUrl model.session.key (Route.EditDraft draft.id))
+                    ]
+                        |> Maybe.Extra.values
+                        |> Cmd.batch
+            in
+            ( newModel, cmd )
 
-            SessionMsg sessionMsg ->
-                SessionUpdate.update sessionMsg model.session
-                    |> Extra.Cmd.mapModel (flip withSession model)
+        SessionMsg sessionMsg ->
+            SessionUpdate.update sessionMsg model.session
+                |> Extra.Cmd.mapModel (flip withSession model)
 
 
 

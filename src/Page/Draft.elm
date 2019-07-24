@@ -23,6 +23,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Extra.Cmd exposing (noCmd)
 import Extra.String
 import Http exposing (Error(..))
 import Json.Decode as Decode exposing (Error)
@@ -87,13 +88,13 @@ init draftId session =
             , selectedInstructionToolIndex = Nothing
             }
     in
-    load ( model, Cmd.none )
+    ( model, Cmd.none )
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load : Model -> ( Model, Cmd Msg )
 load =
     let
-        loadDraft ( model, cmd ) =
+        loadDraft model =
             case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
                     case Session.getAccessToken model.session of
@@ -102,10 +103,7 @@ load =
                                 |> RemoteCache.withLocalLoading model.draftId
                                 |> flip Session.withDraftCache model.session
                                 |> flip withSession model
-                            , Cmd.batch
-                                [ cmd
-                                , Draft.loadFromServer accessToken GotLoadDraftResponse model.draftId
-                                ]
+                            , Draft.loadFromServer accessToken GotLoadDraftResponse model.draftId
                             )
 
                         Nothing ->
@@ -113,16 +111,13 @@ load =
                                 |> RemoteCache.withLocalLoading model.draftId
                                 |> flip Session.withDraftCache model.session
                                 |> flip withSession model
-                            , Cmd.batch
-                                [ cmd
-                                , Draft.loadFromLocalStorage model.draftId
-                                ]
+                            , Draft.loadFromLocalStorage model.draftId
                             )
 
                 _ ->
-                    ( model, cmd )
+                    noCmd model
 
-        loadLevel ( model, cmd ) =
+        loadLevel model =
             case
                 Cache.get model.draftId model.session.drafts.local
                     |> RemoteData.toMaybe
@@ -133,19 +128,16 @@ load =
                             ( model.session
                                 |> Session.levelLoading draft.levelId
                                 |> flip withSession model
-                            , Cmd.batch
-                                [ cmd
-                                , Level.loadFromServer LoadedLevel draft.levelId
-                                ]
+                            , Level.loadFromServer LoadedLevel draft.levelId
                             )
 
                         _ ->
-                            ( model, cmd )
+                            noCmd model
 
                 Nothing ->
-                    ( model, cmd )
+                    noCmd model
     in
-    flip (List.foldl (flip (|>)))
+    Extra.Cmd.fold
         [ loadDraft
         , loadLevel
         ]
@@ -196,175 +188,174 @@ update msg model =
                 |> Maybe.map (flip Session.getLevel model.session)
                 |> Maybe.andThen RemoteData.toMaybe
     in
-    load <|
-        case msg of
-            ImportDataChanged importData ->
-                case model.state of
-                    Importing _ ->
-                        ( { model
-                            | state =
-                                Importing
-                                    { importData = importData
-                                    , errorMessage = Nothing
-                                    }
-                          }
-                        , Cmd.none
-                        )
+    case msg of
+        ImportDataChanged importData ->
+            case model.state of
+                Importing _ ->
+                    ( { model
+                        | state =
+                            Importing
+                                { importData = importData
+                                , errorMessage = Nothing
+                                }
+                      }
+                    , Cmd.none
+                    )
 
-                    Editing ->
-                        ( model, Cmd.none )
+                Editing ->
+                    ( model, Cmd.none )
 
-            Import importData ->
-                case maybeDraft of
-                    Just draft ->
-                        case Decode.decodeString Board.decoder importData of
-                            Ok board ->
-                                { model | state = Editing }
-                                    |> updateDraft (Draft.pushBoard board draft)
+        Import importData ->
+            case maybeDraft of
+                Just draft ->
+                    case Decode.decodeString Board.decoder importData of
+                        Ok board ->
+                            { model | state = Editing }
+                                |> updateDraft (Draft.pushBoard board draft)
 
-                            Err error ->
-                                ( { model
-                                    | state =
-                                        Importing
-                                            { importData = importData
-                                            , errorMessage = Just (Decode.errorToString error)
-                                            }
-                                  }
-                                , Cmd.none
-                                )
+                        Err error ->
+                            ( { model
+                                | state =
+                                    Importing
+                                        { importData = importData
+                                        , errorMessage = Just (Decode.errorToString error)
+                                        }
+                              }
+                            , Cmd.none
+                            )
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-            ImportOpen ->
-                case maybeDraft of
-                    Just draft ->
-                        ( { model
-                            | state =
-                                Importing
-                                    { importData =
-                                        History.current draft.boardHistory
-                                            |> Board.encode
-                                            |> Encode.encode 2
-                                    , errorMessage = Nothing
-                                    }
-                          }
-                        , Cmd.none
-                        )
+        ImportOpen ->
+            case maybeDraft of
+                Just draft ->
+                    ( { model
+                        | state =
+                            Importing
+                                { importData =
+                                    History.current draft.boardHistory
+                                        |> Board.encode
+                                        |> Encode.encode 2
+                                , errorMessage = Nothing
+                                }
+                      }
+                    , Cmd.none
+                    )
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-            ImportClosed ->
-                ( { model | state = Editing }
-                , Cmd.none
-                )
+        ImportClosed ->
+            ( { model | state = Editing }
+            , Cmd.none
+            )
 
-            EditUndo ->
-                case maybeDraft of
-                    Just draft ->
-                        updateDraft
-                            (Draft.undo draft)
-                            model
+        EditUndo ->
+            case maybeDraft of
+                Just draft ->
+                    updateDraft
+                        (Draft.undo draft)
+                        model
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-            EditRedo ->
-                case maybeDraft of
-                    Just draft ->
-                        updateDraft
-                            (Draft.redo draft)
-                            model
+        EditRedo ->
+            case maybeDraft of
+                Just draft ->
+                    updateDraft
+                        (Draft.redo draft)
+                        model
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-            EditClear ->
-                case ( maybeDraft, maybeLevel ) of
-                    ( Just draft, Just level ) ->
-                        updateDraft
-                            (Draft.pushBoard level.initialBoard draft)
-                            model
+        EditClear ->
+            case ( maybeDraft, maybeLevel ) of
+                ( Just draft, Just level ) ->
+                    updateDraft
+                        (Draft.pushBoard level.initialBoard draft)
+                        model
 
-                    _ ->
-                        ( model, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
-            ClickedBack ->
-                ( model
-                , Navigation.back model.session.key 1
-                )
+        ClickedBack ->
+            ( model
+            , Navigation.back model.session.key 1
+            )
 
-            ClickedExecute ->
-                ( model
-                , Route.pushUrl
-                    model.session.key
-                    (Route.ExecuteDraft model.draftId)
-                )
+        ClickedExecute ->
+            ( model
+            , Route.pushUrl
+                model.session.key
+                (Route.ExecuteDraft model.draftId)
+            )
 
-            InstructionToolSelected index ->
-                ( { model
-                    | selectedInstructionToolIndex = Just index
-                  }
-                , Cmd.none
-                )
+        InstructionToolSelected index ->
+            ( { model
+                | selectedInstructionToolIndex = Just index
+              }
+            , Cmd.none
+            )
 
-            InstructionToolReplaced index instructionTool ->
-                case maybeLevel of
-                    Just level ->
-                        ( { model
-                            | session =
-                                Level.withInstructionTool index instructionTool level
-                                    |> flip Session.withLevel model.session
-                          }
-                        , Cmd.none
-                        )
+        InstructionToolReplaced index instructionTool ->
+            case maybeLevel of
+                Just level ->
+                    ( { model
+                        | session =
+                            Level.withInstructionTool index instructionTool level
+                                |> flip Session.withLevel model.session
+                      }
+                    , Cmd.none
+                    )
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-            InstructionPlaced position instruction ->
-                case maybeDraft of
-                    Just oldDraft ->
-                        let
-                            board =
-                                oldDraft.boardHistory
-                                    |> History.current
-                                    |> Board.set position instruction
+        InstructionPlaced position instruction ->
+            case maybeDraft of
+                Just oldDraft ->
+                    let
+                        board =
+                            oldDraft.boardHistory
+                                |> History.current
+                                |> Board.set position instruction
 
-                            draft =
-                                Draft.pushBoard board oldDraft
-                        in
-                        updateDraft draft model
+                        draft =
+                            Draft.pushBoard board oldDraft
+                    in
+                    updateDraft draft model
 
-                    Nothing ->
-                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
-            GotLoadDraftResponse { request, result } ->
-                let
-                    modelWithDraftResult =
-                        model.session.drafts
-                            |> RemoteCache.withLocalResult request result
-                            |> flip Session.withDraftCache model.session
-                            |> flip withSession model
-                in
-                ( modelWithDraftResult
-                , Cmd.none
-                )
+        GotLoadDraftResponse { request, result } ->
+            let
+                modelWithDraftResult =
+                    model.session.drafts
+                        |> RemoteCache.withLocalResult request result
+                        |> flip Session.withDraftCache model.session
+                        |> flip withSession model
+            in
+            ( modelWithDraftResult
+            , Cmd.none
+            )
 
-            -- TODO
-            LoadedLevel result ->
-                Debug.todo "LoadedLevel not implemented"
+        -- TODO
+        LoadedLevel result ->
+            Debug.todo "LoadedLevel not implemented"
 
-            GotSaveDraftToServerResponse requestResult ->
-                case requestResult.result of
-                    Ok _ ->
-                        ( model, Cmd.none )
+        GotSaveDraftToServerResponse requestResult ->
+            case requestResult.result of
+                Ok _ ->
+                    ( model, Cmd.none )
 
-                    Err error ->
-                        ( model
-                        , Ports.Console.errorString (DetailedHttpError.toString error)
-                        )
+                Err error ->
+                    ( model
+                    , Ports.Console.errorString (DetailedHttpError.toString error)
+                    )
 
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )

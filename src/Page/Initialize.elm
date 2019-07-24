@@ -168,10 +168,10 @@ init { navigationKey, localStorageEntries, url } =
                     |> Maybe.withDefault Cmd.none
                 ]
     in
-    load ( model, cmd )
+    ( model, cmd )
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load : Model -> ( Model, Cmd Msg )
 load =
     let
         loadUserData model =
@@ -365,196 +365,195 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    load <|
-        case msg |> Debug.log "GotUserInfoResponse" of
-            GotUserInfoResponse result ->
-                let
-                    modelWithActualUserInfo =
-                        { model | actualUserInfo = RemoteData.fromResult result }
-                in
-                case result of
-                    Ok actualUserInfo ->
-                        let
-                            verified =
-                                case modelWithActualUserInfo.accessTokenState of
-                                    Verifying accessToken ->
-                                        Verified
-                                            { accessToken = accessToken
-                                            , userInfo = actualUserInfo
-                                            }
+    case msg |> Debug.log "GotUserInfoResponse" of
+        GotUserInfoResponse result ->
+            let
+                modelWithActualUserInfo =
+                    { model | actualUserInfo = RemoteData.fromResult result }
+            in
+            case result of
+                Ok actualUserInfo ->
+                    let
+                        verified =
+                            case modelWithActualUserInfo.accessTokenState of
+                                Verifying accessToken ->
+                                    Verified
+                                        { accessToken = accessToken
+                                        , userInfo = actualUserInfo
+                                        }
 
-                                    _ ->
-                                        modelWithActualUserInfo.accessTokenState
-                        in
-                        case modelWithActualUserInfo.expectedUserInfo of
-                            Just expectedUserInfo ->
-                                if expectedUserInfo.sub == actualUserInfo.sub then
-                                    ( { modelWithActualUserInfo
-                                        | expectedUserInfo = Just actualUserInfo
-                                        , accessTokenState = verified
-                                      }
-                                    , UserInfo.saveToLocalStorage actualUserInfo
-                                    )
+                                _ ->
+                                    modelWithActualUserInfo.accessTokenState
+                    in
+                    case modelWithActualUserInfo.expectedUserInfo of
+                        Just expectedUserInfo ->
+                            if expectedUserInfo.sub == actualUserInfo.sub then
+                                ( { modelWithActualUserInfo
+                                    | expectedUserInfo = Just actualUserInfo
+                                    , accessTokenState = verified
+                                  }
+                                , UserInfo.saveToLocalStorage actualUserInfo
+                                )
 
-                                else
-                                    ( modelWithActualUserInfo
-                                    , Cmd.none
-                                    )
+                            else
+                                ( modelWithActualUserInfo
+                                , Cmd.none
+                                )
 
-                            Nothing ->
-                                let
-                                    localStorageClean =
-                                        modelWithActualUserInfo.localDrafts
-                                            |> Dict.isEmpty
+                        Nothing ->
+                            let
+                                localStorageClean =
+                                    modelWithActualUserInfo.localDrafts
+                                        |> Dict.isEmpty
 
-                                    -- TODO Check blueprints
-                                in
-                                if localStorageClean then
-                                    ( { modelWithActualUserInfo
-                                        | expectedUserInfo = Just actualUserInfo
-                                        , accessTokenState = verified
-                                      }
-                                    , UserInfo.saveToLocalStorage actualUserInfo
-                                    )
+                                -- TODO Check blueprints
+                            in
+                            if localStorageClean then
+                                ( { modelWithActualUserInfo
+                                    | expectedUserInfo = Just actualUserInfo
+                                    , accessTokenState = verified
+                                  }
+                                , UserInfo.saveToLocalStorage actualUserInfo
+                                )
 
-                                else
-                                    ( modelWithActualUserInfo
-                                    , Cmd.none
-                                    )
+                            else
+                                ( modelWithActualUserInfo
+                                , Cmd.none
+                                )
 
-                    Err error ->
-                        let
-                            initializationError =
-                                case error of
-                                    DetailedHttpError.NetworkError ->
-                                        NetworkMissing
+                Err error ->
+                    let
+                        initializationError =
+                            case error of
+                                DetailedHttpError.NetworkError ->
+                                    NetworkMissing
 
-                                    _ ->
-                                        ServerError error
+                                _ ->
+                                    ServerError error
 
-                            newAccessTokenState =
-                                case ( modelWithActualUserInfo.accessTokenState, error ) of
-                                    ( Verifying accessToken, DetailedHttpError.InvalidAccessToken ) ->
-                                        Expired accessToken
+                        newAccessTokenState =
+                            case ( modelWithActualUserInfo.accessTokenState, error ) of
+                                ( Verifying accessToken, DetailedHttpError.InvalidAccessToken ) ->
+                                    Expired accessToken
 
-                                    ( Verified { accessToken }, DetailedHttpError.InvalidAccessToken ) ->
-                                        Expired accessToken
+                                ( Verified { accessToken }, DetailedHttpError.InvalidAccessToken ) ->
+                                    Expired accessToken
 
-                                    _ ->
-                                        modelWithActualUserInfo.accessTokenState
-                        in
-                        ( { modelWithActualUserInfo
-                            | accessTokenState = newAccessTokenState
-                            , error = Just initializationError
-                          }
-                        , Ports.Console.errorString (DetailedHttpError.toString error)
-                        )
+                                _ ->
+                                    modelWithActualUserInfo.accessTokenState
+                    in
+                    ( { modelWithActualUserInfo
+                        | accessTokenState = newAccessTokenState
+                        , error = Just initializationError
+                      }
+                    , Ports.Console.errorString (DetailedHttpError.toString error)
+                    )
 
-            GotDraftLoadResponse requestResult ->
-                let
-                    { request, result } =
-                        requestResult
+        GotDraftLoadResponse requestResult ->
+            let
+                { request, result } =
+                    requestResult
 
-                    modelWithActualDraft =
-                        Cache.insertRequestResult requestResult model.actualDrafts
-                            |> flip withActualDrafts model
-                in
-                case result of
-                    Ok actualDraft ->
-                        case Dict.get request modelWithActualDraft.localDrafts of
-                            Just (Ok localDraft) ->
-                                if actualDraft == localDraft then
-                                    ( { modelWithActualDraft
-                                        | expectedDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.expectedDrafts
-                                      }
-                                    , Draft.saveRemoteToLocalStorage actualDraft
-                                    )
+                modelWithActualDraft =
+                    Cache.insertRequestResult requestResult model.actualDrafts
+                        |> flip withActualDrafts model
+            in
+            case result of
+                Ok actualDraft ->
+                    case Dict.get request modelWithActualDraft.localDrafts of
+                        Just (Ok localDraft) ->
+                            if actualDraft == localDraft then
+                                ( { modelWithActualDraft
+                                    | expectedDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.expectedDrafts
+                                  }
+                                , Draft.saveRemoteToLocalStorage actualDraft
+                                )
 
-                                else
-                                    case ( modelWithActualDraft.accessTokenState, Dict.get request modelWithActualDraft.expectedDrafts ) of
-                                        ( Verified { accessToken }, Just (Ok expectedDraft) ) ->
-                                            if actualDraft == expectedDraft then
-                                                modelWithActualDraft
-                                                    |> withSavingDraft localDraft
-                                                    |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
+                            else
+                                case ( modelWithActualDraft.accessTokenState, Dict.get request modelWithActualDraft.expectedDrafts ) of
+                                    ( Verified { accessToken }, Just (Ok expectedDraft) ) ->
+                                        if actualDraft == expectedDraft then
+                                            modelWithActualDraft
+                                                |> withSavingDraft localDraft
+                                                |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
 
-                                            else
-                                                modelWithActualDraft
-                                                    |> withCmd Cmd.none
-
-                                        _ ->
+                                        else
                                             modelWithActualDraft
                                                 |> withCmd Cmd.none
 
-                            _ ->
-                                modelWithActualDraft
-                                    |> withCmd Cmd.none
-
-                    Err error ->
-                        case error of
-                            DetailedHttpError.NotFound ->
-                                case ( model.accessTokenState, Dict.get request model.localDrafts ) of
-                                    ( Verified { accessToken }, Just (Ok localDraft) ) ->
-                                        modelWithActualDraft
-                                            |> withSavingDraft localDraft
-                                            |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
-
                                     _ ->
                                         modelWithActualDraft
-                                            |> withError error
-                                            |> withCmd (Ports.Console.errorString "509c6a8b-2df8-4ecc-bb32-90067b6e7893")
+                                            |> withCmd Cmd.none
 
-                            DetailedHttpError.InvalidAccessToken ->
-                                modelWithActualDraft
-                                    |> withExpiredAccessToken
-                                    |> withError error
-                                    |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
+                        _ ->
+                            modelWithActualDraft
+                                |> withCmd Cmd.none
 
-                            _ ->
-                                modelWithActualDraft
-                                    |> withError error
-                                    |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
+                Err error ->
+                    case error of
+                        DetailedHttpError.NotFound ->
+                            case ( model.accessTokenState, Dict.get request model.localDrafts ) of
+                                ( Verified { accessToken }, Just (Ok localDraft) ) ->
+                                    modelWithActualDraft
+                                        |> withSavingDraft localDraft
+                                        |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
 
-            GotDraftSaveResponse requestResult ->
-                let
-                    { request, result } =
-                        requestResult
+                                _ ->
+                                    modelWithActualDraft
+                                        |> withError error
+                                        |> withCmd (Ports.Console.errorString "509c6a8b-2df8-4ecc-bb32-90067b6e7893")
 
-                    draftId =
-                        request.id
+                        DetailedHttpError.InvalidAccessToken ->
+                            modelWithActualDraft
+                                |> withExpiredAccessToken
+                                |> withError error
+                                |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
 
-                    modelWithSavedDraft =
-                        withSavedDraft requestResult model
-                in
-                case result of
-                    Ok () ->
-                        ( { modelWithSavedDraft
-                            | actualDrafts = Cache.insert draftId request model.actualDrafts
-                            , localDrafts = Dict.insert draftId (Ok request) modelWithSavedDraft.localDrafts
-                            , expectedDrafts = Dict.insert draftId (Ok request) modelWithSavedDraft.expectedDrafts
-                          }
-                        , Cmd.none
-                        )
+                        _ ->
+                            modelWithActualDraft
+                                |> withError error
+                                |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
 
-                    Err error ->
-                        case error of
-                            DetailedHttpError.InvalidAccessToken ->
-                                ( modelWithSavedDraft
-                                    |> withExpiredAccessToken
-                                , Ports.Console.errorString (DetailedHttpError.toString error)
-                                )
+        GotDraftSaveResponse requestResult ->
+            let
+                { request, result } =
+                    requestResult
 
-                            _ ->
-                                ( modelWithSavedDraft
-                                , Ports.Console.errorString (DetailedHttpError.toString error)
-                                )
+                draftId =
+                    request.id
 
-            ClickedContinueOffline ->
-                ( { model
-                    | accessTokenState = Missing
-                  }
-                , Cmd.none
-                )
+                modelWithSavedDraft =
+                    withSavedDraft requestResult model
+            in
+            case result of
+                Ok () ->
+                    ( { modelWithSavedDraft
+                        | actualDrafts = Cache.insert draftId request model.actualDrafts
+                        , localDrafts = Dict.insert draftId (Ok request) modelWithSavedDraft.localDrafts
+                        , expectedDrafts = Dict.insert draftId (Ok request) modelWithSavedDraft.expectedDrafts
+                      }
+                    , Cmd.none
+                    )
+
+                Err error ->
+                    case error of
+                        DetailedHttpError.InvalidAccessToken ->
+                            ( modelWithSavedDraft
+                                |> withExpiredAccessToken
+                            , Ports.Console.errorString (DetailedHttpError.toString error)
+                            )
+
+                        _ ->
+                            ( modelWithSavedDraft
+                            , Ports.Console.errorString (DetailedHttpError.toString error)
+                            )
+
+        ClickedContinueOffline ->
+            ( { model
+                | accessTokenState = Missing
+              }
+            , Cmd.none
+            )
 
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )

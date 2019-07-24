@@ -18,6 +18,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Extra.Array
+import Extra.Cmd exposing (noCmd)
 import Extra.String
 import InstructionToolView
 import Maybe.Extra
@@ -70,19 +71,19 @@ init levelId session =
             , enabledInstructionTools = Array.empty
             }
     in
-    load ( model, Cmd.none )
+    ( model, Cmd.none )
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load : Model -> ( Model, Cmd Msg )
 load =
     let
-        loadLevel ( model, cmd ) =
+        loadLevel model =
             case Session.getLevel model.levelId model.session of
                 NotAsked ->
                     ( model.session
                         |> Session.levelLoading model.levelId
                         |> setSession model
-                    , Cmd.batch [ cmd, Level.loadFromLocalStorage model.levelId ]
+                    , Level.loadFromLocalStorage model.levelId
                     )
 
                 Success level ->
@@ -91,7 +92,7 @@ load =
                             |> Maybe.map ((==) level.id)
                             |> Maybe.withDefault False
                     then
-                        ( model, cmd )
+                        noCmd model
 
                     else
                         ( { model
@@ -113,13 +114,13 @@ load =
                                     |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
                                     |> Array.fromList
                           }
-                        , cmd
+                        , Cmd.none
                         )
 
                 _ ->
-                    ( model, cmd )
+                    noCmd model
     in
-    flip (List.foldl (flip (|>)))
+    Extra.Cmd.fold
         [ loadLevel ]
 
 

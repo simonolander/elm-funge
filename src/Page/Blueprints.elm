@@ -53,11 +53,11 @@ init selectedLevelId session =
             , error = Nothing
             }
     in
-    load ( model, Cmd.none )
+    ( model, Cmd.none )
 
 
-load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-load ( model, cmd ) =
+load : Model -> ( Model, Cmd Msg )
+load model =
     case Session.getCampaign CampaignId.blueprints model.session of
         NotAsked ->
             case Session.getAccessToken model.session of
@@ -65,17 +65,14 @@ load ( model, cmd ) =
                     ( model.session
                         |> Session.campaignLoading campaignId
                         |> setSession model
-                    , Cmd.batch
-                        [ cmd
-                        , Blueprint.loadAllFromServer accessToken GotLoadBlueprintsResponse
-                        ]
+                    , Blueprint.loadAllFromServer accessToken GotLoadBlueprintsResponse
                     )
 
                 Nothing ->
                     ( model.session
                         |> Session.campaignLoading campaignId
                         |> setSession model
-                    , Cmd.batch [ cmd, Campaign.loadFromLocalStorage campaignId ]
+                    , Campaign.loadFromLocalStorage campaignId
                     )
 
         Failure NotFound ->
@@ -86,7 +83,7 @@ load ( model, cmd ) =
             ( model.session
                 |> Session.withCampaign campaign
                 |> setSession model
-            , Cmd.batch [ cmd, Campaign.saveToLocalStorage campaign ]
+            , Campaign.saveToLocalStorage campaign
             )
 
         Success campaign ->
@@ -100,12 +97,11 @@ load ( model, cmd ) =
                 |> setSession model
             , notAskedLevelIds
                 |> List.map Level.loadFromLocalStorage
-                |> (::) cmd
                 |> Cmd.batch
             )
 
         _ ->
-            ( model, cmd )
+            ( model, Cmd.none )
 
 
 getSession : Model -> Session
