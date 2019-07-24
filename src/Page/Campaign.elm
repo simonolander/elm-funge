@@ -6,7 +6,6 @@ module Page.Campaign exposing
     , load
     , subscriptions
     , update
-    , updateSession
     , view
     )
 
@@ -24,7 +23,6 @@ import Data.History as History
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache
-import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
@@ -36,11 +34,10 @@ import Extra.Cmd
 import Extra.RemoteData
 import Html.Attributes
 import Maybe.Extra
-import Ports.Console
 import Random
 import RemoteData exposing (RemoteData(..))
-import Result exposing (Result)
 import Route exposing (Route)
+import SessionUpdate exposing (SessionMsg(..))
 import Set
 import View.Box
 import View.ErrorScreen
@@ -85,9 +82,6 @@ load =
                     let
                         loadCampaignRemotely =
                             Level.loadFromServerByCampaignId (SessionMsg << GotLoadLevelsByCampaignIdResponse) model.campaignId
-
-                        loadCampaignLocally =
-                            Campaign.loadFromLocalStorage model.campaignId
                     in
                     ( model.session
                         |> Session.campaignLoading model.campaignId
@@ -114,8 +108,7 @@ load =
                         |> List.foldl Session.levelLoading model.session
                         |> flip withSession model
                     , notAskedLevelIds
-                        -- TODO Load from server if accessToken?
-                        |> List.map Level.loadFromLocalStorage
+                        |> List.map (Level.loadFromServer (SessionMsg << GotLoadLevelResponse))
                         |> Cmd.batch
                     )
 
@@ -278,13 +271,6 @@ type Msg
     | SessionMsg SessionMsg
 
 
-type SessionMsg
-    = GotLoadHighScoreResponse (RequestResult LevelId DetailedHttpError HighScore)
-    | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId DetailedHttpError (List Level))
-    | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Solution))
-    | GotSaveDraftResponse (RequestResult Draft DetailedHttpError ())
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -357,89 +343,8 @@ update msg model =
                 ( newModel, cmd )
 
             SessionMsg sessionMsg ->
-                updateSession sessionMsg model.session
+                SessionUpdate.update sessionMsg model.session
                     |> Extra.Cmd.mapModel (flip withSession model)
-
-
-updateSession : SessionMsg -> Session -> ( Session, Cmd Msg )
-updateSession msg session =
-    case msg of
-        GotLoadHighScoreResponse requestResult ->
-            ( Session.withHighScoreResult requestResult session
-            , Cmd.none
-            )
-
-        GotLoadLevelsByCampaignIdResponse requestResult ->
-            case requestResult.result of
-                Ok levels ->
-                    let
-                        campaign =
-                            { id = requestResult.request
-                            , levelIds = List.map .id levels
-                            }
-
-                        saveCampaignLocallyCmd =
-                            Campaign.saveToLocalStorage campaign
-
-                        saveLevelsLocallyCmd =
-                            levels
-                                |> List.map Level.saveToLocalStorage
-                                |> Cmd.batch
-
-                        cmd =
-                            Cmd.batch
-                                [ saveCampaignLocallyCmd
-                                , saveLevelsLocallyCmd
-                                ]
-                    in
-                    ( session
-                        |> Session.withCampaign campaign
-                        |> Session.withLevels levels
-                    , cmd
-                    )
-
-                -- TODO
-                Err error ->
-                    ( session
-                    , Ports.Console.errorString (DetailedHttpError.toString error)
-                    )
-
-        GotLoadSolutionsByLevelIdResponse requestResult ->
-            case requestResult.result of
-                Ok solutions ->
-                    let
-                        solutionBook =
-                            { levelId = requestResult.request
-                            , solutionIds =
-                                solutions
-                                    |> List.map .id
-                                    |> Set.fromList
-                            }
-
-                        cmd =
-                            solutions
-                                |> List.map Solution.saveToLocalStorage
-                                |> Cmd.batch
-                    in
-                    ( session
-                        |> Session.withSolutionBook solutionBook
-                        |> Session.withSolutions solutions
-                    , cmd
-                    )
-
-                -- TODO
-                Err error ->
-                    ( session
-                    , Ports.Console.errorString (DetailedHttpError.toString error)
-                    )
-
-        GotSaveDraftResponse { request, result } ->
-            case result of
-                Ok () ->
-                    Debug.todo "fb421adc-f203-443f-b134-c4e5843943e5"
-
-                Err error ->
-                    Debug.todo "5d68bcf1-48b9-45c5-9e4b-905f06ec6cb8"
 
 
 

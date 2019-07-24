@@ -35,6 +35,7 @@ module Data.Session exposing
     , withHighScore
     , withHighScoreResult
     , withLevel
+    , withLevelCache
     , withLevels
     , withSolution
     , withSolutionBook
@@ -121,6 +122,11 @@ withDraftCache cache session =
 withDraftBookCache : Cache LevelId DraftBook -> Session -> Session
 withDraftBookCache cache session =
     { session | draftBooks = cache }
+
+
+withLevelCache : Cache LevelId Level -> Session -> Session
+withLevelCache cache session =
+    { session | levels = cache }
 
 
 

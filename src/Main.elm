@@ -29,6 +29,7 @@ import Page.Login as Login
 import Ports.Console
 import Ports.LocalStorage
 import Route
+import SessionUpdate
 import Url exposing (Url)
 
 
@@ -204,7 +205,7 @@ update msg model =
         ( CampaignMsg (Campaign.SessionMsg message), mdl ) ->
             mdl
                 |> getSession
-                |> Campaign.updateSession message
+                |> SessionUpdate.update message
                 |> updateWith (flip withSession mdl) CampaignMsg
 
         ( HomeMsg message, Home mdl ) ->

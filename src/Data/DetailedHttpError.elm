@@ -1,4 +1,6 @@
-module Data.DetailedHttpError exposing (DetailedHttpError(..), toString)
+module Data.DetailedHttpError exposing (DetailedHttpError(..), consoleError, toString)
+
+import Ports.Console
 
 
 type DetailedHttpError
@@ -34,3 +36,8 @@ toString detailedHttpError =
 
         BadBody int error ->
             "BadBody: " ++ error
+
+
+consoleError : DetailedHttpError -> Cmd msg
+consoleError error =
+    Ports.Console.errorString (toString error)
