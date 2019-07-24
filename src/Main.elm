@@ -83,6 +83,7 @@ init flags url key =
     }
         |> Initialize.init
         |> updateWith Initialize InitializeMsg
+        |> load
 
 
 
