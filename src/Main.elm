@@ -14,6 +14,7 @@ import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Data.Solution
 import Data.SolutionBook
+import Extra.Cmd exposing (withExtraCmd)
 import Html
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -25,7 +26,6 @@ import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
 import Page.Initialize as Initialize
-import Page.Login as Login
 import Ports.Console
 import Ports.LocalStorage
 import Route
@@ -52,7 +52,6 @@ type Model
     | Draft Draft.Model
     | Blueprint Blueprint.Model
     | Blueprints Blueprints.Model
-    | Login Login.Model
     | Initialize Initialize.Model
 
 
@@ -125,10 +124,6 @@ view model =
             Blueprints.view mdl
                 |> msgMap BlueprintsMsg
 
-        Login mdl ->
-            Login.view mdl
-                |> msgMap LoginMsg
-
         Initialize mdl ->
             Initialize.view mdl
                 |> msgMap InitializeMsg
@@ -147,7 +142,6 @@ type Msg
     | HomeMsg Home.Msg
     | BlueprintsMsg Blueprints.Msg
     | BlueprintMsg Blueprint.Msg
-    | LoginMsg Login.Msg
     | InitializeMsg Initialize.Msg
     | LocalStorageResponse ( String, Encode.Value )
 
@@ -207,6 +201,7 @@ update msg model =
                 |> getSession
                 |> SessionUpdate.update message
                 |> updateWith (flip withSession mdl) CampaignMsg
+                |> load
 
         ( HomeMsg message, Home mdl ) ->
             Home.update message mdl
@@ -219,10 +214,6 @@ update msg model =
         ( BlueprintMsg message, Blueprint mdl ) ->
             Blueprint.update message mdl
                 |> updateWith Blueprint BlueprintMsg
-
-        ( LoginMsg message, Login mdl ) ->
-            Login.update message mdl
-                |> updateWith Login LoginMsg
 
         ( InitializeMsg message, Initialize mdl ) ->
             Initialize.update message mdl
@@ -272,13 +263,9 @@ changeUrl url oldSession =
             Blueprint.init levelId session
                 |> updateWith Blueprint BlueprintMsg
 
-        Just Route.Login ->
-            Login.init session
-                |> updateWith Login LoginMsg
-
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate response model =
+localStorageResponseUpdate response mainModel =
     let
         onSingle :
             { name : String
@@ -406,44 +393,28 @@ localStorageResponseUpdate response model =
                 |> onSolutionBook
                 |> onSolution
     in
-    case model of
-        Home mdl ->
-            onResponse mdl
-                |> updateWith Home HomeMsg
+    load <|
+        case mainModel of
+            Home model ->
+                updateWith Home HomeMsg (onResponse model)
 
-        Campaign mdl ->
-            onResponse mdl
-                |> Campaign.load
-                |> updateWith Campaign CampaignMsg
+            Campaign model ->
+                updateWith Campaign CampaignMsg (onResponse model)
 
-        Execution mdl ->
-            onResponse mdl
-                |> Execution.load
-                |> updateWith Execution ExecutionMsg
+            Execution model ->
+                updateWith Execution ExecutionMsg (onResponse model)
 
-        Draft mdl ->
-            onResponse mdl
-                |> Draft.load
-                |> updateWith Draft DraftMsg
+            Draft model ->
+                updateWith Draft DraftMsg (onResponse model)
 
-        Blueprints mdl ->
-            onResponse mdl
-                |> Blueprints.load
-                |> updateWith Blueprints BlueprintsMsg
+            Blueprints model ->
+                updateWith Blueprints BlueprintsMsg (onResponse model)
 
-        Blueprint mdl ->
-            onResponse mdl
-                |> Blueprint.load
-                |> updateWith Blueprint BlueprintMsg
+            Blueprint model ->
+                updateWith Blueprint BlueprintMsg (onResponse model)
 
-        Login mdl ->
-            onResponse mdl
-                |> updateWith Login LoginMsg
-
-        Initialize mdl ->
-            onResponse mdl
-                |> Initialize.load
-                |> updateWith Initialize InitializeMsg
+            Initialize model ->
+                updateWith Initialize InitializeMsg (onResponse model)
 
 
 
@@ -472,9 +443,6 @@ subscriptions model =
 
                 Blueprint mdl ->
                     Sub.map BlueprintMsg (Blueprint.subscriptions mdl)
-
-                Login mdl ->
-                    Sub.map LoginMsg (Login.subscriptions mdl)
 
                 Initialize mdl ->
                     Sub.map InitializeMsg (Initialize.subscriptions mdl)
@@ -513,11 +481,47 @@ getSession model =
         Blueprint mdl ->
             Blueprint.getSession mdl
 
-        Login mdl ->
-            Login.getSession mdl
-
         Initialize mdl ->
             mdl.session
+
+
+load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load ( mainModel, cmd ) =
+    case mainModel of
+        Home model ->
+            Home.load ( model, Cmd.none )
+                |> updateWith Home HomeMsg
+                |> withExtraCmd cmd
+
+        Campaign model ->
+            Campaign.load ( model, Cmd.none )
+                |> updateWith Campaign CampaignMsg
+                |> withExtraCmd cmd
+
+        Execution model ->
+            Execution.load ( model, Cmd.none )
+                |> updateWith Execution ExecutionMsg
+                |> withExtraCmd cmd
+
+        Draft model ->
+            Draft.load ( model, Cmd.none )
+                |> updateWith Draft DraftMsg
+                |> withExtraCmd cmd
+
+        Blueprint model ->
+            Blueprint.load ( model, Cmd.none )
+                |> updateWith Blueprint BlueprintMsg
+                |> withExtraCmd cmd
+
+        Blueprints model ->
+            Blueprints.load ( model, Cmd.none )
+                |> updateWith Blueprints BlueprintsMsg
+                |> withExtraCmd cmd
+
+        Initialize model ->
+            Initialize.load ( model, Cmd.none )
+                |> updateWith Initialize InitializeMsg
+                |> withExtraCmd cmd
 
 
 withSession : Session -> Model -> Model
@@ -540,9 +544,6 @@ withSession session model =
 
         Blueprint mdl ->
             Blueprint { mdl | session = session }
-
-        Login mdl ->
-            Login { mdl | session = session }
 
         Initialize mdl ->
             Initialize { mdl | session = session }

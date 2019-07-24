@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Home exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
 import Api.Auth0 as Auth0
 import Browser exposing (Document)
@@ -34,6 +34,11 @@ init session =
 getSession : Model -> Session
 getSession { session } =
     session
+
+
+load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+load =
+    identity
 
 
 
