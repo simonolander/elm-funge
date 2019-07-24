@@ -153,10 +153,6 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        session =
-            getSession model
-    in
     case ( msg, model ) of
         ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
@@ -167,7 +163,7 @@ update msg model =
 
                         Just _ ->
                             ( model
-                            , Navigation.pushUrl session.key (Url.toString url)
+                            , Navigation.pushUrl (getSession model).key (Url.toString url)
                             )
 
                 Browser.External href ->
@@ -188,7 +184,7 @@ update msg model =
                     )
 
         ( ChangedUrl url, _ ) ->
-            changeUrl url session
+            changeUrl url (getSession model)
 
         ( LocalStorageResponse response, mdl ) ->
             localStorageResponseUpdate response mdl
@@ -204,6 +200,12 @@ update msg model =
         ( CampaignMsg message, Campaign mdl ) ->
             Campaign.update message mdl
                 |> updateWith Campaign CampaignMsg
+
+        ( CampaignMsg (Campaign.SessionMsg message), mdl ) ->
+            mdl
+                |> getSession
+                |> Campaign.updateSession message
+                |> updateWith (flip withSession mdl) CampaignMsg
 
         ( HomeMsg message, Home mdl ) ->
             Home.update message mdl

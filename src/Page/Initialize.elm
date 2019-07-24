@@ -27,6 +27,7 @@ import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
+import Extra.Cmd exposing (withCmd)
 import Extra.Result
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -173,23 +174,22 @@ init { navigationKey, localStorageEntries, url } =
 load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 load =
     let
-        loadUserData ( model, cmd ) =
+        loadUserData model =
             case ( model.accessTokenState, model.actualUserInfo ) of
                 ( Verifying accessToken, RemoteData.NotAsked ) ->
                     ( { model
                         | actualUserInfo = RemoteData.Loading
                       }
                     , Cmd.batch
-                        [ cmd
-                        , UserInfo.loadFromServer accessToken GotUserInfoResponse
+                        [ UserInfo.loadFromServer accessToken GotUserInfoResponse
                         , AccessToken.saveToLocalStorage accessToken
                         ]
                     )
 
                 _ ->
-                    ( model, cmd )
+                    ( model, Cmd.none )
 
-        loadDrafts ( model, cmd ) =
+        loadDrafts model =
             case model.accessTokenState of
                 Verified { accessToken } ->
                     let
@@ -218,18 +218,16 @@ load =
                         |> List.foldl Cache.loading model.actualDrafts
                         |> flip withActualDrafts model
                     , Cmd.batch
-                        [ cmd
-                        , loadingDraftIds
+                        [ loadingDraftIds
                             |> List.map (Draft.loadFromServer accessToken GotDraftLoadResponse)
                             |> Cmd.batch
                         ]
                     )
 
                 _ ->
-                    ( model, cmd )
+                    ( model, Cmd.none )
 
-        finish : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-        finish ( model, cmd ) =
+        finish model =
             case model.accessTokenState of
                 Missing ->
                     let
@@ -242,17 +240,14 @@ load =
                                 |> Session.withUser user
                     in
                     ( { model | session = session }
-                    , Cmd.batch
-                        [ cmd
-                        , Route.replaceUrl model.session.key model.route
-                        ]
+                    , Route.replaceUrl model.session.key model.route
                     )
 
                 Expired _ ->
-                    ( model, cmd )
+                    ( model, Cmd.none )
 
                 Verifying _ ->
-                    ( model, cmd )
+                    ( model, Cmd.none )
 
                 Verified { accessToken, userInfo } ->
                     let
@@ -264,7 +259,7 @@ load =
                                 |> not
                     in
                     if hasDraftConflicts then
-                        ( model, cmd )
+                        ( model, Cmd.none )
 
                     else
                         let
@@ -290,13 +285,10 @@ load =
                                     |> Session.withDraftCache draftCache
                         in
                         ( { model | session = session }
-                        , Cmd.batch
-                            [ cmd
-                            , Route.replaceUrl model.session.key model.route
-                            ]
+                        , Route.replaceUrl model.session.key model.route
                         )
     in
-    flip (List.foldl (flip (|>)))
+    Extra.Cmd.fold
         [ loadUserData
         , loadDrafts
         , finish
@@ -373,11 +365,6 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        withCmd : Cmd Msg -> Model -> ( Model, Cmd Msg )
-        withCmd cmd mdl =
-            ( mdl, cmd )
-    in
     load <|
         case msg |> Debug.log "GotUserInfoResponse" of
             GotUserInfoResponse result ->
