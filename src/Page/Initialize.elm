@@ -528,7 +528,7 @@ update msg model =
             case result of
                 Ok () ->
                     ( { modelWithSavedDraft
-                        | actualDrafts = Cache.insert draftId request model.actualDrafts
+                        | actualDrafts = Cache.withValue draftId request model.actualDrafts
                         , localDrafts = Dict.insert draftId (Ok request) modelWithSavedDraft.localDrafts
                         , expectedDrafts = Dict.insert draftId (Ok request) modelWithSavedDraft.expectedDrafts
                       }

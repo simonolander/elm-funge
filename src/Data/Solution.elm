@@ -1,4 +1,4 @@
-module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, loadFromServerByLevelId, localStorageResponse, saveToLocalStorage, saveToServer)
+module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, loadFromServerByLevelId, loadFromServerBySolutionId, localStorageResponse, saveToLocalStorage, saveToServer)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
@@ -159,3 +159,12 @@ loadFromServerByLevelId accessToken toMsg levelId =
         |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
         |> GCP.withAccessToken accessToken
         |> GCP.request (RequestResult.constructor levelId >> toMsg)
+
+
+loadFromServerBySolutionId : AccessToken -> (RequestResult LevelId DetailedHttpError Solution -> msg) -> SolutionId -> Cmd msg
+loadFromServerBySolutionId accessToken toMsg solutionId =
+    GCP.get decoder
+        |> GCP.withPath [ "solutions" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "solutionId" solutionId ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request (RequestResult.constructor solutionId >> toMsg)

@@ -2,6 +2,7 @@ module Data.Draft exposing
     ( Draft
     , decoder
     , encode
+    , eq
     , generator
     , getInstructionCount
     , loadAllFromServer
@@ -42,6 +43,11 @@ type alias Draft =
     , boardHistory : History Board
     , levelId : LevelId
     }
+
+
+eq : Draft -> Draft -> Bool
+eq draft1 draft2 =
+    draft1.id == draft2.id && draft1.levelId == draft2.levelId && History.current draft1.boardHistory == History.current draft2.boardHistory
 
 
 pushBoard : Board -> Draft -> Draft

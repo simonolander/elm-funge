@@ -28,24 +28,27 @@ module Data.Session exposing
     , solutionError
     , solutionLoading
     , withCampaign
+    , withCampaignCache
     , withCampaigns
     , withDraftBook
     , withDraftBookCache
     , withDraftCache
     , withHighScore
+    , withHighScoreCache
     , withHighScoreResult
     , withLevel
     , withLevelCache
     , withLevels
     , withSolution
     , withSolutionBook
+    , withSolutionBookCache
+    , withSolutionCache
     , withSolutions
     , withUrl
     , withUser
     , withoutLevel
     )
 
-import Basics.Extra exposing (flip)
 import Browser.Navigation exposing (Key)
 import Data.AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
@@ -114,9 +117,29 @@ withUrl url session =
     { session | url = url }
 
 
+withLevelCache : Cache LevelId Level -> Session -> Session
+withLevelCache cache session =
+    { session | levels = cache }
+
+
 withDraftCache : RemoteCache DraftId Draft -> Session -> Session
 withDraftCache cache session =
     { session | drafts = cache }
+
+
+withSolutionCache : Cache SolutionId Solution -> Session -> Session
+withSolutionCache cache session =
+    { session | solutions = cache }
+
+
+withCampaignCache : Cache CampaignId Campaign -> Session -> Session
+withCampaignCache cache session =
+    { session | campaigns = cache }
+
+
+withHighScoreCache : Cache LevelId HighScore -> Session -> Session
+withHighScoreCache cache session =
+    { session | highScores = cache }
 
 
 withDraftBookCache : Cache LevelId DraftBook -> Session -> Session
@@ -124,9 +147,9 @@ withDraftBookCache cache session =
     { session | draftBooks = cache }
 
 
-withLevelCache : Cache LevelId Level -> Session -> Session
-withLevelCache cache session =
-    { session | levels = cache }
+withSolutionBookCache : Cache LevelId SolutionBook -> Session -> Session
+withSolutionBookCache cache session =
+    { session | solutionBooks = cache }
 
 
 
@@ -146,7 +169,7 @@ getLevel levelId session =
 withLevel : Level -> Session -> Session
 withLevel level session =
     session.levels
-        |> Cache.insert level.id level
+        |> Cache.withValue level.id level
         |> setLevelCache session
 
 
@@ -172,7 +195,7 @@ levelLoading levelId session =
 levelError : LevelId -> DetailedHttpError -> Session -> Session
 levelError levelId error session =
     session.levels
-        |> Cache.failure levelId error
+        |> Cache.withError levelId error
         |> setLevelCache session
 
 
@@ -195,7 +218,7 @@ withSolution solution session =
     { session
         | solutions =
             session.solutions
-                |> Cache.insert solution.id solution
+                |> Cache.withValue solution.id solution
         , solutionBooks =
             session.solutionBooks
                 |> Cache.withDefault solution.levelId (SolutionBook.empty solution.levelId)
@@ -218,7 +241,7 @@ solutionLoading levelId session =
 solutionError : LevelId -> DetailedHttpError -> Session -> Session
 solutionError levelId error session =
     session.solutions
-        |> Cache.failure levelId error
+        |> Cache.withError levelId error
         |> setSolutionCache session
 
 
@@ -244,7 +267,7 @@ withCampaigns campaigns session =
 withCampaign : Campaign -> Session -> Session
 withCampaign campaign session =
     session.campaigns
-        |> Cache.insert campaign.id campaign
+        |> Cache.withValue campaign.id campaign
         |> setCampaignCache session
 
 
@@ -258,7 +281,7 @@ campaignLoading campaignId session =
 campaignError : CampaignId -> DetailedHttpError -> Session -> Session
 campaignError campaignId error session =
     session.campaigns
-        |> Cache.failure campaignId error
+        |> Cache.withError campaignId error
         |> setCampaignCache session
 
 
@@ -279,7 +302,7 @@ getHighScore levelId session =
 withHighScore : HighScore -> Session -> Session
 withHighScore highScore session =
     session.highScores
-        |> Cache.insert highScore.levelId highScore
+        |> Cache.withValue highScore.levelId highScore
         |> setHighScoreCache session
 
 
@@ -301,7 +324,7 @@ highScoreLoading levelId session =
 highScoreError : LevelId -> DetailedHttpError -> Session -> Session
 highScoreError levelId error session =
     session.highScores
-        |> Cache.failure levelId error
+        |> Cache.withError levelId error
         |> setHighScoreCache session
 
 
@@ -337,7 +360,7 @@ draftBookLoading levelId session =
 draftBookError : LevelId -> DetailedHttpError -> Session -> Session
 draftBookError levelId error session =
     session.draftBooks
-        |> Cache.failure levelId error
+        |> Cache.withError levelId error
         |> setDraftBookCache session
 
 
@@ -381,5 +404,5 @@ solutionBookLoading levelId session =
 solutionBookError : LevelId -> DetailedHttpError -> Session -> Session
 solutionBookError levelId error session =
     session.solutionBooks
-        |> Cache.failure levelId error
+        |> Cache.withError levelId error
         |> setSolutionBookCache session

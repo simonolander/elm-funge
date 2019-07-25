@@ -162,12 +162,17 @@ load =
                                 |> List.map Set.toList
                                 |> List.concat
                                 |> List.filter (flip Cache.isNotAsked model.session.solutions)
+
+                        loadSolution =
+                            Session.getAccessToken model.session
+                                |> Maybe.map (flip Solution.loadFromServerBySolutionId (SessionMsg << GotLoadSolutionsBySolutionIdResponse))
+                                |> Maybe.withDefault Solution.loadFromLocalStorage
                     in
                     ( notAskedSolutionIds
                         |> List.foldl Session.solutionLoading model.session
                         |> flip withSession model
                     , notAskedSolutionIds
-                        |> List.map Solution.loadFromLocalStorage
+                        |> List.map loadSolution
                         |> Cmd.batch
                     )
 
@@ -182,8 +187,13 @@ load =
                             ( model.session
                                 |> Session.draftBookLoading levelId
                                 |> flip withSession model
-                            , DraftBook.loadFromLocalStorage levelId
-                            )
+                            , case Session.getAccessToken model.session of
+                                Just accessToken ->
+                                    Draft.loadFromServerByLevelId accessToken (SessionMsg << GotLoadDraftByLevelIdResponse) levelId
+
+                                Nothing ->
+                                    DraftBook.loadFromLocalStorage levelId
+                                                                )
 
                         _ ->
                             ( model, Cmd.none )
@@ -315,7 +325,7 @@ update msg model =
 
                 draftBookCache =
                     model.session.draftBooks
-                        |> Cache.insert draft.levelId draftBook
+                        |> Cache.withValue draft.levelId draftBook
 
                 newModel =
                     model.session

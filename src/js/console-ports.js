@@ -3,9 +3,9 @@ module.exports = {
 };
 
 function register(ports) {
-    if (typeof ports.log !== 'undefined') {
-        ports.log.subscribe(function (value) {
-            console.log(value);
+    if (typeof ports.info !== 'undefined') {
+        ports.info.subscribe(function (value) {
+            console.info(value);
         });
     }
     if (typeof ports.error !== 'undefined') {

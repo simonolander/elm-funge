@@ -1,4 +1,4 @@
-module Data.Cache exposing (Cache, empty, failure, fromRequestResults, fromResult, fromResultDict, get, insert, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault, withResult)
+module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault, withError, withResult, withValue)
 
 import Basics.Extra exposing (flip)
 import Data.DetailedHttpError exposing (DetailedHttpError)
@@ -47,8 +47,8 @@ insertRequestResult requestResult cache =
     insertInternal requestResult.request (RemoteData.fromResult requestResult.result) cache
 
 
-insert : comparable -> value -> Cache comparable value -> Cache comparable value
-insert key value =
+withValue : comparable -> value -> Cache comparable value -> Cache comparable value
+withValue key value =
     insertInternal key (Success value)
 
 
@@ -65,8 +65,8 @@ remove key cache =
         |> Cache
 
 
-failure : comparable -> DetailedHttpError -> Cache comparable value -> Cache comparable value
-failure key error =
+withError : comparable -> DetailedHttpError -> Cache comparable value -> Cache comparable value
+withError key error =
     insertInternal key (Failure error)
 
 
@@ -99,14 +99,14 @@ setInsert key value cache =
         |> Maybe.withDefault (Success Set.empty)
         |> RemoteData.withDefault Set.empty
         |> Set.insert value
-        |> flip (insert key) cache
+        |> flip (withValue key) cache
 
 
 withDefault : comparable -> value -> Cache comparable value -> Cache comparable value
 withDefault key default cache =
     get key cache
         |> RemoteData.withDefault default
-        |> flip (insert key) cache
+        |> flip (withValue key) cache
 
 
 map : comparable -> (value -> value) -> Cache comparable value -> Cache comparable value

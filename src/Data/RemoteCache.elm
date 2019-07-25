@@ -1,4 +1,19 @@
-module Data.RemoteCache exposing (RemoteCache, empty, withActualLoading, withActualResult, withActualValue, withExpectedLoading, withExpectedResult, withExpectedValue, withLocalLoading, withLocalResult, withLocalValue)
+module Data.RemoteCache exposing
+    ( RemoteCache
+    , empty
+    , withActualError
+    , withActualLoading
+    , withActualResult
+    , withActualValue
+    , withExpectedError
+    , withExpectedLoading
+    , withExpectedResult
+    , withExpectedValue
+    , withLocalError
+    , withLocalLoading
+    , withLocalResult
+    , withLocalValue
+    )
 
 import Data.Cache as Cache exposing (Cache)
 import Data.DetailedHttpError exposing (DetailedHttpError)
@@ -21,12 +36,17 @@ empty =
 
 withLocalValue : comparable -> value -> RemoteCache comparable value -> RemoteCache comparable value
 withLocalValue key value cache =
-    { cache | local = Cache.insert key value cache.local }
+    { cache | local = Cache.withValue key value cache.local }
 
 
 withLocalLoading : comparable -> RemoteCache comparable value -> RemoteCache comparable value
 withLocalLoading key cache =
     { cache | local = Cache.loading key cache.local }
+
+
+withLocalError : comparable -> DetailedHttpError -> RemoteCache comparable value -> RemoteCache comparable value
+withLocalError key error cache =
+    { cache | local = Cache.withError key error cache.local }
 
 
 withLocalResult : comparable -> Result DetailedHttpError value -> RemoteCache comparable value -> RemoteCache comparable value
@@ -36,12 +56,17 @@ withLocalResult key result cache =
 
 withExpectedValue : comparable -> value -> RemoteCache comparable value -> RemoteCache comparable value
 withExpectedValue key value cache =
-    { cache | expected = Cache.insert key value cache.expected }
+    { cache | expected = Cache.withValue key value cache.expected }
 
 
 withExpectedLoading : comparable -> RemoteCache comparable value -> RemoteCache comparable value
 withExpectedLoading key cache =
     { cache | expected = Cache.loading key cache.expected }
+
+
+withExpectedError : comparable -> DetailedHttpError -> RemoteCache comparable value -> RemoteCache comparable value
+withExpectedError key error cache =
+    { cache | expected = Cache.withError key error cache.expected }
 
 
 withExpectedResult : comparable -> Result DetailedHttpError value -> RemoteCache comparable value -> RemoteCache comparable value
@@ -51,12 +76,17 @@ withExpectedResult key result cache =
 
 withActualValue : comparable -> value -> RemoteCache comparable value -> RemoteCache comparable value
 withActualValue key value cache =
-    { cache | actual = Cache.insert key value cache.actual }
+    { cache | actual = Cache.withValue key value cache.actual }
 
 
 withActualLoading : comparable -> RemoteCache comparable value -> RemoteCache comparable value
 withActualLoading key cache =
     { cache | actual = Cache.loading key cache.actual }
+
+
+withActualError : comparable -> DetailedHttpError -> RemoteCache comparable value -> RemoteCache comparable value
+withActualError key error cache =
+    { cache | actual = Cache.withError key error cache.actual }
 
 
 withActualResult : comparable -> Result DetailedHttpError value -> RemoteCache comparable value -> RemoteCache comparable value
