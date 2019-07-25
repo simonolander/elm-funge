@@ -153,49 +153,7 @@ update msg session =
             in
             case result of
                 Ok actualDraft ->
-                    case Cache.get request sessionWithActualDraft.drafts.local of
-                        Success localDraft ->
-                            case Cache.get request sessionWithActualDraft.drafts.expected of
-                                Success expectedDraft ->
-                                    if Draft.eq localDraft actualDraft then
-                                        if Draft.eq localDraft expectedDraft then
-                                            noCmd sessionWithActualDraft
-
-                                        else
-                                            sessionWithActualDraft.drafts
-                                                |> RemoteCache.withExpectedValue request actualDraft
-                                                |> flip Session.withDraftCache sessionWithActualDraft
-                                                |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
-
-                                    else if Draft.eq localDraft expectedDraft then
-                                        sessionWithActualDraft.drafts
-                                            |> RemoteCache.withLocalValue request actualDraft
-                                            |> RemoteCache.withExpectedValue request actualDraft
-                                            |> flip Session.withDraftCache sessionWithActualDraft
-                                            |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
-                                            |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
-
-                                    else
-                                        sessionWithActualDraft
-                                            |> withCmd
-                                                (Ports.Console.errorString
-                                                    ("5107844dd836    Conflict in draft " ++ actualDraft.id)
-                                                )
-
-                                _ ->
-                                    sessionWithActualDraft
-                                        |> withCmd
-                                            (Ports.Console.errorString
-                                                ("c797bf8b5d8c    Conflict in draft " ++ actualDraft.id)
-                                            )
-
-                        _ ->
-                            sessionWithActualDraft.drafts
-                                |> RemoteCache.withLocalValue request actualDraft
-                                |> RemoteCache.withExpectedValue request actualDraft
-                                |> flip Session.withDraftCache sessionWithActualDraft
-                                |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
-                                |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
+                    gotActualDraft actualDraft sessionWithActualDraft
 
                 Err error ->
                     sessionWithActualDraft
@@ -214,15 +172,17 @@ update msg session =
                         draftBookCache =
                             Cache.withValue request draftBook session.draftBooks
 
-                        --                        draftCache =
-                        --                            List.foldl (\draft cache -> RemoteCache.withValue draft.id draft cache) session.drafts
-                        saveDraftsLocallyCmd =
-                            List.map Draft.saveRemoteToLocalStorage drafts
+                        sessionWithDraftBookCache =
+                            Session.withDraftBookCache draftBookCache session
                     in
-                    Debug.todo ""
+                    Extra.Cmd.fold (List.map gotActualDraft drafts) sessionWithDraftBookCache
 
                 Err error ->
-                    Debug.todo ""
+                    session.draftBooks
+                        |> Cache.loading request
+                        |> flip Session.withDraftBookCache session
+                        |> withCmd (DraftBook.loadFromLocalStorage request)
+                        |> withExtraCmd (DetailedHttpError.consoleError error)
 
         GotSaveDraftResponse { request, result } ->
             case result of
@@ -238,3 +198,50 @@ update msg session =
                         |> RemoteCache.withActualResult request.id (Err error)
                         |> flip Session.withDraftCache session
                         |> withCmd (DetailedHttpError.consoleError error)
+
+
+gotActualDraft : Draft -> Session -> ( Session, Cmd msg )
+gotActualDraft actualDraft session =
+    case Cache.get actualDraft.id session.drafts.local of
+        Success localDraft ->
+            case Cache.get actualDraft.id session.drafts.expected of
+                Success expectedDraft ->
+                    if Draft.eq localDraft actualDraft then
+                        if Draft.eq localDraft expectedDraft then
+                            noCmd session
+
+                        else
+                            session.drafts
+                                |> RemoteCache.withExpectedValue actualDraft.id actualDraft
+                                |> flip Session.withDraftCache session
+                                |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
+
+                    else if Draft.eq localDraft expectedDraft then
+                        session.drafts
+                            |> RemoteCache.withLocalValue actualDraft.id actualDraft
+                            |> RemoteCache.withExpectedValue actualDraft.id actualDraft
+                            |> flip Session.withDraftCache session
+                            |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
+                            |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
+
+                    else
+                        session
+                            |> withCmd
+                                (Ports.Console.errorString
+                                    ("5107844dd836    Conflict in draft " ++ actualDraft.id)
+                                )
+
+                _ ->
+                    session
+                        |> withCmd
+                            (Ports.Console.errorString
+                                ("c797bf8b5d8c    Conflict in draft " ++ actualDraft.id)
+                            )
+
+        _ ->
+            session.drafts
+                |> RemoteCache.withLocalValue actualDraft.id actualDraft
+                |> RemoteCache.withExpectedValue actualDraft.id actualDraft
+                |> flip Session.withDraftCache session
+                |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
+                |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
