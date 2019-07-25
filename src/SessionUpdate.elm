@@ -25,13 +25,13 @@ import Set
 
 
 type SessionMsg
-    = GotLoadHighScoreResponse (RequestResult LevelId DetailedHttpError HighScore)
+    = GotLoadDraftByDraftIdResponse (RequestResult DraftId DetailedHttpError Draft)
+    | GotLoadDraftByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Draft))
+    | GotLoadHighScoreResponse (RequestResult LevelId DetailedHttpError HighScore)
+    | GotLoadLevelResponse (RequestResult LevelId DetailedHttpError Level)
     | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId DetailedHttpError (List Level))
     | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse (RequestResult SolutionId DetailedHttpError Solution)
-    | GotLoadDraftByDraftIdResponse (RequestResult DraftId DetailedHttpError Draft)
-    | GotLoadDraftByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Draft))
-    | GotLoadLevelResponse (RequestResult LevelId DetailedHttpError Level)
     | GotSaveDraftResponse (RequestResult Draft DetailedHttpError ())
 
 
