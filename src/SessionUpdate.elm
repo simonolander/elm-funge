@@ -208,21 +208,18 @@ update msg session =
                         draftBook =
                             session.draftBooks
                                 |> Cache.get request
-                                |> Cache.withDefault (DraftBook.empty request)
-                                |> DraftBook.withDraftIds (List.map .id drafts)
+                                |> RemoteData.withDefault (DraftBook.empty request)
+                                |> DraftBook.withDraftIds (Set.fromList (List.map .id drafts))
 
                         draftBookCache =
                             Cache.withValue request draftBook session.draftBooks
 
-                        draftCache =
-                            List.foldl (\draft cache -> Cache.withValue draft.id draft cache) session.drafts
-
+                        --                        draftCache =
+                        --                            List.foldl (\draft cache -> RemoteCache.withValue draft.id draft cache) session.drafts
                         saveDraftsLocallyCmd =
                             List.map Draft.saveRemoteToLocalStorage drafts
                     in
-                    session.draftBooks
-                        |> Cache.withValue request draftBook
-                        |> Session.withDraftBookCache
+                    Debug.todo ""
 
                 Err error ->
                     Debug.todo ""
