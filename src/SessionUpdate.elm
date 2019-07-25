@@ -26,7 +26,7 @@ import Set
 
 type SessionMsg
     = GotLoadDraftByDraftIdResponse (RequestResult DraftId DetailedHttpError Draft)
-    | GotLoadDraftByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Draft))
+    | GotLoadDraftsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Draft))
     | GotLoadHighScoreResponse (RequestResult LevelId DetailedHttpError HighScore)
     | GotLoadLevelResponse (RequestResult LevelId DetailedHttpError Level)
     | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId DetailedHttpError (List Level))
@@ -159,7 +159,7 @@ update msg session =
                     sessionWithActualDraft
                         |> withCmd (DetailedHttpError.consoleError error)
 
-        GotLoadDraftByLevelIdResponse { request, result } ->
+        GotLoadDraftsByLevelIdResponse { request, result } ->
             case result of
                 Ok drafts ->
                     let

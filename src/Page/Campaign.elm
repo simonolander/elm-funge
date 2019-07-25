@@ -189,11 +189,11 @@ load =
                                 |> flip withSession model
                             , case Session.getAccessToken model.session of
                                 Just accessToken ->
-                                    Draft.loadFromServerByLevelId accessToken (SessionMsg << GotLoadDraftByLevelIdResponse) levelId
+                                    Draft.loadFromServerByLevelId accessToken (SessionMsg << GotLoadDraftsByLevelIdResponse) levelId
 
                                 Nothing ->
                                     DraftBook.loadFromLocalStorage levelId
-                                                                )
+                            )
 
                         _ ->
                             ( model, Cmd.none )
@@ -229,18 +229,13 @@ load =
         loadSelectedLevelHighScore model =
             case model.selectedLevelId of
                 Just levelId ->
-                    case Session.getHighScore levelId model.session of
+                    case Cache.get levelId model.session.highScores of
                         NotAsked ->
-                            case Session.getAccessToken model.session of
-                                Just _ ->
-                                    ( model.session
-                                        |> Session.loadingHighScore levelId
-                                        |> flip withSession model
-                                    , HighScore.loadFromServer levelId (SessionMsg << GotLoadHighScoreResponse)
-                                    )
-
-                                Nothing ->
-                                    ( model, Cmd.none )
+                            ( model.session
+                                |> Session.loadingHighScore levelId
+                                |> flip withSession model
+                            , HighScore.loadFromServer levelId (SessionMsg << GotLoadHighScoreResponse)
+                            )
 
                         _ ->
                             ( model, Cmd.none )
