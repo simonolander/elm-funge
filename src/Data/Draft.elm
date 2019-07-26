@@ -14,6 +14,8 @@ module Data.Draft exposing
     , localStorageResponse
     , pushBoard
     , redo
+    , removeFromLocalStorage
+    , removeRemoteFromLocalStorage
     , saveRemoteToLocalStorage
     , saveToLocalStorage
     , saveToServer
@@ -173,6 +175,11 @@ loadFromLocalStorage draftId =
     Ports.LocalStorage.storageGetItem key
 
 
+removeFromLocalStorage : DraftId -> Cmd msg
+removeFromLocalStorage draftId =
+    Ports.LocalStorage.storageRemoveItem (localStorageKey draftId)
+
+
 localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId Decode.Error (Maybe Draft))
 localStorageResponse ( key, value ) =
     case String.split "." key of
@@ -216,6 +223,11 @@ loadRemoteFromLocalStorage draftId =
             remoteKey draftId
     in
     Ports.LocalStorage.storageGetItem key
+
+
+removeRemoteFromLocalStorage : DraftId -> Cmd msg
+removeRemoteFromLocalStorage draftId =
+    Ports.LocalStorage.storageRemoveItem (remoteKey draftId)
 
 
 localRemoteStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId Decode.Error (Maybe Draft))

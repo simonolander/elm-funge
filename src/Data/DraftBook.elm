@@ -1,11 +1,10 @@
-module Data.DraftBook exposing (DraftBook, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withDraftId, withDraftIds)
+module Data.DraftBook exposing (DraftBook, empty, loadFromLocalStorage, localStorageResponse, removeFromLocalStorage, saveToLocalStorage, withDraftId, withDraftIds)
 
 import Basics.Extra exposing (flip)
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Extra.Decode
-import Extra.Encode
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -40,34 +39,6 @@ withDraftIds draftIds levelDrafts =
 
 
 
--- JSON
-
-
-encode : DraftBook -> Encode.Value
-encode levelDrafts =
-    Encode.object
-        [ ( "levelId", LevelId.encode levelDrafts.levelId )
-        , ( "draftIds", Extra.Encode.set DraftId.encode levelDrafts.draftIds )
-        ]
-
-
-decoder : Decode.Decoder DraftBook
-decoder =
-    Decode.field "levelId" LevelId.decoder
-        |> Decode.andThen
-            (\levelId ->
-                Decode.field "draftIds" (Extra.Decode.set DraftId.decoder)
-                    |> Decode.andThen
-                        (\draftIds ->
-                            Decode.succeed
-                                { levelId = levelId
-                                , draftIds = draftIds
-                                }
-                        )
-            )
-
-
-
 -- LOCAL STORAGE
 
 
@@ -95,6 +66,11 @@ loadFromLocalStorage levelId =
             localStorageKey levelId
     in
     Ports.LocalStorage.storageGetItem key
+
+
+removeFromLocalStorage : LevelId -> Cmd msg
+removeFromLocalStorage levelId =
+    Ports.LocalStorage.storageRemoveItem (localStorageKey levelId)
 
 
 localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error DraftBook)

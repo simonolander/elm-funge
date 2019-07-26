@@ -3,7 +3,6 @@ module Page.Initialize exposing
     , Msg
     , init
     , load
-    , localStorageResponseUpdate
     , subscriptions
     , update
     , view
@@ -17,7 +16,9 @@ import Data.AccessToken as AccessToken exposing (AccessToken)
 import Data.Cache as Cache exposing (Cache)
 import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
+import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
+import Data.LevelId exposing (LevelId)
 import Data.RemoteCache exposing (RemoteCache)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
@@ -27,7 +28,7 @@ import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
-import Extra.Cmd exposing (withCmd)
+import Extra.Cmd exposing (noCmd, withCmd, withExtraCmd)
 import Extra.Result
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -53,6 +54,11 @@ type ConflictResolution a
     | KeepLocal a
     | KeepActual a
     | ResolveManually
+        { local : a
+        , expected : Maybe a
+        , actual : a
+        }
+    | Error DetailedHttpError
 
 
 type InitializationError
@@ -82,11 +88,23 @@ type alias Model =
     , expectedUserInfo : Maybe UserInfo
     , actualUserInfo : RemoteData.RemoteData DetailedHttpError UserInfo
     , localDrafts : Dict DraftId (Result Decode.Error Draft)
+    , localDraftBooks : Dict LevelId (Result Decode.Error DraftBook)
     , expectedDrafts : Dict DraftId (Result Decode.Error Draft)
     , actualDrafts : Cache DraftId Draft
     , savingDrafts : Dict DraftId (Saving Draft)
     , error : Maybe InitializationError
     }
+
+
+type Msg
+    = GotUserInfoResponse (Result DetailedHttpError UserInfo)
+    | GotDraftLoadResponse (RequestResult DraftId DetailedHttpError Draft)
+    | GotDraftSaveResponse (RequestResult Draft DetailedHttpError ())
+    | ClickedContinueOffline
+    | ClickedDraftKeepLocal DraftId
+    | ClickedDraftKeepServer DraftId
+    | ClickedImportLocalData
+    | ClickedDeleteLocalData
 
 
 init :
@@ -147,6 +165,12 @@ init { navigationKey, localStorageEntries, url } =
                 |> List.map RequestResult.toTuple
                 |> Dict.fromList
 
+        localDraftBooks =
+            localStorageEntries
+                |> List.filterMap DraftBook.localStorageResponse
+                |> List.map RequestResult.toTuple
+                |> Dict.fromList
+
         model =
             { session =
                 Session.init navigationKey url
@@ -162,6 +186,7 @@ init { navigationKey, localStorageEntries, url } =
             , expectedDrafts = expectedDrafts
             , actualDrafts = Cache.empty
             , savingDrafts = Dict.empty
+            , localDraftBooks = localDraftBooks
             , error = Nothing
             }
 
@@ -189,7 +214,6 @@ load =
                       }
                     , Cmd.batch
                         [ UserInfo.loadFromServer accessToken GotUserInfoResponse
-                        , AccessToken.saveToLocalStorage accessToken
                         ]
                     )
 
@@ -292,7 +316,11 @@ load =
                                     |> Session.withDraftCache draftCache
                         in
                         ( { model | session = session }
-                        , Route.replaceUrl model.session.key model.route
+                        , Cmd.batch
+                            [ AccessToken.saveToLocalStorage accessToken
+                            , UserInfo.saveToLocalStorage userInfo
+                            , Route.replaceUrl model.session.key model.route
+                            ]
                         )
     in
     Extra.Cmd.fold
@@ -363,16 +391,9 @@ withExpiredAccessToken model =
 -- UPDATE
 
 
-type Msg
-    = GotUserInfoResponse (Result DetailedHttpError UserInfo)
-    | GotDraftLoadResponse (RequestResult DraftId DetailedHttpError Draft)
-    | GotDraftSaveResponse (RequestResult Draft DetailedHttpError ())
-    | ClickedContinueOffline
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg |> Debug.log "GotUserInfoResponse" of
+    case msg of
         GotUserInfoResponse result ->
             let
                 modelWithActualUserInfo =
@@ -399,7 +420,7 @@ update msg model =
                                     | expectedUserInfo = Just actualUserInfo
                                     , accessTokenState = verified
                                   }
-                                , UserInfo.saveToLocalStorage actualUserInfo
+                                , Cmd.none
                                 )
 
                             else
@@ -409,18 +430,18 @@ update msg model =
 
                         Nothing ->
                             let
-                                localStorageClean =
+                                localStorageIsClean =
                                     modelWithActualUserInfo.localDrafts
                                         |> Dict.isEmpty
 
                                 -- TODO Check blueprints
                             in
-                            if localStorageClean then
+                            if localStorageIsClean then
                                 ( { modelWithActualUserInfo
                                     | expectedUserInfo = Just actualUserInfo
                                     , accessTokenState = verified
                                   }
-                                , UserInfo.saveToLocalStorage actualUserInfo
+                                , Cmd.none
                                 )
 
                             else
@@ -456,70 +477,54 @@ update msg model =
                     , Ports.Console.errorString (DetailedHttpError.toString error)
                     )
 
-        GotDraftLoadResponse requestResult ->
+        GotDraftLoadResponse { request, result } ->
             let
-                { request, result } =
-                    requestResult
-
                 modelWithActualDraft =
-                    Cache.insertRequestResult requestResult model.actualDrafts
+                    Cache.withResult request result model.actualDrafts
                         |> flip withActualDrafts model
             in
-            case result of
-                Ok actualDraft ->
-                    case Dict.get request modelWithActualDraft.localDrafts of
-                        Just (Ok localDraft) ->
-                            if Draft.eq actualDraft localDraft then
-                                ( { modelWithActualDraft
-                                    | expectedDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.expectedDrafts
-                                  }
-                                , Draft.saveRemoteToLocalStorage actualDraft
-                                )
+            case
+                determineDraftConflict
+                    { local = Dict.get request modelWithActualDraft.localDrafts
+                    , expected = Dict.get request modelWithActualDraft.expectedDrafts
+                    , actual = RemoteData.fromResult result
+                    }
+            of
+                DoNothing ->
+                    modelWithActualDraft
+                        |> noCmd
 
-                            else
-                                case ( modelWithActualDraft.accessTokenState, Dict.get request modelWithActualDraft.expectedDrafts ) of
-                                    ( Verified { accessToken }, Just (Ok expectedDraft) ) ->
-                                        if Draft.eq actualDraft expectedDraft then
-                                            modelWithActualDraft
-                                                |> withSavingDraft localDraft
-                                                |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
-
-                                        else
-                                            modelWithActualDraft
-                                                |> withCmd Cmd.none
-
-                                    _ ->
-                                        modelWithActualDraft
-                                            |> withCmd Cmd.none
+                KeepLocal localDraft ->
+                    case modelWithActualDraft.accessTokenState of
+                        Verified { accessToken } ->
+                            modelWithActualDraft
+                                |> withSavingDraft localDraft
+                                |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
 
                         _ ->
                             modelWithActualDraft
-                                |> withCmd Cmd.none
+                                |> withCmd (Ports.Console.errorString "aa167786    Access token expired during initialization")
 
-                Err error ->
-                    case error of
-                        DetailedHttpError.NotFound ->
-                            case ( model.accessTokenState, Dict.get request model.localDrafts ) of
-                                ( Verified { accessToken }, Just (Ok localDraft) ) ->
-                                    modelWithActualDraft
-                                        |> withSavingDraft localDraft
-                                        |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
+                KeepActual actualDraft ->
+                    { modelWithActualDraft
+                        | localDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.localDrafts
+                        , expectedDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.expectedDrafts
+                    }
+                        |> withCmd (Draft.saveToLocalStorage actualDraft)
+                        |> withExtraCmd (Draft.saveRemoteToLocalStorage actualDraft)
 
-                                _ ->
-                                    modelWithActualDraft
-                                        |> withError error
-                                        |> withCmd (Ports.Console.errorString "509c6a8b-2df8-4ecc-bb32-90067b6e7893")
+                Error DetailedHttpError.InvalidAccessToken ->
+                    modelWithActualDraft
+                        |> withExpiredAccessToken
+                        |> withCmd (Ports.Console.errorString "Access token expired or invalid")
 
-                        DetailedHttpError.InvalidAccessToken ->
-                            modelWithActualDraft
-                                |> withExpiredAccessToken
-                                |> withError error
-                                |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
+                Error error ->
+                    modelWithActualDraft
+                        |> withCmd (DetailedHttpError.consoleError error)
 
-                        _ ->
-                            modelWithActualDraft
-                                |> withError error
-                                |> withCmd (Ports.Console.errorString (DetailedHttpError.toString error))
+                ResolveManually _ ->
+                    modelWithActualDraft
+                        |> noCmd
 
         GotDraftSaveResponse requestResult ->
             let
@@ -562,10 +567,71 @@ update msg model =
             , Cmd.none
             )
 
+        ClickedDraftKeepLocal draftId ->
+            case ( model.accessTokenState, Dict.get draftId model.localDrafts ) of
+                ( Verified { accessToken }, Just (Ok localDraft) ) ->
+                    model
+                        |> withSavingDraft localDraft
+                        |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
 
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
-    ( model, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
+
+        ClickedDraftKeepServer draftId ->
+            case Cache.get draftId model.actualDrafts of
+                RemoteData.Success actualDraft ->
+                    { model
+                        | localDrafts = Dict.insert draftId (Ok actualDraft) model.localDrafts
+                        , expectedDrafts = Dict.insert draftId (Ok actualDraft) model.expectedDrafts
+                    }
+                        |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
+                        |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ClickedImportLocalData ->
+            case ( model.accessTokenState, RemoteData.toMaybe model.actualUserInfo ) of
+                ( Verifying accessToken, Just actualUserInfo ) ->
+                    ( { model
+                        | accessTokenState = Verified { accessToken = accessToken, userInfo = actualUserInfo }
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        ClickedDeleteLocalData ->
+            case ( model.accessTokenState, RemoteData.toMaybe model.actualUserInfo ) of
+                -- TODO Remove blueprints
+                ( Verifying accessToken, Just actualUserInfo ) ->
+                    ( { model
+                        | accessTokenState =
+                            Verified
+                                { accessToken = accessToken
+                                , userInfo = actualUserInfo
+                                }
+                        , localDrafts = Dict.empty
+                      }
+                    , Cmd.batch
+                        [ model.localDrafts
+                            |> Dict.keys
+                            |> List.map Draft.removeFromLocalStorage
+                            |> Cmd.batch
+                        , model.expectedDrafts
+                            |> Dict.keys
+                            |> List.map Draft.removeRemoteFromLocalStorage
+                            |> Cmd.batch
+                        , model.localDraftBooks
+                            |> Dict.keys
+                            |> List.map DraftBook.removeFromLocalStorage
+                            |> Cmd.batch
+                        ]
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 
@@ -606,13 +672,35 @@ view model =
                                 |> View.Layout.layout
 
                         RemoteData.Success actualUserInfo ->
-                            [ "User info doesn't match. Expected sub"
-                            , Maybe.map .sub model.expectedUserInfo |> Maybe.withDefault "<Nothing>"
-                            , ", but actually it was"
-                            , actualUserInfo.sub
-                            ]
-                                |> String.join " "
-                                |> View.ErrorScreen.layout
+                            View.Layout.layout <|
+                                viewInfo
+                                    { title = "User info doesn't match"
+                                    , icon =
+                                        { src = "assets/instruction-images/exception.svg"
+                                        , description = "Alert icon"
+                                        }
+                                    , elements =
+                                        case model.expectedUserInfo of
+                                            Just expectedUserInfo ->
+                                                [ paragraph [ Font.center ]
+                                                    [ text "You're trying to sign in as "
+                                                    , text actualUserInfo.sub |> el [ Font.color (rgb255 163 179 222) ]
+                                                    , text " but there is unsaved data belonging to "
+                                                    , text expectedUserInfo.sub |> el [ Font.color (rgb255 163 179 222) ]
+                                                    , text ". Either clear the local data and continue or log in to the other account."
+                                                    ]
+                                                , ViewComponents.textButton [] Nothing "Delete data"
+                                                , ViewComponents.textButton [] Nothing "Sign in to other account"
+                                                ]
+
+                                            Nothing ->
+                                                [ paragraph [ Font.center ]
+                                                    [ text "There is local data that is not associated with this account. Either import it to this account or delete it."
+                                                    ]
+                                                , ViewComponents.textButton [] (Just ClickedImportLocalData) "Import data"
+                                                , ViewComponents.textButton [] (Just ClickedDeleteLocalData) "Delete data"
+                                                ]
+                                    }
 
                 Verified _ ->
                     viewProgress model
@@ -674,7 +762,7 @@ viewHttpError model error =
 
 
 determineDraftConflict :
-    { local : Result Decode.Error Draft
+    { local : Maybe (Result Decode.Error Draft)
     , expected : Maybe (Result Decode.Error Draft)
     , actual : RemoteData.RemoteData DetailedHttpError Draft
     }
@@ -691,10 +779,10 @@ determineDraftConflict { local, expected, actual } =
             case error of
                 DetailedHttpError.NotFound ->
                     case local of
-                        Ok localDraft ->
+                        Just (Ok localDraft) ->
                             KeepLocal localDraft
 
-                        Err _ ->
+                        _ ->
                             DoNothing
 
                 _ ->
@@ -702,7 +790,7 @@ determineDraftConflict { local, expected, actual } =
 
         RemoteData.Success actualDraft ->
             case local of
-                Ok localDraft ->
+                Just (Ok localDraft) ->
                     case expected of
                         Just (Ok expectedDraft) ->
                             if Draft.eq localDraft expectedDraft then
@@ -720,6 +808,10 @@ determineDraftConflict { local, expected, actual } =
 
                             else
                                 ResolveManually
+                                    { local = localDraft
+                                    , expected = Just expectedDraft
+                                    , actual = actualDraft
+                                    }
 
                         _ ->
                             if Draft.eq localDraft actualDraft then
@@ -727,8 +819,12 @@ determineDraftConflict { local, expected, actual } =
 
                             else
                                 ResolveManually
+                                    { local = localDraft
+                                    , expected = Nothing
+                                    , actual = actualDraft
+                                    }
 
-                Err _ ->
+                _ ->
                     KeepActual actualDraft
 
 
@@ -748,21 +844,23 @@ viewProgress model =
                     )
 
         draftsNeedingManualResolution =
-            List.filterMap
-                (\record ->
-                    case ( record.local, record.expected, record.actual ) of
-                        ( Ok localDraft, Just (Ok expectedDraft), RemoteData.Success actualDraft ) ->
-                            case record.actual of
-                                RemoteData.Success actualDraft ->
-                                    Nothing
+            model.localDrafts
+                |> Dict.keys
+                |> List.filterMap
+                    (\key ->
+                        case
+                            determineDraftConflict
+                                { local = Dict.get key model.localDrafts
+                                , expected = Dict.get key model.expectedDrafts
+                                , actual = Cache.get key model.actualDrafts
+                                }
+                        of
+                            ResolveManually record ->
+                                Just record
 
-                                _ ->
-                                    Nothing
-
-                        _ ->
-                            Nothing
-                )
-                drafts
+                            _ ->
+                                Nothing
+                    )
 
         --        view =
         --            case List.head draftsNeedingManualResolution of
@@ -771,7 +869,57 @@ viewProgress model =
         --
         --                Nothing ->
     in
-    Debug.todo ""
+    case List.head draftsNeedingManualResolution of
+        Just record ->
+            viewResolveDraftConflict record
+
+        Nothing ->
+            text "doing stuff"
+
+
+viewResolveDraftConflict : { local : Draft, expected : Maybe Draft, actual : Draft } -> Element Msg
+viewResolveDraftConflict { local, expected, actual } =
+    textColumn [ width fill ]
+        [ paragraph [ Font.center ] [ text "Conflict" ]
+        , paragraph [ width fill, Font.center ]
+            [ text "Your local changes on draft "
+            , text local.id
+            , text " have diverged from the server version. You need to choose which version you want to keep."
+            ]
+        , ViewComponents.textButton [] (Just (ClickedDraftKeepLocal local.id)) "Keep my local changes"
+        , ViewComponents.textButton [] (Just (ClickedDraftKeepServer actual.id)) "Keep the server changes"
+        ]
+
+
+viewInfo :
+    { title : String
+    , icon :
+        { src : String
+        , description : String
+        }
+    , elements : List (Element msg)
+    }
+    -> Element msg
+viewInfo { title, icon, elements } =
+    column
+        [ centerX
+        , centerY
+        , spacing 20
+        , padding 40
+        ]
+        ([ image
+            [ width (px 72)
+            , centerX
+            ]
+            icon
+         , paragraph
+            [ Font.size 25
+            , Font.center
+            ]
+            [ text title ]
+         ]
+            ++ elements
+        )
 
 
 
