@@ -28,7 +28,7 @@ import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
-import Extra.Cmd exposing (noCmd, withCmd, withExtraCmd)
+import Extra.Cmd exposing (noCmd, withCmd)
 import Extra.Result
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -105,6 +105,7 @@ type Msg
     | ClickedDraftKeepServer DraftId
     | ClickedImportLocalData
     | ClickedDeleteLocalData
+    | ClickedSignInToOtherAccount
 
 
 init :
@@ -646,6 +647,11 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        ClickedSignInToOtherAccount ->
+            ( model
+            , Browser.Navigation.load (Auth0.login (Route.toUrl model.route))
+            )
+
 
 
 -- SUBSCRIPTIONS
@@ -702,8 +708,8 @@ view model =
                                                     , text expectedUserInfo.sub |> el [ Font.color (rgb255 163 179 222) ]
                                                     , text ". Either clear the local data and continue or log in to the other account."
                                                     ]
-                                                , ViewComponents.textButton [] Nothing "Delete data"
-                                                , ViewComponents.textButton [] Nothing "Sign in to other account"
+                                                , ViewComponents.textButton [] (Just ClickedDeleteLocalData) "Delete data"
+                                                , ViewComponents.textButton [] (Just ClickedSignInToOtherAccount) "Sign in to other account"
                                                 ]
 
                                             Nothing ->
