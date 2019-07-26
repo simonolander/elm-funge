@@ -693,9 +693,9 @@ view model =
                         RemoteData.Success actualUserInfo ->
                             View.Layout.layout <|
                                 viewInfo
-                                    { title = "User info doesn't match"
+                                    { title = "New sign in detected"
                                     , icon =
-                                        { src = "assets/instruction-images/exception.svg"
+                                        { src = "assets/exception-orange.svg"
                                         , description = "Alert icon"
                                         }
                                     , elements =
@@ -709,12 +709,12 @@ view model =
                                                     , text ". Either clear the local data and continue or log in to the other account."
                                                     ]
                                                 , ViewComponents.textButton [] (Just ClickedDeleteLocalData) "Delete data"
-                                                , ViewComponents.textButton [] (Just ClickedSignInToOtherAccount) "Sign in to other account"
+                                                , ViewComponents.textButton [] (Just ClickedSignInToOtherAccount) "Sign in to the other account"
                                                 ]
 
                                             Nothing ->
                                                 [ paragraph [ Font.center ]
-                                                    [ text "There is local data that is not associated with this account. Either import it to this account or delete it."
+                                                    [ text "There is unsaved data on the local storage. Either import it to this account or delete it."
                                                     ]
                                                 , ViewComponents.textButton [] (Just ClickedImportLocalData) "Import data"
                                                 , ViewComponents.textButton [] (Just ClickedDeleteLocalData) "Delete data"
