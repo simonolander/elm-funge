@@ -48,6 +48,13 @@ import ViewComponents
 -- MODEL
 
 
+type ConflictResolution a
+    = DoNothing
+    | KeepLocal a
+    | KeepActual a
+    | ResolveManually
+
+
 type InitializationError
     = NetworkMissing
     | ServerError DetailedHttpError
@@ -201,7 +208,7 @@ load =
                                         if RemoteData.isNotAsked (Cache.get draftId model.actualDrafts) then
                                             case ( localDraftResult, Dict.get draftId model.expectedDrafts ) of
                                                 ( Ok localDraft, Just (Ok expectedDraft) ) ->
-                                                    if localDraft == expectedDraft then
+                                                    if Draft.eq localDraft expectedDraft then
                                                         Nothing
 
                                                     else
@@ -462,7 +469,7 @@ update msg model =
                 Ok actualDraft ->
                     case Dict.get request modelWithActualDraft.localDrafts of
                         Just (Ok localDraft) ->
-                            if actualDraft == localDraft then
+                            if Draft.eq actualDraft localDraft then
                                 ( { modelWithActualDraft
                                     | expectedDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.expectedDrafts
                                   }
@@ -472,7 +479,7 @@ update msg model =
                             else
                                 case ( modelWithActualDraft.accessTokenState, Dict.get request modelWithActualDraft.expectedDrafts ) of
                                     ( Verified { accessToken }, Just (Ok expectedDraft) ) ->
-                                        if actualDraft == expectedDraft then
+                                        if Draft.eq actualDraft expectedDraft then
                                             modelWithActualDraft
                                                 |> withSavingDraft localDraft
                                                 |> withCmd (Draft.saveToServer accessToken GotDraftSaveResponse localDraft)
@@ -608,7 +615,8 @@ view model =
                                 |> View.ErrorScreen.layout
 
                 Verified _ ->
-                    View.ErrorScreen.layout ("Access token verified: \n\n" ++ Debug.toString model)
+                    viewProgress model
+                        |> View.Layout.layout
     in
     { title = "Synchronizing"
     , body = [ element ]
@@ -663,3 +671,116 @@ viewHttpError model error =
 
         _ ->
             View.ErrorScreen.view (DetailedHttpError.toString error)
+
+
+determineDraftConflict :
+    { local : Result Decode.Error Draft
+    , expected : Maybe (Result Decode.Error Draft)
+    , actual : RemoteData.RemoteData DetailedHttpError Draft
+    }
+    -> ConflictResolution Draft
+determineDraftConflict { local, expected, actual } =
+    case actual of
+        RemoteData.NotAsked ->
+            DoNothing
+
+        RemoteData.Loading ->
+            DoNothing
+
+        RemoteData.Failure error ->
+            case error of
+                DetailedHttpError.NotFound ->
+                    case local of
+                        Ok localDraft ->
+                            KeepLocal localDraft
+
+                        Err _ ->
+                            DoNothing
+
+                _ ->
+                    DoNothing
+
+        RemoteData.Success actualDraft ->
+            case local of
+                Ok localDraft ->
+                    case expected of
+                        Just (Ok expectedDraft) ->
+                            if Draft.eq localDraft expectedDraft then
+                                if Draft.eq localDraft actualDraft then
+                                    DoNothing
+
+                                else
+                                    KeepActual actualDraft
+
+                            else if Draft.eq localDraft actualDraft then
+                                KeepActual actualDraft
+
+                            else if Draft.eq expectedDraft actualDraft then
+                                KeepLocal localDraft
+
+                            else
+                                ResolveManually
+
+                        _ ->
+                            if Draft.eq localDraft actualDraft then
+                                KeepActual actualDraft
+
+                            else
+                                ResolveManually
+
+                Err _ ->
+                    KeepActual actualDraft
+
+
+viewProgress : Model -> Element Msg
+viewProgress model =
+    let
+        drafts =
+            model.localDrafts
+                |> Dict.toList
+                |> List.sortBy Tuple.first
+                |> List.map
+                    (\( draftId, localResult ) ->
+                        { local = localResult
+                        , expected = Dict.get draftId model.expectedDrafts
+                        , actual = Cache.get draftId model.actualDrafts
+                        }
+                    )
+
+        draftsNeedingManualResolution =
+            List.filterMap
+                (\record ->
+                    case ( record.local, record.expected, record.actual ) of
+                        ( Ok localDraft, Just (Ok expectedDraft), RemoteData.Success actualDraft ) ->
+                            case record.actual of
+                                RemoteData.Success actualDraft ->
+                                    Nothing
+
+                                _ ->
+                                    Nothing
+
+                        _ ->
+                            Nothing
+                )
+                drafts
+
+        --        view =
+        --            case List.head draftsNeedingManualResolution of
+        --                Just draftNeedingManualResolution ->
+        --                    viewDraftResolver draftsNeedingManualResolution
+        --
+        --                Nothing ->
+    in
+    Debug.todo ""
+
+
+
+--    if numberOfLoadingDrafts > 0 then
+--        [ String.fromInt numberOfLoadingDrafts
+--        , " drafts remaining"
+--        ]
+--            |> String.join ""
+--            |> View.LoadingScreen.view
+--
+--    else
+--        View.LoadingScreen.view (Debug.toString maybeConflictingDrafts)
