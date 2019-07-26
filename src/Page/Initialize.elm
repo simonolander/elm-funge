@@ -314,11 +314,26 @@ load =
                                 model.session
                                     |> Session.withUser user
                                     |> Session.withDraftCache draftCache
+
+                            saveDraftsLocallyCmd =
+                                Cmd.batch
+                                    [ model.localDrafts
+                                        |> Dict.values
+                                        |> List.filterMap Result.toMaybe
+                                        |> List.map Draft.saveToLocalStorage
+                                        |> Cmd.batch
+                                    , model.actualDrafts
+                                        |> Cache.values
+                                        |> List.filterMap RemoteData.toMaybe
+                                        |> List.map Draft.saveRemoteToLocalStorage
+                                        |> Cmd.batch
+                                    ]
                         in
                         ( { model | session = session }
                         , Cmd.batch
                             [ AccessToken.saveToLocalStorage accessToken
                             , UserInfo.saveToLocalStorage userInfo
+                            , saveDraftsLocallyCmd
                             , Route.replaceUrl model.session.key model.route
                             ]
                         )
@@ -510,8 +525,7 @@ update msg model =
                         | localDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.localDrafts
                         , expectedDrafts = Dict.insert request (Ok actualDraft) modelWithActualDraft.expectedDrafts
                     }
-                        |> withCmd (Draft.saveToLocalStorage actualDraft)
-                        |> withExtraCmd (Draft.saveRemoteToLocalStorage actualDraft)
+                        |> noCmd
 
                 Error DetailedHttpError.InvalidAccessToken ->
                     modelWithActualDraft
@@ -584,8 +598,7 @@ update msg model =
                         | localDrafts = Dict.insert draftId (Ok actualDraft) model.localDrafts
                         , expectedDrafts = Dict.insert draftId (Ok actualDraft) model.expectedDrafts
                     }
-                        |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
-                        |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
+                        |> noCmd
 
                 _ ->
                     ( model, Cmd.none )
@@ -780,6 +793,7 @@ determineDraftConflict { local, expected, actual } =
                 DetailedHttpError.NotFound ->
                     case local of
                         Just (Ok localDraft) ->
+                            -- TODO maybe manual if there exists an expected draft
                             KeepLocal localDraft
 
                         _ ->

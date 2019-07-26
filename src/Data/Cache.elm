@@ -1,4 +1,4 @@
-module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, withDefault, withError, withResult, withValue)
+module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, values, withDefault, withError, withResult, withValue)
 
 import Basics.Extra exposing (flip)
 import Data.DetailedHttpError exposing (DetailedHttpError)
@@ -25,6 +25,13 @@ keys cache =
     cache
         |> getDict
         |> Dict.keys
+
+
+values : Cache comparable value -> List (RemoteData DetailedHttpError value)
+values cache =
+    cache
+        |> getDict
+        |> Dict.values
 
 
 empty : Cache comparable value

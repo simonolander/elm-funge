@@ -38,6 +38,7 @@ function unsavedDraft() {
     }));
 }
 
+fakeUserInfo();
 unsavedDraft();
 
 const app = Elm.Main.init({
