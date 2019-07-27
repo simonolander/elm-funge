@@ -767,11 +767,16 @@ viewHttpError : Model -> DetailedHttpError -> Element Msg
 viewHttpError model error =
     case error of
         DetailedHttpError.NetworkError ->
-            column
-                []
-                [ text "Unable to connect to server"
-                , Input.button [] { onPress = Just ClickedContinueOffline, label = text "Continue offline" }
-                ]
+            viewInfo
+                { title = "Unable to connect to server"
+                , icon =
+                    { src = "assets/exception-orange.svg"
+                    , description = "Alert icon"
+                    }
+                , elements =
+                    [ ViewComponents.textButton [] (Just ClickedContinueOffline) "Continue offline"
+                    ]
+                }
 
         DetailedHttpError.InvalidAccessToken ->
             viewExpiredAccessToken model
@@ -961,16 +966,22 @@ viewProgress model =
 
 viewResolveDraftConflict : { local : Draft, expected : Maybe Draft, actual : Draft } -> Element Msg
 viewResolveDraftConflict { local, expected, actual } =
-    textColumn [ width fill ]
-        [ paragraph [ Font.center ] [ text "Conflict" ]
-        , paragraph [ width fill, Font.center ]
-            [ text "Your local changes on draft "
-            , text local.id
-            , text " have diverged from the server version. You need to choose which version you want to keep."
+    viewInfo
+        { title = "Confict in draft " ++ local.id
+        , icon =
+            { src = "assets/exception-orange.svg"
+            , description = "Alert icon"
+            }
+        , elements =
+            [ paragraph [ Font.center ]
+                [ text "Your local changes on draft "
+                , text local.id
+                , text " have diverged from the server version. You need to choose which version you want to keep."
+                ]
+            , ViewComponents.textButton [] (Just (ClickedDraftKeepLocal local.id)) "Keep my local changes"
+            , ViewComponents.textButton [] (Just (ClickedDraftKeepServer actual.id)) "Keep the server changes"
             ]
-        , ViewComponents.textButton [] (Just (ClickedDraftKeepLocal local.id)) "Keep my local changes"
-        , ViewComponents.textButton [] (Just (ClickedDraftKeepServer actual.id)) "Keep the server changes"
-        ]
+        }
 
 
 viewLoading :
