@@ -738,7 +738,7 @@ viewExpiredAccessToken model =
         , spacing 20
         ]
         [ image
-            [ width (px 72)
+            [ width (px 36)
             , centerX
             ]
             { src = "assets/instruction-images/exception.svg"
@@ -882,19 +882,81 @@ viewProgress model =
                                 Nothing
                     )
 
-        --        view =
-        --            case List.head draftsNeedingManualResolution of
-        --                Just draftNeedingManualResolution ->
-        --                    viewDraftResolver draftsNeedingManualResolution
-        --
-        --                Nothing ->
+        numberOfDraftsSaving =
+            model.savingDrafts
+                |> Dict.values
+                |> List.filter
+                    (\a ->
+                        case a of
+                            Saving _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+                |> List.length
+
+        numberOfDraftsSaved =
+            model.savingDrafts
+                |> Dict.values
+                |> List.filter
+                    (\a ->
+                        case a of
+                            Saved _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+                |> List.length
+
+        numberOfDraftsLoading =
+            model.actualDrafts
+                |> Cache.values
+                |> List.filter RemoteData.isLoading
+                |> List.length
+
+        numberOfDraftsLoaded =
+            model.actualDrafts
+                |> Cache.values
+                |> List.filter (not << RemoteData.isLoading)
+                |> List.length
+
+        elements =
+            [ column
+                [ centerX, spacing 10 ]
+                [ row [ width fill ]
+                    [ el [ alignLeft ] (text "Loading drafts: ")
+                    , [ String.fromInt numberOfDraftsLoaded
+                      , "/"
+                      , String.fromInt (numberOfDraftsLoading + numberOfDraftsLoaded)
+                      ]
+                        |> String.concat
+                        |> text
+                        |> el [ alignRight ]
+                    ]
+                , row [ width fill ]
+                    [ el [ alignLeft ] (text "Saving drafts: ")
+                    , [ String.fromInt numberOfDraftsSaved
+                      , "/"
+                      , String.fromInt (numberOfDraftsSaving + numberOfDraftsSaved)
+                      ]
+                        |> String.concat
+                        |> text
+                        |> el [ alignRight ]
+                    ]
+                ]
+            ]
     in
     case List.head draftsNeedingManualResolution of
         Just record ->
             viewResolveDraftConflict record
 
         Nothing ->
-            text "doing stuff"
+            viewLoading
+                { title = "Resolving unsaved data"
+                , elements = elements
+                }
 
 
 viewResolveDraftConflict : { local : Draft, expected : Maybe Draft, actual : Draft } -> Element Msg
@@ -911,12 +973,38 @@ viewResolveDraftConflict { local, expected, actual } =
         ]
 
 
+viewLoading :
+    { title : String
+    , elements : List (Element msg)
+    }
+    -> Element msg
+viewLoading { title, elements } =
+    column
+        [ centerX
+        , centerY
+        , spacing 20
+        , padding 40
+        ]
+        ([ paragraph
+            [ Font.size 28
+            , Font.center
+            ]
+            [ text title ]
+         , image
+            [ width (px 36)
+            , centerX
+            ]
+            { src = "assets/spinner.svg"
+            , description = "Loading spinner"
+            }
+         ]
+            ++ elements
+        )
+
+
 viewInfo :
     { title : String
-    , icon :
-        { src : String
-        , description : String
-        }
+    , icon : { src : String, description : String }
     , elements : List (Element msg)
     }
     -> Element msg
@@ -933,22 +1021,10 @@ viewInfo { title, icon, elements } =
             ]
             icon
          , paragraph
-            [ Font.size 25
+            [ Font.size 28
             , Font.center
             ]
             [ text title ]
          ]
             ++ elements
         )
-
-
-
---    if numberOfLoadingDrafts > 0 then
---        [ String.fromInt numberOfLoadingDrafts
---        , " drafts remaining"
---        ]
---            |> String.join ""
---            |> View.LoadingScreen.view
---
---    else
---        View.LoadingScreen.view (Debug.toString maybeConflictingDrafts)
