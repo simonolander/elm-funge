@@ -194,6 +194,12 @@ update msg model =
                 Draft.update message mdl
                     |> updateWith Draft DraftMsg
 
+            ( DraftMsg (Draft.SessionMsg message), mdl ) ->
+                mdl
+                    |> getSession
+                    |> SessionUpdate.update message
+                    |> updateWith (flip withSession mdl) DraftMsg
+
             ( CampaignMsg message, Campaign mdl ) ->
                 Campaign.update message mdl
                     |> updateWith Campaign CampaignMsg

@@ -1,4 +1,4 @@
-module Page.Draft exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
+module Page.Draft exposing (Model, Msg(..), getSession, init, load, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -13,10 +13,8 @@ import Data.History as History
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Level as Level exposing (Level)
-import Data.LevelId exposing (LevelId)
 import Data.Position exposing (Position)
 import Data.RemoteCache as RemoteCache
-import Data.RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
@@ -24,15 +22,13 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Extra.Cmd exposing (noCmd)
-import Extra.String
-import Http exposing (Error(..))
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
-import Ports.Console
+import Maybe.Extra
 import RemoteData exposing (RemoteData(..), WebData)
 import Route
+import SessionUpdate exposing (SessionMsg(..))
 import View.Board
-import View.Box
 import View.ErrorScreen
 import View.Header
 import View.InstructionTools
@@ -77,6 +73,22 @@ type alias ErrorModel =
     }
 
 
+type Msg
+    = ImportDataChanged String
+    | Import String
+    | ImportOpen
+    | ImportClosed
+    | EditUndo
+    | EditRedo
+    | EditClear
+    | ClickedBack
+    | ClickedExecute
+    | InstructionToolReplaced Int InstructionTool
+    | InstructionToolSelected Int
+    | InstructionPlaced Position Instruction
+    | SessionMsg SessionMsg
+
+
 init : DraftId -> Session -> ( Model, Cmd Msg )
 init draftId session =
     let
@@ -94,25 +106,32 @@ init draftId session =
 load : Model -> ( Model, Cmd Msg )
 load =
     let
-        loadDraft model =
+        loadActualDraft model =
+            case ( Session.getAccessToken model.session, Cache.get model.draftId model.session.drafts.actual ) of
+                ( Just accessToken, NotAsked ) ->
+                    ( model.session.drafts
+                        |> RemoteCache.withActualLoading model.draftId
+                        |> flip Session.withDraftCache model.session
+                        |> flip withSession model
+                    , Draft.loadFromServer accessToken (SessionMsg << GotLoadDraftByDraftIdResponse) model.draftId
+                    )
+
+                _ ->
+                    noCmd model
+
+        loadLocalDraft model =
             case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
-                    case Session.getAccessToken model.session of
-                        Just accessToken ->
-                            ( model.session.drafts
-                                |> RemoteCache.withLocalLoading model.draftId
-                                |> flip Session.withDraftCache model.session
-                                |> flip withSession model
-                            , Draft.loadFromServer accessToken GotLoadDraftResponse model.draftId
-                            )
+                    if Maybe.Extra.isNothing (Session.getAccessToken model.session) || RemoteData.isFailure (Cache.get model.draftId model.session.drafts.actual) then
+                        ( model.session.drafts
+                            |> RemoteCache.withLocalLoading model.draftId
+                            |> flip Session.withDraftCache model.session
+                            |> flip withSession model
+                        , Draft.loadFromLocalStorage model.draftId
+                        )
 
-                        Nothing ->
-                            ( model.session.drafts
-                                |> RemoteCache.withLocalLoading model.draftId
-                                |> flip Session.withDraftCache model.session
-                                |> flip withSession model
-                            , Draft.loadFromLocalStorage model.draftId
-                            )
+                    else
+                        noCmd model
 
                 _ ->
                     noCmd model
@@ -128,7 +147,7 @@ load =
                             ( model.session
                                 |> Session.levelLoading draft.levelId
                                 |> flip withSession model
-                            , Level.loadFromServer LoadedLevel draft.levelId
+                            , Level.loadFromServer (SessionMsg << GotLoadLevelResponse) draft.levelId
                             )
 
                         _ ->
@@ -138,7 +157,8 @@ load =
                     noCmd model
     in
     Extra.Cmd.fold
-        [ loadDraft
+        [ loadActualDraft
+        , loadLocalDraft
         , loadLevel
         ]
 
@@ -155,24 +175,6 @@ withSession session model =
 
 
 -- UPDATE
-
-
-type Msg
-    = ImportDataChanged String
-    | Import String
-    | ImportOpen
-    | ImportClosed
-    | EditUndo
-    | EditRedo
-    | EditClear
-    | ClickedBack
-    | ClickedExecute
-    | InstructionToolReplaced Int InstructionTool
-    | InstructionToolSelected Int
-    | InstructionPlaced Position Instruction
-    | GotLoadDraftResponse (RequestResult DraftId DetailedHttpError Draft)
-    | LoadedLevel (RequestResult LevelId DetailedHttpError Level)
-    | GotSaveDraftToServerResponse (RequestResult Draft DetailedHttpError ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -331,31 +333,9 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        GotLoadDraftResponse { request, result } ->
-            let
-                modelWithDraftResult =
-                    model.session.drafts
-                        |> RemoteCache.withLocalResult request result
-                        |> flip Session.withDraftCache model.session
-                        |> flip withSession model
-            in
-            ( modelWithDraftResult
-            , Cmd.none
-            )
-
-        -- TODO
-        LoadedLevel result ->
-            Debug.todo "LoadedLevel not implemented"
-
-        GotSaveDraftToServerResponse requestResult ->
-            case requestResult.result of
-                Ok _ ->
-                    ( model, Cmd.none )
-
-                Err error ->
-                    ( model
-                    , Ports.Console.errorString (DetailedHttpError.toString error)
-                    )
+        SessionMsg sessionMsg ->
+            SessionUpdate.update sessionMsg model.session
+                |> Extra.Cmd.mapModel (flip withSession model)
 
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )
@@ -365,7 +345,7 @@ updateDraft draft model =
             case Session.getAccessToken model.session of
                 Just accessToken ->
                     Cmd.batch
-                        [ Draft.saveToServer accessToken GotSaveDraftToServerResponse draft
+                        [ Draft.saveToServer accessToken (SessionMsg << GotSaveDraftResponse) draft
                         , Draft.saveToLocalStorage draft
                         ]
 
@@ -406,10 +386,14 @@ view model =
                 Nothing ->
                     case Cache.get model.draftId model.session.drafts.local of
                         NotAsked ->
-                            View.ErrorScreen.view ("Not asked for draft: " ++ model.draftId)
+                            if RemoteData.isLoading (Cache.get model.draftId model.session.drafts.actual) then
+                                View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ " from server")
+
+                            else
+                                View.ErrorScreen.view ("Not asked for draft: " ++ model.draftId)
 
                         Loading ->
-                            View.LoadingScreen.view ("Loading draft " ++ model.draftId)
+                            View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ " from local storage")
 
                         Failure error ->
                             View.ErrorScreen.view (DetailedHttpError.toString error)
