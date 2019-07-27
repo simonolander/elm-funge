@@ -653,7 +653,7 @@ stepExecutionStep executionStep =
 
         Decrement ->
             { movedExecutionStep
-                | stack = popOp (Int16.subtract Int16.one) stack
+                | stack = popOp (flip Int16.subtract Int16.one) stack
             }
 
         Add ->
