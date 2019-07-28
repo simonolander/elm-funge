@@ -1,4 +1,4 @@
-module Page.Execution exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
+module Page.Execution exposing (Model, Msg(..), getSession, init, load, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -31,10 +31,8 @@ import ExecutionControlView
 import Extra.Cmd exposing (noCmd)
 import InstructionView
 import Maybe.Extra
-import Ports.Console
 import Random
 import RemoteData exposing (RemoteData(..), WebData)
-import Result as Http
 import Route
 import SessionUpdate exposing (SessionMsg(..))
 import Time
@@ -842,10 +840,15 @@ view model =
         content =
             case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
-                    View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not asked :/")
+                    case Cache.get model.draftId model.session.drafts.actual of
+                        Loading ->
+                            View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ " from server")
+
+                        _ ->
+                            View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not asked :/")
 
                 Loading ->
-                    View.LoadingScreen.view ("Loading draft " ++ model.draftId)
+                    View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ " from local storage")
 
                 Failure error ->
                     let

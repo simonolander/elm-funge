@@ -190,6 +190,12 @@ update msg model =
                 Execution.update message mdl
                     |> updateWith Execution ExecutionMsg
 
+            ( ExecutionMsg (Execution.SessionMsg message), mdl ) ->
+                mdl
+                    |> getSession
+                    |> SessionUpdate.update message
+                    |> updateWith (flip withSession mdl) ExecutionMsg
+
             ( DraftMsg message, Draft mdl ) ->
                 Draft.update message mdl
                     |> updateWith Draft DraftMsg
