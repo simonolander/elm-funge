@@ -9,7 +9,6 @@ import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Score as Score exposing (Score)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId as SolutionId exposing (SolutionId)
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -22,6 +21,7 @@ type alias Solution =
     , levelId : LevelId
     , score : Score
     , board : Board
+    , published : Bool
     }
 
 
@@ -37,6 +37,7 @@ generator levelId score board =
             , levelId = levelId
             , score = score
             , board = board
+            , published = False
             }
         )
         SolutionId.generator
@@ -54,6 +55,7 @@ encode solution =
         , ( "levelId", LevelId.encode solution.levelId )
         , ( "score", Score.encode solution.score )
         , ( "board", Board.encode solution.board )
+        , ( "published", Encode.bool solution.published )
         ]
 
 
@@ -71,12 +73,17 @@ decoderV1 =
                                         Decode.field "board" Board.decoder
                                             |> Decode.andThen
                                                 (\board ->
-                                                    Decode.succeed
-                                                        { id = id
-                                                        , levelId = levelId
-                                                        , score = score
-                                                        , board = board
-                                                        }
+                                                    Decode.maybe (Decode.field "published" Decode.bool)
+                                                        |> Decode.andThen
+                                                            (\published ->
+                                                                Decode.succeed
+                                                                    { id = id
+                                                                    , levelId = levelId
+                                                                    , score = score
+                                                                    , board = board
+                                                                    , published = Maybe.withDefault True published
+                                                                    }
+                                                            )
                                                 )
                                     )
                         )
@@ -143,13 +150,13 @@ localStorageResponse ( key, value ) =
 -- REST
 
 
-saveToServer : (Result DetailedHttpError () -> msg) -> Solution -> AccessToken -> Cmd msg
-saveToServer toMsg solution accessToken =
+saveToServer : (RequestResult Solution DetailedHttpError () -> msg) -> AccessToken -> Solution -> Cmd msg
+saveToServer toMsg accessToken solution =
     GCP.post (Decode.succeed ())
         |> GCP.withPath [ "solutions" ]
         |> GCP.withAccessToken accessToken
         |> GCP.withBody (encode solution)
-        |> GCP.request toMsg
+        |> GCP.request (RequestResult.constructor solution >> toMsg)
 
 
 loadFromServerByLevelId : AccessToken -> (RequestResult LevelId DetailedHttpError (List Solution) -> msg) -> LevelId -> Cmd msg

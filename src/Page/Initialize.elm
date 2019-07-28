@@ -22,12 +22,14 @@ import Data.LevelId exposing (LevelId)
 import Data.RemoteCache exposing (RemoteCache)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.Session as Session exposing (Session)
+import Data.Solution as Solution exposing (Solution)
+import Data.SolutionBook as SolutionBook exposing (SolutionBook)
+import Data.SolutionId exposing (SolutionId)
 import Data.User as User
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Font as Font
-import Element.Input as Input
 import Extra.Cmd exposing (noCmd, withCmd)
 import Extra.Result
 import Json.Decode as Decode
@@ -92,6 +94,9 @@ type alias Model =
     , expectedDrafts : Dict DraftId (Result Decode.Error Draft)
     , actualDrafts : Cache DraftId Draft
     , savingDrafts : Dict DraftId (Saving Draft)
+    , localSolutions : List Solution
+    , localSolutionBooks : List SolutionBook
+    , savingSolutions : Dict SolutionId (Saving Solution)
     , error : Maybe InitializationError
     }
 
@@ -100,6 +105,7 @@ type Msg
     = GotUserInfoResponse (Result DetailedHttpError UserInfo)
     | GotDraftLoadResponse (RequestResult DraftId DetailedHttpError Draft)
     | GotDraftSaveResponse (RequestResult Draft DetailedHttpError ())
+    | GotSolutionSaveResponse (RequestResult Solution DetailedHttpError ())
     | ClickedContinueOffline
     | ClickedDraftKeepLocal DraftId
     | ClickedDraftKeepServer DraftId
@@ -172,6 +178,19 @@ init { navigationKey, localStorageEntries, url } =
                 |> List.map RequestResult.toTuple
                 |> Dict.fromList
 
+        localSolutions =
+            localStorageEntries
+                |> List.filterMap Solution.localStorageResponse
+                |> List.map .result
+                |> List.filterMap Result.toMaybe
+                |> Maybe.Extra.values
+
+        localSolutionBooks =
+            localStorageEntries
+                |> List.filterMap SolutionBook.localStorageResponse
+                |> List.map .result
+                |> List.filterMap Result.toMaybe
+
         model =
             { session =
                 Session.init navigationKey url
@@ -188,6 +207,9 @@ init { navigationKey, localStorageEntries, url } =
             , actualDrafts = Cache.empty
             , savingDrafts = Dict.empty
             , localDraftBooks = localDraftBooks
+            , localSolutions = localSolutions
+            , localSolutionBooks = localSolutionBooks
+            , savingSolutions = Dict.empty
             , error = Nothing
             }
 
@@ -259,6 +281,30 @@ load =
                 _ ->
                     ( model, Cmd.none )
 
+        publishSolutions model =
+            case model.accessTokenState of
+                Verified { accessToken } ->
+                    let
+                        unpublishedSolutions =
+                            model.localSolutions
+                                |> List.filter (.published >> not)
+                                |> List.filter (.id >> flip Dict.member model.savingSolutions >> not)
+
+                        savingSolutions =
+                            unpublishedSolutions
+                                |> List.foldl (\solution -> Dict.insert solution.id (Saving solution)) model.savingSolutions
+                    in
+                    ( { model
+                        | savingSolutions = savingSolutions
+                      }
+                    , unpublishedSolutions
+                        |> List.map (Solution.saveToServer GotSolutionSaveResponse accessToken)
+                        |> Cmd.batch
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
         finish model =
             case model.accessTokenState of
                 Missing ->
@@ -289,11 +335,30 @@ load =
                                 |> List.filter (\( local, expected ) -> local /= expected)
                                 |> List.isEmpty
                                 |> not
-                    in
-                    if hasDraftConflicts then
-                        ( model, Cmd.none )
 
-                    else
+                        hasSavingDrafts =
+                            model.savingDrafts
+                                |> Dict.values
+                                |> List.filter isSaving
+                                |> List.isEmpty
+                                |> not
+
+                        hasSavingSolutions =
+                            model.savingSolutions
+                                |> Dict.values
+                                |> List.filter isSaving
+                                |> List.isEmpty
+                                |> not
+
+                        done =
+                            [ hasDraftConflicts
+                            , hasSavingDrafts
+                            , hasSavingSolutions
+                            ]
+                                |> List.any identity
+                                |> not
+                    in
+                    if done then
                         let
                             user =
                                 User.authorizedUser accessToken userInfo
@@ -338,10 +403,14 @@ load =
                             , Route.replaceUrl model.session.key model.route
                             ]
                         )
+
+                    else
+                        ( model, Cmd.none )
     in
     Extra.Cmd.fold
         [ loadUserData
         , loadDrafts
+        , publishSolutions
         , finish
         ]
 
@@ -401,6 +470,16 @@ withExpiredAccessToken model =
                 Verified { accessToken } ->
                     Expired accessToken
     }
+
+
+isSaving : Saving a -> Bool
+isSaving saving =
+    case saving of
+        Saving _ ->
+            True
+
+        Saved _ ->
+            False
 
 
 
@@ -574,6 +653,33 @@ update msg model =
                             ( modelWithSavedDraft
                             , Ports.Console.errorString (DetailedHttpError.toString error)
                             )
+
+        GotSolutionSaveResponse { request, result } ->
+            let
+                modelWithSavedResponse =
+                    { model
+                        | savingSolutions =
+                            Dict.insert request.id
+                                (Saved
+                                    (case result of
+                                        Ok () ->
+                                            Ok request
+
+                                        Err error ->
+                                            Err error
+                                    )
+                                )
+                                model.savingSolutions
+                    }
+            in
+            case result of
+                Ok () ->
+                    modelWithSavedResponse
+                        |> withCmd (Solution.saveToLocalStorage { request | published = True })
+
+                Err error ->
+                    modelWithSavedResponse
+                        |> withCmd (DetailedHttpError.consoleError error)
 
         ClickedContinueOffline ->
             ( { model
@@ -890,29 +996,13 @@ viewProgress model =
         numberOfDraftsSaving =
             model.savingDrafts
                 |> Dict.values
-                |> List.filter
-                    (\a ->
-                        case a of
-                            Saving _ ->
-                                True
-
-                            _ ->
-                                False
-                    )
+                |> List.filter isSaving
                 |> List.length
 
         numberOfDraftsSaved =
             model.savingDrafts
                 |> Dict.values
-                |> List.filter
-                    (\a ->
-                        case a of
-                            Saved _ ->
-                                True
-
-                            _ ->
-                                False
-                    )
+                |> List.filter (not << isSaving)
                 |> List.length
 
         numberOfDraftsLoading =
@@ -927,29 +1017,36 @@ viewProgress model =
                 |> List.filter (not << RemoteData.isLoading)
                 |> List.length
 
+        numberOfSolutionsSaving =
+            model.savingSolutions
+                |> Dict.values
+                |> List.filter isSaving
+                |> List.length
+
+        numberOfSolutionsSaved =
+            model.savingSolutions
+                |> Dict.values
+                |> List.filter (not << isSaving)
+                |> List.length
+
+        progressRow description current total =
+            row [ width fill ]
+                [ el [ alignLeft ] (text description)
+                , [ String.fromInt current
+                  , "/"
+                  , String.fromInt total
+                  ]
+                    |> String.concat
+                    |> text
+                    |> el [ alignRight ]
+                ]
+
         elements =
             [ column
                 [ centerX, spacing 10 ]
-                [ row [ width fill ]
-                    [ el [ alignLeft ] (text "Loading drafts: ")
-                    , [ String.fromInt numberOfDraftsLoaded
-                      , "/"
-                      , String.fromInt (numberOfDraftsLoading + numberOfDraftsLoaded)
-                      ]
-                        |> String.concat
-                        |> text
-                        |> el [ alignRight ]
-                    ]
-                , row [ width fill ]
-                    [ el [ alignLeft ] (text "Saving drafts: ")
-                    , [ String.fromInt numberOfDraftsSaved
-                      , "/"
-                      , String.fromInt (numberOfDraftsSaving + numberOfDraftsSaved)
-                      ]
-                        |> String.concat
-                        |> text
-                        |> el [ alignRight ]
-                    ]
+                [ progressRow "Loading drafts: " numberOfDraftsLoaded (numberOfDraftsLoading + numberOfDraftsLoaded)
+                , progressRow "Saving drafts: " numberOfDraftsSaved (numberOfDraftsSaving + numberOfDraftsSaved)
+                , progressRow "Saving solutions: " numberOfSolutionsSaved (numberOfSolutionsSaving + numberOfSolutionsSaved)
                 ]
             ]
     in
@@ -967,7 +1064,7 @@ viewProgress model =
 viewResolveDraftConflict : { local : Draft, expected : Maybe Draft, actual : Draft } -> Element Msg
 viewResolveDraftConflict { local, expected, actual } =
     viewInfo
-        { title = "Confict in draft " ++ local.id
+        { title = "Conflict in draft " ++ local.id
         , icon =
             { src = "assets/exception-orange.svg"
             , description = "Alert icon"

@@ -33,6 +33,7 @@ type SessionMsg
     | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse (RequestResult SolutionId DetailedHttpError Solution)
     | GotSaveDraftResponse (RequestResult Draft DetailedHttpError ())
+    | GotSaveSolutionResponse (RequestResult Solution DetailedHttpError ())
 
 
 update : SessionMsg -> Session -> ( Session, Cmd msg )
@@ -197,6 +198,22 @@ update msg session =
                     session.drafts
                         |> RemoteCache.withActualResult request.id (Err error)
                         |> flip Session.withDraftCache session
+                        |> withCmd (DetailedHttpError.consoleError error)
+
+        GotSaveSolutionResponse { request, result } ->
+            let
+                solution =
+                    { request | published = True }
+            in
+            case result of
+                Ok () ->
+                    session.solutions
+                        |> Cache.withValue solution.id solution
+                        |> flip Session.withSolutionCache session
+                        |> withCmd (Solution.saveToLocalStorage solution)
+
+                Err error ->
+                    session
                         |> withCmd (DetailedHttpError.consoleError error)
 
 

@@ -29,8 +29,6 @@ import Element.Font as Font
 import Element.Input as Input
 import ExecutionControlView
 import Extra.Cmd exposing (noCmd)
-import Extra.String
-import Http
 import InstructionView
 import Maybe.Extra
 import Ports.Console
@@ -38,6 +36,7 @@ import Random
 import RemoteData exposing (RemoteData(..), WebData)
 import Result as Http
 import Route
+import SessionUpdate exposing (SessionMsg(..))
 import Time
 import View.Box
 import View.ErrorScreen
@@ -81,8 +80,19 @@ type alias Model =
     , loadedLevelId : Maybe LevelId
     , execution : Maybe Execution
     , state : ExecutionState
-    , saveSolutionRequest : WebData ()
     }
+
+
+type Msg
+    = ClickedStep
+    | ClickedUndo
+    | ClickedRun
+    | ClickedFastForward
+    | ClickedPause
+    | ClickedNavigateBrowseLevels
+    | GeneratedSolution Solution
+    | Tick
+    | SessionMsg SessionMsg
 
 
 init : DraftId -> Session -> ( Model, Cmd Msg )
@@ -94,7 +104,6 @@ init draftId session =
             , loadedLevelId = Nothing
             , state = Paused
             , execution = Nothing
-            , saveSolutionRequest = NotAsked
             }
     in
     ( model, Cmd.none )
@@ -103,15 +112,32 @@ init draftId session =
 load : Model -> ( Model, Cmd Msg )
 load =
     let
-        loadDraft model =
+        loadActualDraft model =
+            case ( Session.getAccessToken model.session, Cache.get model.draftId model.session.drafts.actual ) of
+                ( Just accessToken, NotAsked ) ->
+                    ( model.session.drafts
+                        |> RemoteCache.withActualLoading model.draftId
+                        |> flip Session.withDraftCache model.session
+                        |> flip withSession model
+                    , Draft.loadFromServer accessToken (SessionMsg << GotLoadDraftByDraftIdResponse) model.draftId
+                    )
+
+                _ ->
+                    noCmd model
+
+        loadLocalDraft model =
             case Cache.get model.draftId model.session.drafts.local of
                 NotAsked ->
-                    ( model.session.drafts
-                        |> RemoteCache.withLocalLoading model.draftId
-                        |> flip Session.withDraftCache model.session
-                        |> setSession model
-                    , Draft.loadFromLocalStorage model.draftId
-                    )
+                    if Maybe.Extra.isNothing (Session.getAccessToken model.session) || RemoteData.isFailure (Cache.get model.draftId model.session.drafts.actual) then
+                        ( model.session.drafts
+                            |> RemoteCache.withLocalLoading model.draftId
+                            |> flip Session.withDraftCache model.session
+                            |> flip withSession model
+                        , Draft.loadFromLocalStorage model.draftId
+                        )
+
+                    else
+                        noCmd model
 
                 _ ->
                     noCmd model
@@ -126,10 +152,20 @@ load =
                         NotAsked ->
                             ( model.session
                                 |> Session.levelLoading draft.levelId
-                                |> setSession model
-                            , Level.loadFromLocalStorage draft.levelId
+                                |> flip withSession model
+                            , Level.loadFromServer (SessionMsg << GotLoadLevelResponse) draft.levelId
                             )
 
+                        _ ->
+                            noCmd model
+
+                Nothing ->
+                    noCmd model
+
+        initializeExecution model =
+            case RemoteData.toMaybe (Cache.get model.draftId model.session.drafts.local) of
+                Just draft ->
+                    case Session.getLevel draft.levelId model.session of
                         Success level ->
                             if
                                 model.loadedLevelId
@@ -153,8 +189,10 @@ load =
                     ( model, Cmd.none )
     in
     Extra.Cmd.fold
-        [ loadDraft
+        [ loadActualDraft
+        , loadLocalDraft
         , loadLevel
+        , initializeExecution
         ]
 
 
@@ -163,8 +201,8 @@ getSession { session } =
     session
 
 
-setSession : Model -> Session -> Model
-setSession model session =
+withSession : Session -> Model -> Model
+withSession session model =
     { model | session = session }
 
 
@@ -224,18 +262,6 @@ isSolved execution =
 -- UPDATE
 
 
-type Msg
-    = ClickedStep
-    | ClickedUndo
-    | ClickedRun
-    | ClickedFastForward
-    | ClickedPause
-    | ClickedNavigateBrowseLevels
-    | GeneratedSolution Solution
-    | SavedSolutionToServer (Result DetailedHttpError ())
-    | Tick
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model.execution of
@@ -285,32 +311,25 @@ update msg model =
 
                 GeneratedSolution solution ->
                     case Session.getAccessToken model.session of
-                        Just token ->
+                        Just accessToken ->
                             ( { model
                                 | session = Session.withSolution solution model.session
-                                , saveSolutionRequest = Loading
                               }
                             , Cmd.batch
                                 [ Solution.saveToLocalStorage solution
-                                , Solution.saveToServer SavedSolutionToServer solution token
+                                , Solution.saveToServer (SessionMsg << GotSaveSolutionResponse) accessToken solution
                                 ]
                             )
 
                         Nothing ->
                             ( Session.withSolution solution model.session
-                                |> setSession model
+                                |> flip withSession model
                             , Solution.saveToLocalStorage solution
                             )
 
-                SavedSolutionToServer result ->
-                    case result of
-                        Http.Ok () ->
-                            ( { model | saveSolutionRequest = Success () }, Cmd.none )
-
-                        Http.Err error ->
-                            ( model
-                            , Ports.Console.errorString (DetailedHttpError.toString error)
-                            )
+                SessionMsg sessionMsg ->
+                    SessionUpdate.update sessionMsg model.session
+                        |> Extra.Cmd.mapModel (flip withSession model)
 
         Nothing ->
             ( model, Cmd.none )
