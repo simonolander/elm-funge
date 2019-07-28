@@ -1,9 +1,9 @@
 import {Request, Response} from 'express';
 import * as EndpointException from "../data/EndpointException";
 import * as Solution from "../data/PostSolutionRequest";
-import * as Result from "../data/Result";
 import * as Firestore from "../service/firestore";
 import * as Board from "../data/Board";
+import * as Result from "../data/Result";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 
@@ -51,17 +51,17 @@ async function post(req: Request, res: Response): Promise<Response> {
     }
 
 
-    const solutionExists = Firestore.getSolutions({
+    const solutionExists = await Firestore.getSolutions({
         levelId: solution.levelId,
         authorId: user.id
     })
-        .then(snapshot =>
-            snapshot.docs
-                .map(doc => doc.get('board'))
-                .map(board => decode(board, Board.decoder))
-                .filter(board => board.tag === "success")
-                .map(board => board as Result.Success<Board.Board>) // TODO
-                .some(board => Board.equals(solution.board, board.value))
+        .then(snapshot => {
+                const boards = Result.values(snapshot.docs
+                    .map(doc => doc.get('board'))
+                    .map(board => decode(board, Board.decoder)));
+
+                return boards.some(board => Board.equals(solution.board, board));
+            }
         );
     if (solutionExists) {
         return EndpointException.send({
