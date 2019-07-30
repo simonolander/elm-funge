@@ -12,7 +12,8 @@ export interface PostLevelRequest {
     readonly description: Array<string>,
     readonly io: IO.IO,
     readonly initialBoard: Board.Board,
-    readonly instructionTools: Array<InstructionTool.InstructionTool>
+    readonly instructionTools: Array<InstructionTool.InstructionTool>,
+    readonly version: number
 }
 
 export const decoder: JsonDecoder.Decoder<PostLevelRequest> = JsonDecoder.object({
@@ -23,5 +24,6 @@ export const decoder: JsonDecoder.Decoder<PostLevelRequest> = JsonDecoder.object
     description: JsonDecoder.array(JsonDecoder.string, "description"),
     io: IO.decoder,
     initialBoard: Board.decoder,
-    instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools")
+    instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
+    version: Integer.nonNegativeDecoder
 }, "PostLevelRequest");

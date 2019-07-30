@@ -71,7 +71,7 @@
       }
     ],
     "index": 0,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -161,7 +161,7 @@
       }
     ],
     "index": 1,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -263,7 +263,7 @@
       }
     ],
     "index": 2,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -363,7 +363,7 @@
       }
     ],
     "index": 3,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -477,7 +477,7 @@
       }
     ],
     "index": 4,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -580,7 +580,7 @@
       }
     ],
     "index": 5,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -680,7 +680,7 @@
       }
     ],
     "index": 6,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -782,7 +782,7 @@
       }
     ],
     "index": 7,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -900,7 +900,7 @@
       }
     ],
     "index": 8,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1025,7 +1025,7 @@
       }
     ],
     "index": 9,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1139,7 +1139,7 @@
       }
     ],
     "index": 10,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1269,7 +1269,7 @@
       }
     ],
     "index": 11,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1378,7 +1378,7 @@
       }
     ],
     "index": 12,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1475,7 +1475,7 @@
       }
     ],
     "index": 13,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1564,7 +1564,7 @@
       }
     ],
     "index": 14,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1683,7 +1683,7 @@
       }
     ],
     "index": 15,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1826,7 +1826,7 @@
       }
     ],
     "index": 16,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -1964,7 +1964,7 @@
       }
     ],
     "index": 17,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -2116,7 +2116,7 @@
       }
     ],
     "index": 18,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -2286,7 +2286,7 @@
       }
     ],
     "index": 19,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -2360,7 +2360,7 @@
       }
     ],
     "index": 20,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -2481,7 +2481,7 @@
       }
     ],
     "index": 21,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -2630,7 +2630,7 @@
       }
     ],
     "index": 22,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   },
   {
@@ -2772,7 +2772,7 @@
       }
     ],
     "index": 23,
-    "chapter": "Basic",
+    "campaignId": "standard",
     "authorId": "root"
   }
 ]

@@ -13,6 +13,8 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
             return get(req, res);
         case 'POST':
             return post(req, res,);
+        case 'PUT':
+            return put(req, res,);
         default:
             return EndpointException.send({
                 status: 400,
@@ -58,6 +60,20 @@ async function post(req: Request, res: Response): Promise<Response> {
         ...levelResult.value,
         createdTime: new Date().getTime(),
         authorId: user.id
+    })
+        .then(() => res.send());
+}
+
+/* TODO REMOVE */
+async function put(req: Request, res: Response): Promise<Response> {
+    const levelResult = decode(req.body, Level.decoder);
+    if (levelResult.tag === "failure") {
+        return EndpointException.send(levelResult.error, res);
+    }
+    return Firestore.addLevel({
+        ...levelResult.value,
+        createdTime: new Date().getTime(),
+        authorId: "root"
     })
         .then(() => res.send());
 }

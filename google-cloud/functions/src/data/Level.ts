@@ -13,4 +13,5 @@ export interface Level {
     readonly instructionTools: Array<InstructionTool.InstructionTool>
     readonly authorId: string
     readonly createdTime: number
+    readonly version: number
 }
