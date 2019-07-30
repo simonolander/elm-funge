@@ -2,8 +2,8 @@ import {Score} from "./Score";
 
 export interface HighScore {
     readonly levelId: string,
-    readonly numberOfSteps: Map<number, number>,
-    readonly numberOfInstructions: Map<number, number>,
+    readonly numberOfSteps: Array<[number, number]>,
+    readonly numberOfInstructions: Array<[number, number]>,
 }
 
 export function fromScores(levelId: string, scores: Array<Score>): HighScore {
@@ -21,7 +21,7 @@ export function fromScores(levelId: string, scores: Array<Score>): HighScore {
 
     return {
         levelId,
-        numberOfSteps,
-        numberOfInstructions
+        numberOfSteps: [...numberOfSteps.entries()],
+        numberOfInstructions: [...numberOfInstructions.entries()]
     };
 }

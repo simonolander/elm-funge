@@ -6,9 +6,12 @@ import * as Board from "../data/Board";
 import * as Result from "../data/Result";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
+import {JsonDecoder} from "ts.data.json";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
+        case 'GET':
+            return get(req, res);
         case 'POST':
             return post(req, res);
         default:
@@ -17,6 +20,46 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
                 messages: [`Bad request method: ${req.method}`]
             }, res);
     }
+}
+
+async function get(req: Request, res: Response): Promise<Response> {
+    const scopes = ["openid", "read:solutions"];
+    const authResult = verifyJwt(req, scopes);
+    if (authResult.tag === "failure") {
+        return EndpointException.send(authResult.error, res);
+    }
+    const user = await Firestore.getUserBySubject(authResult.value);
+
+    const requestResult = decode(
+        req.query,
+        JsonDecoder.object(
+            {
+                levelId: JsonDecoder.oneOf(
+                    [
+                        JsonDecoder.string,
+                        JsonDecoder.isUndefined(undefined)
+                    ],
+                    "levelId: string | undefined"),
+                campaignId: JsonDecoder.oneOf(
+                    [
+                        JsonDecoder.string,
+                        JsonDecoder.isUndefined(undefined)
+                    ],
+                    "campaignId: string | undefined")
+            },
+            "GetSolutionsRequest: { levelId: string | undefined, campaignId: string | undefined }"
+        )
+    );
+    if (requestResult.tag === "failure") {
+        return EndpointException.send(requestResult.error, res);
+    }
+
+    return Firestore.getSolutions({
+        authorId: user.id,
+        levelId: requestResult.value.levelId,
+        campaignId: requestResult.value.levelId
+    })
+        .then(snapshot => res.send(snapshot.docs.map(doc => doc.data())))
 }
 
 async function post(req: Request, res: Response): Promise<Response> {

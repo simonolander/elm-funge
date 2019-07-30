@@ -2,11 +2,20 @@ import {Firestore} from "@google-cloud/firestore"
 import {Solution} from "../data/Solution";
 import {Draft} from "../data/Draft";
 import {Level} from "../data/Level";
+import Query = FirebaseFirestore.Query;
 
 const PROJECT_ID = "luminous-cubist-234816";
 const firestore: Firestore = new Firestore({
     projectId: PROJECT_ID
 });
+
+function get(collectionPath: string, parameters: {[s: string]: any}) {
+    const collection: Query = firestore.collection(collectionPath);
+    return Object.entries(parameters)
+        .filter(([_, value]) => typeof value !== "undefined")
+        .reduce((query, [key, value]) => query.where(key, "==", value), collection)
+        .get();
+}
 
 export async function getUserBySubject(subject: string) {
     const usersCollection = firestore.collection("users");
@@ -34,7 +43,7 @@ function getById(collectionName: string): (id: string) => Promise<FirebaseFirest
 
 export const getDraftById = getById("drafts");
 
-export async function getDrafts(parameters: { authorId: string, draftId?: string, levelId?: string}) {
+export async function getDrafts(parameters: { authorId: string, draftId?: string, levelId?: string }) {
     let query = firestore.collection("drafts")
         .where("authorId", "==", parameters.authorId);
     if (typeof parameters.draftId !== "undefined") {
@@ -106,7 +115,6 @@ export async function getBlueprints(parameters: { authorId: string, offset?: num
     return query.get();
 }
 
-
 export async function addBlueprint(blueprint: Level) {
     return firestore.collection("blueprints")
         .add(blueprint)
@@ -123,15 +131,8 @@ export async function getBlueprintDocument(id: string) {
 
 export const getSolutionById = getById("solutions");
 
-export async function getSolutions({levelId, authorId}: { levelId: string, authorId?: string }) {
-    let query = firestore.collection("solutions")
-        .where("levelId", "==", levelId);
-
-    if (typeof authorId !== "undefined") {
-        query = query.where("authorId", "==", authorId);
-    }
-
-    return query.get();
+export async function getSolutions(parameters: { levelId?: string, authorId?: string, campaignId?: string }) {
+    return get('solutions', parameters);
 }
 
 export async function addSolution(solution: Solution) {
