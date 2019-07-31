@@ -48,8 +48,7 @@ async function getUserInfoFromAuth0(authorization: string): Promise<any> {
 }
 
 async function get(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "profile"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "profile"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }

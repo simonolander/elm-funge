@@ -22,8 +22,7 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
 }
 
 async function get(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "read:blueprints"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "read:blueprints"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
@@ -68,8 +67,7 @@ async function get(req: Request, res: Response): Promise<Response> {
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "edit:blueprints"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "edit:blueprints"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }

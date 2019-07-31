@@ -23,8 +23,7 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
 }
 
 async function get(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "read:solutions"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "read:solutions"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
@@ -39,15 +38,15 @@ async function get(req: Request, res: Response): Promise<Response> {
                         JsonDecoder.string,
                         JsonDecoder.isUndefined(undefined)
                     ],
-                    "levelId: string | undefined"),
+                    "levelId?: string"),
                 campaignId: JsonDecoder.oneOf(
                     [
                         JsonDecoder.string,
                         JsonDecoder.isUndefined(undefined)
                     ],
-                    "campaignId: string | undefined")
+                    "campaignId?: string")
             },
-            "GetSolutionsRequest: { levelId: string | undefined, campaignId: string | undefined }"
+            "GetSolutionsRequest: { levelId?: string, campaignId?: string }"
         )
     );
     if (requestResult.tag === "failure") {
@@ -63,8 +62,7 @@ async function get(req: Request, res: Response): Promise<Response> {
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "submit:solutions"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "submit:solutions"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }

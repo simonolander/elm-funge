@@ -12,7 +12,7 @@ async function route(req: Request, res: Response, endpoint: (req: Request, res: 
             res.set('Access-Control-Allow-Methods', 'GET');
             res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
             res.set('Access-Control-Max-Age', '3600');
-            return res.status(204).send('');
+            return res.status(204).send();
         } else {
             return endpoint(req, res)
         }

@@ -25,8 +25,7 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
  * levelId: string | undefined
  */
 async function get(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "read:drafts"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "read:drafts"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
@@ -64,8 +63,7 @@ async function get(req: Request, res: Response): Promise<Response> {
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
-    const scopes = ["openid", "edit:drafts"];
-    const authResult = verifyJwt(req, scopes);
+    const authResult = verifyJwt(req, ["openid", "edit:drafts"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }

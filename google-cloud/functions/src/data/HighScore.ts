@@ -7,21 +7,19 @@ export interface HighScore {
 }
 
 export function fromScores(levelId: string, scores: Array<Score>): HighScore {
-    const numberOfSteps = new Map;
+    const numberOfSteps: {[s: number]: number} = {};
     scores.forEach(score => {
-        const current = numberOfSteps.get(score.numberOfSteps) || 0;
-        numberOfSteps.set(score.numberOfSteps, current + 1);
+        numberOfSteps[score.numberOfSteps] = (numberOfSteps[score.numberOfSteps] || 0) + 1;
     });
 
-    const numberOfInstructions = new Map;
+    const numberOfInstructions: {[s: number]: number} = {};
     scores.forEach(score => {
-        const current = numberOfInstructions.get(score.numberOfInstructions) || 0;
-        numberOfInstructions.set(score.numberOfInstructions, current + 1);
+        numberOfInstructions[score.numberOfInstructions] = (numberOfInstructions[score.numberOfInstructions] || 0) + 1;
     });
 
     return {
         levelId,
-        numberOfSteps: [...numberOfSteps.entries()],
-        numberOfInstructions: [...numberOfInstructions.entries()]
+        numberOfSteps: Object.entries(numberOfSteps).map(([key, value]) => [parseInt(key), value]),
+        numberOfInstructions: Object.entries(numberOfInstructions).map(([key, value]) => [parseInt(key), value])
     };
 }

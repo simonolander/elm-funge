@@ -2,6 +2,7 @@ import {Request} from "express";
 import * as Result from "../data/Result";
 import {EndpointException} from "../data/EndpointException";
 import {JsonWebTokenError, NotBeforeError, TokenExpiredError, verify} from "jsonwebtoken";
+import {Scope} from "../data/Scope";
 
 // const AMAZON_COGNITO_PEM =
 //     `-----BEGIN PUBLIC KEY-----
@@ -33,7 +34,7 @@ const audience = AUTH0_AUD;
 const issuer = AUTH0_ISS;
 const pem = AUTH0_PEM;
 
-export function verifyJwt(req: Request, scopes: string[]): Result.Result<string, EndpointException> {
+export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, EndpointException> {
     try {
         const authorizationHeader = req.get('Authorization');
         if (typeof authorizationHeader !== 'string') {

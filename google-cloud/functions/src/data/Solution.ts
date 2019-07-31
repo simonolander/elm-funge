@@ -1,5 +1,6 @@
 import * as Score from "./Score";
 import * as Board from "./Board";
+import {JsonDecoder} from "ts.data.json";
 
 export interface Solution {
     readonly id: string,
@@ -8,3 +9,11 @@ export interface Solution {
     readonly board: Board.Board,
     readonly authorId: string
 }
+
+export const decoder : JsonDecoder.Decoder<Solution> = JsonDecoder.object({
+    id: JsonDecoder.string,
+    levelId: JsonDecoder.string,
+    score: Score.decoder,
+    board: Board.decoder,
+    authorId: JsonDecoder.string,
+}, "Solution");
