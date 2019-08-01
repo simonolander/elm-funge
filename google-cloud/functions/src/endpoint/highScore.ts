@@ -9,12 +9,12 @@ import * as Solution from "../data/Solution";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
-        case 'GET':
+        case "GET":
             return get(req, res);
         default:
             return EndpointException.send({
-                status: 400,
-                messages: [`Bad request method: ${req.method}`]
+                messages: [`Bad request method: ${req.method}`],
+                status: 400
             }, res);
     }
 }

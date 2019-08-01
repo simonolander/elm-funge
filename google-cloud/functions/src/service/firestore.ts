@@ -1,8 +1,7 @@
 import {Firestore} from "@google-cloud/firestore"
 import {Solution} from "../data/Solution";
-import {Draft} from "../data/Draft";
 import {Level} from "../data/Level";
-import Query = FirebaseFirestore.Query;
+
 
 const PROJECT_ID = "luminous-cubist-234816";
 const firestore: Firestore = new Firestore({
@@ -17,11 +16,25 @@ const collectionPaths = {
     solutions: "solutions",
 };
 
-function get(collectionPath: string, parameters: {[s: string]: any}) {
-    const collection: Query = firestore.collection(collectionPath);
+function get(collectionPath: string, parameters: {[s: string]: any, limit?: number, offset?: number}) {
+    function fold(query: FirebaseFirestore.Query, [key, value]: [string, string | number]): FirebaseFirestore.Query {
+        switch (key) {
+            case "limit":
+                return typeof value === "number"
+                    ? query.limit(value)
+                    : query;
+            case "offset":
+                return typeof value === "number"
+                    ? query.offset(value)
+                    : query;
+            default:
+                return query.where(key, "==", value);
+        }
+    }
+    const collection = firestore.collection(collectionPath);
     return Object.entries(parameters)
         .filter(([_, value]) => typeof value !== "undefined")
-        .reduce((query, [key, value]) => query.where(key, "==", value), collection)
+        .reduce(fold, collection)
         .get();
 }
 
@@ -36,12 +49,9 @@ export async function getUserBySubject(subject: string) {
                 : usersCollection.doc(snapshot.docs[0].id));
 }
 
-function getById(collectionName: string): (id: string) => Promise<FirebaseFirestore.QuerySnapshot> {
-    return async function (id: string): Promise<FirebaseFirestore.QuerySnapshot> {
-        return firestore.collection(collectionName)
-            .where("id", "==", id)
-            .limit(1)
-            .get()
+function getById(collectionName: string): (id: string) => Promise<FirebaseFirestore.DocumentReference> {
+    return async function (id: string): Promise<FirebaseFirestore.DocumentReference> {
+        return firestore.collection(collectionName).doc(id);
     }
 }
 
@@ -49,78 +59,35 @@ function getById(collectionName: string): (id: string) => Promise<FirebaseFirest
  * DRAFTS
  */
 
-export const getDraftById = getById("drafts");
+export const getDraftById = getById(collectionPaths.drafts);
 
 export async function getDrafts(parameters: { authorId: string, draftId?: string, levelId?: string }) {
-    let query = firestore.collection(collectionPaths.drafts)
-        .where("authorId", "==", parameters.authorId);
-    if (typeof parameters.draftId !== "undefined") {
-        query = query.where("id", "==", parameters.draftId);
-    }
-    if (typeof parameters.levelId !== "undefined") {
-        query = query.where("levelId", "==", parameters.levelId);
-    }
-    return query.get();
-}
-
-export async function addDraft(draft: Draft) {
-    return firestore.collection(collectionPaths.drafts)
-        .add(draft);
-}
-
-export async function getDraftDocument(firestoreId: string) {
-    return firestore.collection(collectionPaths.drafts)
-        .doc(firestoreId);
+    return get(collectionPaths.drafts, parameters);
 }
 
 /**
  * LEVELS
  */
 
-export const getLevelById = getById("levels");
+export const getLevelById = getById(collectionPaths.levels);
 
-export async function getLevels(parameters: { campaignId: string, offset?: number, limit?: number }) {
-    const {campaignId, offset, limit} = parameters;
-    let query = firestore.collection(collectionPaths.levels)
-        .where("campaignId", "==", campaignId);
-
-    if (typeof offset !== "undefined") {
-        query = query.offset(offset);
-    }
-
-    if (typeof limit !== "undefined") {
-        query = query.offset(limit);
-    }
-
-    return query.get();
+export async function getLevels(parameters: { campaignId?: string, offset?: number, limit?: number }) {
+    return get(collectionPaths.levels, parameters);
 }
-
 
 export async function addLevel(level: Level) {
     return firestore.collection(collectionPaths.levels)
-        .add(level)
+        .add(level);
 }
 
 /**
  * BLUEPRINTS
  */
 
-export const getBlueprintById = getById("blueprints");
+export const getBlueprintById = getById(collectionPaths.blueprints);
 
 export async function getBlueprints(parameters: { authorId: string, offset?: number, limit?: number }) {
-    const {authorId, offset, limit} = parameters;
-    let query = firestore.collection(collectionPaths.blueprints)
-        .where("authorId", "==", authorId);
-
-    if (typeof offset !== "undefined") {
-        query = query.offset(offset);
-    }
-
-    if (typeof limit !== "undefined") {
-        query = query.offset(limit);
-    }
-
-    return query.get();
+    return get(collectionPaths.blueprints, parameters);
 }
 
 export async function addBlueprint(blueprint: Level) {
@@ -128,19 +95,14 @@ export async function addBlueprint(blueprint: Level) {
         .add(blueprint)
 }
 
-export async function getBlueprintDocument(id: string) {
-    return firestore.collection(collectionPaths.blueprints)
-        .doc(id);
-}
-
 /**
  * SOLUTIONS
  */
 
-export const getSolutionById = getById("solutions");
+export const getSolutionById = getById(collectionPaths.solutions);
 
 export async function getSolutions(parameters: { levelId?: string, authorId?: string, campaignId?: string }) {
-    return get('solutions', parameters);
+    return get(collectionPaths.solutions, parameters);
 }
 
 export async function addSolution(solution: Solution) {

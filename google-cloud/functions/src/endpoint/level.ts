@@ -1,11 +1,13 @@
-import {Request, Response} from 'express';
+import * as Board from "../data/Board";
 import * as EndpointException from "../data/EndpointException";
-import * as Level from "../data/PostLevelRequest";
-import {verifyJwt} from "../misc/auth";
-import {decode} from "../misc/json";
 import * as Firestore from '../service/firestore'
+import * as Level from "../data/PostLevelRequest";
+import * as Score from "../data/Score";
 import {JsonDecoder} from "ts.data.json";
+import {Request, Response} from 'express';
 import {decoder} from "../data/Integer";
+import {decode} from "../misc/json";
+import {verifyJwt} from "../misc/auth";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
@@ -46,22 +48,40 @@ async function get(req: Request, res: Response): Promise<Response> {
 }
 
 async function post(req: Request, res: Response): Promise<Response> {
-    // const scopes = ["openid", "publish:blueprints"]; // TODO What is this method doing?
     const authResult = verifyJwt(req, ["openid", "publish:blueprints"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
-    const levelResult = decode(req.body, Level.decoder);
-    if (levelResult.tag === "failure") {
-        return EndpointException.send(levelResult.error, res);
+    const request = decode(req.body, JsonDecoder.object({
+        blueprintId: JsonDecoder.string,
+        solution: JsonDecoder.object({
+            score: Score.decoder,
+            board: Board.decoder
+        }, "Solution")
+    }, "Publish blueprint request"));
+    if (request.tag === "failure") {
+        return EndpointException.send(request.error, res);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    return Firestore.addLevel({
-        ...levelResult.value,
-        createdTime: new Date().getTime(),
-        authorId: user.id
-    })
-        .then(() => res.send());
+    const blueprintRef = await Firestore.getBlueprintById(request.value.blueprintId);
+    const blueprintSnapshot = await blueprintRef.get();
+    if (!blueprintSnapshot.exists) {
+        return EndpointException.send({
+            status: 404,
+            messages: [`Blueprint not found: ${request.value.blueprintId}`]
+        }, res);
+    }
+    if (blueprintSnapshot.get("authorId") !== user.id) {
+        return EndpointException.send({
+            status: 403,
+            messages: [`User ${user.id} does not have permission to publish blueprint ${request.value.blueprintId}`]
+        }, res)
+    }
+    // TODO Check solution
+    return EndpointException.send({
+        status: 500,
+        messages: [`Not implemented`]
+    }, res);
 }
 
 /* TODO REMOVE */

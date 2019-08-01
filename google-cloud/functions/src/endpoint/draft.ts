@@ -1,17 +1,20 @@
 import {Request, Response} from 'express';
 import * as EndpointException from "../data/EndpointException";
-import * as PostDraftRequest from "../data/PostDraftRequest";
 import {verifyJwt} from "../misc/auth";
 import * as Firestore from '../service/firestore'
 import {decode} from "../misc/json";
 import * as GetDraftRequest from "../data/GetDraftRequest";
+import {JsonDecoder} from "ts.data.json";
+import * as Board from "../data/Board";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
         case 'GET':
             return get(req, res);
-        case 'POST':
-            return post(req, res,);
+        case 'PUT':
+            return put(req, res);
+        case 'DELETE':
+            return del(req, res);
         default:
             return EndpointException.send({
                 status: 400,
@@ -62,55 +65,83 @@ async function get(req: Request, res: Response): Promise<Response> {
     }
 }
 
-async function post(req: Request, res: Response): Promise<Response> {
+async function put(req: Request, res: Response): Promise<Response> {
     const authResult = verifyJwt(req, ["openid", "edit:drafts"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    const draftResult = decode(req.body, PostDraftRequest.decoder);
+    const draftResult = decode(req.body, JsonDecoder.object({
+        id: JsonDecoder.string,
+        levelId: JsonDecoder.string,
+        board: Board.decoder
+    }, "Save draft request"));
     if (draftResult.tag === "failure") {
         return EndpointException.send(draftResult.error, res);
     }
     const draftRequest = draftResult.value;
-    const levelExists = await Firestore.getLevelById(draftRequest.levelId)
-        .then(snapshot => !snapshot.empty);
-    if (levelExists === false) {
+    const levelSnapshot = await Firestore.getLevelById(draftRequest.levelId)
+        .then(ref => ref.get());
+    if (!levelSnapshot.exists) {
         return EndpointException.send({
             status: 404,
             messages: [`Level ${draftRequest.levelId} does not exist`]
         }, res);
     }
-    const existingDraft = await Firestore.getDraftById(draftRequest.id);
-    if (existingDraft.empty) {
-        const time = new Date().getTime();
-        const draft = {
+    const draftRef = await Firestore.getDraftById(draftRequest.id);
+    const draftSnapshot = await draftRef.get();
+    if (!draftSnapshot.exists) {
+        const time = Date.now();
+        return draftRef.set({
             ...draftResult.value,
             authorId: user.id,
             createdTime: time,
             modifiedTime: time
-        };
-        return Firestore.addDraft(draft)
-            .then(ref => ref.get())
-            .then(ref => res.send(ref.data()));
+        }).then(() => res.send());
     } else {
-        if (existingDraft.docs[0].get('authorId') !== user.id) {
+        if (draftSnapshot.get('authorId') !== user.id) {
             return EndpointException.send({
                 status: 403,
                 messages: [`User ${user.id} does not have permission to edit draft ${draftRequest.id}`]
             }, res)
         }
-        let existingLevelId = existingDraft.docs[0].get('levelId');
+        let existingLevelId = draftSnapshot.get('levelId');
         if (existingLevelId !== draftRequest.levelId) {
             return EndpointException.send({
                 status: 400,
                 messages: [`Requested level id ${draftRequest} does not match existing level id ${existingLevelId}`]
             }, res)
         }
-        return Firestore.getDraftDocument(existingDraft.docs[0].id)
-            .then(ref => ref.set({
-                board: draftRequest.board
-            }, {merge: true}))
+        // TODO Check that the board matches too
+        return draftRef.set({board: draftRequest.board}, {merge: true})
+            .then(() => res.send());
+    }
+}
+
+async function del(req: Request, res: Response): Promise<Response> {
+    const authResult = verifyJwt(req, ["openid", "edit:drafts"]);
+    if (authResult.tag === "failure") {
+        return EndpointException.send(authResult.error, res);
+    }
+    const user = await Firestore.getUserBySubject(authResult.value);
+    const draftResult = decode(req.body, JsonDecoder.object({
+        draftId: JsonDecoder.string
+    }, "Delete draft request"));
+    if (draftResult.tag === "failure") {
+        return EndpointException.send(draftResult.error, res);
+    }
+    const draftRef = await Firestore.getDraftById(draftResult.value.draftId);
+    const draftSnapshot = await draftRef.get();
+    if (!draftSnapshot.exists) {
+        return res.send();
+    } else {
+        if (draftSnapshot.get('authorId') !== user.id) {
+            return EndpointException.send({
+                status: 403,
+                messages: [`User ${user.id} does not have permission to delete draft ${draftResult.value.draftId}`]
+            }, res)
+        }
+        return draftRef.delete()
             .then(() => res.send());
     }
 }
