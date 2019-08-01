@@ -5,14 +5,16 @@ import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from '../service/firestore'
 import {JsonDecoder} from "ts.data.json";
-import {decoder} from "../data/Integer";
+
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
         case 'GET':
             return get(req, res);
-        case 'POST':
-            return post(req, res,);
+        case 'PUT':
+            return put(req, res);
+        case 'DELETE':
+            return del(req, res);
         default:
             return EndpointException.send({
                 status: 400,
@@ -33,14 +35,6 @@ async function get(req: Request, res: Response): Promise<Response> {
                 JsonDecoder.string,
                 JsonDecoder.isUndefined(undefined)
             ], "blueprintId"),
-            offset: JsonDecoder.oneOf([
-                decoder({minValue: 0, fromString: true}),
-                JsonDecoder.isUndefined(50)
-            ], "offset"),
-            limit: JsonDecoder.oneOf([
-                decoder({minValue: 0, fromString: true}),
-                JsonDecoder.isUndefined(0)
-            ], "limit"),
         }, "GetBlueprintsRequest"));
     if (requestResult.tag === "failure") {
         return EndpointException.send(requestResult.error, res);
@@ -59,14 +53,13 @@ async function get(req: Request, res: Response): Promise<Response> {
         }
     } else {
         return Firestore.getBlueprints({
-            authorId: user.id,
-            offset: requestResult.value.offset,
-            limit: requestResult.value.limit
-        }).then(snapshot => res.send(snapshot.docs.map(doc => doc.data())))
+            authorId: user.id
+        })
+            .then(snapshot => res.send(snapshot.docs.map(doc => doc.data())))
     }
 }
 
-async function post(req: Request, res: Response): Promise<Response> {
+async function put(req: Request, res: Response): Promise<Response> {
     const authResult = verifyJwt(req, ["openid", "edit:blueprints"]);
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
@@ -100,6 +93,37 @@ async function post(req: Request, res: Response): Promise<Response> {
                 ...blueprintResult.value,
                 modifiedTime: Date.now()
             }, {merge: true}))
+            .then(() => res.send());
+    }
+}
+
+async function del(req: Request, res: Response): Promise<Response> {
+    const authResult = verifyJwt(req, ["openid", "edit:blueprints"]);
+    if (authResult.tag === "failure") {
+        return EndpointException.send(authResult.error, res);
+    }
+    const requestResult = decode(req.body, JsonDecoder.object({
+        blueprintId: JsonDecoder.string
+    }, "DeleteRequest"));
+    if (requestResult.tag === "failure") {
+        return EndpointException.send(requestResult.error, res);
+    }
+    const {blueprintId} = requestResult.value;
+    const user = await Firestore.getUserBySubject(authResult.value);
+
+    const snapshot = await Firestore.getBlueprintById(blueprintId);
+    if (snapshot.empty) {
+        return res.send();
+    } else {
+        // TODO decode snapshot to get some safety
+        if (snapshot.docs[0].get('authorId') !== user.id) {
+            return EndpointException.send({
+                status: 403,
+                messages: [`User ${user.id} does not have permission to delete blueprint ${blueprintId}`]
+            }, res)
+        }
+        return Firestore.getBlueprintDocument(snapshot.docs[0].id)
+            .then(ref => ref.delete())
             .then(() => res.send());
     }
 }

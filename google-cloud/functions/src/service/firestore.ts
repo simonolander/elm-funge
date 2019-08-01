@@ -9,6 +9,14 @@ const firestore: Firestore = new Firestore({
     projectId: PROJECT_ID
 });
 
+const collectionPaths = {
+    users: "users",
+    drafts: "drafts",
+    levels: "levels",
+    blueprints: "blueprints",
+    solutions: "solutions",
+};
+
 function get(collectionPath: string, parameters: {[s: string]: any}) {
     const collection: Query = firestore.collection(collectionPath);
     return Object.entries(parameters)
@@ -18,7 +26,7 @@ function get(collectionPath: string, parameters: {[s: string]: any}) {
 }
 
 export async function getUserBySubject(subject: string) {
-    const usersCollection = firestore.collection("users");
+    const usersCollection = firestore.collection(collectionPaths.users);
     return usersCollection.where("subjectAuth0", "==", subject)
         .limit(1)
         .get()
@@ -44,7 +52,7 @@ function getById(collectionName: string): (id: string) => Promise<FirebaseFirest
 export const getDraftById = getById("drafts");
 
 export async function getDrafts(parameters: { authorId: string, draftId?: string, levelId?: string }) {
-    let query = firestore.collection("drafts")
+    let query = firestore.collection(collectionPaths.drafts)
         .where("authorId", "==", parameters.authorId);
     if (typeof parameters.draftId !== "undefined") {
         query = query.where("id", "==", parameters.draftId);
@@ -56,13 +64,13 @@ export async function getDrafts(parameters: { authorId: string, draftId?: string
 }
 
 export async function addDraft(draft: Draft) {
-    return firestore.collection("drafts")
+    return firestore.collection(collectionPaths.drafts)
         .add(draft);
 }
 
-export async function getDraftDocument(id: string) {
-    return firestore.collection("drafts")
-        .doc(id);
+export async function getDraftDocument(firestoreId: string) {
+    return firestore.collection(collectionPaths.drafts)
+        .doc(firestoreId);
 }
 
 /**
@@ -73,7 +81,7 @@ export const getLevelById = getById("levels");
 
 export async function getLevels(parameters: { campaignId: string, offset?: number, limit?: number }) {
     const {campaignId, offset, limit} = parameters;
-    let query = firestore.collection("levels")
+    let query = firestore.collection(collectionPaths.levels)
         .where("campaignId", "==", campaignId);
 
     if (typeof offset !== "undefined") {
@@ -89,7 +97,7 @@ export async function getLevels(parameters: { campaignId: string, offset?: numbe
 
 
 export async function addLevel(level: Level) {
-    return firestore.collection("levels")
+    return firestore.collection(collectionPaths.levels)
         .add(level)
 }
 
@@ -101,7 +109,7 @@ export const getBlueprintById = getById("blueprints");
 
 export async function getBlueprints(parameters: { authorId: string, offset?: number, limit?: number }) {
     const {authorId, offset, limit} = parameters;
-    let query = firestore.collection("blueprints")
+    let query = firestore.collection(collectionPaths.blueprints)
         .where("authorId", "==", authorId);
 
     if (typeof offset !== "undefined") {
@@ -116,12 +124,12 @@ export async function getBlueprints(parameters: { authorId: string, offset?: num
 }
 
 export async function addBlueprint(blueprint: Level) {
-    return firestore.collection("blueprints")
+    return firestore.collection(collectionPaths.blueprints)
         .add(blueprint)
 }
 
 export async function getBlueprintDocument(id: string) {
-    return firestore.collection("blueprints")
+    return firestore.collection(collectionPaths.blueprints)
         .doc(id);
 }
 
@@ -136,6 +144,6 @@ export async function getSolutions(parameters: { levelId?: string, authorId?: st
 }
 
 export async function addSolution(solution: Solution) {
-    return firestore.collection("solutions")
+    return firestore.collection(collectionPaths.solutions)
         .add(solution);
 }
