@@ -1,5 +1,5 @@
-import * as Direction from "./Direction";
 import {JsonDecoder} from "ts.data.json";
+import * as Direction from "./Direction";
 import * as Int16 from "./Int16";
 
 export function compareFn(a: Instruction, b: Instruction) {
@@ -94,116 +94,116 @@ export type Instruction
     | Exception;
 
 export interface NoOp {
-    readonly tag: "NoOp"
+    readonly tag: "NoOp";
 }
 
 export interface ChangeDirection {
-    readonly tag: "ChangeDirection",
-    readonly direction: Direction.Direction
+    readonly tag: "ChangeDirection";
+    readonly direction: Direction.Direction;
 }
 
 export interface PushToStack {
-    readonly tag: "PushToStack",
-    readonly value: Int16.Int16
+    readonly tag: "PushToStack";
+    readonly value: Int16.Int16;
 }
 
 export interface PopFromStack {
-    readonly tag: "PopFromStack"
+    readonly tag: "PopFromStack";
 }
 
 export interface JumpForward {
-    readonly tag: "JumpForward"
+    readonly tag: "JumpForward";
 }
 
 export interface Duplicate {
-    readonly tag: "Duplicate"
+    readonly tag: "Duplicate";
 }
 
 export interface Swap {
-    readonly tag: "Swap"
+    readonly tag: "Swap";
 }
 
 export interface Negate {
-    readonly tag: "Negate"
+    readonly tag: "Negate";
 }
 
 export interface Abs {
-    readonly tag: "Abs"
+    readonly tag: "Abs";
 }
 
 export interface Not {
-    readonly tag: "Not"
+    readonly tag: "Not";
 }
 
 export interface Increment {
-    readonly tag: "Increment"
+    readonly tag: "Increment";
 }
 
 export interface Decrement {
-    readonly tag: "Decrement"
+    readonly tag: "Decrement";
 }
 
 export interface Add {
-    readonly tag: "Add"
+    readonly tag: "Add";
 }
 
 export interface Subtract {
-    readonly tag: "Subtract"
+    readonly tag: "Subtract";
 }
 
 export interface Multiply {
-    readonly tag: "Multiply"
+    readonly tag: "Multiply";
 }
 
 export interface Divide {
-    readonly tag: "Divide"
+    readonly tag: "Divide";
 }
 
 export interface Equals {
-    readonly tag: "Equals"
+    readonly tag: "Equals";
 }
 
 export interface CompareLessThan {
-    readonly tag: "CompareLessThan"
+    readonly tag: "CompareLessThan";
 }
 
 export interface And {
-    readonly tag: "And"
+    readonly tag: "And";
 }
 
 export interface Or {
-    readonly tag: "Or"
+    readonly tag: "Or";
 }
 
 export interface XOr {
-    readonly tag: "XOr"
+    readonly tag: "XOr";
 }
 
 export interface Read {
-    readonly tag: "Read"
+    readonly tag: "Read";
 }
 
 export interface Print {
-    readonly tag: "Print"
+    readonly tag: "Print";
 }
 
 export interface Branch {
-    readonly tag: "Branch",
-    readonly trueDirection: Direction.Direction,
-    readonly falseDirection: Direction.Direction
+    readonly tag: "Branch";
+    readonly trueDirection: Direction.Direction;
+    readonly falseDirection: Direction.Direction;
 }
 
 export interface Terminate {
-    readonly tag: "Terminate"
+    readonly tag: "Terminate";
 }
 
 export interface SendToBottom {
-    readonly tag: "SendToBottom"
+    readonly tag: "SendToBottom";
 }
 
 export interface Exception {
-    readonly tag: "Exception",
-    readonly exceptionMessage: string
+    readonly tag: "Exception";
+    readonly exceptionMessage: string;
 }
 
 export const decoder: Decoder<Instruction> = JsonDecoder.oneOf<Instruction>(
@@ -211,11 +211,11 @@ export const decoder: Decoder<Instruction> = JsonDecoder.oneOf<Instruction>(
         JsonDecoder.object({tag: JsonDecoder.isExactly("NoOp")}, "NoOp"),
         JsonDecoder.object({
             tag: JsonDecoder.isExactly("ChangeDirection"),
-            direction: Direction.decoder
+            direction: Direction.decoder,
         }, "ChangeDirection"),
         JsonDecoder.object({
             tag: JsonDecoder.isExactly("PushToStack"),
-            value: Int16.decoder
+            value: Int16.decoder,
         }, "PushToStack"),
         JsonDecoder.object({tag: JsonDecoder.isExactly("PopFromStack")}, "PopFromStack"),
         JsonDecoder.object({tag: JsonDecoder.isExactly("JumpForward")}, "JumpForward"),
@@ -240,14 +240,14 @@ export const decoder: Decoder<Instruction> = JsonDecoder.oneOf<Instruction>(
         JsonDecoder.object({
             tag: JsonDecoder.isExactly("Branch"),
             trueDirection: Direction.decoder,
-            falseDirection: Direction.decoder
+            falseDirection: Direction.decoder,
         }, "Branch"),
         JsonDecoder.object({tag: JsonDecoder.isExactly("Terminate")}, "Terminate"),
         JsonDecoder.object({tag: JsonDecoder.isExactly("SendToBottom")}, "SendToBottom"),
         JsonDecoder.object({
             tag: JsonDecoder.isExactly("Exception"),
-            exceptionMessage: JsonDecoder.string
+            exceptionMessage: JsonDecoder.string,
         }, "Exception"),
     ],
-    "Instruction"
+    "Instruction",
 );

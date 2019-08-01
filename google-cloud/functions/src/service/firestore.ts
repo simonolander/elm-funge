@@ -1,11 +1,10 @@
-import {Firestore} from "@google-cloud/firestore"
-import {Solution} from "../data/Solution";
+import {Firestore} from "@google-cloud/firestore";
 import {Level} from "../data/Level";
-
+import {Solution} from "../data/Solution";
 
 const PROJECT_ID = "luminous-cubist-234816";
 const firestore: Firestore = new Firestore({
-    projectId: PROJECT_ID
+    projectId: PROJECT_ID,
 });
 
 const collectionPaths = {
@@ -50,9 +49,9 @@ export async function getUserBySubject(subject: string) {
 }
 
 function getById(collectionName: string): (id: string) => Promise<FirebaseFirestore.DocumentReference> {
-    return async function (id: string): Promise<FirebaseFirestore.DocumentReference> {
+    return async function(id: string): Promise<FirebaseFirestore.DocumentReference> {
         return firestore.collection(collectionName).doc(id);
-    }
+    };
 }
 
 /**
@@ -92,7 +91,7 @@ export async function getBlueprints(parameters: { authorId: string, offset?: num
 
 export async function addBlueprint(blueprint: Level) {
     return firestore.collection(collectionPaths.blueprints)
-        .add(blueprint)
+        .add(blueprint);
 }
 
 /**

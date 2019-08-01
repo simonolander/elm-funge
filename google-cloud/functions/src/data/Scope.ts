@@ -7,4 +7,4 @@ export type Scope =
     | "edit:blueprints"
     | "read:solutions"
     | "submit:solutions"
-    | "publish:blueprints"
+    | "publish:blueprints";

@@ -1,11 +1,11 @@
-import {Request, Response} from 'express';
-import * as EndpointException from "../data/EndpointException";
-import * as Firestore from '../service/firestore'
+import {Request, Response} from "express";
 import {JsonDecoder} from "ts.data.json";
-import {decode} from "../misc/json";
+import * as EndpointException from "../data/EndpointException";
 import * as HighScore from "../data/HighScore";
 import * as Result from "../data/Result";
 import * as Solution from "../data/Solution";
+import {decode} from "../misc/json";
+import * as Firestore from "../service/firestore";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
@@ -14,7 +14,7 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
         default:
             return EndpointException.send({
                 messages: [`Bad request method: ${req.method}`],
-                status: 400
+                status: 400,
             }, res);
     }
 }
@@ -23,8 +23,8 @@ async function get(req: Request, res: Response): Promise<Response> {
     const result = decode(
         req.query,
         JsonDecoder.object({
-            levelId: JsonDecoder.string
-        }, "{ levelId: string }")
+            levelId: JsonDecoder.string,
+        }, "{ levelId: string }"),
     );
     if (result.tag === "failure") {
         return EndpointException.send(result.error, res);

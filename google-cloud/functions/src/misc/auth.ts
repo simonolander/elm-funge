@@ -1,7 +1,7 @@
 import {Request} from "express";
-import * as Result from "../data/Result";
-import {EndpointException} from "../data/EndpointException";
 import {JsonWebTokenError, NotBeforeError, TokenExpiredError, verify} from "jsonwebtoken";
+import {EndpointException} from "../data/EndpointException";
+import * as Result from "../data/Result";
 import {Scope} from "../data/Scope";
 
 // const AMAZON_COGNITO_PEM =
@@ -27,8 +27,8 @@ iAdQvWb9plN5brxB4+7HXOVs+KqKRCrAVRJ6x4YggNFDjOxcSyvylpDZGY+OnRpI
 /V1OD62pjU8pOzwE+TA3DBpdbmB+/EpINDotQ4R0LCXWwq04b/x7LwSouR09iMhF
 +wIDAQAB
 -----END PUBLIC KEY-----`;
-const AUTH0_AUD = 'https://us-central1-luminous-cubist-234816.cloudfunctions.net';
-const AUTH0_ISS = 'https://dev-253xzd4c.eu.auth0.com/';
+const AUTH0_AUD = "https://us-central1-luminous-cubist-234816.cloudfunctions.net";
+const AUTH0_ISS = "https://dev-253xzd4c.eu.auth0.com/";
 
 const audience = AUTH0_AUD;
 const issuer = AUTH0_ISS;
@@ -36,56 +36,56 @@ const pem = AUTH0_PEM;
 
 export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, EndpointException> {
     try {
-        const authorizationHeader = req.get('Authorization');
-        if (typeof authorizationHeader !== 'string') {
+        const authorizationHeader = req.get("Authorization");
+        if (typeof authorizationHeader !== "string") {
             return Result.failure({
                 status: 403,
-                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]
+                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`],
             });
         }
-        const splits = authorizationHeader.split(' ');
+        const splits = authorizationHeader.split(" ");
         if (splits.length !== 2) {
             return Result.failure({
                 status: 403,
-                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]
+                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`],
             });
         }
         const [type, token] = splits;
-        if (type !== 'Bearer') {
+        if (type !== "Bearer") {
             return Result.failure({
                 status: 403,
-                messages: [`Failed failed to extract authorization header, invalid type: ${type}`]
+                messages: [`Failed failed to extract authorization header, invalid type: ${type}`],
             });
         }
         const tokenObject: any = verify(token, pem, {
-            algorithms: ['RS256'],
-            audience: audience,
-            issuer: issuer
+            algorithms: ["RS256"],
+            audience,
+            issuer,
         });
-        if (typeof tokenObject !== 'object') {
+        if (typeof tokenObject !== "object") {
             return Result.failure({
                 status: 403,
-                messages: [`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`]
+                messages: [`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`],
             });
         }
-        const subject = tokenObject["sub"];
-        if (typeof subject !== 'string') {
+        const subject = tokenObject.sub;
+        if (typeof subject !== "string") {
             return Result.failure({
                 status: 403,
-                messages: [`Failed to verify jwt, invalid subject: ${subject}`]
+                messages: [`Failed to verify jwt, invalid subject: ${subject}`],
             });
         }
         if (subject.length === 0) {
             return Result.failure({
                 status: 403,
-                messages: [`Failed to verify jwt, subject is empty`]
+                messages: [`Failed to verify jwt, subject is empty`],
             });
         }
-        const scope = tokenObject["scope"];
+        const scope = tokenObject.scope;
         if (typeof scope !== "string") {
             return Result.failure({
                 status: 403,
-                messages: [`Failed to verify jwt, malformed scope: ${typeof scope}`]
+                messages: [`Failed to verify jwt, malformed scope: ${typeof scope}`],
             });
         }
         const presentScopes = scope.split(" ");
@@ -93,7 +93,7 @@ export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, 
         if (missingScopes.length !== 0) {
             return Result.failure({
                 status: 403,
-                messages: missingScopes.map(scope => `Failed to verify jwt, missing scope: ${scope}`)
+                messages: missingScopes.map(scope => `Failed to verify jwt, missing scope: ${scope}`),
             });
         }
         return Result.success(subject);
@@ -103,16 +103,16 @@ export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, 
                 status: 403,
                 messages: [
                     `Token expired at ${e.expiredAt.toISOString()}`,
-                    e.message
-                ]
+                    e.message,
+                ],
             });
         } else if (e instanceof NotBeforeError) {
             return Result.failure({
                 status: 403,
                 messages: [
                     `Token is not valid before ${e.date.toISOString()}`,
-                    e.message
-                ]
+                    e.message,
+                ],
             });
 
         } else if (e instanceof JsonWebTokenError) {
@@ -120,8 +120,8 @@ export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, 
                 status: 403,
                 messages: [
                     `There was an error with the token`,
-                    e.message
-                ]
+                    e.message,
+                ],
             });
         } else {
             throw e;

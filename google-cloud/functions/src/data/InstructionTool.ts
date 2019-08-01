@@ -9,24 +9,24 @@ export type InstructionTool
     | Exception;
 
 export interface JustInstruction {
-    readonly tag: "JustInstruction",
-    readonly instruction: Instruction.Instruction
+    readonly tag: "JustInstruction";
+    readonly instruction: Instruction.Instruction;
 }
 
 export interface ChangeAnyDirection {
-    readonly tag: "ChangeAnyDirection"
+    readonly tag: "ChangeAnyDirection";
 }
 
 export interface BranchAnyDirection {
-    readonly tag: "BranchAnyDirection"
+    readonly tag: "BranchAnyDirection";
 }
 
 export interface PushValueToStack {
-    readonly tag: "PushValueToStack"
+    readonly tag: "PushValueToStack";
 }
 
 export interface Exception {
-    readonly tag: "Exception",
+    readonly tag: "Exception";
 }
 
 export const decoder: JsonDecoder.Decoder<InstructionTool> = JsonDecoder.oneOf<InstructionTool>(
@@ -37,8 +37,8 @@ export const decoder: JsonDecoder.Decoder<InstructionTool> = JsonDecoder.oneOf<I
         JsonDecoder.object({tag: JsonDecoder.isExactly("Exception")}, "Exception"),
         JsonDecoder.object({
             tag: JsonDecoder.isExactly("JustInstruction"),
-            instruction: Instruction.decoder
-        }, "JustInstruction")
+            instruction: Instruction.decoder,
+        }, "JustInstruction"),
     ],
-    "InstructionTool"
+    "InstructionTool",
 );

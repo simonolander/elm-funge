@@ -1,11 +1,11 @@
-import * as BoardInstruction from "./BoardInstruction";
 import {JsonDecoder} from "ts.data.json";
-import * as Integer from "./Integer"
+import * as BoardInstruction from "./BoardInstruction";
+import * as Integer from "./Integer";
 
 export interface Board {
-    readonly width: number,
-    readonly height: number,
-    readonly instructions: Array<BoardInstruction.BoardInstruction>,
+    readonly width: number;
+    readonly height: number;
+    readonly instructions: BoardInstruction.BoardInstruction[];
 }
 
 export const decoder: JsonDecoder.Decoder<Board> = JsonDecoder.object({
