@@ -19,12 +19,11 @@ export function failure<B>(error: B): Failure<B> {
 }
 
 export function values<A, B>(results: Array<Result<A, B>>): A[] {
-    const values: A[] = [];
+    const successes: A[] = [];
     const errors: B[] = [];
-    for (let i = 0; i < results.length; ++i) {
-        const result = results[i];
+    for (const result of results) {
         if (result.tag === "success") {
-            values.push(result.value);
+            successes.push(result.value);
         } else {
             errors.push(result.error);
         }
@@ -32,5 +31,5 @@ export function values<A, B>(results: Array<Result<A, B>>): A[] {
     if (errors.length !== 0) {
         console.warn(`321ee2b7    Found ${errors.length} errors when extracting values`, errors);
     }
-    return values;
+    return successes;
 }

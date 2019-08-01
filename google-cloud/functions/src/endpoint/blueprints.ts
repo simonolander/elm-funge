@@ -71,18 +71,17 @@ async function put(req: Request, res: Response): Promise<Response> {
     const user = await Firestore.getUserBySubject(authResult.value);
     const ref = await Firestore.getBlueprintById(request.value.id);
     const blueprint = await ref.get()
-        .then(ref => ref.data());
+        .then(r => r.data());
     if (typeof blueprint === "undefined") {
         const time = Date.now();
-        const blueprint = {
+        return Firestore.addBlueprint({
             ...request.value,
             authorId: user.id,
             createdTime: time,
             modifiedTime: time,
-        };
-        return Firestore.addBlueprint(blueprint)
-            .then(ref => ref.get())
-            .then(ref => res.send(ref.data()));
+        })
+            .then(r => r.get())
+            .then(r => res.send(r.data()));
     } else {
         if (blueprint.authorId !== user.id) {
             return EndpointException.send({

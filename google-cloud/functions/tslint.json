@@ -1,0 +1,24 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:recommended"
+  ],
+  "jsRules": {},
+  "rules": {
+    "arrow-parens": {
+      "severity": "off"
+    },
+    "object-literal-sort-keys": false,
+    "interface-name": {
+      "options": "never-prefix"
+    },
+    "radix": false,
+    "max-line-length": {
+      "options": {
+        "limit": 200
+      }
+    },
+    "no-console": false
+  },
+  "rulesDirectory": []
+}

@@ -81,14 +81,14 @@ export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, 
                 messages: [`Failed to verify jwt, subject is empty`],
             });
         }
-        const scope = tokenObject.scope;
-        if (typeof scope !== "string") {
+        const scopeString = tokenObject.scope;
+        if (typeof scopeString !== "string") {
             return Result.failure({
                 status: 403,
-                messages: [`Failed to verify jwt, malformed scope: ${typeof scope}`],
+                messages: [`Failed to verify jwt, malformed scope: ${typeof scopeString}`],
             });
         }
-        const presentScopes = scope.split(" ");
+        const presentScopes = scopeString.split(" ");
         const missingScopes = scopes.filter(scope => presentScopes.indexOf(scope) === -1);
         if (missingScopes.length !== 0) {
             return Result.failure({

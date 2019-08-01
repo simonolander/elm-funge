@@ -1,4 +1,5 @@
 import {Firestore} from "@google-cloud/firestore";
+import {Blueprint} from "../data/Blueprint";
 import {Level} from "../data/Level";
 import {Solution} from "../data/Solution";
 
@@ -15,7 +16,7 @@ const collectionPaths = {
     solutions: "solutions",
 };
 
-function get(collectionPath: string, parameters: {[s: string]: any, limit?: number, offset?: number}) {
+function get(collectionPath: string, parameters: { [s: string]: any, limit?: number, offset?: number }) {
     function fold(query: FirebaseFirestore.Query, [key, value]: [string, string | number]): FirebaseFirestore.Query {
         switch (key) {
             case "limit":
@@ -30,6 +31,7 @@ function get(collectionPath: string, parameters: {[s: string]: any, limit?: numb
                 return query.where(key, "==", value);
         }
     }
+
     const collection = firestore.collection(collectionPath);
     return Object.entries(parameters)
         .filter(([_, value]) => typeof value !== "undefined")
@@ -49,9 +51,7 @@ export async function getUserBySubject(subject: string) {
 }
 
 function getById(collectionName: string): (id: string) => Promise<FirebaseFirestore.DocumentReference> {
-    return async function(id: string): Promise<FirebaseFirestore.DocumentReference> {
-        return firestore.collection(collectionName).doc(id);
-    };
+    return async (id: string): Promise<FirebaseFirestore.DocumentReference> => firestore.collection(collectionName).doc(id);
 }
 
 /**
@@ -89,7 +89,7 @@ export async function getBlueprints(parameters: { authorId: string, offset?: num
     return get(collectionPaths.blueprints, parameters);
 }
 
-export async function addBlueprint(blueprint: Level) {
+export async function addBlueprint(blueprint: Blueprint) {
     return firestore.collection(collectionPaths.blueprints)
         .add(blueprint);
 }

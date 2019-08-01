@@ -2,7 +2,7 @@ import { Response } from "express";
 
 export interface EndpointException {
     status: number;
-    messages: String[];
+    messages: string[];
 }
 
 export function send(exception: EndpointException, res: Response): Response {
