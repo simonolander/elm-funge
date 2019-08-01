@@ -1,12 +1,12 @@
 import {Request, Response} from 'express';
 import * as EndpointException from "../data/EndpointException";
-import * as Solution from "../data/PostSolutionRequest";
 import * as Firestore from "../service/firestore";
 import * as Board from "../data/Board";
 import * as Result from "../data/Result";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import {JsonDecoder} from "ts.data.json";
+import * as Score from "../data/Score";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
     switch (req.method) {
@@ -68,7 +68,12 @@ async function post(req: Request, res: Response): Promise<Response> {
     }
     const user = await Firestore.getUserBySubject(authResult.value);
 
-    const solutionResult = decode(req.body, Solution.decoder);
+    const solutionResult = decode(req.body, JsonDecoder.object({
+        id: JsonDecoder.string,
+        levelId: JsonDecoder.string,
+        score: Score.decoder,
+        board: Board.decoder
+    }, "PostSolutionRequest"));
     if (solutionResult.tag === "failure") {
         return EndpointException.send(solutionResult.error, res);
     }

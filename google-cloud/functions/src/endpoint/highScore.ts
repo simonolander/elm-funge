@@ -31,7 +31,7 @@ async function get(req: Request, res: Response): Promise<Response> {
     }
 
     return Firestore.getSolutions({levelId: result.value.levelId})
-        .then(snapshot => snapshot.docs.map(doc => decode(doc, Solution.decoder)))
+        .then(snapshot => snapshot.docs.map(doc => decode(doc.data(), Solution.decoder)))
         .then(results => Result.values(results))
         .then(solutions => solutions.map(solution => solution.score))
         .then(scores => HighScore.fromScores(result.value.levelId, scores))
