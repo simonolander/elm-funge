@@ -2,10 +2,12 @@ import {Request, Response} from "express";
 import {JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
 import * as EndpointException from "../data/EndpointException";
+import * as Level from "../data/Level";
 import * as Result from "../data/Result";
 import * as Score from "../data/Score";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
+import {isSolutionValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
@@ -16,8 +18,8 @@ export async function endpoint(req: Request, res: Response): Promise<Response> {
             return post(req, res);
         default:
             return EndpointException.send({
-                messages: [`Bad request method: ${req.method}`],
                 status: 400,
+                messages: [`Bad request method: ${req.method}`],
             }, res);
     }
 }
@@ -88,6 +90,7 @@ async function post(req: Request, res: Response): Promise<Response> {
 
     const levelSnapshot = await Firestore.getLevelById(request.value.levelId)
         .then((ref) => ref.get());
+
     if (!levelSnapshot.exists) {
         return EndpointException.send({
             messages: [`Level ${request.value.levelId} does not exist`],
@@ -97,11 +100,11 @@ async function post(req: Request, res: Response): Promise<Response> {
 
     const similarSolutionExists = await Firestore.getSolutions({levelId: request.value.levelId, authorId: user.id})
         .then((snapshot) => {
-                const boards = Result.values(snapshot.docs
-                    .map((doc) => doc.get("board"))
-                    .map((board) => decode(board, Board.decoder)));
+            const boards = Result.values(snapshot.docs
+                .map((doc) => doc.get("board"))
+                .map((board) => decode(board, Board.decoder)));
 
-                return boards.some((board) => Board.equals(request.value.board, board));
+            return boards.some((board) => Board.equals(request.value.board, board));
         });
     if (similarSolutionExists) {
         return EndpointException.send({
@@ -110,7 +113,20 @@ async function post(req: Request, res: Response): Promise<Response> {
         }, res);
     }
 
-    // TODO Check that solution works
+    const level = decode(levelSnapshot.data(), Level.decoder);
+
+    if (level.tag === "failure") {
+        return EndpointException.send(level.error, res);
+    }
+
+    const solutionError = isSolutionValid(level.value, request.value.board, request.value.score);
+    if (typeof solutionError !== "undefined") {
+        console.warn(`645de896    Invalid solution posted by user ${user.id}`, solutionError);
+        return EndpointException.send({
+            messages: [solutionError],
+            status: 400,
+        }, res);
+    }
 
     return Firestore.addSolution({...request.value, authorId: user.id})
         .then(() => res.send());

@@ -9,12 +9,18 @@ export interface HighScore {
 export function fromScores(levelId: string, scores: Score[]): HighScore {
     const numberOfSteps: {[s: number]: number} = {};
     scores.forEach(score => {
-        numberOfSteps[score.numberOfSteps] = (numberOfSteps[score.numberOfSteps] || 0) + 1;
+        const oldCount = typeof numberOfSteps[score.numberOfSteps] === "number"
+            ? numberOfSteps[score.numberOfSteps]
+            : 0;
+        numberOfSteps[score.numberOfSteps] = oldCount + 1;
     });
 
     const numberOfInstructions: {[s: number]: number} = {};
     scores.forEach(score => {
-        numberOfInstructions[score.numberOfInstructions] = (numberOfInstructions[score.numberOfInstructions] || 0) + 1;
+        const oldCount = typeof numberOfInstructions[score.numberOfInstructions] === "number"
+            ? numberOfInstructions[score.numberOfInstructions]
+            : 0;
+        numberOfInstructions[score.numberOfInstructions] = oldCount + 1;
     });
 
     return {

@@ -15,3 +15,7 @@ export const decoder: JsonDecoder.Decoder<Direction> = JsonDecoder.oneOf(
     ],
     "Direction",
 );
+
+export function compareFn(a: Direction, b: Direction): number {
+    return a.localeCompare(b);
+}

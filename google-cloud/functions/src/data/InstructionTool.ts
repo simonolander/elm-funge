@@ -42,3 +42,18 @@ export const decoder: JsonDecoder.Decoder<InstructionTool> = JsonDecoder.oneOf<I
     ],
     "InstructionTool",
 );
+
+export function canMakeInstruction(instructionTool: InstructionTool, instruction: Instruction.Instruction): boolean {
+    switch (instructionTool.tag) {
+        case "ChangeAnyDirection":
+            return instruction.tag === "ChangeDirection";
+        case "BranchAnyDirection":
+            return instruction.tag === "Branch";
+        case "PushValueToStack":
+            return instruction.tag === "PushToStack";
+        case "Exception":
+            return instruction.tag === "Exception";
+        case "JustInstruction":
+            return Instruction.compareFn(instruction, instructionTool.instruction) === 0;
+    }
+}

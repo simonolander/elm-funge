@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import {JsonDecoder} from "ts.data.json";
+import * as Blueprint from "../data/Blueprint";
 import * as EndpointException from "../data/EndpointException";
-import * as Level from "../data/PostLevelRequest";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from "../service/firestore";
@@ -64,7 +64,7 @@ async function put(req: Request, res: Response): Promise<Response> {
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
-    const request = decode(req.body, Level.decoder);
+    const request = decode(req.body, Blueprint.decoder);
     if (request.tag === "failure") {
         return EndpointException.send(request.error, res);
     }

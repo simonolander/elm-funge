@@ -3,17 +3,16 @@ import * as Direction from "./Direction";
 import * as Int16 from "./Int16";
 
 export function compareFn(a: Instruction, b: Instruction) {
-    if (a.tag !== b.tag) {
-        return a.tag < b.tag ? -1 : 1;
+    const tagCompare = a.tag.localeCompare(b.tag);
+    if (tagCompare !== 0) {
+        return tagCompare;
     }
 
     let c;
     switch (a.tag) {
         case "ChangeDirection":
             c = b as ChangeDirection;
-            return a.direction === c.direction
-                ? 0
-                : a.direction < c.direction ? -1 : 1;
+            return Direction.compareFn(a.direction, c.direction);
         case "PushToStack":
             c = b as PushToStack;
             return a.value === c.value
@@ -21,20 +20,14 @@ export function compareFn(a: Instruction, b: Instruction) {
                 : a.value < c.value ? -1 : 1;
         case "Branch":
             c = b as Branch;
-            return a.trueDirection < c.trueDirection
-                ? -1
-                : a.trueDirection > c.trueDirection
-                    ? 1
-                    : a.falseDirection < c.falseDirection
-                        ? -1
-                        : a.falseDirection > c.falseDirection
-                            ? 1
-                            : 0;
+            const trueCompare = Direction.compareFn(a.trueDirection, c.trueDirection);
+            if (trueCompare !== 0) {
+                return trueCompare;
+            }
+            return Direction.compareFn(a.falseDirection, c.falseDirection);
         case "Exception":
             c = b as Exception;
-            return a.exceptionMessage === c.exceptionMessage
-                ? 0
-                : a.exceptionMessage < c.exceptionMessage ? -1 : 1;
+            return a.exceptionMessage.localeCompare(c.exceptionMessage);
         case "NoOp":
         case "PopFromStack":
         case "JumpForward":
@@ -60,6 +53,10 @@ export function compareFn(a: Instruction, b: Instruction) {
         case "SendToBottom":
             return 0;
     }
+}
+
+export function toString(instruction: Instruction) {
+    return JSON.stringify(instruction, null, 2);
 }
 
 import Decoder = JsonDecoder.Decoder;

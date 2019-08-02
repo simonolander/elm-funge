@@ -1,12 +1,16 @@
 import {Request, Response} from "express";
 import {JsonDecoder} from "ts.data.json";
+import * as Blueprint from "../data/Blueprint";
 import * as Board from "../data/Board";
 import * as EndpointException from "../data/EndpointException";
-import {decoder} from "../data/Integer";
-import * as Level from "../data/PostLevelRequest";
+import * as InstructionTool from "../data/InstructionTool";
+import {decoder, default as Integer} from "../data/Integer";
+import * as IO from "../data/IO";
+import * as Level from "../data/Level";
 import * as Score from "../data/Score";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
+import {isSolutionValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
 export async function endpoint(req: Request, res: Response): Promise<Response> {
@@ -54,10 +58,8 @@ async function post(req: Request, res: Response): Promise<Response> {
     }
     const request = decode(req.body, JsonDecoder.object({
         blueprintId: JsonDecoder.string,
-        solution: JsonDecoder.object({
-            score: Score.decoder,
-            board: Board.decoder,
-        }, "Solution"),
+        score: Score.decoder,
+        board: Board.decoder,
     }, "Publish blueprint request"));
     if (request.tag === "failure") {
         return EndpointException.send(request.error, res);
@@ -71,13 +73,30 @@ async function post(req: Request, res: Response): Promise<Response> {
             messages: [`Blueprint not found: ${request.value.blueprintId}`],
         }, res);
     }
-    if (blueprintSnapshot.get("authorId") !== user.id) {
+    const blueprint = decode(blueprintSnapshot.data(), Blueprint.decoder);
+    if (blueprint.tag === "failure") {
+        console.warn(`2f275279    Corrupted data for blueprint ${request.value.blueprintId}`, ...blueprint.error.messages);
+        return EndpointException.send({
+            ...blueprint.error, status: 500,
+        }, res);
+    }
+    if (blueprint.value.authorId !== user.id) {
         return EndpointException.send({
             status: 403,
             messages: [`User ${user.id} does not have permission to publish blueprint ${request.value.blueprintId}`],
         }, res);
     }
-    // TODO Check solution
+
+    const level = Level.fromBlueprint(blueprint.value);
+    const solutionError = isSolutionValid(level, request.value.board, request.value.score);
+    if (typeof solutionError !== "undefined") {
+        console.warn(`3259a409    Invalid solution posted by user ${user.id}`, solutionError);
+        return EndpointException.send({
+            messages: [solutionError],
+            status: 400,
+        }, res);
+    }
+
     return EndpointException.send({
         status: 500,
         messages: [`Not implemented`],
@@ -86,7 +105,17 @@ async function post(req: Request, res: Response): Promise<Response> {
 
 /* TODO REMOVE */
 async function put(req: Request, res: Response): Promise<Response> {
-    const levelResult = decode(req.body, Level.decoder);
+    const levelResult = decode(req.body, JsonDecoder.object({
+        id: JsonDecoder.string,
+        index: Integer.nonNegativeDecoder,
+        campaignId: JsonDecoder.string,
+        name: JsonDecoder.string,
+        description: JsonDecoder.array(JsonDecoder.string, "description"),
+        io: IO.decoder,
+        initialBoard: Board.decoder,
+        instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
+        version: Integer.nonNegativeDecoder,
+    }, "PostLevelRequest"));
     if (levelResult.tag === "failure") {
         return EndpointException.send(levelResult.error, res);
     }

@@ -18,7 +18,9 @@
         "limit": 200
       }
     },
-    "no-console": false
+    "no-console": false,
+    "strict-comparisons": true,
+    "strict-boolean-expressions": true
   },
   "rulesDirectory": []
 }

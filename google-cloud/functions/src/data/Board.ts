@@ -1,5 +1,6 @@
 import {JsonDecoder} from "ts.data.json";
 import * as BoardInstruction from "./BoardInstruction";
+import {Instruction} from "./Instruction";
 import * as Integer from "./Integer";
 
 export interface Board {
@@ -15,10 +16,6 @@ export const decoder: JsonDecoder.Decoder<Board> = JsonDecoder.object({
 }, "Board");
 
 export function equals(board1: Board, board2: Board): boolean {
-    if (board1 === board2) {
-        return true;
-    }
-
     if (board1.width !== board2.width) {
         return false;
     }
@@ -42,4 +39,16 @@ export function equals(board1: Board, board2: Board): boolean {
         return BoardInstruction.compareFn(v1, v2) === 0;
     });
     return true;
+}
+
+export function toMatrix(board: Board): Instruction[][] {
+    const matrix: Instruction[][] = new Array(board.width)
+        .fill(null)
+        .map(() => new Array(board.height).fill({tag: "NoOp"}));
+
+    for (const {position, instruction} of board.instructions) {
+        matrix[position.x][position.y] = instruction;
+    }
+
+    return matrix;
 }
