@@ -1,7 +1,4 @@
 import {Firestore} from "@google-cloud/firestore";
-import {Blueprint} from "../data/Blueprint";
-import {Level} from "../data/Level";
-import {Solution} from "../data/Solution";
 
 const PROJECT_ID = "luminous-cubist-234816";
 const firestore: Firestore = new Firestore({
@@ -74,11 +71,6 @@ export async function getLevels(parameters: { campaignId?: string, offset?: numb
     return get(collectionPaths.levels, parameters);
 }
 
-export async function addLevel(level: Level) {
-    return firestore.collection(collectionPaths.levels)
-        .add(level);
-}
-
 /**
  * BLUEPRINTS
  */
@@ -89,11 +81,6 @@ export async function getBlueprints(parameters: { authorId: string, offset?: num
     return get(collectionPaths.blueprints, parameters);
 }
 
-export async function addBlueprint(blueprint: Blueprint) {
-    return firestore.collection(collectionPaths.blueprints)
-        .add(blueprint);
-}
-
 /**
  * SOLUTIONS
  */
@@ -102,9 +89,4 @@ export const getSolutionById = getById(collectionPaths.solutions);
 
 export async function getSolutions(parameters: { levelId?: string, authorId?: string, campaignId?: string }) {
     return get(collectionPaths.solutions, parameters);
-}
-
-export async function addSolution(solution: Solution) {
-    return firestore.collection(collectionPaths.solutions)
-        .add(solution);
 }

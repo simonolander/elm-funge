@@ -5,6 +5,7 @@ import * as EndpointException from "../data/EndpointException";
 import * as Level from "../data/Level";
 import * as Result from "../data/Result";
 import * as Score from "../data/Score";
+import * as Solution from "../data/Solution";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import {isSolutionValid} from "../service/engine";
@@ -128,6 +129,11 @@ async function post(req: Request, res: Response): Promise<Response> {
         }, res);
     }
 
-    return Firestore.addSolution({...request.value, authorId: user.id})
+    const solution: Solution.Solution = {
+        ...request.value,
+        authorId: user.id,
+    };
+
+    return solutionRef.set(solution)
         .then(() => res.send());
 }

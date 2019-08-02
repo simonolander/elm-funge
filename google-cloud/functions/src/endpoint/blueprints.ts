@@ -74,14 +74,14 @@ async function put(req: Request, res: Response): Promise<Response> {
         .then(r => r.data());
     if (typeof blueprint === "undefined") {
         const time = Date.now();
-        return Firestore.addBlueprint({
+        const newBlueprint: Blueprint.Blueprint = {
             ...request.value,
             authorId: user.id,
             createdTime: time,
             modifiedTime: time,
-        })
-            .then(r => r.get())
-            .then(r => res.send(r.data()));
+        };
+        return ref.set(newBlueprint)
+            .then(() => res.send());
     } else {
         if (blueprint.authorId !== user.id) {
             return EndpointException.send({

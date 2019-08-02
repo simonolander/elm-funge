@@ -119,10 +119,12 @@ async function put(req: Request, res: Response): Promise<Response> {
     if (levelResult.tag === "failure") {
         return EndpointException.send(levelResult.error, res);
     }
-    return Firestore.addLevel({
+    const level: Level.Level = {
         ...levelResult.value,
         createdTime: new Date().getTime(),
         authorId: "root",
-    })
+    };
+    return Firestore.getLevelById(levelResult.value.id)
+        .then(ref => ref.set(level))
         .then(() => res.send());
 }
