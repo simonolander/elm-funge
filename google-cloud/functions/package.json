@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "tslint --fix --project .",
-    "build": "npm install && npm run lint && tsc && echo '    :)\n'"
+    "build": "npm install && npm run lint && tsc && echo '    :)\n'",
+    "deploy": "npm run build && gcloud functions deploy drafts --runtime nodejs8 --trigger-http && gcloud functions deploy solutions --runtime nodejs8 --trigger-http && gcloud functions deploy highScores --runtime nodejs8 --trigger-http && gcloud functions deploy levels --runtime nodejs8 --trigger-http && gcloud functions deploy userInfo --runtime nodejs8 --trigger-http"
   },
   "author": "Simon Olander",
   "license": "ISC",

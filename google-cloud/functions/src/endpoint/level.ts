@@ -4,7 +4,7 @@ import * as Blueprint from "../data/Blueprint";
 import * as Board from "../data/Board";
 import * as EndpointException from "../data/EndpointException";
 import * as InstructionTool from "../data/InstructionTool";
-import {decoder, default as Integer} from "../data/Integer";
+import * as Integer from "../data/Integer";
 import * as IO from "../data/IO";
 import * as Level from "../data/Level";
 import * as Score from "../data/Score";
@@ -35,12 +35,12 @@ async function get(req: Request, res: Response): Promise<Response> {
         JsonDecoder.object({
             campaignId: JsonDecoder.string,
             offset: JsonDecoder.oneOf([
-                decoder({minValue: 0, fromString: true}),
-                JsonDecoder.isUndefined(50),
+                Integer.decoder({minValue: 0, fromString: true}),
+                JsonDecoder.isUndefined(undefined),
             ], "offset"),
             limit: JsonDecoder.oneOf([
-                decoder({minValue: 0, fromString: true}),
-                JsonDecoder.isUndefined(0),
+                Integer.decoder({minValue: 0, fromString: true}),
+                JsonDecoder.isUndefined(undefined),
             ], "limit"),
         }, "GetLevelsRequest"));
     if (requestResult.tag === "failure") {
