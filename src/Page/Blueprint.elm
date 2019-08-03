@@ -331,7 +331,6 @@ update msg model =
                     let
                         newLevel =
                             boardInstruction
-                                |> Debug.log "boardInstruction"
                                 |> flip Board.withBoardInstruction level.initialBoard
                                 |> flip Level.withInitialBoard level
 

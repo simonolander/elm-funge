@@ -116,7 +116,7 @@ update msg session =
                         |> withExtraCmd (DetailedHttpError.consoleError error)
 
         GotLoadLevelResponse { request, result } ->
-            case result |> Debug.log "GotLoadLevelResponse" of
+            case result of
                 Ok level ->
                     session.levels
                         |> Cache.withValue level.id level

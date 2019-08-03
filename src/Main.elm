@@ -150,7 +150,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     load <|
-        case ( msg, model ) |> Debug.log "msg" of
+        case ( msg, model ) of
             ( ClickedLink urlRequest, _ ) ->
                 case urlRequest of
                     Browser.Internal url ->
