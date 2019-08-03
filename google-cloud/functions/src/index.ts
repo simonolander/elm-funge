@@ -9,7 +9,7 @@ async function route(req: Request, res: Response, endpoint: (req: Request, res: 
     try {
         res.set("Access-Control-Allow-Origin", "*");
         if (req.method === "OPTIONS") {
-            res.set("Access-Control-Allow-Methods", "GET");
+            res.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
             res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
             res.set("Access-Control-Max-Age", "3600");
             return res.status(204).send();

@@ -275,7 +275,7 @@ loadFromServerByLevelId accessToken toMsg levelId =
 
 saveToServer : AccessToken -> (RequestResult Draft DetailedHttpError () -> msg) -> Draft -> Cmd msg
 saveToServer accessToken toMsg draft =
-    GCP.post (Decode.succeed ())
+    GCP.put (Decode.succeed ())
         |> GCP.withPath [ "drafts" ]
         |> GCP.withAccessToken accessToken
         |> GCP.withBody (encode draft)

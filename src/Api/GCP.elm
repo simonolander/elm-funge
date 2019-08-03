@@ -2,6 +2,7 @@ module Api.GCP exposing
     ( RequestBuilder
     , get
     , post
+    , put
     , request
     , withAccessToken
     , withBody
@@ -52,6 +53,15 @@ post decoder =
             get decoder
     in
     { empty | method = "POST" }
+
+
+put : Decode.Decoder response -> RequestBuilder response
+put decoder =
+    let
+        empty =
+            get decoder
+    in
+    { empty | method = "put" }
 
 
 withPath : List String -> RequestBuilder response -> RequestBuilder response

@@ -1,8 +1,9 @@
 import {Request, Response} from "express";
 import {JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
+import * as Draft from "../data/Draft";
 import * as EndpointException from "../data/EndpointException";
-import * as GetDraftRequest from "../data/GetDraftRequest";
+import * as Result from "../data/Result";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from "../service/firestore";
@@ -32,36 +33,43 @@ async function get(req: Request, res: Response): Promise<Response> {
     if (authResult.tag === "failure") {
         return EndpointException.send(authResult.error, res);
     }
-    const subject = authResult.value;
-    const result = decode(req.query, GetDraftRequest.decoder);
-    if (result.tag === "failure") {
-        return EndpointException.send(result.error, res);
+    const request = decode(req.query, JsonDecoder.object({
+        draftId: JsonDecoder.oneOf([
+            JsonDecoder.string,
+            JsonDecoder.isUndefined(undefined),
+        ], "draftId | undefined"),
+        levelId: JsonDecoder.oneOf([
+            JsonDecoder.string,
+            JsonDecoder.isUndefined(undefined),
+        ], "levelId | undefined"),
+    }, "GetDraftRequest"));
+    if (request.tag === "failure") {
+        return EndpointException.send(request.error, res);
     }
-    const {draftId, levelId} = result.value;
-    if (typeof draftId !== "undefined") {
-        return Firestore.getUserBySubject(subject)
-            .then(ref => Firestore.getDrafts({
-                authorId: ref.id,
-                draftId,
-            }))
-            .then(ref => ref.docs.map(doc => doc.data()))
-            .then(data =>
-                data.length !== 0
-                    ? res.send(data[0])
-                    : res.status(404).send());
-    } else if (typeof levelId !== "undefined") {
-        return Firestore.getUserBySubject(subject)
-            .then(ref => Firestore.getDrafts({
-                authorId: ref.id,
-                levelId,
-            }))
-            .then(ref => ref.docs.map(doc => doc.data()))
-            .then(data => res.send(data));
+    const user = await Firestore.getUserBySubject(authResult.value);
+    if (typeof request.value.draftId !== "undefined") {
+        const snapshot = await Firestore.getDraftById(request.value.draftId)
+            .then(ref => ref.get());
+        if (snapshot.exists) {
+            const draft = decode(snapshot.data(), Draft.decoder);
+            if (draft.tag === "failure") {
+                console.warn(`989e047a    Corrupt draft ${request.value.draftId} in firestore`, draft.error.messages);
+                throw new Error(`Corrupt draft ${request.value.draftId} in firestore`);
+            }
+            if (draft.value.authorId !== user.id) {
+                return EndpointException.send({
+                    status: 403,
+                    messages: [`User ${user.id} does not have permission to read draft ${request.value.draftId}`],
+                }, res);
+            }
+            return res.send(draft.value);
+        } else {
+            return res.status(404).send();
+        }
     } else {
-        return Firestore.getUserBySubject(subject)
-            .then(ref => Firestore.getDrafts({authorId: ref.id}))
-            .then(ref => ref.docs.map(doc => doc.data()))
-            .then(data => res.send(data));
+        return Firestore.getDrafts({authorId: user.id, levelId: request.value.levelId})
+            .then(snapshot => Result.values(snapshot.docs.map(doc => decode(doc, Draft.decoder))))
+            .then(drafts => res.send(drafts));
     }
 }
 
