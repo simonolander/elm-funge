@@ -123,10 +123,10 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
                         x = (x + board.width - 1) % board.width;
                         break;
                     case "Up":
-                        y = (y + 1) % board.height;
+                        y = (y + board.height - 1) % board.height;
                         break;
                     case "Down":
-                        y = (y + board.height - 1) % board.height;
+                        y = (y + 1) % board.height;
                         break;
                 }
                 break;
@@ -218,10 +218,10 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
                 x = (x + board.width - 1) % board.width;
                 break;
             case "Up":
-                y = (y + 1) % board.height;
+                y = (y + board.height - 1) % board.height;
                 break;
             case "Down":
-                y = (y + board.height - 1) % board.height;
+                y = (y + 1) % board.height;
                 break;
         }
     }
