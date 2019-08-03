@@ -33,7 +33,14 @@ async function get(req: Request, res: Response): Promise<Response> {
     const requestResult = decode(
         req.query,
         JsonDecoder.object({
-            campaignId: JsonDecoder.string,
+            campaignId: JsonDecoder.oneOf([
+                JsonDecoder.string,
+                JsonDecoder.isUndefined(undefined),
+            ], "campaignId"),
+            levelId: JsonDecoder.oneOf([
+                JsonDecoder.string,
+                JsonDecoder.isUndefined(undefined),
+            ], "campaignId"),
             offset: JsonDecoder.oneOf([
                 Integer.decoder({minValue: 0, fromString: true}),
                 JsonDecoder.isUndefined(undefined),
@@ -45,6 +52,15 @@ async function get(req: Request, res: Response): Promise<Response> {
         }, "GetLevelsRequest"));
     if (requestResult.tag === "failure") {
         return EndpointException.send(requestResult.error, res);
+    }
+
+    if (typeof requestResult.value.levelId !== "undefined") {
+        const documentSnapshot = await Firestore.getLevelById(requestResult.value.levelId)
+            .then(ref => ref.get());
+        if (!documentSnapshot.exists) {
+            return res.status(404).send();
+        }
+        return res.send(documentSnapshot.data());
     }
 
     return Firestore.getLevels(requestResult.value)

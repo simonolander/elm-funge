@@ -150,7 +150,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     load <|
-        case ( msg, model ) of
+        case ( msg, model ) |> Debug.log "msg" of
             ( ClickedLink urlRequest, _ ) ->
                 case urlRequest of
                     Browser.Internal url ->
@@ -186,7 +186,7 @@ update msg model =
             ( LocalStorageResponse response, mdl ) ->
                 localStorageResponseUpdate response mdl
 
-            ( ExecutionMsg message, Execution mdl ) ->
+            ( ExecutionMsg (Execution.InternalMsg message), Execution mdl ) ->
                 Execution.update message mdl
                     |> updateWith Execution ExecutionMsg
 

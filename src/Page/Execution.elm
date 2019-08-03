@@ -82,6 +82,11 @@ type alias Model =
 
 
 type Msg
+    = InternalMsg InternalMsg
+    | SessionMsg SessionMsg
+
+
+type InternalMsg
     = ClickedStep
     | ClickedUndo
     | ClickedRun
@@ -90,7 +95,6 @@ type Msg
     | ClickedNavigateBrowseLevels
     | GeneratedSolution Solution
     | Tick
-    | SessionMsg SessionMsg
 
 
 init : DraftId -> Session -> ( Model, Cmd Msg )
@@ -260,9 +264,11 @@ isSolved execution =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model.execution of
+    case
+        model.execution
+    of
         Just execution ->
             case msg of
                 ClickedStep ->
@@ -325,10 +331,6 @@ update msg model =
                             , Solution.saveToLocalStorage solution
                             )
 
-                SessionMsg sessionMsg ->
-                    SessionUpdate.update sessionMsg model.session
-                        |> Extra.Cmd.mapModel (flip withSession model)
-
         Nothing ->
             ( model, Cmd.none )
 
@@ -376,7 +378,7 @@ stepModel oldExecution model =
 
                     generateSolutionCmd =
                         Random.generate
-                            GeneratedSolution
+                            (InternalMsg << GeneratedSolution)
                             (Solution.generator
                                 execution.level.id
                                 score
@@ -805,10 +807,10 @@ subscriptions model =
                 Sub.none
 
             Running ->
-                Time.every 250 (always Tick)
+                Time.every 250 (always (InternalMsg Tick))
 
             FastForwarding ->
-                Time.every 100 (always Tick)
+                Time.every 100 (always (InternalMsg Tick))
 
     else
         Sub.none
@@ -973,19 +975,19 @@ viewExecutionSidebar execution model =
                 }
 
         undoButtonView =
-            viewButton ExecutionControlView.Undo (Just ClickedUndo)
+            viewButton ExecutionControlView.Undo (Just (InternalMsg ClickedUndo))
 
         stepButtonView =
-            viewButton ExecutionControlView.Step (Just ClickedStep)
+            viewButton ExecutionControlView.Step (Just (InternalMsg ClickedStep))
 
         runButtonView =
-            viewButton ExecutionControlView.Play (Just ClickedRun)
+            viewButton ExecutionControlView.Play (Just (InternalMsg ClickedRun))
 
         fastForwardButtonView =
-            viewButton ExecutionControlView.FastForward (Just ClickedFastForward)
+            viewButton ExecutionControlView.FastForward (Just (InternalMsg ClickedFastForward))
 
         pauseButtonView =
-            viewButton ExecutionControlView.Pause (Just ClickedPause)
+            viewButton ExecutionControlView.Pause (Just (InternalMsg ClickedPause))
 
         executionControlInstructionsView =
             wrappedRow
@@ -1199,7 +1201,7 @@ viewVictoryModal execution =
             , padding 10
             , mouseOver [ Background.color (rgba 1 1 1 0.5) ]
             ]
-            { onPress = Just ClickedNavigateBrowseLevels
+            { onPress = Just (InternalMsg ClickedNavigateBrowseLevels)
             , label =
                 el [ centerX, centerY ] (text "Back to levels")
             }
