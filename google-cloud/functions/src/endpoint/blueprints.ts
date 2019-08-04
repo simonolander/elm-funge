@@ -14,7 +14,7 @@ import {
     notFound,
     updated,
 } from "../data/EndpointResult";
-import {values} from "../data/Result";
+import {fromDecodeResult, values} from "../data/Result";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from "../service/firestore";
@@ -69,7 +69,7 @@ async function get(req: Request): Promise<EndpointResult<Blueprint.Blueprint | B
         return Firestore.getBlueprints({
             authorId: user.id,
         })
-            .then(snapshot => snapshot.docs.map(doc => Blueprint.decoder.decode(doc.data())))
+            .then(snapshot => snapshot.docs.map(doc => fromDecodeResult(Blueprint.decoder.decode(doc.data()))))
             .then(values)
             .then(got);
     }

@@ -20,15 +20,18 @@ export function failure<B>(error: B): Failure<B> {
     return {tag: "failure", error};
 }
 
-export function values<A>(results: Array<Result<A, string> | Json.Result<A>>): A[] {
+export function fromDecodeResult<A>(result: Json.Result<A>): Result<A, string> {
+    if (result instanceof Json.Ok) {
+        return success(result.value);
+    }
+    return failure(result.error);
+}
+
+export function values<A, B>(results: Array<Result<A, B>>): A[] {
     const successes: A[] = [];
-    const errors: string[] = [];
+    const errors: B[] = [];
     for (const result of results) {
-        if (result instanceof Json.Ok) {
-            successes.push(result.value);
-        } else if (result instanceof Json.Err) {
-            errors.push(result.error);
-        } else if (result.tag === "success") {
+        if (result.tag === "success") {
             successes.push(result.value);
         } else {
             errors.push(result.error);

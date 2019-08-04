@@ -13,7 +13,7 @@ import {
 } from "../data/EndpointResult";
 import * as Level from "../data/Level";
 import * as Result from "../data/Result";
-import {values} from "../data/Result";
+import {fromDecodeResult, values} from "../data/Result";
 import * as Score from "../data/Score";
 import * as Solution from "../data/Solution";
 import {verifyJwt} from "../misc/auth";
@@ -88,6 +88,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         levelId: requestResult.value.levelId,
     })
         .then(snapshot => snapshot.docs.map(Solution.decoder.decode))
+        .then(results => results.map(fromDecodeResult))
         .then(values)
         .then(got);
 }

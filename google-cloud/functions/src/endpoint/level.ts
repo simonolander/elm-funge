@@ -16,7 +16,7 @@ import * as InstructionTool from "../data/InstructionTool";
 import * as Integer from "../data/Integer";
 import * as IO from "../data/IO";
 import * as Level from "../data/Level";
-import {values} from "../data/Result";
+import {fromDecodeResult, values} from "../data/Result";
 import * as Score from "../data/Score";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
@@ -78,6 +78,7 @@ async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Lev
     return Firestore.getLevels(requestResult.value)
         .then(snapshot => snapshot.docs.map(doc => doc.data()))
         .then(data => data.map(Level.decoder.decode))
+        .then(data => data.map(fromDecodeResult))
         .then(results => got(values(results)));
 }
 
