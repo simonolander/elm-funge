@@ -1,4 +1,4 @@
-module Api.Auth0 exposing (LoginResponse, login, loginResponseFromUrl, logout)
+module Api.Auth0 exposing (LoginResponse, login, loginResponseFromUrl, logout, reLogin)
 
 import Data.AccessToken as AccessToken exposing (AccessToken)
 import Dict
@@ -139,9 +139,19 @@ login url =
         parameters
 
 
+logout : String
 logout =
     Url.Builder.crossOrigin prePath
         [ "v2", "logout" ]
         [ Url.Builder.string "client_id" clientId
         , Url.Builder.string "returnTo" returnTo
+        ]
+
+
+reLogin : Maybe Url -> String
+reLogin url =
+    Url.Builder.crossOrigin prePath
+        [ "v2", "logout" ]
+        [ Url.Builder.string "client_id" clientId
+        , Url.Builder.string "returnTo" (login url)
         ]

@@ -756,7 +756,7 @@ update msg model =
 
         ClickedSignInToOtherAccount ->
             ( model
-            , Browser.Navigation.load (Auth0.login (Route.toUrl model.route))
+            , Browser.Navigation.load (Auth0.reLogin (Route.toUrl model.route))
             )
 
 
