@@ -1,18 +1,16 @@
-import {Request, Response} from "express";
+import {Request} from "express";
 import * as https from "https";
-import * as EndpointException from "../data/EndpointException";
+
+import {badRequest, EndpointResult, got, invalidAccessToken} from "../data/EndpointResult";
 import {verifyJwt} from "../misc/auth";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request, res: Response): Promise<Response> {
+export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     switch (req.method) {
         case "GET":
-            return get(req, res);
+            return get(req);
         default:
-            return EndpointException.send({
-                status: 400,
-                messages: [`Bad request method: ${req.method}`],
-            }, res);
+            return badRequest(`Bad request method: ${req.method}`);
     }
 }
 
@@ -46,17 +44,17 @@ async function getUserInfoFromAuth0(authorization: string): Promise<any> {
     });
 }
 
-async function get(req: Request, res: Response): Promise<Response> {
+async function get(req: Request): Promise<EndpointResult<any>> {
     const authResult = verifyJwt(req, ["openid", "profile"]);
     if (authResult.tag === "failure") {
-        return EndpointException.send(authResult.error, res);
+        return authResult.error;
     }
     const authorization = req.get("Authorization");
     if (typeof authorization === "undefined") {
-        return EndpointException.send({status: 403, messages: ["Missing Authorization header"]}, res);
+        return invalidAccessToken(["Missing Authorization header"]);
     }
     const userInfo = await getUserInfoFromAuth0(authorization);
     return Firestore.getUserBySubject(authResult.value)
         .then(ref => ref.set(userInfo, {merge: true}))
-        .then(() => res.send(userInfo));
+        .then(() => got(userInfo));
 }

@@ -1,25 +1,23 @@
-import {Request, Response} from "express";
+import {Request} from "express";
 import {JsonDecoder} from "ts.data.json";
-import * as EndpointException from "../data/EndpointException";
+
+import {badRequest, EndpointResult, got} from "../data/EndpointResult";
 import * as HighScore from "../data/HighScore";
 import * as Result from "../data/Result";
 import * as Solution from "../data/Solution";
 import {decode} from "../misc/json";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request, res: Response): Promise<Response> {
+export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     switch (req.method) {
         case "GET":
-            return get(req, res);
+            return get(req);
         default:
-            return EndpointException.send({
-                messages: [`Bad request method: ${req.method}`],
-                status: 400,
-            }, res);
+            return badRequest(`Bad request method: ${req.method}`);
     }
 }
 
-async function get(req: Request, res: Response): Promise<Response> {
+async function get(req: Request): Promise<EndpointResult<any>> {
     const result = decode(
         req.query,
         JsonDecoder.object({
@@ -27,7 +25,7 @@ async function get(req: Request, res: Response): Promise<Response> {
         }, "{ levelId: string }"),
     );
     if (result.tag === "failure") {
-        return EndpointException.send(result.error, res);
+        return badRequest(result.error);
     }
 
     return Firestore.getSolutions({levelId: result.value.levelId})
@@ -35,5 +33,5 @@ async function get(req: Request, res: Response): Promise<Response> {
         .then(results => Result.values(results))
         .then(solutions => solutions.map(solution => solution.score))
         .then(scores => HighScore.fromScores(result.value.levelId, scores))
-        .then(highScore => res.send(highScore));
+        .then(highScore => got(highScore));
 }

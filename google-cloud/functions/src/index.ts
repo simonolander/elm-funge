@@ -1,11 +1,12 @@
 import {Request, Response} from "express";
+import {EndpointResult, getBody, getStatusCode, internalServerError} from "./data/EndpointResult";
 import {endpoint as DraftEndpoint} from "./endpoint/draft";
 import {endpoint as HighScoreEndpoint} from "./endpoint/highScore";
 import {endpoint as LevelEndpoint} from "./endpoint/level";
 import {endpoint as SolutionEndpoint} from "./endpoint/solution";
 import {endpoint as UserEndpoint} from "./endpoint/user";
 
-async function route(req: Request, res: Response, endpoint: (req: Request, res: Response) => Promise<Response>) {
+async function route(req: Request, res: Response, endpoint: (req: Request, res: Response) => Promise<EndpointResult<any>>) {
     try {
         res.set("Access-Control-Allow-Origin", "*");
         if (req.method === "OPTIONS") {
@@ -14,27 +15,23 @@ async function route(req: Request, res: Response, endpoint: (req: Request, res: 
             res.set("Access-Control-Max-Age", "3600");
             return res.status(204).send();
         } else {
-            return endpoint(req, res);
+            return endpoint(req, res)
+                .then(result => res.status(getStatusCode(result))
+                    .send(getBody(result)));
         }
     } catch (error) {
         console.error(error);
         if (error instanceof Error) {
-            return res.status(500)
-                .send({
-                    status: 500,
-                    messages: [
-                        `Unexpected ${error.name} error occured when performing the request`,
-                        error.message,
-                    ],
-                    stack: error.stack,
-                });
+            const result = internalServerError([
+                `Unexpected ${error.name} error occured when performing the request`,
+                error.message,
+            ]);
+            return res.status(getStatusCode(result))
+                .send(getBody(result));
         } else {
-            return res.status(500)
-                .send({
-                    status: 500,
-                    messages: [`An unexpected error occured when performing the request`],
-                    error,
-                });
+            const result = internalServerError(`An unexpected error occured when performing the request`);
+            return res.status(getStatusCode(result))
+                .send(getBody(result));
         }
     }
 }

@@ -1,5 +1,6 @@
 module Api.GCP exposing
     ( RequestBuilder
+    , delete
     , get
     , post
     , put
@@ -61,7 +62,16 @@ put decoder =
         empty =
             get decoder
     in
-    { empty | method = "put" }
+    { empty | method = "PUT" }
+
+
+delete : Decode.Decoder response -> RequestBuilder response
+delete decoder =
+    let
+        empty =
+            get decoder
+    in
+    { empty | method = "DELETE" }
 
 
 withPath : List String -> RequestBuilder response -> RequestBuilder response

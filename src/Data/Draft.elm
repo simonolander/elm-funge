@@ -1,6 +1,7 @@
 module Data.Draft exposing
     ( Draft
     , decoder
+    , deleteFromServer
     , encode
     , eq
     , generator
@@ -280,3 +281,12 @@ saveToServer accessToken toMsg draft =
         |> GCP.withAccessToken accessToken
         |> GCP.withBody (encode draft)
         |> GCP.request (RequestResult.constructor draft >> toMsg)
+
+
+deleteFromServer : (RequestResult DraftId DetailedHttpError () -> msg) -> AccessToken -> DraftId -> Cmd msg
+deleteFromServer toMsg accessToken draftId =
+    GCP.delete (Decode.succeed ())
+        |> GCP.withPath [ "drafts" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "draftId" draftId ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request (RequestResult.constructor draftId >> toMsg)

@@ -1,35 +1,42 @@
-import {Request, Response} from "express";
-import {JsonDecoder} from "ts.data.json";
+import {Request} from "express";
+import {Err, JsonDecoder} from "ts.data.json";
 import * as Blueprint from "../data/Blueprint";
 import * as Board from "../data/Board";
-import * as EndpointException from "../data/EndpointException";
+
+import {
+    badRequest,
+    EndpointResult,
+    forbidden,
+    got,
+    internalServerError,
+    notFound,
+    updated,
+} from "../data/EndpointResult";
 import * as InstructionTool from "../data/InstructionTool";
 import * as Integer from "../data/Integer";
 import * as IO from "../data/IO";
 import * as Level from "../data/Level";
+import {values} from "../data/Result";
 import * as Score from "../data/Score";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import {isSolutionValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request, res: Response): Promise<Response> {
+export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     switch (req.method) {
         case "GET":
-            return get(req, res);
+            return get(req);
         case "POST":
-            return post(req, res);
+            return post(req);
         case "PUT":
-            return put(req, res);
+            return put(req);
         default:
-            return EndpointException.send({
-                status: 400,
-                messages: [`Bad request method: ${req.method}`],
-            }, res);
+            return badRequest(`Bad request method: ${req.method}`);
     }
 }
 
-async function get(req: Request, res: Response): Promise<Response> {
+async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Level[]>> {
     const requestResult = decode(
         req.query,
         JsonDecoder.object({
@@ -51,26 +58,33 @@ async function get(req: Request, res: Response): Promise<Response> {
             ], "limit"),
         }, "GetLevelsRequest"));
     if (requestResult.tag === "failure") {
-        return EndpointException.send(requestResult.error, res);
+        return badRequest(requestResult.error);
     }
 
     if (typeof requestResult.value.levelId !== "undefined") {
         const documentSnapshot = await Firestore.getLevelById(requestResult.value.levelId)
             .then(ref => ref.get());
         if (!documentSnapshot.exists) {
-            return res.status(404).send();
+            return notFound();
         }
-        return res.send(documentSnapshot.data());
+        const level =  Level.decoder.decode(documentSnapshot.data());
+        if (level instanceof Err) {
+            console.warn(`ed00fc10    Corrupted data for level ${requestResult.value.levelId}`, level.error);
+            return internalServerError(`Corrupted data for level ${requestResult.value.levelId}`);
+        }
+        return got(level.value);
     }
 
     return Firestore.getLevels(requestResult.value)
-        .then(snapshot => res.send(snapshot.docs.map(doc => doc.data())));
+        .then(snapshot => snapshot.docs.map(doc => doc.data()))
+        .then(data => data.map(Level.decoder.decode))
+        .then(results => got(values(results)));
 }
 
-async function post(req: Request, res: Response): Promise<Response> {
-    const authResult = verifyJwt(req, ["openid", "publish:blueprints"]);
+async function post(req: Request): Promise<EndpointResult<never>> {
+    const authResult = verifyJwt<never>(req, ["openid", "publish:blueprints"]);
     if (authResult.tag === "failure") {
-        return EndpointException.send(authResult.error, res);
+        return authResult.error;
     }
     const request = decode(req.body, JsonDecoder.object({
         blueprintId: JsonDecoder.string,
@@ -78,49 +92,35 @@ async function post(req: Request, res: Response): Promise<Response> {
         board: Board.decoder,
     }, "Publish blueprint request"));
     if (request.tag === "failure") {
-        return EndpointException.send(request.error, res);
+        return badRequest(request.error);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
     const blueprintRef = await Firestore.getBlueprintById(request.value.blueprintId);
     const blueprintSnapshot = await blueprintRef.get();
     if (!blueprintSnapshot.exists) {
-        return EndpointException.send({
-            status: 404,
-            messages: [`Blueprint not found: ${request.value.blueprintId}`],
-        }, res);
+        return notFound();
     }
     const blueprint = decode(blueprintSnapshot.data(), Blueprint.decoder);
     if (blueprint.tag === "failure") {
-        console.warn(`2f275279    Corrupted data for blueprint ${request.value.blueprintId}`, ...blueprint.error.messages);
-        return EndpointException.send({
-            ...blueprint.error, status: 500,
-        }, res);
+        console.warn(`2f275279    Corrupted data for blueprint ${request.value.blueprintId}`, ...blueprint.error);
+        return internalServerError(`Corrupted data for blueprint ${request.value.blueprintId}`);
     }
     if (blueprint.value.authorId !== user.id) {
-        return EndpointException.send({
-            status: 403,
-            messages: [`User ${user.id} does not have permission to publish blueprint ${request.value.blueprintId}`],
-        }, res);
+        return forbidden(user.id, "publish", "blueprint", request.value.blueprintId);
     }
 
     const level = Level.fromBlueprint(blueprint.value);
     const solutionError = isSolutionValid(level, request.value.board, request.value.score);
     if (typeof solutionError !== "undefined") {
         console.warn(`3259a409    Invalid solution posted by user ${user.id}`, solutionError);
-        return EndpointException.send({
-            messages: [solutionError],
-            status: 400,
-        }, res);
+        return badRequest([`Invalid solution posted by user ${user.id}`, solutionError]);
     }
 
-    return EndpointException.send({
-        status: 500,
-        messages: [`Not implemented`],
-    }, res);
+    return internalServerError("not implemented");
 }
 
 /* TODO REMOVE */
-async function put(req: Request, res: Response): Promise<Response> {
+async function put(req: Request): Promise<EndpointResult<never>> {
     const levelResult = decode(req.body, JsonDecoder.object({
         id: JsonDecoder.string,
         index: Integer.nonNegativeDecoder,
@@ -133,7 +133,7 @@ async function put(req: Request, res: Response): Promise<Response> {
         version: Integer.nonNegativeDecoder,
     }, "PostLevelRequest"));
     if (levelResult.tag === "failure") {
-        return EndpointException.send(levelResult.error, res);
+        return badRequest(levelResult.error);
     }
     const level: Level.Level = {
         ...levelResult.value,
@@ -142,5 +142,5 @@ async function put(req: Request, res: Response): Promise<Response> {
     };
     return Firestore.getLevelById(levelResult.value.id)
         .then(ref => ref.set(level))
-        .then(() => res.send());
+        .then(() => updated());
 }

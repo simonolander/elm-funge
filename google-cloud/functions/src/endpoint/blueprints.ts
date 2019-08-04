@@ -1,31 +1,41 @@
-import {Request, Response} from "express";
-import {JsonDecoder} from "ts.data.json";
+import {Request} from "express";
+import {Err, JsonDecoder} from "ts.data.json";
 import * as Blueprint from "../data/Blueprint";
-import * as EndpointException from "../data/EndpointException";
+
+import {
+    alreadyDeleted,
+    badRequest,
+    created,
+    deleted,
+    EndpointResult,
+    forbidden,
+    got,
+    internalServerError,
+    notFound,
+    updated,
+} from "../data/EndpointResult";
+import {values} from "../data/Result";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request, res: Response): Promise<Response> {
+export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     switch (req.method) {
         case "GET":
-            return get(req, res);
+            return get(req);
         case "PUT":
-            return put(req, res);
+            return put(req);
         case "DELETE":
-            return del(req, res);
+            return del(req);
         default:
-            return EndpointException.send({
-                status: 400,
-                messages: [`Bad request method: ${req.method}`],
-            }, res);
+            return badRequest(`Bad request method: ${req.method}`);
     }
 }
 
-async function get(req: Request, res: Response): Promise<Response> {
-    const authResult = verifyJwt(req, ["openid", "read:blueprints"]);
+async function get(req: Request): Promise<EndpointResult<Blueprint.Blueprint | Blueprint.Blueprint[]>> {
+    const authResult = verifyJwt<Blueprint.Blueprint>(req, ["openid", "read:blueprints"]);
     if (authResult.tag === "failure") {
-        return EndpointException.send(authResult.error, res);
+        return authResult.error;
     }
     const request = decode(
         req.query,
@@ -36,37 +46,43 @@ async function get(req: Request, res: Response): Promise<Response> {
             ], "blueprintId"),
         }, "GetBlueprintsRequest"));
     if (request.tag === "failure") {
-        return EndpointException.send(request.error, res);
+        return badRequest(request.error);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
     if (typeof request.value.blueprintId !== "undefined") {
         const blueprintSnapshot = await Firestore.getBlueprintById(request.value.blueprintId)
             .then(ref => ref.get());
-        const blueprint = blueprintSnapshot.data();
-        if (typeof blueprint === "undefined") {
-            return res.status(404).send();
+        if (!blueprintSnapshot.exists) {
+            return notFound();
         }
-        if (blueprint.authorId !== user.id) {
-            return res.status(403).send();
+        const blueprint = Blueprint.decoder.decode(blueprintSnapshot.data());
+        if (blueprint instanceof Err) {
+            console.warn(`4650f597    Corrupted data for blueprint ${request.value.blueprintId}`, blueprint.error);
+            return internalServerError(`Corrupted data for blueprint ${request.value.blueprintId}`);
+        }
+        if (blueprint.value.authorId !== user.id) {
+            return forbidden(user.id, "read", "blueprint", request.value.blueprintId);
         } else {
-            return res.send(blueprint);
+            return got(blueprint.value);
         }
     } else {
         return Firestore.getBlueprints({
             authorId: user.id,
         })
-            .then(snapshot => res.send(snapshot.docs.map(doc => doc.data())));
+            .then(snapshot => snapshot.docs.map(doc => Blueprint.decoder.decode(doc.data())))
+            .then(values)
+            .then(got);
     }
 }
 
-async function put(req: Request, res: Response): Promise<Response> {
-    const authResult = verifyJwt(req, ["openid", "edit:blueprints"]);
+async function put(req: Request): Promise<EndpointResult<never>> {
+    const authResult = verifyJwt<never>(req, ["openid", "edit:blueprints"]);
     if (authResult.tag === "failure") {
-        return EndpointException.send(authResult.error, res);
+        return authResult.error;
     }
     const request = decode(req.body, Blueprint.decoder);
     if (request.tag === "failure") {
-        return EndpointException.send(request.error, res);
+        return badRequest(request.error);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
     const ref = await Firestore.getBlueprintById(request.value.id);
@@ -81,44 +97,42 @@ async function put(req: Request, res: Response): Promise<Response> {
             modifiedTime: time,
         };
         return ref.set(newBlueprint)
-            .then(() => res.send());
+            .then(() => created());
     } else {
         if (blueprint.authorId !== user.id) {
-            return EndpointException.send({
-                status: 403,
-                messages: [`User ${user.id} does not have permission to edit blueprint ${request.value.id}`],
-            }, res);
+            return forbidden(user.id, "edit", "blueprint", request.value.id);
         }
         return ref.set({...request.value, modifiedTime: Date.now()}, {merge: true})
-            .then(() => res.send());
+            .then(() => updated());
     }
 }
 
-async function del(req: Request, res: Response): Promise<Response> {
-    const authResult = verifyJwt(req, ["openid", "edit:blueprints"]);
+async function del(req: Request): Promise<EndpointResult<never>> {
+    const authResult = verifyJwt<never>(req, ["openid", "edit:blueprints"]);
     if (authResult.tag === "failure") {
-        return EndpointException.send(authResult.error, res);
+        return authResult.error;
     }
     const request = decode(req.body, JsonDecoder.object({
         blueprintId: JsonDecoder.string,
     }, "DeleteRequest"));
     if (request.tag === "failure") {
-        return EndpointException.send(request.error, res);
+        return badRequest(request.error);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
     const snapshot = await Firestore.getBlueprintById(request.value.blueprintId)
         .then(ref => ref.get());
     if (!snapshot.exists) {
-        return res.send();
-    } else {
-        // TODO decode snapshot to get some safety
-        if (snapshot.get("authorId") !== user.id) {
-            return EndpointException.send({
-                status: 403,
-                messages: [`User ${user.id} does not have permission to delete blueprint ${request.value.blueprintId}`],
-            }, res);
-        }
-        return snapshot.ref.delete()
-            .then(() => res.send());
+        return alreadyDeleted();
     }
+
+    const blueprint = Blueprint.decoder.decode(snapshot.data());
+    if (blueprint instanceof Err) {
+        console.warn(`ba52d48c    Corrupted data for blueprint ${request.value.blueprintId}`, blueprint.error);
+        return internalServerError(`Corrupted data for blueprint ${request.value.blueprintId}`);
+    }
+    if (blueprint.value.authorId !== user.id) {
+        return forbidden(user.id, "delete", "blueprint", request.value.blueprintId);
+    }
+    return snapshot.ref.delete()
+        .then(() => deleted());
 }

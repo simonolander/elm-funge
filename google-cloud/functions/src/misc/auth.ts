@@ -1,6 +1,6 @@
 import {Request} from "express";
 import {JsonWebTokenError, NotBeforeError, TokenExpiredError, verify} from "jsonwebtoken";
-import {EndpointException} from "../data/EndpointException";
+import {EndpointResult, invalidAccessToken} from "../data/EndpointResult";
 import * as Result from "../data/Result";
 import {Scope} from "../data/Scope";
 
@@ -34,28 +34,19 @@ const audience = AUTH0_AUD;
 const issuer = AUTH0_ISS;
 const pem = AUTH0_PEM;
 
-export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, EndpointException> {
+export function verifyJwt<T>(req: Request, scopes: Scope[]): Result.Result<string, EndpointResult<T>> {
     try {
         const authorizationHeader = req.get("Authorization");
         if (typeof authorizationHeader !== "string") {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`],
-            });
+            return Result.failure(invalidAccessToken([`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]));
         }
         const splits = authorizationHeader.split(" ");
         if (splits.length !== 2) {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`],
-            });
+            return Result.failure(invalidAccessToken([`Failed failed to extract authorization header, malformed header: ${authorizationHeader}`]));
         }
         const [type, token] = splits;
         if (type !== "Bearer") {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed failed to extract authorization header, invalid type: ${type}`],
-            });
+            return Result.failure(invalidAccessToken([`Failed failed to extract authorization header, invalid type: ${type}`]));
         }
         const tokenObject: any = verify(token, pem, {
             algorithms: ["RS256"],
@@ -63,66 +54,43 @@ export function verifyJwt(req: Request, scopes: Scope[]): Result.Result<string, 
             issuer,
         });
         if (typeof tokenObject !== "object") {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`],
-            });
+            return Result.failure(invalidAccessToken([`Failed to verify jwt, invalid tokenObject: ${typeof tokenObject}`]));
         }
         const subject = tokenObject.sub;
+        // noinspection SuspiciousTypeOfGuard
         if (typeof subject !== "string") {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed to verify jwt, invalid subject: ${subject}`],
-            });
+            return Result.failure(invalidAccessToken([`Failed to verify jwt, invalid subject: ${subject}`]));
         }
         if (subject.length === 0) {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed to verify jwt, subject is empty`],
-            });
+            return Result.failure(invalidAccessToken([`Failed to verify jwt, subject is empty`]));
         }
         const scopeString = tokenObject.scope;
         if (typeof scopeString !== "string") {
-            return Result.failure({
-                status: 403,
-                messages: [`Failed to verify jwt, malformed scope: ${typeof scopeString}`],
-            });
+            return Result.failure(invalidAccessToken([`Failed to verify jwt, malformed scope: ${typeof scopeString}`]));
         }
         const presentScopes = scopeString.split(" ");
         const missingScopes = scopes.filter(scope => presentScopes.indexOf(scope) === -1);
         if (missingScopes.length !== 0) {
-            return Result.failure({
-                status: 403,
-                messages: missingScopes.map(scope => `Failed to verify jwt, missing scope: ${scope}`),
-            });
+            return Result.failure(invalidAccessToken(missingScopes.map(scope => `Failed to verify jwt, missing scope: ${scope}`)));
         }
         return Result.success(subject);
     } catch (e) {
         if (e instanceof TokenExpiredError) {
-            return Result.failure({
-                status: 403,
-                messages: [
+            return Result.failure(invalidAccessToken([
                     `Token expired at ${e.expiredAt.toISOString()}`,
                     e.message,
-                ],
-            });
+                ]));
         } else if (e instanceof NotBeforeError) {
-            return Result.failure({
-                status: 403,
-                messages: [
+            return Result.failure(invalidAccessToken([
                     `Token is not valid before ${e.date.toISOString()}`,
                     e.message,
-                ],
-            });
+                ]));
 
         } else if (e instanceof JsonWebTokenError) {
-            return Result.failure({
-                status: 403,
-                messages: [
+            return Result.failure(invalidAccessToken([
                     `There was an error with the token`,
                     e.message,
-                ],
-            });
+                ]));
         } else {
             throw e;
         }

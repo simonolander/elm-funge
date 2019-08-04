@@ -1,3 +1,5 @@
+import * as Json from "ts.data.json";
+
 export type Result<A, B> = Success<A> | Failure<B>;
 
 export interface Success<A> {
@@ -18,11 +20,15 @@ export function failure<B>(error: B): Failure<B> {
     return {tag: "failure", error};
 }
 
-export function values<A, B>(results: Array<Result<A, B>>): A[] {
+export function values<A>(results: Array<Result<A, string> | Json.Result<A>>): A[] {
     const successes: A[] = [];
-    const errors: B[] = [];
+    const errors: string[] = [];
     for (const result of results) {
-        if (result.tag === "success") {
+        if (result instanceof Json.Ok) {
+            successes.push(result.value);
+        } else if (result instanceof Json.Err) {
+            errors.push(result.error);
+        } else if (result.tag === "success") {
             successes.push(result.value);
         } else {
             errors.push(result.error);
