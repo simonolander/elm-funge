@@ -77,7 +77,7 @@ async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Lev
 
     return Firestore.getLevels(requestResult.value)
         .then(snapshot => snapshot.docs.map(doc => doc.data()))
-        .then(data => data.map(Level.decoder.decode))
+        .then(data => data.map(v => Level.decoder.decode(v)))
         .then(data => data.map(fromDecodeResult))
         .then(results => got(values(results)));
 }

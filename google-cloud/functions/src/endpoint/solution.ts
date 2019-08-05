@@ -87,7 +87,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         campaignId: requestResult.value.levelId,
         levelId: requestResult.value.levelId,
     })
-        .then(snapshot => snapshot.docs.map(Solution.decoder.decode))
+        .then(snapshot => snapshot.docs.map(v => Solution.decoder.decode(v)))
         .then(results => results.map(fromDecodeResult))
         .then(values)
         .then(got);
