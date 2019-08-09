@@ -1,4 +1,4 @@
-module Page.Draft exposing (Model, Msg(..), getSession, init, load, subscriptions, update, view)
+module Page.Draft exposing (InternalMsg, Model, Msg(..), getSession, init, load, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -73,7 +73,7 @@ type alias ErrorModel =
     }
 
 
-type Msg
+type InternalMsg
     = ImportDataChanged String
     | Import String
     | ImportOpen
@@ -86,6 +86,10 @@ type Msg
     | InstructionToolReplaced Int InstructionTool
     | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
+
+
+type Msg
+    = InternalMsg InternalMsg
     | SessionMsg SessionMsg
 
 
@@ -179,7 +183,7 @@ withSession session model =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         maybeDraft =
@@ -336,10 +340,6 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        SessionMsg sessionMsg ->
-            SessionUpdate.update sessionMsg model.session
-                |> Extra.Cmd.mapModel (flip withSession model)
-
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )
 updateDraft draft model =
@@ -447,7 +447,7 @@ viewLoaded model =
         boardOnClick =
             maybeSelectedInstructionTool
                 |> Maybe.map InstructionTool.getInstruction
-                |> Maybe.map (\instruction { position } -> InstructionPlaced position instruction)
+                |> Maybe.map (\instruction { position } -> InternalMsg (InstructionPlaced position instruction))
 
         disabledPositions =
             Board.instructions model.level.initialBoard
@@ -489,7 +489,7 @@ viewLoaded model =
                             , width (px 500)
                             , height (px 500)
                             ]
-                            { onChange = ImportDataChanged
+                            { onChange = InternalMsg << ImportDataChanged
                             , text = importData
                             , placeholder = Nothing
                             , spellcheck = False
@@ -504,10 +504,10 @@ viewLoaded model =
                             |> Maybe.map (paragraph [])
                             |> Maybe.withDefault none
                         , ViewComponents.textButton []
-                            (Just (Import importData))
+                            (Just (InternalMsg (Import importData)))
                             "Import"
                         , ViewComponents.textButton []
-                            (Just ImportClosed)
+                            (Just (InternalMsg ImportClosed))
                             "Close"
                         ]
                         |> Just
@@ -519,8 +519,8 @@ viewLoaded model =
             View.InstructionTools.view
                 { instructionTools = model.level.instructionTools
                 , selectedIndex = model.selectedInstructionToolIndex
-                , onSelect = Just InstructionToolSelected
-                , onReplace = InstructionToolReplaced
+                , onSelect = Just (InternalMsg << InstructionToolSelected)
+                , onReplace = \index tool -> InternalMsg (InstructionToolReplaced index tool)
                 }
 
         element =
@@ -553,27 +553,27 @@ viewSidebar model =
 
         undoButtonView =
             textButton []
-                (Just EditUndo)
+                (Just (InternalMsg EditUndo))
                 "Undo"
 
         redoButtonView =
             textButton []
-                (Just EditRedo)
+                (Just (InternalMsg EditRedo))
                 "Redo"
 
         clearButtonView =
             textButton []
-                (Just EditClear)
+                (Just (InternalMsg EditClear))
                 "Clear"
 
         importExportButtonView =
             textButton []
-                (Just ImportOpen)
+                (Just (InternalMsg ImportOpen))
                 "Import / Export"
 
         executeButtonView =
             textButton []
-                (Just ClickedExecute)
+                (Just (InternalMsg ClickedExecute))
                 "Execute"
     in
     column

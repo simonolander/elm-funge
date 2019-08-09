@@ -197,7 +197,7 @@ update msg model =
                     |> SessionUpdate.update message
                     |> updateWith (flip withSession mdl) ExecutionMsg
 
-            ( DraftMsg message, Draft mdl ) ->
+            ( DraftMsg (Draft.InternalMsg message), Draft mdl ) ->
                 Draft.update message mdl
                     |> updateWith Draft DraftMsg
 
