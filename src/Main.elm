@@ -4,10 +4,11 @@ import Api.Auth0 as Auth0
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
+import Data.Cache as Cache
 import Data.Campaign
 import Data.Draft
 import Data.DraftBook
-import Data.GetError exposing (GetError(..))
+import Data.GetError as GetError exposing (GetError(..))
 import Data.Level
 import Data.RemoteCache as RemoteCache
 import Data.RequestResult as RequestResult exposing (RequestResult)
@@ -284,12 +285,13 @@ localStorageResponseUpdate response mainModel =
         onSingle :
             { name : String
             , success : value -> Session -> Session
-            , failure : String -> GetError -> Session -> Session
+            , notFound : String -> Session -> Session
+            , failure : String -> Decode.Error -> Session -> Session
             , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error (Maybe value))
             }
             -> ( { model | session : Session }, Cmd msg )
             -> ( { model | session : Session }, Cmd msg )
-        onSingle { name, success, failure, transform } ( mdl, cmd ) =
+        onSingle { name, success, notFound, failure, transform } ( mdl, cmd ) =
             case transform response of
                 Just { request, result } ->
                     case result of
@@ -303,17 +305,13 @@ localStorageResponseUpdate response mainModel =
                                 errorMessage =
                                     name ++ " " ++ request ++ " not found"
                             in
-                            ( { mdl | session = failure request NotFound mdl.session }
+                            ( { mdl | session = notFound request mdl.session }
                             , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
                             )
 
                         Err error ->
-                            let
-                                errorMessage =
-                                    Decode.errorToString error
-                            in
-                            ( { mdl | session = failure request (RequestResult.badBody error) mdl.session }
-                            , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
+                            ( { mdl | session = failure request error mdl.session }
+                            , Cmd.batch [ cmd, Ports.Console.errorString (Decode.errorToString error) ]
                             )
 
                 Nothing ->
@@ -347,7 +345,12 @@ localStorageResponseUpdate response mainModel =
             onSingle
                 { name = "Campaign"
                 , success = Session.withCampaign
-                , failure = Session.campaignError
+                , notFound = \id session -> Session.campaignError id (GetError.Other "Not found in local storage") session
+                , failure =
+                    \campaignId error session ->
+                        session.campaigns
+                            |> Cache.withError campaignId (GetError.Other (Decode.errorToString error))
+                            |> flip Session.withCampaignCache session
                 , transform = Data.Campaign.localStorageResponse
                 }
 
@@ -355,18 +358,32 @@ localStorageResponseUpdate response mainModel =
             onSingle
                 { name = "Level"
                 , success = Session.withLevel
-                , failure = Session.levelError
+                , notFound = \id session -> Session.levelError id (GetError.Other "Not found in local storage") session
+                , failure =
+                    \levelId error session ->
+                        session.levels
+                            |> Cache.withError levelId (GetError.Other (Decode.errorToString error))
+                            |> flip Session.withLevelCache session
                 , transform = Data.Level.localStorageResponse
                 }
 
         onDraft =
+            let
+                notFound : String -> Session -> Session
+                notFound =
+                    \draftId session ->
+                        session.drafts
+                            |> RemoteCache.withLocalValue draftId Nothing
+                            |> flip Session.withDraftCache session
+            in
             onSingle
                 { name = "Draft"
                 , success =
                     \draft session ->
                         session.drafts
-                            |> RemoteCache.withLocalValue draft.id draft
+                            |> RemoteCache.withLocalValue draft.id (Just draft)
                             |> flip Session.withDraftCache session
+                , notFound = notFound
                 , failure =
                     \draftId error session ->
                         session.drafts
@@ -376,10 +393,28 @@ localStorageResponseUpdate response mainModel =
                 }
 
         onSolution =
+            let
+                notFound : String -> Session -> Session
+                notFound =
+                    \solutionId session ->
+                        session.solutions
+                            |> RemoteCache.withLocalValue solutionId Nothing
+                            |> flip Session.withSolutionCache session
+            in
             onSingle
                 { name = "Solution"
-                , success = Session.withSolution
-                , failure = Session.solutionError
+                , success =
+                    \solution session ->
+                        session.solutions
+                            |> RemoteCache.withLocalValue solution.id (Just solution)
+                            |> flip Session.withSolutionCache session
+                , notFound =
+                    notFound
+                , failure =
+                    \solutionId error session ->
+                        session.solutions
+                            |> RemoteCache.withLocalResult solutionId (Err error)
+                            |> flip Session.withSolutionCache session
                 , transform = Data.Solution.localStorageResponse
                 }
 
