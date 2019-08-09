@@ -131,8 +131,8 @@ load =
                     case Session.getAccessToken model.session of
                         Just accessToken ->
                             ( notAskedLevelIds
-                                |> List.foldl RemoteCache.withActualLoading model.session.solutions
-                                |> flip Session.withSolutionCache model.session
+                                |> List.foldl Cache.loading model.session.solutionBooks
+                                |> flip Session.withSolutionBookCache model.session
                                 |> flip withSession model
                             , notAskedLevelIds
                                 |> List.map (\levelId -> Solution.loadFromServerByLevelId (SessionMsg << GotLoadSolutionsByLevelIdResponse levelId) accessToken levelId)
@@ -141,8 +141,8 @@ load =
 
                         Nothing ->
                             ( notAskedLevelIds
-                                |> List.foldl RemoteCache.withLocalLoading model.session.solutions
-                                |> flip Session.withSolutionCache model.session
+                                |> List.foldl Cache.loading model.session.solutionBooks
+                                |> flip Session.withSolutionBookCache model.session
                                 |> flip withSession model
                             , notAskedLevelIds
                                 |> List.map SolutionBook.loadFromLocalStorage
