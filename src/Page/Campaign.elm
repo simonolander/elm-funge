@@ -14,10 +14,10 @@ import Browser exposing (Document)
 import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
+import Data.GetError as GetError exposing (GetError)
 import Data.HighScore as HighScore exposing (HighScore)
 import Data.History as History
 import Data.Level as Level exposing (Level)
@@ -33,6 +33,7 @@ import Element.Font as Font
 import Extra.Cmd
 import Extra.RemoteData
 import Html.Attributes
+import Json.Decode as Decode
 import Maybe.Extra
 import Random
 import RemoteData exposing (RemoteData(..))
@@ -81,7 +82,7 @@ load =
                 NotAsked ->
                     let
                         loadCampaignRemotely =
-                            Level.loadFromServerByCampaignId (SessionMsg << GotLoadLevelsByCampaignIdResponse) model.campaignId
+                            Level.loadFromServerByCampaignId (SessionMsg << GotLoadLevelsByCampaignIdResponse model.campaignId) model.campaignId
                     in
                     ( model.session
                         |> Session.campaignLoading model.campaignId
@@ -108,7 +109,7 @@ load =
                         |> List.foldl Session.levelLoading model.session
                         |> flip withSession model
                     , notAskedLevelIds
-                        |> List.map (Level.loadFromServer (SessionMsg << GotLoadLevelResponse))
+                        |> List.map (\levelId -> Level.loadFromServer (SessionMsg << GotLoadLevelByLevelIdResponse levelId) levelId)
                         |> Cmd.batch
                     )
 
@@ -126,22 +127,27 @@ load =
                         notAskedLevelIds =
                             campaign.levelIds
                                 |> List.filter (flip Cache.isNotAsked model.session.solutionBooks)
-
-                        loadSolutionBook =
-                            case Session.getAccessToken model.session of
-                                Just accessToken ->
-                                    Solution.loadFromServerByLevelId accessToken (SessionMsg << GotLoadSolutionsByLevelIdResponse)
-
-                                Nothing ->
-                                    SolutionBook.loadFromLocalStorage
                     in
-                    ( notAskedLevelIds
-                        |> List.foldl Session.solutionBookLoading model.session
-                        |> flip withSession model
-                    , notAskedLevelIds
-                        |> List.map loadSolutionBook
-                        |> Cmd.batch
-                    )
+                    case Session.getAccessToken model.session of
+                        Just accessToken ->
+                            ( notAskedLevelIds
+                                |> List.foldl RemoteCache.withActualLoading model.session.solutions
+                                |> flip Session.withSolutionCache model.session
+                                |> flip withSession model
+                            , notAskedLevelIds
+                                |> List.map (\levelId -> Solution.loadFromServerByLevelId (SessionMsg << GotLoadSolutionsByLevelIdResponse levelId) accessToken levelId)
+                                |> Cmd.batch
+                            )
+
+                        Nothing ->
+                            ( notAskedLevelIds
+                                |> List.foldl RemoteCache.withLocalLoading model.session.solutions
+                                |> flip Session.withSolutionCache model.session
+                                |> flip withSession model
+                            , notAskedLevelIds
+                                |> List.map SolutionBook.loadFromLocalStorage
+                                |> Cmd.batch
+                            )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -154,27 +160,42 @@ load =
             of
                 Just campaign ->
                     let
-                        notAskedSolutionIds =
+                        solutionIds =
                             campaign.levelIds
                                 |> List.map (flip Session.getSolutionBook model.session)
                                 |> Extra.RemoteData.successes
                                 |> List.map .solutionIds
                                 |> List.map Set.toList
                                 |> List.concat
-                                |> List.filter (flip Cache.isNotAsked model.session.solutions)
-
-                        loadSolution =
-                            Session.getAccessToken model.session
-                                |> Maybe.map (flip Solution.loadFromServerBySolutionId (SessionMsg << GotLoadSolutionsBySolutionIdResponse))
-                                |> Maybe.withDefault Solution.loadFromLocalStorage
                     in
-                    ( notAskedSolutionIds
-                        |> List.foldl Session.solutionLoading model.session
-                        |> flip withSession model
-                    , notAskedSolutionIds
-                        |> List.map loadSolution
-                        |> Cmd.batch
-                    )
+                    case Session.getAccessToken model.session of
+                        Just accessToken ->
+                            let
+                                notAskedSolutionIds =
+                                    List.filter (flip Cache.isNotAsked model.session.solutions.actual) solutionIds
+                            in
+                            ( notAskedSolutionIds
+                                |> List.foldl RemoteCache.withActualLoading model.session.solutions
+                                |> flip Session.withSolutionCache model.session
+                                |> flip withSession model
+                            , notAskedSolutionIds
+                                |> List.map (\solutionId -> Solution.loadFromServerBySolutionId (SessionMsg << GotLoadSolutionsBySolutionIdResponse solutionId) accessToken solutionId)
+                                |> Cmd.batch
+                            )
+
+                        Nothing ->
+                            let
+                                notAskedSolutionIds =
+                                    List.filter (flip Cache.isNotAsked model.session.solutions.local) solutionIds
+                            in
+                            ( notAskedSolutionIds
+                                |> List.foldl RemoteCache.withLocalLoading model.session.solutions
+                                |> flip Session.withSolutionCache model.session
+                                |> flip withSession model
+                            , notAskedSolutionIds
+                                |> List.map Solution.loadFromLocalStorage
+                                |> Cmd.batch
+                            )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -189,7 +210,7 @@ load =
                                 |> flip withSession model
                             , case Session.getAccessToken model.session of
                                 Just accessToken ->
-                                    Draft.loadFromServerByLevelId accessToken (SessionMsg << GotLoadDraftsByLevelIdResponse) levelId
+                                    Draft.loadFromServerByLevelId (SessionMsg << GotLoadDraftsByLevelIdResponse levelId) accessToken levelId
 
                                 Nothing ->
                                     DraftBook.loadFromLocalStorage levelId
@@ -234,7 +255,7 @@ load =
                             ( model.session
                                 |> Session.loadingHighScore levelId
                                 |> flip withSession model
-                            , HighScore.loadFromServer levelId (SessionMsg << GotLoadHighScoreResponse)
+                            , HighScore.loadFromServer levelId (SessionMsg << GotLoadHighScoreResponse levelId)
                             )
 
                         _ ->
@@ -310,7 +331,7 @@ update msg model =
             let
                 draftCache =
                     model.session.drafts
-                        |> RemoteCache.withLocalValue draft.id draft
+                        |> RemoteCache.withLocalValue draft.id (Just draft)
 
                 draftBook =
                     Cache.get draft.levelId model.session.draftBooks
@@ -331,7 +352,7 @@ update msg model =
                 saveDraftToServerCmd =
                     case Session.getAccessToken model.session of
                         Just accessToken ->
-                            Just (Draft.saveToServer accessToken (SessionMsg << GotSaveDraftResponse) draft)
+                            Just (Draft.saveToServer (SessionMsg << GotSaveDraftResponse draft) accessToken draft)
 
                         Nothing ->
                             Nothing
@@ -384,7 +405,7 @@ view model =
                             View.LoadingScreen.view "Loading campaign"
 
                         Failure error ->
-                            View.ErrorScreen.view (DetailedHttpError.toString error)
+                            View.ErrorScreen.view (GetError.toString error)
 
                         Success campaign ->
                             viewCampaign campaign model
@@ -442,7 +463,7 @@ viewCampaign campaign model =
                     viewTemporarySidebar "Loading level..."
 
                 Just (Failure error) ->
-                    viewTemporarySidebar (DetailedHttpError.toString error)
+                    viewTemporarySidebar (GetError.toString error)
 
                 Nothing ->
                     viewTemporarySidebar "Select a level"
@@ -497,7 +518,7 @@ viewLevels campaign model =
                     View.Box.simpleLoading "Loading level..."
 
                 Failure error ->
-                    View.Box.simpleError (DetailedHttpError.toString error)
+                    View.Box.simpleError (GetError.toString error)
 
                 Success level ->
                     viewLevel level
@@ -599,7 +620,7 @@ viewDrafts level session =
             View.Box.simpleLoading "Loading drafts"
 
         Failure error ->
-            View.Box.simpleError (DetailedHttpError.toString error)
+            View.Box.simpleError (GetError.toString error)
 
         Success draftBook ->
             let
@@ -618,19 +639,25 @@ viewDrafts level session =
                             View.Box.simpleLoading ("Loading draft " ++ String.fromInt (index + 1))
 
                         Failure error ->
-                            View.Box.simpleError (DetailedHttpError.toString error)
+                            View.Box.simpleError (Decode.errorToString error)
 
-                        Success draft ->
+                        Success Nothing ->
+                            View.Box.simpleError "Not found"
+
+                        Success (Just draft) ->
                             let
-                                maybeSolution =
-                                    Session.getSolutionBook level.id session
+                                solved =
+                                    session.solutionBooks
+                                        |> Cache.get level.id
                                         |> RemoteData.map .solutionIds
                                         |> RemoteData.map Set.toList
                                         |> RemoteData.withDefault []
-                                        |> List.map (flip Session.getSolution session)
-                                        |> Extra.RemoteData.successes
+                                        |> List.map (flip Cache.get session.solutions.local)
+                                        |> List.filterMap RemoteData.toMaybe
+                                        |> Maybe.Extra.values
                                         |> List.filter (.board >> (==) (History.current draft.boardHistory))
-                                        |> List.head
+                                        |> List.isEmpty
+                                        |> not
 
                                 attrs =
                                     [ width fill
@@ -644,7 +671,7 @@ viewDrafts level session =
                                         ]
                                     , htmlAttribute
                                         (Html.Attributes.class
-                                            (if Maybe.Extra.isJust maybeSolution then
+                                            (if solved then
                                                 "solved"
 
                                              else
@@ -672,18 +699,6 @@ viewDrafts level session =
                                         [ text "Instructions: "
                                         , Draft.getInstructionCount level.initialBoard draft
                                             |> String.fromInt
-                                            |> text
-                                        ]
-                                    , row
-                                        [ width fill
-                                        , spaceEvenly
-                                        ]
-                                        [ text "Steps: "
-                                        , maybeSolution
-                                            |> Maybe.map .score
-                                            |> Maybe.map .numberOfSteps
-                                            |> Maybe.map String.fromInt
-                                            |> Maybe.withDefault "N/A"
                                             |> text
                                         ]
                                     ]

@@ -6,7 +6,7 @@ import Browser exposing (Document)
 import Data.Board as Board
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
 import Data.CampaignId as CampaignId
-import Data.DetailedHttpError as DetailedHttpError
+import Data.GetError as GetError
 import Data.IO as IO
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
@@ -19,7 +19,6 @@ import Element.Background as Background
 import Element.Font as Font
 import Extra.Array
 import Extra.Cmd exposing (noCmd)
-import Extra.String
 import InstructionToolView
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
@@ -373,7 +372,7 @@ view model =
                     View.LoadingScreen.view ("Loading level " ++ model.levelId)
 
                 Failure error ->
-                    View.ErrorScreen.view (DetailedHttpError.toString error)
+                    View.ErrorScreen.view (GetError.toString error)
 
                 Success level ->
                     viewBlueprint level model

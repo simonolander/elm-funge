@@ -1,4 +1,4 @@
-module Extra.Result exposing (extractMaybe, getError)
+module Extra.Result exposing (extractMaybe, getError, split)
 
 
 extractMaybe : Result error (Maybe value) -> Maybe (Result error value)
@@ -19,3 +19,24 @@ getError result =
 
         Err error ->
             Just error
+
+
+split : List (Result error value) -> ( List value, List error )
+split list =
+    case list of
+        (Ok value) :: tail ->
+            let
+                ( values, errors ) =
+                    split tail
+            in
+            ( value :: values, errors )
+
+        (Err error) :: tail ->
+            let
+                ( values, errors ) =
+                    split tail
+            in
+            ( values, error :: errors )
+
+        [] ->
+            ( [], [] )

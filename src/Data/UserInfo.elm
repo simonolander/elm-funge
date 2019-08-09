@@ -2,14 +2,14 @@ module Data.UserInfo exposing (UserInfo, decoder, encode, getUserName, loadFromS
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
-import Data.DetailedHttpError exposing (DetailedHttpError)
+import Data.GetError as HttpError exposing (GetError)
 import Data.RequestResult as RequestResult exposing (RequestResult)
-import Http
 import Json.Decode
 import Json.Encode
 import Json.Encode.Extra
 import Maybe.Extra
 import Ports.LocalStorage as LocalStorage
+import Result exposing (Result)
 import Url exposing (Url)
 
 
@@ -104,12 +104,12 @@ decoder =
 -- REST
 
 
-loadFromServer : AccessToken -> (Result DetailedHttpError UserInfo -> msg) -> Cmd msg
+loadFromServer : AccessToken -> (Result GetError UserInfo -> msg) -> Cmd msg
 loadFromServer accessToken toMsg =
-    GCP.get decoder
+    GCP.get
         |> GCP.withPath [ "userInfo" ]
         |> GCP.withAccessToken accessToken
-        |> GCP.request toMsg
+        |> GCP.request (HttpError.expect decoder toMsg)
 
 
 

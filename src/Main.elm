@@ -5,9 +5,9 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Campaign
-import Data.DetailedHttpError exposing (DetailedHttpError(..))
 import Data.Draft
 import Data.DraftBook
+import Data.GetError exposing (GetError(..))
 import Data.Level
 import Data.RemoteCache as RemoteCache
 import Data.RequestResult as RequestResult exposing (RequestResult)
@@ -284,7 +284,7 @@ localStorageResponseUpdate response mainModel =
         onSingle :
             { name : String
             , success : value -> Session -> Session
-            , failure : String -> DetailedHttpError -> Session -> Session
+            , failure : String -> GetError -> Session -> Session
             , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error (Maybe value))
             }
             -> ( { model | session : Session }, Cmd msg )
@@ -321,7 +321,7 @@ localStorageResponseUpdate response mainModel =
 
         onCollection :
             { success : value -> Session -> Session
-            , failure : String -> DetailedHttpError -> Session -> Session
+            , failure : String -> GetError -> Session -> Session
             , transform : ( String, Encode.Value ) -> Maybe (RequestResult String Decode.Error value)
             }
             -> ( { model | session : Session }, Cmd msg )

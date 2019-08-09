@@ -6,10 +6,10 @@ import Browser exposing (Document)
 import Data.Board as Board exposing (Board)
 import Data.Cache as Cache
 import Data.CampaignId as CampaignId
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Direction exposing (Direction(..))
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
+import Data.GetError as GetError exposing (GetError)
 import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
@@ -28,8 +28,9 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import ExecutionControlView
-import Extra.Cmd exposing (noCmd)
+import Extra.Cmd exposing (noCmd, withCmd, withExtraCmd)
 import InstructionView
+import Json.Decode as Decoder
 import Maybe.Extra
 import Random
 import RemoteData exposing (RemoteData(..), WebData)
@@ -121,7 +122,7 @@ load =
                         |> RemoteCache.withActualLoading model.draftId
                         |> flip Session.withDraftCache model.session
                         |> flip withSession model
-                    , Draft.loadFromServer accessToken (SessionMsg << GotLoadDraftByDraftIdResponse) model.draftId
+                    , Draft.loadFromServer (SessionMsg << GotLoadDraftByDraftIdResponse model.draftId) accessToken model.draftId
                     )
 
                 _ ->
@@ -148,14 +149,16 @@ load =
             case
                 Cache.get model.draftId model.session.drafts.local
                     |> RemoteData.toMaybe
+                    |> Maybe.Extra.join
             of
                 Just draft ->
-                    case Session.getLevel draft.levelId model.session of
+                    case Cache.get draft.levelId model.session.levels of
                         NotAsked ->
-                            ( model.session
-                                |> Session.levelLoading draft.levelId
+                            ( model.session.levels
+                                |> Cache.loading draft.levelId
+                                |> flip Session.withLevelCache model.session
                                 |> flip withSession model
-                            , Level.loadFromServer (SessionMsg << GotLoadLevelResponse) draft.levelId
+                            , Level.loadFromServer (SessionMsg << GotLoadLevelByLevelIdResponse draft.levelId) draft.levelId
                             )
 
                         _ ->
@@ -165,9 +168,14 @@ load =
                     noCmd model
 
         initializeExecution model =
-            case RemoteData.toMaybe (Cache.get model.draftId model.session.drafts.local) of
+            case
+                model.session.drafts.local
+                    |> Cache.get model.draftId
+                    |> RemoteData.toMaybe
+                    |> Maybe.Extra.join
+            of
                 Just draft ->
-                    case Session.getLevel draft.levelId model.session of
+                    case Cache.get draft.levelId model.session.levels of
                         Success level ->
                             if
                                 model.loadedLevelId
@@ -299,6 +307,7 @@ update msg model =
                         levelId =
                             Cache.get model.draftId model.session.drafts.local
                                 |> RemoteData.toMaybe
+                                |> Maybe.Extra.join
                                 |> Maybe.map .levelId
 
                         campaignId =
@@ -314,20 +323,21 @@ update msg model =
                     stepModel execution model
 
                 GeneratedSolution solution ->
+                    let
+                        modelWithSolution =
+                            model.session.solutions
+                                |> RemoteCache.withLocalValue solution.id (Just solution)
+                                |> flip Session.withSolutionCache model.session
+                                |> flip withSession model
+                    in
                     case Session.getAccessToken model.session of
                         Just accessToken ->
-                            ( { model
-                                | session = Session.withSolution solution model.session
-                              }
-                            , Cmd.batch
-                                [ Solution.saveToLocalStorage solution
-                                , Solution.saveToServer (SessionMsg << GotSaveSolutionResponse) accessToken solution
-                                ]
-                            )
+                            modelWithSolution
+                                |> withCmd (Solution.saveToLocalStorage solution)
+                                |> withExtraCmd (Solution.saveToServer (SessionMsg << GotSaveSolutionResponse solution) accessToken solution)
 
                         Nothing ->
-                            ( Session.withSolution solution model.session
-                                |> flip withSession model
+                            ( modelWithSolution
                             , Solution.saveToLocalStorage solution
                             )
 
@@ -853,18 +863,12 @@ view model =
                     View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ " from local storage")
 
                 Failure error ->
-                    let
-                        errorMessage =
-                            case error of
-                                DetailedHttpError.NotFound ->
-                                    "Draft " ++ model.draftId ++ " not found"
+                    View.ErrorScreen.view (Decoder.errorToString error)
 
-                                _ ->
-                                    DetailedHttpError.toString error
-                    in
-                    View.ErrorScreen.view errorMessage
+                Success Nothing ->
+                    View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not found")
 
-                Success draft ->
+                Success (Just draft) ->
                     case Session.getLevel draft.levelId model.session of
                         NotAsked ->
                             View.ErrorScreen.view ("Level " ++ draft.levelId ++ " not asked :/")
@@ -873,7 +877,7 @@ view model =
                             View.LoadingScreen.view ("Loading level " ++ draft.levelId)
 
                         Failure error ->
-                            View.ErrorScreen.view (DetailedHttpError.toString error)
+                            View.ErrorScreen.view (GetError.toString error)
 
                         Success _ ->
                             case model.execution of

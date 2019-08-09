@@ -6,9 +6,9 @@ import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
 import Data.Cache as Cache
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
+import Data.GetError as GetError exposing (GetError)
 import Data.History as History
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
@@ -113,7 +113,7 @@ load =
                         |> RemoteCache.withActualLoading model.draftId
                         |> flip Session.withDraftCache model.session
                         |> flip withSession model
-                    , Draft.loadFromServer accessToken (SessionMsg << GotLoadDraftByDraftIdResponse) model.draftId
+                    , Draft.loadFromServer (SessionMsg << GotLoadDraftByDraftIdResponse model.draftId) accessToken model.draftId
                     )
 
                 _ ->
@@ -140,14 +140,16 @@ load =
             case
                 Cache.get model.draftId model.session.drafts.local
                     |> RemoteData.toMaybe
+                    |> Maybe.Extra.join
             of
                 Just draft ->
-                    case Session.getLevel draft.levelId model.session of
+                    case Cache.get draft.levelId model.session.levels of
                         NotAsked ->
-                            ( model.session
-                                |> Session.levelLoading draft.levelId
+                            ( model.session.levels
+                                |> Cache.loading draft.levelId
+                                |> flip Session.withLevelCache model.session
                                 |> flip withSession model
-                            , Level.loadFromServer (SessionMsg << GotLoadLevelResponse) draft.levelId
+                            , Level.loadFromServer (SessionMsg << GotLoadLevelByLevelIdResponse draft.levelId) draft.levelId
                             )
 
                         _ ->
@@ -183,6 +185,7 @@ update msg model =
         maybeDraft =
             Cache.get model.draftId model.session.drafts.local
                 |> RemoteData.toMaybe
+                |> Maybe.Extra.join
 
         maybeLevel =
             maybeDraft
@@ -345,14 +348,14 @@ updateDraft draft model =
             case Session.getAccessToken model.session of
                 Just accessToken ->
                     Cmd.batch
-                        [ Draft.saveToServer accessToken (SessionMsg << GotSaveDraftResponse) draft
+                        [ Draft.saveToServer (SessionMsg << GotSaveDraftResponse draft) accessToken draft
                         , Draft.saveToLocalStorage draft
                         ]
 
                 Nothing ->
                     Draft.saveToLocalStorage draft
     in
-    ( RemoteCache.withLocalValue draft.id draft model.session.drafts
+    ( RemoteCache.withLocalValue draft.id (Just draft) model.session.drafts
         |> flip Session.withDraftCache model.session
         |> flip withSession model
     , cmd
@@ -396,9 +399,12 @@ view model =
                             View.LoadingScreen.view ("Loading draft " ++ model.draftId ++ " from local storage")
 
                         Failure error ->
-                            View.ErrorScreen.view (DetailedHttpError.toString error)
+                            View.ErrorScreen.view (Decode.errorToString error)
 
-                        Success draft ->
+                        Success Nothing ->
+                            View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not found")
+
+                        Success (Just draft) ->
                             case Session.getLevel draft.levelId session of
                                 NotAsked ->
                                     View.ErrorScreen.view ("Not asked for level: " ++ draft.levelId)
@@ -407,7 +413,7 @@ view model =
                                     View.LoadingScreen.view ("Loading level " ++ draft.levelId)
 
                                 Failure error ->
-                                    View.ErrorScreen.view (DetailedHttpError.toString error)
+                                    View.ErrorScreen.view (GetError.toString error)
 
                                 Success level ->
                                     viewLoaded

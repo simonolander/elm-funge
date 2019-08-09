@@ -1,6 +1,6 @@
 module View.HighScore exposing (view)
 
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
+import Data.GetError as DetailedHttpError exposing (GetError)
 import Data.HighScore exposing (HighScore)
 import Dict
 import Element exposing (..)
@@ -10,7 +10,7 @@ import View.Box
 import View.Constant exposing (color)
 
 
-view : RemoteData DetailedHttpError HighScore -> Element msg
+view : RemoteData GetError HighScore -> Element msg
 view remoteData =
     --    let
     --        remoteData =
@@ -114,7 +114,7 @@ notAsked =
     View.Box.simpleNonInteractive "Not asked"
 
 
-failure : DetailedHttpError -> Element msg
+failure : GetError -> Element msg
 failure error =
     let
         errorMessage =

@@ -17,3 +17,5 @@ export const decoder: JsonDecoder.Decoder<Solution> = JsonDecoder.object({
     board: Board.decoder,
     authorId: JsonDecoder.string,
 }, "Solution");
+
+decoder.decode = decoder.decode.bind(decoder);

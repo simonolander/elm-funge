@@ -3,7 +3,6 @@ module Data.Campaign exposing (Campaign, decoder, empty, encode, loadFromLocalSt
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
-import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage

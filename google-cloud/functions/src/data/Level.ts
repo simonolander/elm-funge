@@ -35,6 +35,8 @@ export const decoder: JsonDecoder.Decoder<Level> = JsonDecoder.object(
     "Level",
 );
 
+decoder.decode = decoder.decode.bind(decoder);
+
 export function fromBlueprint(blueprint: Blueprint): Level {
     return {
         id: blueprint.id,

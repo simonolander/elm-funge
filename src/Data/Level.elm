@@ -23,7 +23,7 @@ import Api.GCP as GCP
 import Array exposing (Array)
 import Data.Board as Board exposing (Board)
 import Data.CampaignId as CampaignId exposing (CampaignId)
-import Data.DetailedHttpError exposing (DetailedHttpError)
+import Data.GetError as HttpError exposing (GetError)
 import Data.IO as IO exposing (IO)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
@@ -291,17 +291,17 @@ decoder =
 -- REST
 
 
-loadFromServer : (RequestResult LevelId DetailedHttpError Level -> msg) -> LevelId -> Cmd msg
+loadFromServer : (Result GetError Level -> msg) -> LevelId -> Cmd msg
 loadFromServer toMsg levelId =
-    GCP.get decoder
+    GCP.get
         |> GCP.withPath [ "levels" ]
         |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
-        |> GCP.request (RequestResult.constructor levelId >> toMsg)
+        |> GCP.request (HttpError.expect decoder toMsg)
 
 
-loadFromServerByCampaignId : (RequestResult CampaignId DetailedHttpError (List Level) -> msg) -> CampaignId -> Cmd msg
+loadFromServerByCampaignId : (Result GetError (List Level) -> msg) -> CampaignId -> Cmd msg
 loadFromServerByCampaignId toMsg campaignId =
-    GCP.get (Decode.list decoder)
+    GCP.get
         |> GCP.withPath [ "levels" ]
         |> GCP.withQueryParameters [ Url.Builder.string "campaignId" campaignId ]
-        |> GCP.request (RequestResult.constructor campaignId >> toMsg)
+        |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)

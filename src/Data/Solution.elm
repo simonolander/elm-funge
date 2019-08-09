@@ -1,11 +1,27 @@
-module Data.Solution exposing (Solution, decoder, encode, generator, loadFromLocalStorage, loadFromServerByLevelId, loadFromServerBySolutionId, localStorageResponse, saveToLocalStorage, saveToServer)
+module Data.Solution exposing
+    ( Solution
+    , decoder
+    , encode
+    , generator
+    , loadFromLocalStorage
+    , loadFromServerByLevelId
+    , loadFromServerBySolutionId
+    , loadRemoteFromLocalStorage
+    , localRemoteStorageResponse
+    , localStorageResponse
+    , removeRemoteFromLocalStorage
+    , saveRemoteToLocalStorage
+    , saveToLocalStorage
+    , saveToServer
+    )
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
-import Data.DetailedHttpError exposing (DetailedHttpError)
+import Data.GetError as HttpError exposing (GetError)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
+import Data.SaveError as SaveError exposing (SaveError)
 import Data.Score as Score exposing (Score)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId as SolutionId exposing (SolutionId)
@@ -21,7 +37,6 @@ type alias Solution =
     , levelId : LevelId
     , score : Score
     , board : Board
-    , published : Bool
     }
 
 
@@ -37,7 +52,6 @@ generator levelId score board =
             , levelId = levelId
             , score = score
             , board = board
-            , published = False
             }
         )
         SolutionId.generator
@@ -55,7 +69,6 @@ encode solution =
         , ( "levelId", LevelId.encode solution.levelId )
         , ( "score", Score.encode solution.score )
         , ( "board", Board.encode solution.board )
-        , ( "published", Encode.bool solution.published )
         ]
 
 
@@ -73,17 +86,12 @@ decoderV1 =
                                         Decode.field "board" Board.decoder
                                             |> Decode.andThen
                                                 (\board ->
-                                                    Decode.maybe (Decode.field "published" Decode.bool)
-                                                        |> Decode.andThen
-                                                            (\published ->
-                                                                Decode.succeed
-                                                                    { id = id
-                                                                    , levelId = levelId
-                                                                    , score = score
-                                                                    , board = board
-                                                                    , published = Maybe.withDefault True published
-                                                                    }
-                                                            )
+                                                    Decode.succeed
+                                                        { id = id
+                                                        , levelId = levelId
+                                                        , score = score
+                                                        , board = board
+                                                        }
                                                 )
                                     )
                         )
@@ -146,32 +154,79 @@ localStorageResponse ( key, value ) =
             Nothing
 
 
+remoteKey : SolutionId -> Ports.LocalStorage.Key
+remoteKey solutionId =
+    String.join "."
+        [ localStorageKey solutionId
+        , "remote"
+        ]
+
+
+saveRemoteToLocalStorage : Solution -> Cmd msg
+saveRemoteToLocalStorage solution =
+    let
+        key =
+            remoteKey solution.id
+
+        value =
+            encode solution
+    in
+    Ports.LocalStorage.storageSetItem ( key, value )
+
+
+loadRemoteFromLocalStorage : SolutionId -> Cmd msg
+loadRemoteFromLocalStorage solutionId =
+    let
+        key =
+            remoteKey solutionId
+    in
+    Ports.LocalStorage.storageGetItem key
+
+
+removeRemoteFromLocalStorage : SolutionId -> Cmd msg
+removeRemoteFromLocalStorage solutionId =
+    Ports.LocalStorage.storageRemoveItem (remoteKey solutionId)
+
+
+localRemoteStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult SolutionId Decode.Error (Maybe Solution))
+localRemoteStorageResponse ( key, value ) =
+    case String.split "." key of
+        "solutions" :: solutionId :: "remote" :: [] ->
+            value
+                |> Decode.decodeValue (Decode.nullable decoder)
+                |> RequestResult.constructor solutionId
+                |> Just
+
+        _ ->
+            Nothing
+
+
 
 -- REST
 
 
-saveToServer : (RequestResult Solution DetailedHttpError () -> msg) -> AccessToken -> Solution -> Cmd msg
+saveToServer : (Maybe SaveError -> msg) -> AccessToken -> Solution -> Cmd msg
 saveToServer toMsg accessToken solution =
-    GCP.post (Decode.succeed ())
+    GCP.post
         |> GCP.withPath [ "solutions" ]
         |> GCP.withAccessToken accessToken
         |> GCP.withBody (encode solution)
-        |> GCP.request (RequestResult.constructor solution >> toMsg)
+        |> GCP.request (SaveError.expect toMsg)
 
 
-loadFromServerByLevelId : AccessToken -> (RequestResult LevelId DetailedHttpError (List Solution) -> msg) -> LevelId -> Cmd msg
-loadFromServerByLevelId accessToken toMsg levelId =
-    GCP.get (Decode.list decoder)
+loadFromServerByLevelId : (Result GetError (List Solution) -> msg) -> AccessToken -> LevelId -> Cmd msg
+loadFromServerByLevelId toMsg accessToken levelId =
+    GCP.get
         |> GCP.withPath [ "solutions" ]
         |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
         |> GCP.withAccessToken accessToken
-        |> GCP.request (RequestResult.constructor levelId >> toMsg)
+        |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
 
 
-loadFromServerBySolutionId : AccessToken -> (RequestResult LevelId DetailedHttpError Solution -> msg) -> SolutionId -> Cmd msg
-loadFromServerBySolutionId accessToken toMsg solutionId =
-    GCP.get decoder
+loadFromServerBySolutionId : (Result GetError (Maybe Solution) -> msg) -> AccessToken -> SolutionId -> Cmd msg
+loadFromServerBySolutionId toMsg accessToken solutionId =
+    GCP.get
         |> GCP.withPath [ "solutions" ]
         |> GCP.withQueryParameters [ Url.Builder.string "solutionId" solutionId ]
         |> GCP.withAccessToken accessToken
-        |> GCP.request (RequestResult.constructor solutionId >> toMsg)
+        |> GCP.request (HttpError.expectMaybe decoder toMsg)

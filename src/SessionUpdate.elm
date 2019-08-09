@@ -4,57 +4,58 @@ import Basics.Extra exposing (flip)
 import Data.Cache as Cache
 import Data.Campaign as Campaign
 import Data.CampaignId exposing (CampaignId)
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook
 import Data.DraftId exposing (DraftId)
+import Data.GetError as GetError exposing (GetError)
 import Data.HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache
-import Data.RequestResult exposing (RequestResult)
+import Data.SaveError as SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
 import Data.SolutionId exposing (SolutionId)
-import Extra.Cmd exposing (noCmd, withCmd, withExtraCmd)
+import Extra.Cmd exposing (withCmd, withExtraCmd)
 import Extra.Result
+import Maybe.Extra
 import Ports.Console
 import RemoteData exposing (RemoteData(..))
 import Set
 
 
 type SessionMsg
-    = GotLoadDraftByDraftIdResponse (RequestResult DraftId DetailedHttpError Draft)
-    | GotLoadDraftsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Draft))
-    | GotLoadHighScoreResponse (RequestResult LevelId DetailedHttpError HighScore)
-    | GotLoadLevelResponse (RequestResult LevelId DetailedHttpError Level)
-    | GotLoadLevelsByCampaignIdResponse (RequestResult CampaignId DetailedHttpError (List Level))
-    | GotLoadSolutionsByLevelIdResponse (RequestResult LevelId DetailedHttpError (List Solution))
-    | GotLoadSolutionsBySolutionIdResponse (RequestResult SolutionId DetailedHttpError Solution)
-    | GotSaveDraftResponse (RequestResult Draft DetailedHttpError ())
-    | GotSaveSolutionResponse (RequestResult Solution DetailedHttpError ())
+    = GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
+    | GotLoadDraftsByLevelIdResponse LevelId (Result GetError (List Draft))
+    | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
+    | GotLoadLevelByLevelIdResponse LevelId (Result GetError Level)
+    | GotLoadLevelsByCampaignIdResponse CampaignId (Result GetError (List Level))
+    | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
+    | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
+    | GotSaveDraftResponse Draft (Maybe SaveError)
+    | GotSaveSolutionResponse Solution (Maybe SaveError)
 
 
 update : SessionMsg -> Session -> ( Session, Cmd msg )
 update msg session =
     case msg of
-        GotLoadHighScoreResponse { request, result } ->
+        GotLoadHighScoreResponse levelId result ->
             session.highScores
-                |> Cache.withResult request result
+                |> Cache.withResult levelId result
                 |> flip Session.withHighScoreCache session
                 |> withCmd
                     (Extra.Result.getError result
-                        |> Maybe.map DetailedHttpError.consoleError
+                        |> Maybe.map GetError.consoleError
                         |> Maybe.withDefault Cmd.none
                     )
 
-        GotLoadLevelsByCampaignIdResponse { request, result } ->
+        GotLoadLevelsByCampaignIdResponse campaignId result ->
             case result of
                 Ok levels ->
                     let
                         campaign =
-                            { id = request
+                            { id = campaignId
                             , levelIds = List.map .id levels
                             }
 
@@ -80,12 +81,12 @@ update msg session =
 
                 Err error ->
                     session.campaigns
-                        |> Cache.loading request
+                        |> Cache.loading campaignId
                         |> flip Session.withCampaignCache session
-                        |> withCmd (Campaign.loadFromLocalStorage request)
-                        |> withExtraCmd (DetailedHttpError.consoleError error)
+                        |> withCmd (Campaign.loadFromLocalStorage campaignId)
+                        |> withExtraCmd (GetError.consoleError error)
 
-        GotLoadSolutionsByLevelIdResponse { request, result } ->
+        GotLoadSolutionsByLevelIdResponse request result ->
             case result of
                 Ok solutions ->
                     let
@@ -97,25 +98,28 @@ update msg session =
                                     |> Set.fromList
                             }
 
+                        sessionWithSolutionBookCache =
+                            session
+                                |> Session.withSolutionBook solutionBook
+
                         cmd =
                             solutions
                                 |> List.map Solution.saveToLocalStorage
                                 |> Cmd.batch
                     in
-                    ( session
-                        |> Session.withSolutionBook solutionBook
-                        |> Session.withSolutions solutions
-                    , cmd
-                    )
+                    Extra.Cmd.fold
+                        (List.map (\solution -> gotActualSolution solution.id (Just solution)) solutions)
+                        sessionWithSolutionBookCache
+                        |> withExtraCmd cmd
 
                 Err error ->
                     session.solutionBooks
                         |> Cache.loading request
                         |> flip Session.withSolutionBookCache session
                         |> withCmd (SolutionBook.loadFromLocalStorage request)
-                        |> withExtraCmd (DetailedHttpError.consoleError error)
+                        |> withExtraCmd (GetError.consoleError error)
 
-        GotLoadLevelResponse { request, result } ->
+        GotLoadLevelByLevelIdResponse levelId result ->
             case result of
                 Ok level ->
                     session.levels
@@ -125,42 +129,49 @@ update msg session =
 
                 Err error ->
                     session.levels
-                        |> Cache.loading request
+                        |> Cache.loading levelId
                         |> flip Session.withLevelCache session
-                        |> withCmd (Level.loadFromLocalStorage request)
-                        |> withExtraCmd (DetailedHttpError.consoleError error)
+                        |> withCmd (Level.loadFromLocalStorage levelId)
+                        |> withExtraCmd (GetError.consoleError error)
 
-        GotLoadSolutionsBySolutionIdResponse { request, result } ->
+        GotLoadSolutionsBySolutionIdResponse solutionId result ->
+            let
+                sessionWithSolution =
+                    session.solutions
+                        |> RemoteCache.withActualResult solutionId result
+                        |> flip Session.withSolutionCache session
+            in
             case result of
                 Ok solution ->
-                    session.solutions
-                        |> Cache.withValue solution.id solution
-                        |> flip Session.withSolutionCache session
-                        |> noCmd
+                    gotActualSolution solutionId solution sessionWithSolution
 
                 Err error ->
-                    session.solutions
-                        |> Cache.loading request
-                        |> flip Session.withSolutionCache session
-                        |> withCmd (Solution.loadFromLocalStorage request)
-                        |> withExtraCmd (DetailedHttpError.consoleError error)
+                    sessionWithSolution.solutions
+                        |> RemoteCache.withLocalLoading solutionId
+                        |> flip Session.withSolutionCache sessionWithSolution
+                        |> withCmd (Solution.loadFromLocalStorage solutionId)
+                        |> withExtraCmd (GetError.consoleError error)
 
-        GotLoadDraftByDraftIdResponse { request, result } ->
+        GotLoadDraftByDraftIdResponse draftId result ->
             let
                 sessionWithActualDraft =
                     session.drafts
-                        |> RemoteCache.withActualResult request result
+                        |> RemoteCache.withActualResult draftId result
                         |> flip Session.withDraftCache session
             in
             case result of
                 Ok actualDraft ->
-                    gotActualDraft actualDraft sessionWithActualDraft
+                    gotActualDraft draftId actualDraft sessionWithActualDraft
+
+                Err GetError.NetworkError ->
+                    Session.withoutAccessToken sessionWithActualDraft
+                        |> withCmd (Ports.Console.infoString "No network, going offline")
 
                 Err error ->
                     sessionWithActualDraft
-                        |> withCmd (DetailedHttpError.consoleError error)
+                        |> withCmd (GetError.consoleError error)
 
-        GotLoadDraftsByLevelIdResponse { request, result } ->
+        GotLoadDraftsByLevelIdResponse request result ->
             case result of
                 Ok drafts ->
                     let
@@ -176,89 +187,99 @@ update msg session =
                         sessionWithDraftBookCache =
                             Session.withDraftBookCache draftBookCache session
                     in
-                    Extra.Cmd.fold (List.map gotActualDraft drafts) sessionWithDraftBookCache
+                    Extra.Cmd.fold (List.map (\draft -> gotActualDraft draft.id (Just draft)) drafts) sessionWithDraftBookCache
 
                 Err error ->
                     session.draftBooks
                         |> Cache.loading request
                         |> flip Session.withDraftBookCache session
                         |> withCmd (DraftBook.loadFromLocalStorage request)
-                        |> withExtraCmd (DetailedHttpError.consoleError error)
+                        |> withExtraCmd (GetError.consoleError error)
 
-        GotSaveDraftResponse { request, result } ->
+        GotSaveDraftResponse draft result ->
             case result of
-                Ok () ->
+                Nothing ->
                     session.drafts
-                        |> RemoteCache.withActualValue request.id request
-                        |> RemoteCache.withExpectedValue request.id request
+                        |> RemoteCache.withActualValue draft.id (Just draft)
+                        |> RemoteCache.withExpectedValue draft.id (Just draft)
                         |> flip Session.withDraftCache session
-                        |> withCmd (Draft.saveRemoteToLocalStorage request)
+                        |> withCmd (Draft.saveRemoteToLocalStorage draft)
 
-                Err error ->
-                    session.drafts
-                        |> RemoteCache.withActualResult request.id (Err error)
-                        |> flip Session.withDraftCache session
-                        |> withCmd (DetailedHttpError.consoleError error)
+                Just error ->
+                    ( session, SaveError.consoleError error )
 
-        GotSaveSolutionResponse { request, result } ->
-            let
-                solution =
-                    { request | published = True }
-            in
+        GotSaveSolutionResponse solution result ->
             case result of
-                Ok () ->
+                Nothing ->
                     session.solutions
-                        |> Cache.withValue solution.id solution
+                        |> RemoteCache.withActualValue solution.id (Just solution)
+                        |> RemoteCache.withExpectedValue solution.id (Just solution)
                         |> flip Session.withSolutionCache session
                         |> withCmd (Solution.saveToLocalStorage solution)
 
-                Err error ->
-                    session
-                        |> withCmd (DetailedHttpError.consoleError error)
+                Just error ->
+                    ( session, SaveError.consoleError error )
 
 
-gotActualDraft : Draft -> Session -> ( Session, Cmd msg )
-gotActualDraft actualDraft session =
-    case Cache.get actualDraft.id session.drafts.local of
-        Success localDraft ->
-            case Cache.get actualDraft.id session.drafts.expected of
-                Success expectedDraft ->
-                    if Draft.eq localDraft actualDraft then
-                        if Draft.eq localDraft expectedDraft then
-                            noCmd session
+gotActualDraft : DraftId -> Maybe Draft -> Session -> ( Session, Cmd msg )
+gotActualDraft draftId maybeActualDraft session =
+    let
+        sessionWithActualDraft =
+            session.drafts
+                |> RemoteCache.withActualValue draftId maybeActualDraft
+                |> flip Session.withDraftCache session
 
-                        else
-                            session.drafts
-                                |> RemoteCache.withExpectedValue actualDraft.id actualDraft
-                                |> flip Session.withDraftCache session
-                                |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
+        overwrite draft =
+            sessionWithActualDraft.drafts
+                |> RemoteCache.withLocalValue draftId (Just draft)
+                |> RemoteCache.withExpectedValue draftId (Just draft)
+                |> flip Session.withDraftCache sessionWithActualDraft
+                |> withCmd (Draft.saveRemoteToLocalStorage draft)
+                |> withExtraCmd (Draft.saveToLocalStorage draft)
+    in
+    case maybeActualDraft of
+        Just actualDraft ->
+            case
+                Cache.get draftId sessionWithActualDraft.drafts.local
+                    |> RemoteData.toMaybe
+                    |> Maybe.Extra.join
+            of
+                Nothing ->
+                    overwrite actualDraft
 
-                    else if Draft.eq localDraft expectedDraft then
-                        session.drafts
-                            |> RemoteCache.withLocalValue actualDraft.id actualDraft
-                            |> RemoteCache.withExpectedValue actualDraft.id actualDraft
-                            |> flip Session.withDraftCache session
-                            |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
-                            |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
+                Just localDraft ->
+                    if
+                        Cache.get draftId sessionWithActualDraft.drafts.expected
+                            |> RemoteData.toMaybe
+                            |> Maybe.Extra.join
+                            |> Maybe.map (Draft.eq localDraft)
+                            |> Maybe.withDefault False
+                    then
+                        overwrite actualDraft
 
                     else
-                        session
-                            |> withCmd
-                                (Ports.Console.errorString
-                                    ("5107844dd836    Conflict in draft " ++ actualDraft.id)
-                                )
+                        ( sessionWithActualDraft, Cmd.none )
 
-                _ ->
-                    session
-                        |> withCmd
-                            (Ports.Console.errorString
-                                ("c797bf8b5d8c    Conflict in draft " ++ actualDraft.id)
-                            )
+        Nothing ->
+            ( sessionWithActualDraft, Cmd.none )
 
-        _ ->
-            session.drafts
-                |> RemoteCache.withLocalValue actualDraft.id actualDraft
-                |> RemoteCache.withExpectedValue actualDraft.id actualDraft
-                |> flip Session.withDraftCache session
-                |> withCmd (Draft.saveRemoteToLocalStorage actualDraft)
-                |> withExtraCmd (Draft.saveToLocalStorage actualDraft)
+
+gotActualSolution : SolutionId -> Maybe Solution -> Session -> ( Session, Cmd msg )
+gotActualSolution solutionId maybeActualSolution oldSession =
+    let
+        newSession =
+            oldSession.solutions
+                |> RemoteCache.withActualValue solutionId maybeActualSolution
+                |> flip Session.withSolutionCache oldSession
+    in
+    case maybeActualSolution of
+        Just actualSolution ->
+            newSession.solutions
+                |> RemoteCache.withLocalValue solutionId (Just actualSolution)
+                |> RemoteCache.withExpectedValue solutionId (Just actualSolution)
+                |> flip Session.withSolutionCache newSession
+                |> withCmd (Solution.saveRemoteToLocalStorage actualSolution)
+                |> withExtraCmd (Solution.saveToLocalStorage actualSolution)
+
+        Nothing ->
+            ( newSession, Cmd.none )

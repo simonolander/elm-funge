@@ -6,16 +6,14 @@ import Data.Blueprint as Blueprint
 import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
 import Data.CampaignId as CampaignId exposing (CampaignId)
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError(..))
+import Data.GetError as GetError exposing (GetError(..))
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Input as Input
-import Extra.String
 import Html exposing (Html)
-import Http
 import Ports.Console
 import Random
 import RemoteData exposing (RemoteData(..))
@@ -58,7 +56,7 @@ init selectedLevelId session =
 
 load : Model -> ( Model, Cmd Msg )
 load model =
-    case Session.getCampaign CampaignId.blueprints model.session of
+    case Cache.get CampaignId.blueprints model.session.campaigns of
         NotAsked ->
             case Session.getAccessToken model.session of
                 Just accessToken ->
@@ -75,7 +73,8 @@ load model =
                     , Campaign.loadFromLocalStorage campaignId
                     )
 
-        Failure NotFound ->
+        -- TODO Blueprints should be a campaign
+        Failure error ->
             let
                 campaign =
                     Campaign.empty campaignId
@@ -100,7 +99,7 @@ load model =
                 |> Cmd.batch
             )
 
-        _ ->
+        Loading ->
             ( model, Cmd.none )
 
 
@@ -125,7 +124,7 @@ type Msg
     | LevelNameChanged String
     | LevelDeleted LevelId
     | LevelDescriptionChanged String
-    | GotLoadBlueprintsResponse (Result DetailedHttpError (List Level))
+    | GotLoadBlueprintsResponse (Result GetError (List Level))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -269,7 +268,7 @@ update msg model =
                     ( model.session
                         |> Session.campaignError campaignId error
                         |> setSession model
-                    , Ports.Console.errorString (DetailedHttpError.toString error)
+                    , Ports.Console.errorString (GetError.toString error)
                     )
 
 
@@ -306,7 +305,7 @@ view model =
                             View.LoadingScreen.layout ("Loading " ++ campaignId)
 
                         Failure error ->
-                            View.ErrorScreen.layout (DetailedHttpError.toString error)
+                            View.ErrorScreen.layout (GetError.toString error)
 
                         Success campaign ->
                             viewCampaign campaign model

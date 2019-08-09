@@ -39,55 +39,65 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
     }
     const user = await Firestore.getUserBySubject(authResult.value);
 
-    const requestResult = decode(
+    const request = decode(
         req.query,
         JsonDecoder.object(
             {
-                campaignId: JsonDecoder.oneOf([
-                        JsonDecoder.string,
-                        JsonDecoder.isUndefined(undefined),
-                    ],
-                    "campaignId?: string"),
                 levelId: JsonDecoder.oneOf([
                         JsonDecoder.string,
                         JsonDecoder.isUndefined(undefined),
                     ],
                     "levelId?: string"),
                 solutionId: JsonDecoder.oneOf([
-                    JsonDecoder.string,
-                    JsonDecoder.isUndefined(undefined),
-                ], "solutionId?: string"),
+                        JsonDecoder.string,
+                        JsonDecoder.isUndefined(undefined),
+                    ],
+                    "solutionId?: string"),
+                levelIds: JsonDecoder.oneOf([
+                        JsonDecoder.array(JsonDecoder.string, "levelId: string"),
+                        JsonDecoder.isUndefined(undefined),
+                    ],
+                    "levelIds?: string[]"),
             },
             "GetSolutionsRequest",
         ),
     );
-    if (requestResult.tag === "failure") {
-        return badRequest(requestResult.error);
+    if (request.tag === "failure") {
+        return badRequest(request.error);
     }
 
-    if (typeof requestResult.value.solutionId !== "undefined") {
-        const snapshot = await Firestore.getSolutionById(requestResult.value.solutionId)
+    if (typeof request.value.solutionId !== "undefined") {
+        const snapshot = await Firestore.getSolutionById(request.value.solutionId)
             .then(ref => ref.get());
         if (!snapshot.exists) {
             return notFound();
         }
         const solution = Solution.decoder.decode(snapshot.data());
         if (solution instanceof Err) {
-            console.warn(`7b29423a    Corrupted data for solution ${requestResult.value.solutionId}`, solution.error);
-            return internalServerError(`Corrupted data for solution ${requestResult.value.solutionId}`);
+            console.warn(`7b29423a    Corrupted data for solution ${request.value.solutionId}`, solution.error);
+            return internalServerError(`Corrupted data for solution ${request.value.solutionId}`);
         }
         if (solution.value.authorId !== user.id) {
-            return forbidden(user.id, "read", "solution", requestResult.value.solutionId);
+            return forbidden(user.id, "read", "solution", request.value.solutionId);
         }
         return got(solution.value);
     }
 
+    if (typeof request.value.levelIds !== "undefined") {
+        return Promise.all(
+            request.value.levelIds.map(levelId => Firestore.getSolutions({authorId: user.id, levelId})
+                .then(snapshot => snapshot.docs.map(Solution.decoder.decode))
+                .then(results => results.map(fromDecodeResult))
+                .then(values)))
+            .then(lists => lists.reduce((acc, list) => acc.concat(list), []))
+            .then(got);
+    }
+
     return Firestore.getSolutions({
         authorId: user.id,
-        campaignId: requestResult.value.levelId,
-        levelId: requestResult.value.levelId,
+        levelId: request.value.levelId,
     })
-        .then(snapshot => snapshot.docs.map(v => Solution.decoder.decode(v)))
+        .then(snapshot => snapshot.docs.map(Solution.decoder.decode))
         .then(results => results.map(fromDecodeResult))
         .then(values)
         .then(got);

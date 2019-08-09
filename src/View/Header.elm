@@ -4,16 +4,17 @@ import Api.Auth0
 import Basics.Extra exposing (flip)
 import Data.Cache as Cache
 import Data.CampaignId as CampaignId
-import Data.Session as Session
+import Data.Session exposing (Session)
 import Data.User as User
 import Data.UserInfo as UserInfo
 import Element exposing (..)
 import Element.Background as Background
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
-import Route
+import Route exposing (Route)
 
 
+view : Session -> Element msg
 view session =
     let
         online =
@@ -83,6 +84,7 @@ view session =
         ]
 
 
+parentRoute : Session -> Maybe Route
 parentRoute session =
     case Route.fromUrl session.url of
         Just Route.Home ->
@@ -96,8 +98,9 @@ parentRoute session =
                 session.drafts.local
                     |> Cache.get draftId
                     |> RemoteData.toMaybe
+                    |> Maybe.Extra.join
                     |> Maybe.map .levelId
-                    |> Maybe.map (flip Session.getLevel session)
+                    |> Maybe.map (flip Cache.get session.levels)
                     |> Maybe.andThen RemoteData.toMaybe
             of
                 Just level ->

@@ -1,6 +1,6 @@
-module Data.RequestResult exposing (RequestResult, badBody, constructor, convertToHttpError, extractMaybe, toTuple)
+module Data.RequestResult exposing (RequestResult, badBody, constructor, extractMaybe, split, toTuple)
 
-import Data.DetailedHttpError as DetailedHttpError exposing (DetailedHttpError)
+import Data.GetError exposing (GetError(..))
 import Json.Decode
 
 
@@ -17,9 +17,9 @@ constructor request result =
     }
 
 
-badBody : Json.Decode.Error -> DetailedHttpError
+badBody : Json.Decode.Error -> GetError
 badBody =
-    Json.Decode.errorToString >> DetailedHttpError.BadBody 0
+    Json.Decode.errorToString >> Other
 
 
 toTuple : RequestResult request error data -> ( request, Result error data )
@@ -40,17 +40,20 @@ extractMaybe { request, result } =
             Just { request = request, result = Err error }
 
 
-convertToHttpError : RequestResult request Json.Decode.Error (Maybe value) -> RequestResult request DetailedHttpError value
-convertToHttpError { request, result } =
-    { request = request
-    , result =
-        case result of
-            Ok (Just value) ->
-                Ok value
+split : List (RequestResult request error data) -> ( List ( request, data ), List ( request, error ) )
+split list =
+    case list of
+        { request, result } :: tail ->
+            let
+                ( values, errors ) =
+                    split tail
+            in
+            case result of
+                Ok value ->
+                    ( ( request, value ) :: values, errors )
 
-            Ok Nothing ->
-                Err DetailedHttpError.NotFound
+                Err error ->
+                    ( values, ( request, error ) :: errors )
 
-            Err error ->
-                Err (badBody error)
-    }
+        [] ->
+            ( [], [] )

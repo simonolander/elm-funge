@@ -2,9 +2,9 @@ module Data.Blueprint exposing (Blueprint, loadAllFromServer, saveToServer)
 
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
-import Data.DetailedHttpError exposing (DetailedHttpError)
+import Data.GetError as GetError exposing (GetError)
 import Data.Level as Level exposing (Level)
-import Data.RequestResult as RequestResult exposing (RequestResult)
+import Data.SaveError as SaveError exposing (SaveError)
 import Json.Decode as Decode
 
 
@@ -21,18 +21,18 @@ path =
     [ "blueprints" ]
 
 
-loadAllFromServer : AccessToken -> (Result DetailedHttpError (List Blueprint) -> msg) -> Cmd msg
+loadAllFromServer : AccessToken -> (Result GetError (List Blueprint) -> msg) -> Cmd msg
 loadAllFromServer accessToken toMsg =
-    GCP.get (Decode.list Level.decoder)
+    GCP.get
         |> GCP.withPath path
         |> GCP.withAccessToken accessToken
-        |> GCP.request toMsg
+        |> GCP.request (GetError.expect (Decode.list Level.decoder) toMsg)
 
 
-saveToServer : AccessToken -> (RequestResult Blueprint DetailedHttpError () -> msg) -> Blueprint -> Cmd msg
+saveToServer : AccessToken -> (Maybe SaveError -> msg) -> Blueprint -> Cmd msg
 saveToServer accessToken toMsg blueprint =
-    GCP.post (Decode.succeed ())
+    GCP.post
         |> GCP.withPath path
         |> GCP.withAccessToken accessToken
         |> GCP.withBody (Level.encode blueprint)
-        |> GCP.request (RequestResult.constructor blueprint >> toMsg)
+        |> GCP.request (SaveError.expect toMsg)

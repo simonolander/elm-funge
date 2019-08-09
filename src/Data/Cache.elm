@@ -1,18 +1,17 @@
-module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, values, withDefault, withError, withResult, withValue)
+module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, fromValueDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, values, withDefault, withError, withResult, withValue)
 
 import Basics.Extra exposing (flip)
-import Data.DetailedHttpError exposing (DetailedHttpError)
 import Data.RequestResult exposing (RequestResult)
 import Dict exposing (Dict)
 import RemoteData exposing (RemoteData(..))
 import Set exposing (Set)
 
 
-type Cache comparable value
-    = Cache (Dict comparable (RemoteData DetailedHttpError value))
+type Cache comparable error value
+    = Cache (Dict comparable (RemoteData error value))
 
 
-get : comparable -> Cache comparable value -> RemoteData DetailedHttpError value
+get : comparable -> Cache comparable error value -> RemoteData error value
 get key cache =
     cache
         |> getDict
@@ -20,51 +19,56 @@ get key cache =
         |> Maybe.withDefault NotAsked
 
 
-keys : Cache comparable value -> List comparable
+keys : Cache comparable error value -> List comparable
 keys cache =
     cache
         |> getDict
         |> Dict.keys
 
 
-values : Cache comparable value -> List (RemoteData DetailedHttpError value)
+values : Cache comparable error value -> List (RemoteData error value)
 values cache =
     cache
         |> getDict
         |> Dict.values
 
 
-empty : Cache comparable value
+empty : Cache comparable error value
 empty =
     Cache Dict.empty
 
 
-fromRequestResults : List (RequestResult comparable DetailedHttpError value) -> Cache comparable value
+fromRequestResults : List (RequestResult comparable error value) -> Cache comparable error value
 fromRequestResults requestResults =
     List.foldl insertRequestResult empty requestResults
 
 
-fromResultDict : Dict comparable (Result DetailedHttpError value) -> Cache comparable value
+fromResultDict : Dict comparable (Result error value) -> Cache comparable error value
 fromResultDict dict =
     Cache (Dict.map (always RemoteData.fromResult) dict)
 
 
-insertRequestResult : RequestResult comparable DetailedHttpError value -> Cache comparable value -> Cache comparable value
+fromValueDict : Dict comparable value -> Cache comparable error value
+fromValueDict dict =
+    Cache (Dict.map (always RemoteData.succeed) dict)
+
+
+insertRequestResult : RequestResult comparable error value -> Cache comparable error value -> Cache comparable error value
 insertRequestResult requestResult cache =
     insertInternal requestResult.request (RemoteData.fromResult requestResult.result) cache
 
 
-withValue : comparable -> value -> Cache comparable value -> Cache comparable value
+withValue : comparable -> value -> Cache comparable error value -> Cache comparable error value
 withValue key value =
     insertInternal key (Success value)
 
 
-withResult : comparable -> Result DetailedHttpError value -> Cache comparable value -> Cache comparable value
+withResult : comparable -> Result error value -> Cache comparable error value -> Cache comparable error value
 withResult key result cache =
     insertInternal key (RemoteData.fromResult result) cache
 
 
-remove : comparable -> Cache comparable value -> Cache comparable value
+remove : comparable -> Cache comparable error value -> Cache comparable error value
 remove key cache =
     cache
         |> getDict
@@ -72,17 +76,17 @@ remove key cache =
         |> Cache
 
 
-withError : comparable -> DetailedHttpError -> Cache comparable value -> Cache comparable value
+withError : comparable -> error -> Cache comparable error value -> Cache comparable error value
 withError key error =
     insertInternal key (Failure error)
 
 
-loading : comparable -> Cache comparable value -> Cache comparable value
+loading : comparable -> Cache comparable error value -> Cache comparable error value
 loading key =
     insertInternal key Loading
 
 
-isNotAsked : comparable -> Cache comparable value -> Bool
+isNotAsked : comparable -> Cache comparable error value -> Bool
 isNotAsked key cache =
     cache
         |> get key
@@ -93,12 +97,12 @@ isNotAsked key cache =
 -- ADVANCED
 
 
-fromResult : comparable -> Result DetailedHttpError value -> Cache comparable value -> Cache comparable value
+fromResult : comparable -> Result error value -> Cache comparable error value -> Cache comparable error value
 fromResult key result =
     insertInternal key (RemoteData.fromResult result)
 
 
-setInsert : comparable1 -> comparable2 -> Cache comparable1 (Set comparable2) -> Cache comparable1 (Set comparable2)
+setInsert : comparable1 -> comparable2 -> Cache comparable1 error (Set comparable2) -> Cache comparable1 error (Set comparable2)
 setInsert key value cache =
     cache
         |> getDict
@@ -109,14 +113,14 @@ setInsert key value cache =
         |> flip (withValue key) cache
 
 
-withDefault : comparable -> value -> Cache comparable value -> Cache comparable value
+withDefault : comparable -> value -> Cache comparable error value -> Cache comparable error value
 withDefault key default cache =
     get key cache
         |> RemoteData.withDefault default
         |> flip (withValue key) cache
 
 
-map : comparable -> (value -> value) -> Cache comparable value -> Cache comparable value
+map : comparable -> (value -> value) -> Cache comparable error value -> Cache comparable error value
 map key function cache =
     get key cache
         |> RemoteData.map function
@@ -127,12 +131,12 @@ map key function cache =
 -- INTERNAL
 
 
-getDict : Cache comparable value -> Dict comparable (RemoteData DetailedHttpError value)
+getDict : Cache comparable error value -> Dict comparable (RemoteData error value)
 getDict (Cache dict) =
     dict
 
 
-insertInternal : comparable -> RemoteData DetailedHttpError value -> Cache comparable value -> Cache comparable value
+insertInternal : comparable -> RemoteData error value -> Cache comparable error value -> Cache comparable error value
 insertInternal key webData cache =
     cache
         |> getDict

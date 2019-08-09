@@ -2,18 +2,17 @@ module Data.User exposing (User, authorizedUser, getToken, getUserInfo, guest, w
 
 import Data.AccessToken exposing (AccessToken)
 import Data.UserInfo exposing (UserInfo)
-import RemoteData exposing (RemoteData(..), WebData)
 
 
 type alias User =
-    { token : Maybe AccessToken
+    { accessToken : Maybe AccessToken
     , userInfo : Maybe UserInfo
     }
 
 
 getToken : User -> Maybe AccessToken
 getToken user =
-    user.token
+    user.accessToken
 
 
 getUserInfo : User -> Maybe UserInfo
@@ -22,22 +21,22 @@ getUserInfo user =
 
 
 authorizedUser : AccessToken -> UserInfo -> User
-authorizedUser token userInfo =
-    { token = Just token
+authorizedUser accessToken userInfo =
+    { accessToken = Just accessToken
     , userInfo = Just userInfo
     }
 
 
 guest : User
 guest =
-    { token = Nothing
+    { accessToken = Nothing
     , userInfo = Nothing
     }
 
 
 withAccessToken : Maybe AccessToken -> User -> User
 withAccessToken accessToken user =
-    { user | token = accessToken }
+    { user | accessToken = accessToken }
 
 
 withUserInfo : Maybe UserInfo -> User -> User
