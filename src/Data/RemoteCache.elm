@@ -13,9 +13,6 @@ module Data.RemoteCache exposing
     , withLocalLoading
     , withLocalResult
     , withLocalValue
-    , withoutActual
-    , withoutExpected
-    , withoutLocal
     )
 
 import Data.Cache as Cache exposing (Cache)
@@ -62,11 +59,6 @@ withLocalResult key result cache =
     { cache | local = Cache.withResult key result cache.local }
 
 
-withoutLocal : comparable -> RemoteCache comparable value -> RemoteCache comparable value
-withoutLocal key cache =
-    { cache | local = Cache.remove key cache.local }
-
-
 
 -- EXPECTED
 
@@ -91,11 +83,6 @@ withExpectedResult key result cache =
     { cache | expected = Cache.withResult key result cache.expected }
 
 
-withoutExpected : comparable -> RemoteCache comparable value -> RemoteCache comparable value
-withoutExpected key cache =
-    { cache | expected = Cache.remove key cache.expected }
-
-
 
 -- ACTUAL
 
@@ -118,8 +105,3 @@ withActualError key error cache =
 withActualResult : comparable -> Result GetError value -> RemoteCache comparable value -> RemoteCache comparable value
 withActualResult key result cache =
     { cache | actual = Cache.withResult key result cache.actual }
-
-
-withoutActual : comparable -> RemoteCache comparable value -> RemoteCache comparable value
-withoutActual key cache =
-    { cache | actual = Cache.remove key cache.actual }
