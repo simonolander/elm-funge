@@ -86,7 +86,8 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
     if (typeof request.value.levelIds !== "undefined") {
         return Promise.all(
             request.value.levelIds.map(levelId => Firestore.getSolutions({authorId: user.id, levelId})
-                .then(snapshot => snapshot.docs.map(Solution.decoder.decode))
+                .then(snapshot => snapshot.docs.map(doc => doc.data()))
+                .then(data => data.map(Solution.decoder.decode))
                 .then(results => results.map(fromDecodeResult))
                 .then(values)))
             .then(lists => lists.reduce((acc, list) => acc.concat(list), []))
@@ -97,7 +98,8 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         authorId: user.id,
         levelId: request.value.levelId,
     })
-        .then(snapshot => snapshot.docs.map(Solution.decoder.decode))
+        .then(snapshot => snapshot.docs.map(doc => doc.data()))
+        .then(data => data.map(Solution.decoder.decode))
         .then(results => results.map(fromDecodeResult))
         .then(values)
         .then(got);

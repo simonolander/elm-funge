@@ -67,7 +67,7 @@ async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Dr
         }
     } else {
         return Firestore.getDrafts({authorId: user.id, levelId: request.value.levelId})
-            .then(snapshot => Result.values(snapshot.docs.map(doc => decode(doc, Draft.decoder))))
+            .then(snapshot => Result.values(snapshot.docs.map(doc => decode(doc.data(), Draft.decoder))))
             .then(got);
     }
 }
@@ -78,40 +78,41 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         return authResult.error;
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    const draftResult = decode(req.body, JsonDecoder.object({
+    const request = decode(req.body, JsonDecoder.object({
         id: JsonDecoder.string,
         levelId: JsonDecoder.string,
         board: Board.decoder,
     }, "Save draft request"));
-    if (draftResult.tag === "failure") {
-        return badRequest(draftResult.error);
+    if (request.tag === "failure") {
+        return badRequest(request.error);
     }
-    const draftRequest = draftResult.value;
-    const levelSnapshot = await Firestore.getLevelById(draftRequest.levelId)
+    const time = Date.now();
+    const draft: Draft.Draft = {
+        ...request.value,
+        authorId: user.id,
+        createdTime: time,
+        modifiedTime: time,
+    };
+    const levelSnapshot = await Firestore.getLevelById(request.value.levelId)
         .then(ref => ref.get());
     if (!levelSnapshot.exists) {
-        return badRequest(`Level ${draftRequest.levelId} does not exist`);
+        return badRequest(`Level ${request.value.levelId} does not exist`);
     }
-    const draftRef = await Firestore.getDraftById(draftRequest.id);
+    const draftRef = await Firestore.getDraftById(request.value.id);
     const draftSnapshot = await draftRef.get();
     if (!draftSnapshot.exists) {
-        const time = Date.now();
-        return draftRef.set({
-            ...draftResult.value,
-            authorId: user.id,
-            createdTime: time,
-            modifiedTime: time,
-        }).then(() => created());
+        return draftRef.set(draft)
+            .then(() => created());
     } else {
         if (draftSnapshot.get("authorId") !== user.id) {
-            return forbidden(user.id, "edit", "draft", draftRequest.id);
+            return forbidden(user.id, "edit", "draft", request.value.id);
         }
         const existingLevelId = draftSnapshot.get("levelId");
-        if (existingLevelId !== draftRequest.levelId) {
-            return badRequest(`Requested level id ${draftRequest} does not match existing level id ${existingLevelId}`);
+        if (existingLevelId !== request.value.levelId) {
+            return badRequest(`Requested level id ${request.value} does not match existing level id ${existingLevelId}`);
         }
         // TODO Check that the board matches too
-        return draftRef.set({board: draftRequest.board}, {merge: true})
+        return draftRef.set(draft)
             .then(() => updated());
     }
 }
@@ -122,19 +123,19 @@ async function del(req: Request): Promise<EndpointResult<never>> {
         return authResult.error;
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    const draftResult = decode(req.query, JsonDecoder.object({
+    const request = decode(req.query, JsonDecoder.object({
         draftId: JsonDecoder.string,
     }, "Delete draft request"));
-    if (draftResult.tag === "failure") {
-        return badRequest(draftResult.error);
+    if (request.tag === "failure") {
+        return badRequest(request.error);
     }
-    const draftRef = await Firestore.getDraftById(draftResult.value.draftId);
+    const draftRef = await Firestore.getDraftById(request.value.draftId);
     const draftSnapshot = await draftRef.get();
     if (!draftSnapshot.exists) {
         return alreadyDeleted();
     } else {
         if (draftSnapshot.get("authorId") !== user.id) {
-            return forbidden(user.id, "delete", "draft", draftResult.value.draftId);
+            return forbidden(user.id, "delete", "draft", request.value.draftId);
         }
         return draftRef.delete()
             .then(() => deleted());
