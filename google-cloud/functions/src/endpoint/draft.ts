@@ -122,7 +122,7 @@ async function del(req: Request): Promise<EndpointResult<never>> {
         return authResult.error;
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    const draftResult = decode(req.body, JsonDecoder.object({
+    const draftResult = decode(req.query, JsonDecoder.object({
         draftId: JsonDecoder.string,
     }, "Delete draft request"));
     if (draftResult.tag === "failure") {

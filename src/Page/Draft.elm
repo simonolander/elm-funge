@@ -7,6 +7,7 @@ import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
 import Data.Cache as Cache
 import Data.Draft as Draft exposing (Draft)
+import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
 import Data.GetError as GetError exposing (GetError)
 import Data.History as History
@@ -21,7 +22,8 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Extra.Cmd exposing (noCmd)
+import Extra.Cmd exposing (noCmd, withCmd)
+import Html
 import Json.Decode as Decode exposing (Error)
 import Json.Encode as Encode
 import Maybe.Extra
@@ -83,6 +85,7 @@ type InternalMsg
     | EditClear
     | ClickedBack
     | ClickedExecute
+    | ClickedDeleteDraft
     | InstructionToolReplaced Int InstructionTool
     | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
@@ -340,6 +343,53 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
+        ClickedDeleteDraft ->
+            case maybeDraft of
+                Just draft ->
+                    let
+                        newDraftBookCache =
+                            Cache.get draft.levelId model.session.draftBooks
+                                |> RemoteData.withDefault (DraftBook.empty draft.levelId)
+                                |> DraftBook.withoutDraftId draft.id
+                                |> flip (Cache.withValue draft.levelId) model.session.draftBooks
+
+                        newDraftCache =
+                            RemoteCache.withLocalValue draft.id Nothing model.session.drafts
+
+                        removeLocallyCmd =
+                            Cmd.batch
+                                [ Draft.removeFromLocalStorage draft.id
+                                , DraftBook.removeDraftIdFromLocalStorage draft.levelId draft.id
+                                ]
+
+                        removeRemotelyCmd =
+                            Session.getAccessToken model.session
+                                |> Maybe.map (flip (Draft.deleteFromServer (SessionMsg << GotDeleteDraftResponse draft.id)) draft.id)
+                                |> Maybe.withDefault Cmd.none
+
+                        changeRouteCmd =
+                            maybeLevel
+                                |> Maybe.map .campaignId
+                                |> Maybe.map (flip Route.Campaign (Just draft.levelId))
+                                |> Maybe.withDefault Route.Home
+                                |> Route.replaceUrl model.session.key
+
+                        cmd =
+                            Cmd.batch
+                                [ removeLocallyCmd
+                                , removeRemotelyCmd
+                                , changeRouteCmd
+                                ]
+                    in
+                    model.session
+                        |> Session.withDraftCache newDraftCache
+                        |> Session.withDraftBookCache newDraftBookCache
+                        |> flip withSession model
+                        |> withCmd cmd
+
+                Nothing ->
+                    ( model, Cmd.none )
+
 
 updateDraft : Draft -> Model -> ( Model, Cmd Msg )
 updateDraft draft model =
@@ -427,6 +477,7 @@ view model =
         body =
             content
                 |> View.Layout.layout
+                |> Html.map InternalMsg
                 |> List.singleton
     in
     { title = "Draft"
@@ -434,7 +485,7 @@ view model =
     }
 
 
-viewLoaded : LoadedModel -> Element Msg
+viewLoaded : LoadedModel -> Element InternalMsg
 viewLoaded model =
     let
         maybeSelectedInstructionTool =
@@ -447,7 +498,7 @@ viewLoaded model =
         boardOnClick =
             maybeSelectedInstructionTool
                 |> Maybe.map InstructionTool.getInstruction
-                |> Maybe.map (\instruction { position } -> InternalMsg (InstructionPlaced position instruction))
+                |> Maybe.map (\instruction { position } -> InstructionPlaced position instruction)
 
         disabledPositions =
             Board.instructions model.level.initialBoard
@@ -489,7 +540,7 @@ viewLoaded model =
                             , width (px 500)
                             , height (px 500)
                             ]
-                            { onChange = InternalMsg << ImportDataChanged
+                            { onChange = ImportDataChanged
                             , text = importData
                             , placeholder = Nothing
                             , spellcheck = False
@@ -504,10 +555,10 @@ viewLoaded model =
                             |> Maybe.map (paragraph [])
                             |> Maybe.withDefault none
                         , ViewComponents.textButton []
-                            (Just (InternalMsg (Import importData)))
+                            (Just (Import importData))
                             "Import"
                         , ViewComponents.textButton []
-                            (Just (InternalMsg ImportClosed))
+                            (Just ImportClosed)
                             "Close"
                         ]
                         |> Just
@@ -519,8 +570,8 @@ viewLoaded model =
             View.InstructionTools.view
                 { instructionTools = model.level.instructionTools
                 , selectedIndex = model.selectedInstructionToolIndex
-                , onSelect = Just (InternalMsg << InstructionToolSelected)
-                , onReplace = \index tool -> InternalMsg (InstructionToolReplaced index tool)
+                , onSelect = Just InstructionToolSelected
+                , onReplace = \index tool -> InstructionToolReplaced index tool
                 }
 
         element =
@@ -536,7 +587,7 @@ viewLoaded model =
     element
 
 
-viewSidebar : LoadedModel -> Element Msg
+viewSidebar : LoadedModel -> Element InternalMsg
 viewSidebar model =
     let
         level =
@@ -553,28 +604,33 @@ viewSidebar model =
 
         undoButtonView =
             textButton []
-                (Just (InternalMsg EditUndo))
+                (Just EditUndo)
                 "Undo"
 
         redoButtonView =
             textButton []
-                (Just (InternalMsg EditRedo))
+                (Just EditRedo)
                 "Redo"
 
         clearButtonView =
             textButton []
-                (Just (InternalMsg EditClear))
+                (Just EditClear)
                 "Clear"
 
         importExportButtonView =
             textButton []
-                (Just (InternalMsg ImportOpen))
+                (Just ImportOpen)
                 "Import / Export"
 
         executeButtonView =
             textButton []
-                (Just (InternalMsg ClickedExecute))
+                (Just ClickedExecute)
                 "Execute"
+
+        deleteDraftButtonView =
+            textButton []
+                (Just ClickedDeleteDraft)
+                "Delete draft"
     in
     column
         [ px 350 |> width
@@ -605,4 +661,5 @@ viewSidebar model =
             , clearButtonView
             , importExportButtonView
             ]
+        , deleteDraftButtonView
         ]

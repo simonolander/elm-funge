@@ -12,7 +12,7 @@ module Page.Campaign exposing
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Cache as Cache
-import Data.Campaign as Campaign exposing (Campaign)
+import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
@@ -332,6 +332,8 @@ update msg model =
                 draftCache =
                     model.session.drafts
                         |> RemoteCache.withLocalValue draft.id (Just draft)
+                        |> RemoteCache.withExpectedValue draft.id Nothing
+                        |> RemoteCache.withActualValue draft.id Nothing
 
                 draftBook =
                     Cache.get draft.levelId model.session.draftBooks

@@ -1,4 +1,4 @@
-module Data.DraftBook exposing (DraftBook, empty, loadFromLocalStorage, localStorageResponse, removeFromLocalStorage, saveToLocalStorage, withDraftId, withDraftIds)
+module Data.DraftBook exposing (DraftBook, empty, loadFromLocalStorage, localStorageResponse, removeDraftIdFromLocalStorage, removeFromLocalStorage, saveToLocalStorage, withDraftId, withDraftIds, withoutDraftId)
 
 import Basics.Extra exposing (flip)
 import Data.DraftId as DraftId exposing (DraftId)
@@ -25,17 +25,22 @@ empty levelId =
 
 
 withDraftId : DraftId -> DraftBook -> DraftBook
-withDraftId draftId levelDrafts =
-    { levelDrafts
-        | draftIds = Set.insert draftId levelDrafts.draftIds
+withDraftId draftId draftBook =
+    { draftBook
+        | draftIds = Set.insert draftId draftBook.draftIds
     }
 
 
 withDraftIds : Set DraftId -> DraftBook -> DraftBook
-withDraftIds draftIds levelDrafts =
-    { levelDrafts
-        | draftIds = Set.union levelDrafts.draftIds draftIds
+withDraftIds draftIds draftBook =
+    { draftBook
+        | draftIds = Set.union draftBook.draftIds draftIds
     }
+
+
+withoutDraftId : DraftId -> DraftBook -> DraftBook
+withoutDraftId draftId draftBook =
+    { draftBook | draftIds = Set.remove draftId draftBook.draftIds }
 
 
 
@@ -71,6 +76,11 @@ loadFromLocalStorage levelId =
 removeFromLocalStorage : LevelId -> Cmd msg
 removeFromLocalStorage levelId =
     Ports.LocalStorage.storageRemoveItem (localStorageKey levelId)
+
+
+removeDraftIdFromLocalStorage : LevelId -> DraftId -> Cmd msg
+removeDraftIdFromLocalStorage levelId draftId =
+    Ports.LocalStorage.storageRemoveFromSet ( localStorageKey levelId, DraftId.encode draftId )
 
 
 localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error DraftBook)

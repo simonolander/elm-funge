@@ -112,7 +112,7 @@ async function del(req: Request): Promise<EndpointResult<never>> {
     if (authResult.tag === "failure") {
         return authResult.error;
     }
-    const request = decode(req.body, JsonDecoder.object({
+    const request = decode(req.query, JsonDecoder.object({
         blueprintId: JsonDecoder.string,
     }, "DeleteRequest"));
     if (request.tag === "failure") {

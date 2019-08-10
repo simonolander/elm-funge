@@ -26,7 +26,8 @@ import Set
 
 
 type SessionMsg
-    = GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
+    = GotDeleteDraftResponse DraftId (Maybe SaveError)
+    | GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
     | GotLoadDraftsByLevelIdResponse LevelId (Result GetError (List Draft))
     | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
     | GotLoadLevelByLevelIdResponse LevelId (Result GetError Level)
@@ -40,6 +41,18 @@ type SessionMsg
 update : SessionMsg -> Session -> ( Session, Cmd msg )
 update msg session =
     case msg of
+        GotDeleteDraftResponse draftId result ->
+            case result of
+                Nothing ->
+                    session.drafts
+                        |> RemoteCache.withActualValue draftId Nothing
+                        |> RemoteCache.withExpectedValue draftId Nothing
+                        |> flip Session.withDraftCache session
+                        |> withCmd (Draft.removeRemoteFromLocalStorage draftId)
+
+                Just error ->
+                    ( session, SaveError.consoleError error )
+
         GotLoadHighScoreResponse levelId result ->
             session.highScores
                 |> Cache.withResult levelId result
