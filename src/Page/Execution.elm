@@ -21,6 +21,7 @@ import Data.Output exposing (Output)
 import Data.RemoteCache as RemoteCache
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
+import Data.SolutionBook as SolutionBook
 import Data.Stack exposing (Stack)
 import Element exposing (..)
 import Element.Background as Background
@@ -324,10 +325,19 @@ update msg model =
 
                 GeneratedSolution solution ->
                     let
+                        solutionCache =
+                            RemoteCache.withLocalValue solution.id (Just solution) model.session.solutions
+
+                        solutionBookCache =
+                            Cache.get solution.levelId model.session.solutionBooks
+                                |> RemoteData.withDefault (SolutionBook.empty solution.levelId)
+                                |> SolutionBook.withSolutionId solution.id
+                                |> flip (Cache.withValue solution.levelId) model.session.solutionBooks
+
                         modelWithSolution =
-                            model.session.solutions
-                                |> RemoteCache.withLocalValue solution.id (Just solution)
-                                |> flip Session.withSolutionCache model.session
+                            model.session
+                                |> Session.withSolutionBookCache solutionBookCache
+                                |> Session.withSolutionCache solutionCache
                                 |> flip withSession model
                     in
                     case Session.getAccessToken model.session of
