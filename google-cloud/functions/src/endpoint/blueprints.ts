@@ -3,16 +3,13 @@ import {Err, JsonDecoder} from "ts.data.json";
 import * as Blueprint from "../data/Blueprint";
 
 import {
-    alreadyDeleted,
     badRequest,
     corruptData,
-    created,
-    deleted,
     EndpointResult,
     forbidden,
-    got,
+    found,
     notFound,
-    updated,
+    ok,
 } from "../data/EndpointResult";
 import {fromDecodeResult, values} from "../data/Result";
 import {verifyJwt} from "../misc/auth";
@@ -62,7 +59,7 @@ async function get(req: Request): Promise<EndpointResult<Blueprint.Blueprint | B
         if (blueprint.value.authorId !== user.id) {
             return forbidden(user.id, "read", "blueprint", request.value.blueprintId);
         } else {
-            return got(blueprint.value);
+            return found(blueprint.value);
         }
     } else {
         return Firestore.getBlueprints({
@@ -70,7 +67,7 @@ async function get(req: Request): Promise<EndpointResult<Blueprint.Blueprint | B
         })
             .then(snapshot => snapshot.docs.map(doc => fromDecodeResult(Blueprint.decoder.decode(doc.data()))))
             .then(values)
-            .then(got);
+            .then(found);
     }
 }
 
@@ -96,13 +93,13 @@ async function put(req: Request): Promise<EndpointResult<never>> {
             modifiedTime: time,
         };
         return ref.set(newBlueprint)
-            .then(() => created());
+            .then(() => ok());
     } else {
         if (blueprint.authorId !== user.id) {
             return forbidden(user.id, "edit", "blueprint", request.value.id);
         }
         return ref.set({...request.value, modifiedTime: Date.now()}, {merge: true})
-            .then(() => updated());
+            .then(() => ok());
     }
 }
 
@@ -121,7 +118,7 @@ async function del(req: Request): Promise<EndpointResult<never>> {
     const snapshot = await Firestore.getBlueprintById(request.value.blueprintId)
         .then(ref => ref.get());
     if (!snapshot.exists) {
-        return alreadyDeleted();
+        return ok();
     }
 
     const blueprint = Blueprint.decoder.decode(snapshot.data());
@@ -132,5 +129,5 @@ async function del(req: Request): Promise<EndpointResult<never>> {
         return forbidden(user.id, "delete", "blueprint", request.value.blueprintId);
     }
     return snapshot.ref.delete()
-        .then(() => deleted());
+        .then(() => ok());
 }

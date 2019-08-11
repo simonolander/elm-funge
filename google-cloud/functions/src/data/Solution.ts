@@ -19,3 +19,10 @@ export const decoder: JsonDecoder.Decoder<Solution> = JsonDecoder.object({
 }, "Solution");
 
 decoder.decode = decoder.decode.bind(decoder);
+
+export function isSame(a: Solution, b: Solution): boolean {
+    if (a.levelId !== b.levelId) {
+        return false;
+    }
+    return Board.equals(a.board, b.board);
+}

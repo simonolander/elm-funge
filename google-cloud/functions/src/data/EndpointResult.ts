@@ -1,33 +1,23 @@
 import {Collection} from "../service/firestore";
 
 export type EndpointResult<T> =
-    Got<T>
-    | Created
-    | Updated
-    | Deleted
+    Found<T>
+    | Ok
     | NotFound
     | BadRequest
     | InvalidAccessToken
     | Forbidden
-    | AlreadyExists
-    | AlreadyDeleted
+    | ConflictingId
+    | Duplicate
     | InternalServerError;
 
-interface Got<T> {
-    tag: "Got";
+interface Found<T> {
+    tag: "Found";
     body: T;
 }
 
-interface Created {
-    tag: "Created";
-}
-
-interface Updated {
-    tag: "Updated";
-}
-
-interface Deleted {
-    tag: "Deleted";
+interface Ok {
+    tag: "Ok";
 }
 
 interface NotFound {
@@ -49,12 +39,8 @@ interface Forbidden {
     messages: string[];
 }
 
-interface AlreadyExists {
-    tag: "AlreadyExists";
-}
-
-interface AlreadyDeleted {
-    tag: "AlreadyDeleted";
+interface ConflictingId {
+    tag: "ConflictingId";
 }
 
 interface InternalServerError {
@@ -62,15 +48,19 @@ interface InternalServerError {
     messages: string[];
 }
 
+interface Duplicate {
+    tag: "Duplicate";
+}
+
 export function getStatusCode<T>(result: EndpointResult<T>): number {
     switch (result.tag) {
-        case "Got":
+        case "Ok":
             return 200;
-        case "Created":
-            return 200;
-        case "Updated":
-            return 200;
-        case "Deleted":
+        case "ConflictingId":
+            return 409;
+        case "Duplicate":
+            return 409;
+        case "Found":
             return 200;
         case "NotFound":
             return 404;
@@ -80,10 +70,6 @@ export function getStatusCode<T>(result: EndpointResult<T>): number {
             return 403;
         case "Forbidden":
             return 403;
-        case "AlreadyExists":
-            return 409;
-        case "AlreadyDeleted":
-            return 200;
         case "InternalServerError":
             return 500;
     }
@@ -91,35 +77,23 @@ export function getStatusCode<T>(result: EndpointResult<T>): number {
 
 export function getBody<T>(result: EndpointResult<T>): T | EndpointResult<T> {
     switch (result.tag) {
-        case "Got":
+        case "Found":
             return result.body;
         default:
             return result;
     }
 }
 
-export function got<T>(body: T): EndpointResult<T> {
+export function found<T>(body: T): EndpointResult<T> {
     return {
-        tag: "Got",
+        tag: "Found",
         body,
     };
 }
 
-export function created<T>(): EndpointResult<T> {
+export function ok<T>(): EndpointResult<T> {
     return {
-        tag: "Created",
-    };
-}
-
-export function updated<T>(): EndpointResult<T> {
-    return {
-        tag: "Updated",
-    };
-}
-
-export function deleted<T>(): EndpointResult<T> {
-    return {
-        tag: "Deleted",
+        tag: "Ok",
     };
 }
 
@@ -152,18 +126,6 @@ export function forbidden<T>(userId: string, action: "read" | "edit" | "delete" 
     };
 }
 
-export function alreadyExists<T>(): EndpointResult<T> {
-    return {
-        tag: "AlreadyExists",
-    };
-}
-
-export function alreadyDeleted<T>(): EndpointResult<T> {
-    return {
-        tag: "AlreadyDeleted",
-    };
-}
-
 export function internalServerError<T>(message: string | string[]): EndpointResult<T> {
     return {
         tag: "InternalServerError",
@@ -174,4 +136,16 @@ export function internalServerError<T>(message: string | string[]): EndpointResu
 export function corruptData<T>(collection: Collection, id: string, error: string): EndpointResult<T> {
     console.warn(`1dbe7429    Corrupted data in ${collection} for id ${id}`, error);
     return internalServerError(`Corrupted data in ${collection} for id ${id}`);
+}
+
+export function conflictingId<T>(): EndpointResult<T> {
+    return {
+        tag: "ConflictingId",
+    };
+}
+
+export function duplicate<T>(): EndpointResult<T> {
+    return {
+        tag: "Duplicate",
+    };
 }

@@ -1,7 +1,7 @@
 import {Request} from "express";
 import * as https from "https";
 
-import {badRequest, EndpointResult, got, invalidAccessToken} from "../data/EndpointResult";
+import {badRequest, EndpointResult, found, invalidAccessToken} from "../data/EndpointResult";
 import {verifyJwt} from "../misc/auth";
 import * as Firestore from "../service/firestore";
 
@@ -56,5 +56,5 @@ async function get(req: Request): Promise<EndpointResult<any>> {
     const userInfo = await getUserInfoFromAuth0(authorization);
     return Firestore.getUserBySubject(authResult.value)
         .then(ref => ref.set(userInfo, {merge: true}))
-        .then(() => got(userInfo));
+        .then(() => found(userInfo));
 }

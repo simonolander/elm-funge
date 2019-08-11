@@ -3,14 +3,13 @@ import {Err, JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
 import * as Draft from "../data/Draft";
 import {
-    alreadyDeleted,
     badRequest,
-    created, deleted,
     EndpointResult,
     forbidden,
-    got, internalServerError,
+    found,
+    internalServerError,
     notFound,
-    updated,
+    ok,
 } from "../data/EndpointResult";
 import * as Result from "../data/Result";
 import {verifyJwt} from "../misc/auth";
@@ -30,7 +29,7 @@ export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     }
 }
 
-async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Draft[]>> {
+async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Draft[]>> {
     const authResult = verifyJwt<Draft.Draft>(req, ["openid", "read:drafts"]);
     if (authResult.tag === "failure") {
         return authResult.error;
@@ -61,14 +60,14 @@ async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Dr
             if (draft.value.authorId !== user.id) {
                 return forbidden(user.id, "read", "draft", request.value.draftId);
             }
-            return got(draft.value);
+            return found(draft.value);
         } else {
             return notFound();
         }
     } else {
         return Firestore.getDrafts({authorId: user.id, levelId: request.value.levelId})
             .then(snapshot => Result.values(snapshot.docs.map(doc => decode(doc.data(), Draft.decoder))))
-            .then(got);
+            .then(found);
     }
 }
 
@@ -102,7 +101,7 @@ async function put(req: Request): Promise<EndpointResult<never>> {
     const draftSnapshot = await draftRef.get();
     if (!draftSnapshot.exists) {
         return draftRef.set(draft)
-            .then(() => created());
+            .then(() => ok());
     } else {
         if (draftSnapshot.get("authorId") !== user.id) {
             return forbidden(user.id, "edit", "draft", request.value.id);
@@ -113,7 +112,7 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         }
         // TODO Check that the board matches too
         return draftRef.set(draft)
-            .then(() => updated());
+            .then(() => ok());
     }
 }
 
@@ -132,12 +131,12 @@ async function del(req: Request): Promise<EndpointResult<never>> {
     const draftRef = await Firestore.getDraftById(request.value.draftId);
     const draftSnapshot = await draftRef.get();
     if (!draftSnapshot.exists) {
-        return alreadyDeleted();
+        return ok();
     } else {
         if (draftSnapshot.get("authorId") !== user.id) {
             return forbidden(user.id, "delete", "draft", request.value.draftId);
         }
         return draftRef.delete()
-            .then(() => deleted());
+            .then(() => ok());
     }
 }

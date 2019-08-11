@@ -2,14 +2,14 @@ import {Request} from "express";
 import {Err, JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
 import {
-    alreadyExists,
     badRequest,
-    corruptData,
-    created,
+    conflictingId,
+    corruptData, duplicate,
     EndpointResult,
     forbidden,
-    got,
+    found,
     notFound,
+    ok,
 } from "../data/EndpointResult";
 import * as Level from "../data/Level";
 import * as Result from "../data/Result";
@@ -79,7 +79,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         if (solution.value.authorId !== user.id) {
             return forbidden(user.id, "read", "solution", request.value.solutionId);
         }
-        return got(solution.value);
+        return found(solution.value);
     }
 
     if (typeof request.value.levelIds !== "undefined") {
@@ -90,7 +90,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
                 .then(results => results.map(fromDecodeResult))
                 .then(values)))
             .then(lists => lists.reduce((acc, list) => acc.concat(list), []))
-            .then(got);
+            .then(found);
     }
 
     return Firestore.getSolutions({
@@ -101,7 +101,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         .then(data => data.map(Solution.decoder.decode))
         .then(results => results.map(fromDecodeResult))
         .then(values)
-        .then(got);
+        .then(found);
 }
 
 async function post(req: Request): Promise<EndpointResult<never>> {
@@ -121,9 +121,26 @@ async function post(req: Request): Promise<EndpointResult<never>> {
         return badRequest(request.error);
     }
 
+    const solution: Solution.Solution = {
+        ...request.value,
+        authorId: user.id,
+    };
+
     const solutionRef = await Firestore.getSolutionById(request.value.id);
-    if ((await solutionRef.get()).exists) {
-        return alreadyExists();
+    const existingSolution = await solutionRef.get()
+        .then(ref => ref.data())
+        .then(data => JsonDecoder.oneOf([Solution.decoder, JsonDecoder.isUndefined(undefined)], "Solution || undefined").decode(data));
+    if (existingSolution instanceof Err) {
+        return corruptData("solutions", request.value.id, existingSolution.error);
+    }
+    if (typeof existingSolution.value !== "undefined") {
+        if (user.id !== existingSolution.value.authorId) {
+            return conflictingId();
+        }
+        if (Solution.isSame(solution, existingSolution.value)) {
+            return ok();
+        }
+        return conflictingId();
     }
 
     const levelSnapshot = await Firestore.getLevelById(request.value.levelId)
@@ -142,7 +159,7 @@ async function post(req: Request): Promise<EndpointResult<never>> {
             return boards.some((board) => Board.equals(request.value.board, board));
         });
     if (similarSolutionExists) {
-        alreadyExists();
+        duplicate();
     }
 
     const level = decode(levelSnapshot.data(), Level.decoder);
@@ -157,11 +174,6 @@ async function post(req: Request): Promise<EndpointResult<never>> {
         return badRequest(solutionError);
     }
 
-    const solution: Solution.Solution = {
-        ...request.value,
-        authorId: user.id,
-    };
-
     return solutionRef.set(solution)
-        .then(() => created());
+        .then(() => ok());
 }

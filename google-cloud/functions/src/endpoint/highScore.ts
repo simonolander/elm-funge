@@ -1,7 +1,7 @@
 import {Request} from "express";
 import {JsonDecoder} from "ts.data.json";
 
-import {badRequest, EndpointResult, got} from "../data/EndpointResult";
+import {badRequest, EndpointResult, found} from "../data/EndpointResult";
 import * as HighScore from "../data/HighScore";
 import * as Result from "../data/Result";
 import * as Solution from "../data/Solution";
@@ -33,5 +33,5 @@ async function get(req: Request): Promise<EndpointResult<any>> {
         .then(results => Result.values(results))
         .then(solutions => solutions.map(solution => solution.score))
         .then(scores => HighScore.fromScores(result.value.levelId, scores))
-        .then(highScore => got(highScore));
+        .then(highScore => found(highScore));
 }

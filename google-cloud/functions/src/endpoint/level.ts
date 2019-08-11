@@ -4,13 +4,13 @@ import * as Blueprint from "../data/Blueprint";
 import * as Board from "../data/Board";
 
 import {
-    badRequest, corruptData,
+    badRequest,
+    corruptData,
     EndpointResult,
     forbidden,
-    got,
+    found,
     internalServerError,
-    notFound,
-    updated,
+    notFound, ok,
 } from "../data/EndpointResult";
 import * as InstructionTool from "../data/InstructionTool";
 import * as Integer from "../data/Integer";
@@ -67,18 +67,18 @@ async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Lev
         if (!documentSnapshot.exists) {
             return notFound();
         }
-        const level =  Level.decoder.decode(documentSnapshot.data());
+        const level = Level.decoder.decode(documentSnapshot.data());
         if (level instanceof Err) {
             return corruptData("levels", requestResult.value.levelId, level.error);
         }
-        return got(level.value);
+        return found(level.value);
     }
 
     return Firestore.getLevels(requestResult.value)
         .then(snapshot => snapshot.docs.map(doc => doc.data()))
         .then(data => data.map(Level.decoder.decode))
         .then(data => data.map(fromDecodeResult))
-        .then(results => got(values(results)));
+        .then(results => found(values(results)));
 }
 
 async function post(req: Request): Promise<EndpointResult<never>> {
@@ -141,5 +141,5 @@ async function put(req: Request): Promise<EndpointResult<never>> {
     };
     return Firestore.getLevelById(levelResult.value.id)
         .then(ref => ref.set(level))
-        .then(() => updated());
+        .then(() => ok());
 }
