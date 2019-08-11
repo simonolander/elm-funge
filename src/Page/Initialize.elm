@@ -193,8 +193,7 @@ init { navigationKey, localStorageEntries, url } =
         model =
             { session =
                 Session.init navigationKey url
-
-            --                    |> Levels.withTestLevels
+                    |> Levels.withTestLevels
             , route = route
             , accessTokenState =
                 accessToken

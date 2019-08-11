@@ -1,3 +1,5 @@
+import {Collection} from "../service/firestore";
+
 export type EndpointResult<T> =
     Got<T>
     | Created
@@ -167,4 +169,9 @@ export function internalServerError<T>(message: string | string[]): EndpointResu
         tag: "InternalServerError",
         messages: typeof message === "string" ? [message] : message,
     };
+}
+
+export function corruptData<T>(collection: Collection, id: string, error: string): EndpointResult<T> {
+    console.warn(`1dbe7429    Corrupted data in ${collection} for id ${id}`, error);
+    return internalServerError(`Corrupted data in ${collection} for id ${id}`);
 }

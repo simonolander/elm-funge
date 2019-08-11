@@ -4,11 +4,11 @@ import * as Board from "../data/Board";
 import {
     alreadyExists,
     badRequest,
+    corruptData,
     created,
     EndpointResult,
     forbidden,
     got,
-    internalServerError,
     notFound,
 } from "../data/EndpointResult";
 import * as Level from "../data/Level";
@@ -74,8 +74,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         }
         const solution = Solution.decoder.decode(snapshot.data());
         if (solution instanceof Err) {
-            console.warn(`7b29423a    Corrupted data for solution ${request.value.solutionId}`, solution.error);
-            return internalServerError(`Corrupted data for solution ${request.value.solutionId}`);
+            return corruptData("solutions", request.value.solutionId, solution.error);
         }
         if (solution.value.authorId !== user.id) {
             return forbidden(user.id, "read", "solution", request.value.solutionId);
@@ -149,8 +148,7 @@ async function post(req: Request): Promise<EndpointResult<never>> {
     const level = decode(levelSnapshot.data(), Level.decoder);
 
     if (level.tag === "failure") {
-        console.warn(`defedda7    Corrupted data for level ${request.value.levelId}`, level.error);
-        return internalServerError(`Corrupted data for level ${request.value.levelId}`);
+        return corruptData("levels", request.value.levelId, level.error);
     }
 
     const solutionError = isSolutionValid(level.value, request.value.board, request.value.score);

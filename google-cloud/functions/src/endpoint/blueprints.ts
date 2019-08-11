@@ -5,12 +5,12 @@ import * as Blueprint from "../data/Blueprint";
 import {
     alreadyDeleted,
     badRequest,
+    corruptData,
     created,
     deleted,
     EndpointResult,
     forbidden,
     got,
-    internalServerError,
     notFound,
     updated,
 } from "../data/EndpointResult";
@@ -57,8 +57,7 @@ async function get(req: Request): Promise<EndpointResult<Blueprint.Blueprint | B
         }
         const blueprint = Blueprint.decoder.decode(blueprintSnapshot.data());
         if (blueprint instanceof Err) {
-            console.warn(`4650f597    Corrupted data for blueprint ${request.value.blueprintId}`, blueprint.error);
-            return internalServerError(`Corrupted data for blueprint ${request.value.blueprintId}`);
+            return corruptData("blueprints", request.value.blueprintId, blueprint.error);
         }
         if (blueprint.value.authorId !== user.id) {
             return forbidden(user.id, "read", "blueprint", request.value.blueprintId);
@@ -127,8 +126,7 @@ async function del(req: Request): Promise<EndpointResult<never>> {
 
     const blueprint = Blueprint.decoder.decode(snapshot.data());
     if (blueprint instanceof Err) {
-        console.warn(`ba52d48c    Corrupted data for blueprint ${request.value.blueprintId}`, blueprint.error);
-        return internalServerError(`Corrupted data for blueprint ${request.value.blueprintId}`);
+        return corruptData("blueprints", request.value.blueprintId, blueprint.error);
     }
     if (blueprint.value.authorId !== user.id) {
         return forbidden(user.id, "delete", "blueprint", request.value.blueprintId);

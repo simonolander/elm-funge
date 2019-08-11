@@ -4,7 +4,7 @@ import * as Blueprint from "../data/Blueprint";
 import * as Board from "../data/Board";
 
 import {
-    badRequest,
+    badRequest, corruptData,
     EndpointResult,
     forbidden,
     got,
@@ -69,8 +69,7 @@ async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Lev
         }
         const level =  Level.decoder.decode(documentSnapshot.data());
         if (level instanceof Err) {
-            console.warn(`ed00fc10    Corrupted data for level ${requestResult.value.levelId}`, level.error);
-            return internalServerError(`Corrupted data for level ${requestResult.value.levelId}`);
+            return corruptData("levels", requestResult.value.levelId, level.error);
         }
         return got(level.value);
     }
@@ -103,8 +102,7 @@ async function post(req: Request): Promise<EndpointResult<never>> {
     }
     const blueprint = decode(blueprintSnapshot.data(), Blueprint.decoder);
     if (blueprint.tag === "failure") {
-        console.warn(`2f275279    Corrupted data for blueprint ${request.value.blueprintId}`, ...blueprint.error);
-        return internalServerError(`Corrupted data for blueprint ${request.value.blueprintId}`);
+        return corruptData("blueprints", request.value.blueprintId, blueprint.error);
     }
     if (blueprint.value.authorId !== user.id) {
         return forbidden(user.id, "publish", "blueprint", request.value.blueprintId);
