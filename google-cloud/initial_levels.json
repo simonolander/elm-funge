@@ -1,7 +1,9 @@
 [
   {
-    "version": 2,
+    "version": 1,
     "id": "88c653c6c3a5b5e7",
+    "index": 2,
+    "campaignId": "standard",
     "name": "One, two, three",
     "description": [
       "> Output the numbers 1, 2, and 3"
@@ -15,7 +17,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 4,
       "height": 4,
       "instructions": []
@@ -69,14 +70,13 @@
       {
         "tag": "BranchAnyDirection"
       }
-    ],
-    "index": 0,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "42fe70779bd30656",
+    "index": 1,
+    "campaignId": "standard",
     "name": "Double the fun",
     "description": [
       "> Read a number n from input",
@@ -105,7 +105,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 4,
       "height": 4,
       "instructions": []
@@ -159,14 +158,13 @@
       {
         "tag": "BranchAnyDirection"
       }
-    ],
-    "index": 1,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "e2f96c5345e5f1f6",
+    "index": 3,
+    "campaignId": "standard",
     "name": "Count down",
     "description": [
       "> Read a number n from input",
@@ -207,7 +205,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 7,
       "height": 7,
       "instructions": []
@@ -261,14 +258,13 @@
       {
         "tag": "BranchAnyDirection"
       }
-    ],
-    "index": 2,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "c2003520d988f8d0",
+    "index": 4,
+    "campaignId": "standard",
     "name": "Some sums",
     "description": [
       "> Read two numbers a and b from input",
@@ -295,7 +291,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 7,
       "height": 7,
       "instructions": []
@@ -361,14 +356,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 3,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "d3c077ea5033222c",
+    "index": 8,
+    "campaignId": "standard",
     "name": "Signal amplifier",
     "description": [
       "> Read a number x from the input",
@@ -403,7 +397,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": []
@@ -475,14 +468,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 4,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "1a3c6d6a80769a07",
+    "index": 5,
+    "campaignId": "standard",
     "name": "One minus the other",
     "description": [
       "> Read two numbers a and b from input",
@@ -512,7 +504,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 7,
       "height": 7,
       "instructions": []
@@ -578,14 +569,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 5,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "3ee1f15ae601fc94",
+    "index": 6,
+    "campaignId": "standard",
     "name": "Powers of two",
     "description": [
       "> Read a number n from input",
@@ -612,7 +602,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 8,
       "height": 8,
       "instructions": []
@@ -678,14 +667,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 6,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "24c7efb5c41f8f8f",
+    "index": 7,
+    "campaignId": "standard",
     "name": "Triangular numbers",
     "description": [
       "> Read a number n from input",
@@ -714,7 +702,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 8,
       "height": 8,
       "instructions": []
@@ -780,14 +767,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 7,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "bc27b58a0cafb0ba",
+    "index": 9,
+    "campaignId": "standard",
     "name": "Multiplier",
     "description": [
       "> Read two positive numbers x and y from the input",
@@ -820,7 +806,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 7,
       "height": 7,
       "instructions": []
@@ -898,14 +883,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 8,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "9abf854cff37e96b",
+    "index": 10,
+    "campaignId": "standard",
     "name": "Divide and conquer",
     "description": [
       "> Read two positive numbers x and y from the input",
@@ -938,7 +922,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 7,
       "height": 7,
       "instructions": []
@@ -1023,14 +1006,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 9,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "407410b1638112a9",
+    "index": 11,
+    "campaignId": "standard",
     "name": "Sequence reverser",
     "description": [
       "> Read a sequence of numbers from input",
@@ -1065,7 +1047,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": []
@@ -1137,14 +1118,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 10,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "b96e6c12476716a3",
+    "index": 12,
+    "campaignId": "standard",
     "name": "Sequence sorter",
     "description": [
       "> Read a sequence from the input",
@@ -1183,7 +1163,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 7,
       "height": 7,
       "instructions": []
@@ -1267,14 +1246,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 11,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "1fac7ddba473e99d",
+    "index": 13,
+    "campaignId": "standard",
     "name": "Less is more",
     "description": [
       "> Read two numbers a and b from the input",
@@ -1304,7 +1282,6 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 8,
       "height": 8,
       "instructions": []
@@ -1376,14 +1353,13 @@
           "tag": "Terminate"
         }
       }
-    ],
-    "index": 12,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "be13bbdd076a586c",
+    "index": 14,
+    "campaignId": "standard",
     "name": "Labyrinth 1",
     "description": [
       "> Terminate the program",
@@ -1394,87 +1370,86 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
-            "x": 0,
+            "x": 2,
             "y": 0
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 1,
+            "x": 4,
             "y": 0
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 1
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 1,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 0,
+            "x": 2,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
             "y": 2
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 0,
+            "x": 1,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 4
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
           "instruction": {
             "tag": "Terminate"
-          },
-          "position": {
-            "x": 1,
-            "y": 4
           }
         }
       ]
@@ -1489,14 +1464,13 @@
       {
         "tag": "ChangeAnyDirection"
       }
-    ],
-    "index": 13,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "e6d9465e4aacaa0f",
+    "index": 15,
+    "campaignId": "standard",
     "name": "Labyrinth 2",
     "description": [
       "> Terminate the program",
@@ -1507,77 +1481,76 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
-            "x": 0,
+            "x": 4,
             "y": 0
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 0,
+            "x": 3,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 2
           }
         },
         {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
           "instruction": {
             "tag": "Terminate"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
-            "x": 0,
+            "x": 1,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 1,
+            "x": 4,
             "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
           }
         }
       ]
@@ -1592,14 +1565,13 @@
       {
         "tag": "ChangeAnyDirection"
       }
-    ],
-    "index": 14,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "e81d1f82a8a37103",
+    "index": 16,
+    "campaignId": "standard",
     "name": "Labyrinth 3",
     "description": [
       "> Terminate the program",
@@ -1610,107 +1582,106 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
+          "position": {
+            "x": 3,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 0
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
-            "x": 0,
+            "x": 3,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 2
           }
         },
         {
-          "instruction": {
-            "tag": "Terminate"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 2
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
           },
+          "instruction": {
+            "tag": "Terminate"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 1,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 1,
+            "x": 2,
             "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
           }
         }
       ]
@@ -1731,14 +1702,13 @@
           "tag": "JumpForward"
         }
       }
-    ],
-    "index": 15,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "e7d5826a6db19981",
+    "index": 17,
+    "campaignId": "standard",
     "name": "Labyrinth 4",
     "description": [
       "> Terminate the program",
@@ -1749,137 +1719,136 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 1,
             "y": 0
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 0,
-            "y": 1
-          }
-        },
-        {
+            "x": 3,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 1,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 2,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 1
           },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 2
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 1,
+            "x": 3,
             "y": 2
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 1,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 2,
             "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
           }
         },
         {
-          "instruction": {
-            "tag": "Terminate"
-          },
           "position": {
             "x": 3,
             "y": 3
+          },
+          "instruction": {
+            "tag": "Terminate"
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 4
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 4
           }
         }
       ]
@@ -1900,14 +1869,13 @@
           "tag": "JumpForward"
         }
       }
-    ],
-    "index": 16,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "519983570eefe19c",
+    "index": 18,
+    "campaignId": "standard",
     "name": "Labyrinth 5",
     "description": [
       "> Terminate the program",
@@ -1918,138 +1886,137 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
-            "x": 0,
+            "x": 4,
             "y": 0
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 1
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 3,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 2
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
           "instruction": {
             "tag": "PushToStack",
             "value": 1
-          },
-          "position": {
-            "x": 1,
-            "y": 2
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 0,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 3
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 4
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Right",
             "falseDirection": "Up"
-          },
-          "position": {
-            "x": 1,
-            "y": 4
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
           "instruction": {
             "tag": "Terminate"
-          },
-          "position": {
-            "x": 2,
-            "y": 4
           }
         }
       ]
@@ -2064,14 +2031,13 @@
       {
         "tag": "ChangeAnyDirection"
       }
-    ],
-    "index": 17,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "81101cdad21a4ed2",
+    "index": 19,
+    "campaignId": "standard",
     "name": "Labyrinth 6",
     "description": [
       "> Terminate the program",
@@ -2082,148 +2048,147 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
+          "position": {
+            "x": 2,
+            "y": 1
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 1
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
           "instruction": {
             "tag": "PushToStack",
             "value": 1
-          },
-          "position": {
-            "x": 1,
-            "y": 1
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 2
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 2
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 3
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 3
+          },
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Right",
             "falseDirection": "Up"
-          },
-          "position": {
-            "x": 1,
-            "y": 3
           }
         },
         {
-          "instruction": {
-            "tag": "Terminate"
-          },
-          "position": {
-            "x": 2,
-            "y": 3
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 3,
             "y": 3
+          },
+          "instruction": {
+            "tag": "Terminate"
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 3
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 1,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 2,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 3,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 4,
             "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
           }
         }
       ]
@@ -2244,14 +2209,13 @@
           "tag": "JumpForward"
         }
       }
-    ],
-    "index": 18,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "36ae04449442c355",
+    "index": 20,
+    "campaignId": "standard",
     "name": "Labyrinth 7",
     "description": [
       "> Terminate the program",
@@ -2262,167 +2226,166 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
+          "position": {
+            "x": 3,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 0
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 0,
             "y": 1
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 1
           }
         },
         {
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
           "instruction": {
             "tag": "Increment"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
           },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
           "position": {
             "x": 2,
-            "y": 1
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 2
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
             "y": 3
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
           },
-          "position": {
-            "x": 1,
-            "y": 3
-          }
-        },
-        {
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Right",
             "falseDirection": "Left"
-          },
-          "position": {
-            "x": 2,
-            "y": 3
           }
         },
         {
-          "instruction": {
-            "tag": "Terminate"
-          },
           "position": {
             "x": 3,
             "y": 3
+          },
+          "instruction": {
+            "tag": "Terminate"
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 4,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 4
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 1,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 2,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
             "x": 3,
             "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
           }
         }
       ]
@@ -2446,14 +2409,13 @@
           "tag": "JumpForward"
         }
       }
-    ],
-    "index": 19,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "42cdf083b26bb8ab",
+    "index": 21,
+    "campaignId": "standard",
     "name": "Labyrinth 8",
     "description": [
       "> Output 1, 2, 3, 4",
@@ -2469,53 +2431,52 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
           "instruction": {
             "tag": "Terminate"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
           }
         },
         {
+          "position": {
+            "x": 2,
+            "y": 1
+          },
           "instruction": {
             "tag": "Increment"
-          },
-          "position": {
-            "x": 0,
-            "y": 1
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
           "instruction": {
             "tag": "Print"
-          },
-          "position": {
-            "x": 1,
-            "y": 1
           }
         },
         {
-          "instruction": {
-            "tag": "Print"
-          },
           "position": {
-            "x": 0,
+            "x": 2,
             "y": 2
+          },
+          "instruction": {
+            "tag": "Print"
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
           "instruction": {
             "tag": "Increment"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
           }
         }
       ]
@@ -2530,14 +2491,13 @@
       {
         "tag": "ChangeAnyDirection"
       }
-    ],
-    "index": 20,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "5ed6d025ab5937e4",
+    "index": 22,
+    "campaignId": "standard",
     "name": "Labyrinth 9",
     "description": [
       "> Terminate the program",
@@ -2548,119 +2508,118 @@
       "output": []
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
+          "position": {
+            "x": 3,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
           "instruction": {
             "tag": "JumpForward"
-          },
-          "position": {
-            "x": 1,
-            "y": 0
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
             "x": 0,
             "y": 1
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
+          "position": {
+            "x": 2,
+            "y": 1
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 1
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
-            "x": 0,
+            "x": 1,
             "y": 2
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
           "instruction": {
             "tag": "Terminate"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
           "instruction": {
             "tag": "JumpForward"
-          },
-          "position": {
-            "x": 2,
-            "y": 2
           }
         },
         {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
+          }
+        },
+        {
           "position": {
-            "x": 0,
+            "x": 4,
             "y": 3
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
-          "position": {
-            "x": 1,
-            "y": 3
-          }
-        },
-        {
-          "instruction": {
-            "tag": "JumpForward"
-          },
-          "position": {
-            "x": 0,
-            "y": 4
-          }
-        },
-        {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
             "x": 1,
             "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
             "x": 2,
             "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         }
       ]
@@ -2675,14 +2634,13 @@
       {
         "tag": "ChangeAnyDirection"
       }
-    ],
-    "index": 21,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "b4c862e5dcfb82c1",
+    "index": 23,
+    "campaignId": "standard",
     "name": "Labyrinth 10",
     "description": [
       "> Output 1",
@@ -2696,134 +2654,133 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
+          "position": {
+            "x": 1,
+            "y": 0
+          },
           "instruction": {
             "tag": "JumpForward"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 0
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 0
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
-            "x": 0,
+            "x": 2,
             "y": 1
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
-            "x": 1,
+            "x": 4,
             "y": 1
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
           "position": {
             "x": 0,
             "y": 2
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
+          "position": {
+            "x": 1,
+            "y": 2
+          },
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Left",
             "falseDirection": "Up"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
           }
         },
         {
-          "instruction": {
-            "tag": "Terminate"
-          },
           "position": {
             "x": 2,
             "y": 2
+          },
+          "instruction": {
+            "tag": "Terminate"
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Right",
             "falseDirection": "Up"
-          },
-          "position": {
-            "x": 3,
-            "y": 2
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 0,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 3
           }
         },
         {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 3
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 4
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
           "instruction": {
             "tag": "JumpForward"
-          },
-          "position": {
-            "x": 1,
-            "y": 4
           }
         }
       ]
@@ -2850,14 +2807,13 @@
           "tag": "Print"
         }
       }
-    ],
-    "index": 22,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   },
   {
-    "version": 2,
+    "version": 1,
     "id": "f8ba39bc9d01ef03",
+    "index": 24,
+    "campaignId": "standard",
     "name": "Labyrinth 11",
     "description": [
       "> Output 1",
@@ -2871,133 +2827,132 @@
       ]
     },
     "initialBoard": {
-      "version": 2,
       "width": 5,
       "height": 5,
       "instructions": [
         {
-          "instruction": {
-            "tag": "JumpForward"
-          },
-          "position": {
-            "x": 0,
-            "y": 0
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 1,
-            "y": 0
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 0
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
-          "instruction": {
-            "tag": "JumpForward"
+          "position": {
+            "x": 3,
+            "y": 0
           },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
           "position": {
             "x": 0,
             "y": 1
+          },
+          "instruction": {
+            "tag": "JumpForward"
           }
         },
         {
+          "position": {
+            "x": 2,
+            "y": 1
+          },
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Up",
             "falseDirection": "Right"
-          },
-          "position": {
-            "x": 1,
-            "y": 1
           }
         },
         {
+          "position": {
+            "x": 1,
+            "y": 2
+          },
           "instruction": {
             "tag": "JumpForward"
-          },
-          "position": {
-            "x": 0,
-            "y": 2
           }
         },
         {
-          "instruction": {
-            "tag": "Terminate"
-          },
-          "position": {
-            "x": 1,
-            "y": 2
-          }
-        },
-        {
-          "instruction": {
-            "tag": "Exception",
-            "exceptionMessage": "Don't hit the exceptions"
-          },
           "position": {
             "x": 2,
             "y": 2
+          },
+          "instruction": {
+            "tag": "Terminate"
           }
         },
         {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
           "instruction": {
             "tag": "Exception",
             "exceptionMessage": "Don't hit the exceptions"
-          },
-          "position": {
-            "x": 0,
-            "y": 3
           }
         },
         {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "Exception",
+            "exceptionMessage": "Don't hit the exceptions"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 3
+          },
           "instruction": {
             "tag": "Branch",
             "trueDirection": "Down",
             "falseDirection": "Right"
-          },
-          "position": {
-            "x": 1,
-            "y": 3
           }
         },
         {
+          "position": {
+            "x": 4,
+            "y": 3
+          },
           "instruction": {
             "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 4
           },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
           "position": {
             "x": 2,
-            "y": 3
-          }
-        },
-        {
-          "instruction": {
-            "tag": "JumpForward"
-          },
-          "position": {
-            "x": 0,
             "y": 4
-          }
-        },
-        {
+          },
           "instruction": {
             "tag": "Increment"
-          },
-          "position": {
-            "x": 1,
-            "y": 4
           }
         }
       ]
@@ -3018,9 +2973,6 @@
           "tag": "Print"
         }
       }
-    ],
-    "index": 23,
-    "campaignId": "standard",
-    "authorId": "root"
+    ]
   }
 ]

@@ -7,8 +7,9 @@ import Data.Direction exposing (Direction(..))
 import Data.Instruction as Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Int16 as Int16
-import Data.Level exposing (Level)
+import Data.Level as Level exposing (Level)
 import Data.Session as Session
+import Json.Encode as Encode
 import Set
 
 
@@ -989,8 +990,10 @@ levels =
             , levelLabyrinth11
             ]
 
-        -- a =
-        --     lvls |> list JsonUtils.encodeLevel |> JsonUtils.toString |> Debug.log "levels:"
+        a =
+            Encode.list Level.encode lvls
+                |> Encode.encode 2
+                |> Debug.log ""
     in
     lvls
 
