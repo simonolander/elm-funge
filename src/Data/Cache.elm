@@ -1,4 +1,4 @@
-module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, fromValueDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, values, withDefault, withError, withResult, withValue)
+module Data.Cache exposing (Cache, empty, fromRequestResults, fromResult, fromResultDict, fromValueDict, get, insertRequestResult, isNotAsked, keys, loading, map, remove, setInsert, update, values, withDefault, withError, withResult, withValue)
 
 import Basics.Extra exposing (flip)
 import Data.RequestResult exposing (RequestResult)
@@ -36,6 +36,14 @@ values cache =
 empty : Cache comparable error value
 empty =
     Cache Dict.empty
+
+
+update : comparable -> (RemoteData error value -> RemoteData error value) -> Cache comparable error value -> Cache comparable error value
+update key function cache =
+    cache
+        |> getDict
+        |> Dict.update key (Maybe.withDefault NotAsked >> function >> Just)
+        |> Cache
 
 
 fromRequestResults : List (RequestResult comparable error value) -> Cache comparable error value

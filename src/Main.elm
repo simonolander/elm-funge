@@ -195,7 +195,7 @@ update msg model =
                 mdl
                     |> getSession
                     |> SessionUpdate.update message
-                    |> updateWith (flip withSession mdl) ExecutionMsg
+                    |> updateWith (flip withSession mdl) (ExecutionMsg << Execution.SessionMsg)
 
             ( DraftMsg (Draft.InternalMsg message), Draft mdl ) ->
                 Draft.update message mdl
@@ -205,9 +205,9 @@ update msg model =
                 mdl
                     |> getSession
                     |> SessionUpdate.update message
-                    |> updateWith (flip withSession mdl) DraftMsg
+                    |> updateWith (flip withSession mdl) (DraftMsg << Draft.SessionMsg)
 
-            ( CampaignMsg message, Campaign mdl ) ->
+            ( CampaignMsg (Campaign.InternalMsg message), Campaign mdl ) ->
                 Campaign.update message mdl
                     |> updateWith Campaign CampaignMsg
 
@@ -215,7 +215,7 @@ update msg model =
                 mdl
                     |> getSession
                     |> SessionUpdate.update message
-                    |> updateWith (flip withSession mdl) CampaignMsg
+                    |> updateWith (flip withSession mdl) (CampaignMsg << Campaign.SessionMsg)
 
             ( HomeMsg message, Home mdl ) ->
                 Home.update message mdl

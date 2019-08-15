@@ -98,7 +98,7 @@ async function post(req: Request): Promise<EndpointResult<never>> {
     const blueprintRef = await Firestore.getBlueprintById(request.value.blueprintId);
     const blueprintSnapshot = await blueprintRef.get();
     if (!blueprintSnapshot.exists) {
-        return notFound();
+        return badRequest(`Blueprint ${request.value.blueprintId} does not exist`);
     }
     const blueprint = decode(blueprintSnapshot.data(), Blueprint.decoder);
     if (blueprint.tag === "failure") {

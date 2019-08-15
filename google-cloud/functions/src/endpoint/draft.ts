@@ -4,16 +4,19 @@ import * as Board from "../data/Board";
 import * as Draft from "../data/Draft";
 import {
     badRequest,
+    conflictingId,
+    corruptData,
     EndpointResult,
     forbidden,
     found,
-    internalServerError,
     notFound,
     ok,
 } from "../data/EndpointResult";
+import * as Level from "../data/Level";
 import * as Result from "../data/Result";
 import {verifyJwt} from "../misc/auth";
-import {decode} from "../misc/json";
+import {decode, maybe} from "../misc/json";
+import {isBoardValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
 export async function endpoint(req: Request): Promise<EndpointResult<any>> {
@@ -49,21 +52,19 @@ async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Dra
     }
     const user = await Firestore.getUserBySubject(authResult.value);
     if (typeof request.value.draftId !== "undefined") {
-        const snapshot = await Firestore.getDraftById(request.value.draftId)
-            .then(ref => ref.get());
-        if (snapshot.exists) {
-            const draft = decode(snapshot.data(), Draft.decoder);
-            if (draft.tag === "failure") {
-                console.warn(`989e047a    Corrupt draft ${request.value.draftId} in firestore`, draft.error);
-                return internalServerError(`Corrupt draft ${request.value.draftId} in firestore`);
-            }
-            if (draft.value.authorId !== user.id) {
-                return forbidden(user.id, "read", "draft", request.value.draftId);
-            }
-            return found(draft.value);
-        } else {
+        const draft = await Firestore.getDraftById(request.value.draftId)
+            .then(ref => ref.get())
+            .then(data => maybe(Draft.decoder).decode(data));
+        if (draft instanceof Err) {
+            return corruptData("drafts", request.value.draftId, draft.error);
+        }
+        if (typeof draft.value === "undefined") {
             return notFound();
         }
+        if (draft.value.authorId !== user.id) {
+            return forbidden(user.id, "read", "draft", request.value.draftId);
+        }
+        return found(draft.value);
     } else {
         return Firestore.getDrafts({authorId: user.id, levelId: request.value.levelId})
             .then(snapshot => Result.values(snapshot.docs.map(doc => decode(doc.data(), Draft.decoder))))
@@ -92,28 +93,37 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         createdTime: time,
         modifiedTime: time,
     };
-    const levelSnapshot = await Firestore.getLevelById(request.value.levelId)
-        .then(ref => ref.get());
-    if (!levelSnapshot.exists) {
+    const level = await Firestore.getLevelById(request.value.levelId)
+        .then(ref => ref.get())
+        .then(snapshot => snapshot.data())
+        .then(data => maybe(Level.decoder).decode(data));
+    if (level instanceof Err) {
+        return corruptData("levels", request.value.levelId, level.error);
+    }
+    if (typeof level.value === "undefined") {
         return badRequest(`Level ${request.value.levelId} does not exist`);
     }
     const draftRef = await Firestore.getDraftById(request.value.id);
-    const draftSnapshot = await draftRef.get();
-    if (!draftSnapshot.exists) {
-        return draftRef.set(draft)
-            .then(() => ok());
-    } else {
-        if (draftSnapshot.get("authorId") !== user.id) {
-            return forbidden(user.id, "edit", "draft", request.value.id);
-        }
-        const existingLevelId = draftSnapshot.get("levelId");
-        if (existingLevelId !== request.value.levelId) {
-            return badRequest(`Requested level id ${request.value} does not match existing level id ${existingLevelId}`);
-        }
-        // TODO Check that the board matches too
-        return draftRef.set(draft)
-            .then(() => ok());
+    const existingDraft = await draftRef.get()
+        .then(snapshot => snapshot.data())
+        .then(data => maybe(Draft.decoder).decode(data));
+    if (existingDraft instanceof Err) {
+        return corruptData("drafts", request.value.id, existingDraft.error);
     }
+    if (typeof existingDraft.value !== "undefined") {
+        if (existingDraft.value.authorId !== user.id) {
+            return conflictingId();
+        }
+        if (existingDraft.value.levelId !== request.value.levelId) {
+            return badRequest(`Requested level id ${request.value} does not match existing level id ${existingDraft.value.levelId}`);
+        }
+    }
+    const boardError = isBoardValid(level.value, request.value.board);
+    if (typeof boardError !== "undefined") {
+        return badRequest(boardError);
+    }
+    return draftRef.set(draft)
+        .then(() => ok());
 }
 
 async function del(req: Request): Promise<EndpointResult<never>> {

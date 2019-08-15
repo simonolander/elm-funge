@@ -1,11 +1,13 @@
-module Data.SaveError exposing (SaveError(..), consoleError, expect, toString)
+module Data.SubmitSolutionError exposing (SubmitSolutionError(..), consoleError, expect, fromResponse, toString)
 
+import Data.EndpointResult as EndpointResult
 import Extra.Result exposing (getError)
 import Http exposing (Expect, Response(..), expectStringResponse)
+import Json.Decode as Decode
 import Ports.Console
 
 
-type SaveError
+type SubmitSolutionError
     = NetworkError
     | InvalidAccessToken String
     | Duplicate
@@ -13,7 +15,7 @@ type SaveError
     | Other String
 
 
-toString : SaveError -> String
+toString : SubmitSolutionError -> String
 toString detailedHttpError =
     case detailedHttpError of
         NetworkError ->
@@ -32,7 +34,7 @@ toString detailedHttpError =
             string
 
 
-fromResponse : Response String -> Result SaveError ()
+fromResponse : Response String -> Result SubmitSolutionError ()
 fromResponse response =
     case response of
         BadUrl_ string ->
@@ -45,22 +47,31 @@ fromResponse response =
             Err NetworkError
 
         BadStatus_ metadata body ->
-            case metadata.statusCode of
-                403 ->
-                    Err (InvalidAccessToken body)
+            case Decode.decodeString EndpointResult.decoder body of
+                Ok EndpointResult.ConflictingId ->
+                    Err ConflictingId
 
-                statusCode ->
-                    Err (Other ("Status " ++ String.fromInt statusCode ++ ": " ++ body))
+                Ok EndpointResult.Duplicate ->
+                    Err Duplicate
+
+                Ok (EndpointResult.InvalidAccessToken messages) ->
+                    Err (InvalidAccessToken (String.join "\n" messages))
+
+                Ok other ->
+                    Err (Other (EndpointResult.toString other))
+
+                Err _ ->
+                    Err (Other ("Status " ++ String.fromInt metadata.statusCode ++ ": " ++ body))
 
         GoodStatus_ _ _ ->
             Ok ()
 
 
-expect : (Maybe SaveError -> msg) -> Expect msg
+expect : (Maybe SubmitSolutionError -> msg) -> Expect msg
 expect toMsg =
     expectStringResponse (getError >> toMsg) fromResponse
 
 
-consoleError : SaveError -> Cmd msg
+consoleError : SubmitSolutionError -> Cmd msg
 consoleError error =
     Ports.Console.errorString (toString error)

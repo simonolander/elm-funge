@@ -9,6 +9,7 @@ module Data.Solution exposing
     , loadRemoteFromLocalStorage
     , localRemoteStorageResponse
     , localStorageResponse
+    , removeFromLocalStorage
     , removeRemoteFromLocalStorage
     , saveRemoteToLocalStorage
     , saveToLocalStorage
@@ -21,10 +22,10 @@ import Data.Board as Board exposing (Board)
 import Data.GetError as HttpError exposing (GetError)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
-import Data.SaveError as SaveError exposing (SaveError)
 import Data.Score as Score exposing (Score)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId as SolutionId exposing (SolutionId)
+import Data.SubmitSolutionError as SubmitSolutionError exposing (SubmitSolutionError)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage
@@ -141,6 +142,11 @@ saveToLocalStorage solution =
         ]
 
 
+removeFromLocalStorage : SolutionId -> Cmd msg
+removeFromLocalStorage solutionId =
+    Ports.LocalStorage.storageRemoveItem (localStorageKey solutionId)
+
+
 localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult LevelId Decode.Error (Maybe Solution))
 localStorageResponse ( key, value ) =
     case String.split "." key of
@@ -205,13 +211,13 @@ localRemoteStorageResponse ( key, value ) =
 -- REST
 
 
-saveToServer : (Maybe SaveError -> msg) -> AccessToken -> Solution -> Cmd msg
+saveToServer : (Maybe SubmitSolutionError -> msg) -> AccessToken -> Solution -> Cmd msg
 saveToServer toMsg accessToken solution =
     GCP.post
         |> GCP.withPath [ "solutions" ]
         |> GCP.withAccessToken accessToken
         |> GCP.withBody (encode solution)
-        |> GCP.request (SaveError.expect toMsg)
+        |> GCP.request (SubmitSolutionError.expect toMsg)
 
 
 loadFromServerByLevelId : (Result GetError (List Solution) -> msg) -> AccessToken -> LevelId -> Cmd msg

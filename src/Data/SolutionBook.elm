@@ -1,4 +1,16 @@
-module Data.SolutionBook exposing (SolutionBook, decoder, empty, encode, loadFromLocalStorage, localStorageResponse, saveToLocalStorage, withSolutionId, withSolutionIds)
+module Data.SolutionBook exposing
+    ( SolutionBook
+    , decoder
+    , empty
+    , encode
+    , loadFromLocalStorage
+    , localStorageResponse
+    , removeSolutionIdFromLocalStorage
+    , saveToLocalStorage
+    , withSolutionId
+    , withSolutionIds
+    , withoutSolutionId
+    )
 
 import Basics.Extra exposing (flip)
 import Data.LevelId as LevelId exposing (LevelId)
@@ -37,6 +49,11 @@ withSolutionIds solutionIds levelSolutions =
     { levelSolutions
         | solutionIds = Set.union levelSolutions.solutionIds solutionIds
     }
+
+
+withoutSolutionId : SolutionId -> SolutionBook -> SolutionBook
+withoutSolutionId solutionIds solutionBook =
+    { solutionBook | solutionIds = Set.remove solutionIds solutionBook.solutionIds }
 
 
 
@@ -78,14 +95,12 @@ localStorageKey levelId =
 
 saveToLocalStorage : SolutionId -> LevelId -> Cmd msg
 saveToLocalStorage solutionId levelId =
-    let
-        key =
-            localStorageKey levelId
+    Ports.LocalStorage.storagePushToSet ( localStorageKey levelId, SolutionId.encode solutionId )
 
-        value =
-            SolutionId.encode solutionId
-    in
-    Ports.LocalStorage.storagePushToSet ( key, value )
+
+removeSolutionIdFromLocalStorage : SolutionId -> LevelId -> Cmd msg
+removeSolutionIdFromLocalStorage solutionId levelId =
+    Ports.LocalStorage.storageRemoveFromSet ( localStorageKey levelId, SolutionId.encode solutionId )
 
 
 loadFromLocalStorage : LevelId -> Cmd msg

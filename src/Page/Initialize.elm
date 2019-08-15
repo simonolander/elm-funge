@@ -25,6 +25,7 @@ import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId exposing (SolutionId)
+import Data.SubmitSolutionError as SubmitSolutionError exposing (SubmitSolutionError)
 import Data.User as User
 import Data.UserInfo as UserInfo exposing (UserInfo)
 import Dict exposing (Dict)
@@ -37,6 +38,7 @@ import Json.Encode as Encode
 import Levels
 import Maybe.Extra
 import Ports.Console
+import Random
 import RemoteData
 import Route exposing (Route)
 import Url
@@ -63,9 +65,9 @@ type ConflictResolution a
     | Error GetError
 
 
-type Saving a
+type Saving e a
     = Saving a
-    | Saved (Result SaveError a)
+    | Saved (Result e a)
 
 
 type AccessTokenState
@@ -88,20 +90,21 @@ type alias Model =
     , localDrafts : Dict DraftId Draft
     , expectedDrafts : Dict DraftId Draft
     , actualDrafts : Cache DraftId GetError (Maybe Draft)
-    , savingDrafts : Dict DraftId (Saving Draft)
+    , savingDrafts : Dict DraftId (Saving SaveError Draft)
     , localSolutionBooks : Dict LevelId SolutionBook
     , localSolutions : Dict SolutionId Solution
     , expectedSolutions : Dict SolutionId Solution
     , actualSolutions : Cache SolutionId GetError (Maybe Solution)
-    , savingSolutions : Dict SolutionId (Saving Solution)
+    , savingSolutions : Dict SolutionId (Saving SubmitSolutionError Solution)
     }
 
 
 type Msg
-    = GotUserInfoResponse (Result GetError UserInfo)
+    = GeneratedSolution Solution
+    | GotUserInfoResponse (Result GetError UserInfo)
     | GotDraftLoadResponse DraftId (Result GetError (Maybe Draft))
     | GotDraftSaveResponse Draft (Maybe SaveError)
-    | GotSolutionSaveResponse Solution (Maybe SaveError)
+    | GotSolutionSaveResponse Solution (Maybe SubmitSolutionError)
     | ClickedContinueOffline
     | ClickedDraftDeleteLocal DraftId
     | ClickedDraftKeepLocal DraftId
@@ -483,7 +486,7 @@ withExpiredAccessToken model =
     }
 
 
-isSaving : Saving a -> Bool
+isSaving : Saving e a -> Bool
 isSaving saving =
     case saving of
         Saving _ ->
@@ -500,6 +503,24 @@ isSaving saving =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GeneratedSolution solution ->
+            let
+                localSolutions =
+                    Dict.insert solution.id solution model.localSolutions
+
+                localSolutionBooks =
+                    Dict.update
+                        solution.levelId
+                        (Maybe.withDefault (SolutionBook.empty solution.levelId) >> SolutionBook.withSolutionId solution.id >> Just)
+                        model.localSolutionBooks
+            in
+            ( { model
+                | localSolutions = localSolutions
+                , localSolutionBooks = localSolutionBooks
+              }
+            , Cmd.none
+            )
+
         GotUserInfoResponse result ->
             let
                 modelWithActualUserInfo =
@@ -660,8 +681,74 @@ update msg model =
                         |> withCmd (Solution.saveRemoteToLocalStorage solution)
 
                 Just error ->
-                    modelWithSavedResponse
-                        |> withCmd (SaveError.consoleError error)
+                    case error of
+                        SubmitSolutionError.NetworkError ->
+                            --TODO Offline
+                            withExpiredAccessToken model
+                                |> noCmd
+
+                        SubmitSolutionError.InvalidAccessToken message ->
+                            withExpiredAccessToken model
+                                |> noCmd
+
+                        SubmitSolutionError.Duplicate ->
+                            let
+                                localSolutionBooks =
+                                    Dict.update solution.levelId (Maybe.map (SolutionBook.withoutSolutionId solution.id)) model.localSolutionBooks
+
+                                localSolutions =
+                                    Dict.remove solution.id model.localSolutions
+
+                                expectedSolutions =
+                                    Dict.remove solution.id model.expectedSolutions
+
+                                actualSolutions =
+                                    Cache.withValue solution.id Nothing model.actualSolutions
+                            in
+                            ( { model
+                                | localSolutionBooks = localSolutionBooks
+                                , localSolutions = localSolutions
+                                , expectedSolutions = expectedSolutions
+                                , actualSolutions = actualSolutions
+                              }
+                            , Cmd.batch
+                                [ Solution.removeFromLocalStorage solution.id
+                                , Solution.removeRemoteFromLocalStorage solution.id
+                                , SolutionBook.removeSolutionIdFromLocalStorage solution.id solution.levelId
+                                ]
+                            )
+
+                        SubmitSolutionError.ConflictingId ->
+                            let
+                                localSolutionBooks =
+                                    Dict.update solution.levelId (Maybe.map (SolutionBook.withoutSolutionId solution.id)) model.localSolutionBooks
+
+                                localSolutions =
+                                    Dict.remove solution.id model.localSolutions
+
+                                expectedSolutions =
+                                    Dict.remove solution.id model.expectedSolutions
+
+                                actualSolutions =
+                                    Cache.withValue solution.id Nothing model.actualSolutions
+                            in
+                            ( { model
+                                | localSolutionBooks = localSolutionBooks
+                                , localSolutions = localSolutions
+                                , expectedSolutions = expectedSolutions
+                                , actualSolutions = actualSolutions
+                              }
+                            , Cmd.batch
+                                [ Solution.removeFromLocalStorage solution.id
+                                , Solution.removeRemoteFromLocalStorage solution.id
+                                , SolutionBook.removeSolutionIdFromLocalStorage solution.id solution.levelId
+                                , Random.generate GeneratedSolution (Solution.generator solution.levelId solution.score solution.board)
+                                ]
+                            )
+
+                        SubmitSolutionError.Other _ ->
+                            modelWithSavedResponse
+                                |> withCmd (SubmitSolutionError.consoleError error)
 
         ClickedContinueOffline ->
             ( { model

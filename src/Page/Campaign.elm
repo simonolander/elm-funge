@@ -32,6 +32,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Extra.Cmd
 import Extra.RemoteData
+import Html
 import Html.Attributes
 import Json.Decode as Decode
 import Maybe.Extra
@@ -289,19 +290,23 @@ withSession session model =
 -- UPDATE
 
 
-type Msg
+type InternalMsg
     = SelectLevel LevelId
     | ClickedOpenDraft DraftId
     | ClickedGenerateDraft
     | GeneratedDraft Draft
+
+
+type Msg
+    = InternalMsg InternalMsg
     | SessionMsg SessionMsg
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         generateDraft levelId =
-            Random.generate GeneratedDraft (Draft.generator levelId)
+            Random.generate (InternalMsg << GeneratedDraft) (Draft.generator levelId)
     in
     case msg of
         SelectLevel selectedLevelId ->
@@ -369,10 +374,6 @@ update msg model =
             in
             ( newModel, cmd )
 
-        SessionMsg sessionMsg ->
-            SessionUpdate.update sessionMsg model.session
-                |> Extra.Cmd.mapModel (flip withSession model)
-
 
 
 -- SUBSCRIPTIONS
@@ -414,26 +415,27 @@ view model =
     in
     { title = "Levels"
     , body =
-        layout
-            [ Background.color (rgb 0 0 0)
-            , width fill
-            , height fill
-            , Font.family
-                [ Font.monospace
+        content
+            |> layout
+                [ Background.color (rgb 0 0 0)
+                , width fill
+                , height fill
+                , Font.family
+                    [ Font.monospace
+                    ]
+                , Font.color (rgb 1 1 1)
                 ]
-            , Font.color (rgb 1 1 1)
-            ]
-            content
+            |> Html.map InternalMsg
             |> List.singleton
     }
 
 
-viewError : String -> Element Msg
+viewError : String -> Element InternalMsg
 viewError error =
     View.ErrorScreen.view error
 
 
-viewCampaign : Campaign -> Model -> Element Msg
+viewCampaign : Campaign -> Model -> Element InternalMsg
 viewCampaign campaign model =
     let
         viewTemporarySidebar message =
@@ -476,7 +478,7 @@ viewCampaign campaign model =
     View.SingleSidebar.view sidebar mainContent model.session
 
 
-viewLevels : Campaign -> Model -> Element Msg
+viewLevels : Campaign -> Model -> Element InternalMsg
 viewLevels campaign model =
     let
         viewLevel level =
@@ -549,7 +551,7 @@ viewLevels campaign model =
         |> el []
 
 
-viewSidebar : Level -> Model -> List (Element Msg)
+viewSidebar : Level -> Model -> List (Element InternalMsg)
 viewSidebar level model =
     let
         levelNameView =
@@ -612,7 +614,7 @@ viewSidebar level model =
     ]
 
 
-viewDrafts : Level -> Session -> Element Msg
+viewDrafts : Level -> Session -> Element InternalMsg
 viewDrafts level session =
     case Session.getDraftBook level.id session of
         NotAsked ->

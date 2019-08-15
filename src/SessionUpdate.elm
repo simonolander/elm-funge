@@ -17,16 +17,19 @@ import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
 import Data.SolutionId exposing (SolutionId)
+import Data.SubmitSolutionError as SubmitSolutionError exposing (SubmitSolutionError)
 import Extra.Cmd exposing (withCmd, withExtraCmd)
 import Extra.Result
 import Maybe.Extra
 import Ports.Console
+import Random
 import RemoteData exposing (RemoteData(..))
 import Set
 
 
 type SessionMsg
-    = GotDeleteDraftResponse DraftId (Maybe SaveError)
+    = GeneratedSolution Solution
+    | GotDeleteDraftResponse DraftId (Maybe SaveError)
     | GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
     | GotLoadDraftsByLevelIdResponse LevelId (Result GetError (List Draft))
     | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
@@ -35,12 +38,36 @@ type SessionMsg
     | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
     | GotSaveDraftResponse Draft (Maybe SaveError)
-    | GotSaveSolutionResponse Solution (Maybe SaveError)
+    | GotSaveSolutionResponse Solution (Maybe SubmitSolutionError)
 
 
-update : SessionMsg -> Session -> ( Session, Cmd msg )
+update : SessionMsg -> Session -> ( Session, Cmd SessionMsg )
 update msg session =
     case msg of
+        GeneratedSolution solution ->
+            let
+                solutionCache =
+                    session.solutions
+                        |> RemoteCache.withActualValue solution.id (Just solution)
+
+                solutionBookCache =
+                    session.solutionBooks
+                        |> Cache.update solution.id (RemoteData.map (SolutionBook.withSolutionId solution.id))
+
+                cmd =
+                    [ Just <| Solution.saveToLocalStorage solution
+                    , Just <| SolutionBook.saveToLocalStorage solution.id solution.levelId
+                    , Session.getAccessToken session
+                        |> Maybe.map (flip (Solution.saveToServer (GotSaveSolutionResponse solution)) solution)
+                    ]
+                        |> Maybe.Extra.values
+                        |> Cmd.batch
+            in
+            session
+                |> Session.withSolutionCache solutionCache
+                |> Session.withSolutionBookCache solutionBookCache
+                |> withCmd cmd
+
         GotDeleteDraftResponse draftId result ->
             case result of
                 Nothing ->
@@ -231,7 +258,65 @@ update msg session =
                         |> withCmd (Solution.saveToLocalStorage solution)
 
                 Just error ->
-                    ( session, SaveError.consoleError error )
+                    case error of
+                        SubmitSolutionError.NetworkError ->
+                            Debug.todo "Offline"
+
+                        SubmitSolutionError.InvalidAccessToken message ->
+                            ( Session.withoutAccessToken session, Ports.Console.errorString message )
+
+                        SubmitSolutionError.Duplicate ->
+                            let
+                                solutionCache =
+                                    session.solutions
+                                        |> RemoteCache.withLocalValue solution.id Nothing
+                                        |> RemoteCache.withExpectedValue solution.id Nothing
+                                        |> RemoteCache.withActualValue solution.id Nothing
+
+                                solutionBookCache =
+                                    session.solutionBooks
+                                        |> Cache.update solution.id (RemoteData.map (SolutionBook.withoutSolutionId solution.id))
+
+                                cmd =
+                                    Cmd.batch
+                                        [ Solution.removeFromLocalStorage solution.id
+                                        , Solution.removeRemoteFromLocalStorage solution.id
+                                        , SolutionBook.removeSolutionIdFromLocalStorage solution.id solution.levelId
+                                        ]
+                            in
+                            session
+                                |> Session.withSolutionCache solutionCache
+                                |> Session.withSolutionBookCache solutionBookCache
+                                |> withCmd cmd
+
+                        SubmitSolutionError.ConflictingId ->
+                            let
+                                solutionCache =
+                                    session.solutions
+                                        |> RemoteCache.withLocalValue solution.id Nothing
+                                        |> RemoteCache.withExpectedValue solution.id Nothing
+                                        |> RemoteCache.withActualValue solution.id Nothing
+
+                                solutionBookCache =
+                                    session.solutionBooks
+                                        |> Cache.update solution.id (RemoteData.map (SolutionBook.withoutSolutionId solution.id))
+
+                                cmd =
+                                    Cmd.batch
+                                        [ Solution.removeFromLocalStorage solution.id
+                                        , Solution.removeRemoteFromLocalStorage solution.id
+                                        , SolutionBook.removeSolutionIdFromLocalStorage solution.id solution.levelId
+                                        , Solution.generator solution.levelId solution.score solution.board
+                                            |> Random.generate GeneratedSolution
+                                        ]
+                            in
+                            session
+                                |> Session.withSolutionCache solutionCache
+                                |> Session.withSolutionBookCache solutionBookCache
+                                |> withCmd cmd
+
+                        SubmitSolutionError.Other _ ->
+                            ( session, SubmitSolutionError.consoleError error )
 
 
 gotActualDraft : DraftId -> Maybe Draft -> Session -> ( Session, Cmd msg )

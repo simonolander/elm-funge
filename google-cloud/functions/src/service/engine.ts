@@ -8,25 +8,13 @@ import {Score} from "../data/Score";
 
 const MAX_STEPS = 10000000;
 
-export function isSolutionValid(level: Level, board: Board.Board, score: Score): string | undefined {
+export function isBoardValid(level: Level, board: Board.Board) {
     if (level.initialBoard.width !== board.width) {
         return `Invalid board width, excepted ${level.initialBoard.width} but was ${board.width}`;
     }
 
     if (level.initialBoard.height !== board.height) {
         return `Invalid board height, excepted ${level.initialBoard.height} but was ${board.height}`;
-    }
-
-    if (score.numberOfInstructions < 0 || !isFinite(score.numberOfInstructions)) {
-        return `Invalid score, cannot have ${score.numberOfInstructions} instructions`;
-    }
-
-    if (score.numberOfSteps < 1 || !isFinite(score.numberOfSteps)) {
-        return `Invalid score, cannot have ${score.numberOfSteps} numberOfSteps`;
-    }
-
-    if (score.numberOfSteps > MAX_STEPS) {
-        return `Number of steps too large, cannot be higher than ${MAX_STEPS} but was ${score.numberOfSteps}`;
     }
 
     const matrix = Board.toMatrix(board);
@@ -38,14 +26,6 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
         if (Instruction.compareFn(instruction, matrix[position.x][position.y]) !== 0) {
             return `Invalid board, cannot overwrite fixed instruction at position (${position.x}, ${position.y})`;
         }
-    }
-
-    if (!board.instructions.some(({instruction}) => instruction.tag === "Terminate")) {
-        return "Invalid board, must contain at least one terminate instruction";
-    }
-
-    if (level.io.output.length !== 0 && !board.instructions.some(({instruction}) => instruction.tag === "Print")) {
-        return "Invalid board, level contains expected output but board has no print instruction";
     }
 
     const levelMatrix = Board.toMatrix(level.initialBoard);
@@ -63,6 +43,36 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
         }
     }
 
+    return undefined;
+}
+
+export function isSolutionValid(level: Level, board: Board.Board, score: Score): string | undefined {
+    const boardError = isBoardValid(level, board);
+    if (typeof boardError !== "undefined") {
+        return boardError;
+    }
+
+    if (score.numberOfInstructions < 0 || !isFinite(score.numberOfInstructions)) {
+        return `Invalid score, cannot have ${score.numberOfInstructions} instructions`;
+    }
+
+    if (score.numberOfSteps < 1 || !isFinite(score.numberOfSteps)) {
+        return `Invalid score, cannot have ${score.numberOfSteps} numberOfSteps`;
+    }
+
+    if (score.numberOfSteps > MAX_STEPS) {
+        return `Number of steps too large, cannot be higher than ${MAX_STEPS} but was ${score.numberOfSteps}`;
+    }
+
+    if (!board.instructions.some(({instruction}) => instruction.tag === "Terminate")) {
+        return "Invalid board, must contain at least one terminate instruction";
+    }
+
+    if (level.io.output.length !== 0 && !board.instructions.some(({instruction}) => instruction.tag === "Print")) {
+        return "Invalid board, level contains expected output but board has no print instruction";
+    }
+
+    const levelMatrix = Board.toMatrix(level.initialBoard);
     const actualNumberOfInstructions = board.instructions
         .filter(({position, instruction}) => Instruction.compareFn(instruction, levelMatrix[position.x][position.y]) !== 0)
         .length;

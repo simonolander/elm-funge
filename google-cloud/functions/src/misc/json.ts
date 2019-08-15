@@ -1,12 +1,16 @@
-import {JsonDecoder, Ok} from "ts.data.json";
+import * as Json from "ts.data.json";
 
 import * as Result from "../data/Result";
 
-export function decode<T>(json: any, decoder: JsonDecoder.Decoder<T>): Result.Result<T, string> {
+export function decode<T>(json: any, decoder: Json.JsonDecoder.Decoder<T>): Result.Result<T, string> {
     const result = decoder.decode(json);
-    if (result instanceof Ok) {
+    if (result instanceof Json.Ok) {
         return Result.success(result.value);
     } else {
         return Result.failure(result.error);
     }
+}
+
+export function maybe<T>(decoder: Json.JsonDecoder.Decoder<T>): Json.JsonDecoder.Decoder<T | undefined> {
+    return Json.JsonDecoder.oneOf([decoder, Json.JsonDecoder.isUndefined(undefined)], "maybe");
 }
