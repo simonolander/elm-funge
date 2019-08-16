@@ -652,7 +652,7 @@ viewDrafts level session =
 
                         Success (Just draft) ->
                             let
-                                solved =
+                                maybeSolution =
                                     session.solutionBooks
                                         |> Cache.get level.id
                                         |> RemoteData.map .solutionIds
@@ -662,8 +662,7 @@ viewDrafts level session =
                                         |> List.filterMap RemoteData.toMaybe
                                         |> Maybe.Extra.values
                                         |> List.filter (.board >> (==) (History.current draft.boardHistory))
-                                        |> List.isEmpty
-                                        |> not
+                                        |> List.head
 
                                 attrs =
                                     [ width fill
@@ -677,7 +676,7 @@ viewDrafts level session =
                                         ]
                                     , htmlAttribute
                                         (Html.Attributes.class
-                                            (if solved then
+                                            (if Maybe.Extra.isJust maybeSolution then
                                                 "solved"
 
                                              else
@@ -707,6 +706,18 @@ viewDrafts level session =
                                             |> String.fromInt
                                             |> text
                                         ]
+                                    , maybeSolution
+                                        |> Maybe.map
+                                            (\solution ->
+                                                row
+                                                    [ width fill
+                                                    , spaceEvenly
+                                                    ]
+                                                    [ text "Steps: "
+                                                    , text <| String.fromInt solution.score.numberOfSteps
+                                                    ]
+                                            )
+                                        |> Maybe.withDefault none
                                     ]
                                         |> column
                                             attrs
