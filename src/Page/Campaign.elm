@@ -440,7 +440,7 @@ viewError error =
 viewCampaign : Campaign -> Model -> Element InternalMsg
 viewCampaign campaign model =
     let
-        viewTemporarySidebar message =
+        viewTemporarySidebar elements =
             [ el
                 [ centerX
                 , Font.size 32
@@ -450,8 +450,25 @@ viewCampaign campaign model =
                 [ width fill
                 , Font.center
                 ]
-                [ text message ]
+                elements
             ]
+
+        numberOfLevels =
+            List.length campaign.levelIds
+
+        numberOfSolvedLevels =
+            model.session.solutionBooks
+                |> Cache.values
+                |> List.filterMap RemoteData.toMaybe
+                |> List.filter (not << Set.isEmpty << .solutionIds)
+                |> List.length
+
+        -- Not counting solutions not in solution books
+        allSolutionsLoaded =
+            campaign.levelIds
+                |> List.map (flip Cache.get model.session.solutionBooks)
+                |> List.map RemoteData.toMaybe
+                |> List.all Maybe.Extra.isJust
 
         sidebar =
             case
@@ -463,16 +480,29 @@ viewCampaign campaign model =
                     viewSidebar level model
 
                 Just NotAsked ->
-                    viewTemporarySidebar "Not asked :/"
+                    viewTemporarySidebar [ text "Not asked :/" ]
 
                 Just Loading ->
-                    viewTemporarySidebar "Loading level..."
+                    viewTemporarySidebar [ text "Loading level..." ]
 
                 Just (Failure error) ->
-                    viewTemporarySidebar (GetError.toString error)
+                    viewTemporarySidebar [ text (GetError.toString error) ]
 
                 Nothing ->
-                    viewTemporarySidebar "Select a level"
+                    viewTemporarySidebar
+                        [ String.concat
+                            [ if allSolutionsLoaded then
+                                ""
+
+                              else
+                                "at least "
+                            , String.fromInt numberOfSolvedLevels
+                            , "/"
+                            , String.fromInt numberOfLevels
+                            , " solved"
+                            ]
+                            |> text
+                        ]
 
         mainContent =
             viewLevels campaign model

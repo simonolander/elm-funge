@@ -46,6 +46,7 @@ import ViewComponents exposing (..)
 
 type State
     = Editing
+    | Deleting
     | Importing
         { importData : String
         , errorMessage : Maybe String
@@ -86,6 +87,8 @@ type InternalMsg
     | ClickedBack
     | ClickedExecute
     | ClickedDeleteDraft
+    | ClickedConfirmDeleteDraft
+    | ClickedCancelDeleteDraft
     | InstructionToolReplaced Int InstructionTool
     | InstructionToolSelected Int
     | InstructionPlaced Position Instruction
@@ -213,6 +216,9 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+                Deleting ->
+                    ( model, Cmd.none )
 
                 Editing ->
                     ( model, Cmd.none )
@@ -344,6 +350,16 @@ update msg model =
                     ( model, Cmd.none )
 
         ClickedDeleteDraft ->
+            ( { model | state = Deleting }, Cmd.none )
+
+        ClickedCancelDeleteDraft ->
+            if model.state == Deleting then
+                ( { model | state = Editing }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
+        ClickedConfirmDeleteDraft ->
             case maybeDraft of
                 Just draft ->
                     let
@@ -517,6 +533,25 @@ viewLoaded model =
             case model.state of
                 Editing ->
                     Nothing
+
+                Deleting ->
+                    Just <|
+                        column
+                            [ centerX
+                            , centerY
+                            , Background.color (rgb 0 0 0)
+                            , padding 20
+                            , Font.family [ Font.monospace ]
+                            , Font.color (rgb 1 1 1)
+                            , spacing 10
+                            , Border.width 3
+                            , Border.color (rgb 1 1 1)
+                            , width (maximum 400 shrink)
+                            ]
+                            [ paragraph [ Font.center ] [ text "Do you really want to delete this draft?" ]
+                            , ViewComponents.textButton [] (Just ClickedConfirmDeleteDraft) "Delete"
+                            , ViewComponents.textButton [] (Just ClickedCancelDeleteDraft) "Cancel"
+                            ]
 
                 Importing { importData, errorMessage } ->
                     column
