@@ -18,6 +18,8 @@ import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
 import Data.SolutionId exposing (SolutionId)
 import Data.SubmitSolutionError as SubmitSolutionError exposing (SubmitSolutionError)
+import Dict
+import Dict.Extra
 import Extra.Cmd exposing (withCmd, withExtraCmd)
 import Extra.Result
 import Maybe.Extra
@@ -36,6 +38,7 @@ type SessionMsg
     | GotLoadLevelByLevelIdResponse LevelId (Result GetError Level)
     | GotLoadLevelsByCampaignIdResponse CampaignId (Result GetError (List Level))
     | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
+    | GotLoadSolutionsByLevelIdsResponse (List LevelId) (Result GetError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
     | GotSaveDraftResponse Draft (Maybe SaveError)
     | GotSaveSolutionResponse Solution (Maybe SubmitSolutionError)
@@ -126,38 +129,54 @@ update msg session =
                         |> withCmd (Campaign.loadFromLocalStorage campaignId)
                         |> withExtraCmd (GetError.consoleError error)
 
-        GotLoadSolutionsByLevelIdResponse request result ->
+        GotLoadSolutionsBySolutionIdResponse solutionId result ->
+            case result of
+                Ok solution ->
+                    gotActualSolution solutionId solution session
+
+                Err error ->
+                    session.solutions
+                        |> RemoteCache.withActualError solutionId error
+                        |> RemoteCache.withLocalLoading solutionId
+                        |> flip Session.withSolutionCache session
+                        |> withCmd (Solution.loadFromLocalStorage solutionId)
+                        |> withExtraCmd (GetError.consoleError error)
+
+        GotLoadSolutionsByLevelIdResponse levelId result ->
             case result of
                 Ok solutions ->
-                    let
-                        solutionBook =
-                            { levelId = request
-                            , solutionIds =
-                                solutions
-                                    |> List.map .id
-                                    |> Set.fromList
-                            }
-
-                        sessionWithSolutionBookCache =
-                            session
-                                |> Session.withSolutionBook solutionBook
-
-                        cmd =
-                            solutions
-                                |> List.map Solution.saveToLocalStorage
-                                |> Cmd.batch
-                    in
-                    Extra.Cmd.fold
-                        (List.map (\solution -> gotActualSolution solution.id (Just solution)) solutions)
-                        sessionWithSolutionBookCache
-                        |> withExtraCmd cmd
+                    gotSolutionsByLevelId levelId solutions session
 
                 Err error ->
                     session.solutionBooks
-                        |> Cache.loading request
+                        |> Cache.loading levelId
                         |> flip Session.withSolutionBookCache session
-                        |> withCmd (SolutionBook.loadFromLocalStorage request)
+                        |> withCmd (SolutionBook.loadFromLocalStorage levelId)
                         |> withExtraCmd (GetError.consoleError error)
+
+        GotLoadSolutionsByLevelIdsResponse levelIds result ->
+            case result of
+                Ok solutions ->
+                    solutions
+                        |> Dict.Extra.groupBy .levelId
+                        |> Dict.toList
+                        |> List.map (\( levelId, solutionsByLevelId ) -> gotSolutionsByLevelId levelId solutionsByLevelId)
+                        |> flip Extra.Cmd.fold session
+
+                Err error ->
+                    let
+                        functions =
+                            List.map
+                                (\levelId sess ->
+                                    sess.solutionBooks
+                                        |> Cache.loading levelId
+                                        |> flip Session.withSolutionBookCache sess
+                                        |> withCmd (SolutionBook.loadFromLocalStorage levelId)
+                                        |> withExtraCmd (GetError.consoleError error)
+                                )
+                                levelIds
+                    in
+                    Extra.Cmd.fold functions session
 
         GotLoadLevelByLevelIdResponse levelId result ->
             case result of
@@ -172,24 +191,6 @@ update msg session =
                         |> Cache.loading levelId
                         |> flip Session.withLevelCache session
                         |> withCmd (Level.loadFromLocalStorage levelId)
-                        |> withExtraCmd (GetError.consoleError error)
-
-        GotLoadSolutionsBySolutionIdResponse solutionId result ->
-            let
-                sessionWithSolution =
-                    session.solutions
-                        |> RemoteCache.withActualResult solutionId result
-                        |> flip Session.withSolutionCache session
-            in
-            case result of
-                Ok solution ->
-                    gotActualSolution solutionId solution sessionWithSolution
-
-                Err error ->
-                    sessionWithSolution.solutions
-                        |> RemoteCache.withLocalLoading solutionId
-                        |> flip Session.withSolutionCache sessionWithSolution
-                        |> withCmd (Solution.loadFromLocalStorage solutionId)
                         |> withExtraCmd (GetError.consoleError error)
 
         GotLoadDraftByDraftIdResponse draftId result ->
@@ -381,3 +382,23 @@ gotActualSolution solutionId maybeActualSolution oldSession =
 
         Nothing ->
             ( newSession, Cmd.none )
+
+
+gotSolutionsByLevelId : LevelId -> List Solution -> Session -> ( Session, Cmd SessionMsg )
+gotSolutionsByLevelId levelId solutions session =
+    let
+        solutionBookCache =
+            session.solutionBooks
+                |> Cache.update levelId
+                    (RemoteData.withDefault (SolutionBook.empty levelId)
+                        >> SolutionBook.withSolutionIds
+                            (solutions
+                                |> List.map .id
+                                |> Set.fromList
+                            )
+                        >> Success
+                    )
+    in
+    session
+        |> Session.withSolutionBookCache solutionBookCache
+        |> Extra.Cmd.fold (List.map (\solution -> gotActualSolution solution.id (Just solution)) solutions)

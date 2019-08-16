@@ -956,6 +956,12 @@ viewExpiredAccessToken model message =
             { label = ViewComponents.textButton [] Nothing "Sign in"
             , url = Auth0.login (Route.toUrl model.route)
             }
+        , ViewComponents.textButton
+            [ width (px 300)
+            , centerX
+            ]
+            (Just ClickedContinueOffline)
+            "Continue offline"
         ]
 
 

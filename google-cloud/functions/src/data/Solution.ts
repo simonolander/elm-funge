@@ -1,8 +1,10 @@
 import {JsonDecoder} from "ts.data.json";
 import * as Board from "./Board";
+import * as Integer from "./Integer";
 import * as Score from "./Score";
 
 export interface Solution {
+    readonly version: number;
     readonly id: string;
     readonly levelId: string;
     readonly score: Score.Score;
@@ -11,6 +13,7 @@ export interface Solution {
 }
 
 export const decoder: JsonDecoder.Decoder<Solution> = JsonDecoder.object({
+    version: Integer.nonNegativeDecoder,
     id: JsonDecoder.string,
     levelId: JsonDecoder.string,
     score: Score.decoder,

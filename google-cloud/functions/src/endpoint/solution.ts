@@ -54,7 +54,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
                     ],
                     "solutionId?: string"),
                 levelIds: JsonDecoder.oneOf([
-                        JsonDecoder.array(JsonDecoder.string, "levelId: string"),
+                        JsonDecoder.string.map(levelIdString => levelIdString.split(",")),
                         JsonDecoder.isUndefined(undefined),
                     ],
                     "levelIds?: string[]"),
@@ -124,6 +124,7 @@ async function post(req: Request): Promise<EndpointResult<never>> {
     const solution: Solution.Solution = {
         ...request.value,
         authorId: user.id,
+        version: 1,
     };
 
     const solutionRef = await Firestore.getSolutionById(request.value.id);

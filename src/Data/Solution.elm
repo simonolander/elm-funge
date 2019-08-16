@@ -5,6 +5,7 @@ module Data.Solution exposing
     , generator
     , loadFromLocalStorage
     , loadFromServerByLevelId
+    , loadFromServerByLevelIds
     , loadFromServerBySolutionId
     , loadRemoteFromLocalStorage
     , localRemoteStorageResponse
@@ -225,6 +226,15 @@ loadFromServerByLevelId toMsg accessToken levelId =
     GCP.get
         |> GCP.withPath [ "solutions" ]
         |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.withAccessToken accessToken
+        |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
+
+
+loadFromServerByLevelIds : (Result GetError (List Solution) -> msg) -> AccessToken -> List LevelId -> Cmd msg
+loadFromServerByLevelIds toMsg accessToken levelIds =
+    GCP.get
+        |> GCP.withPath [ "solutions" ]
+        |> GCP.withQueryParameters [ Url.Builder.string "levelIds" (String.join "," levelIds) ]
         |> GCP.withAccessToken accessToken
         |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
 

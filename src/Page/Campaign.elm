@@ -135,9 +135,11 @@ load =
                                 |> List.foldl Cache.loading model.session.solutionBooks
                                 |> flip Session.withSolutionBookCache model.session
                                 |> flip withSession model
-                            , notAskedLevelIds
-                                |> List.map (\levelId -> Solution.loadFromServerByLevelId (SessionMsg << GotLoadSolutionsByLevelIdResponse levelId) accessToken levelId)
-                                |> Cmd.batch
+                            , if List.isEmpty notAskedLevelIds then
+                                Cmd.none
+
+                              else
+                                Solution.loadFromServerByLevelIds (SessionMsg << GotLoadSolutionsByLevelIdsResponse notAskedLevelIds) accessToken notAskedLevelIds
                             )
 
                         Nothing ->
