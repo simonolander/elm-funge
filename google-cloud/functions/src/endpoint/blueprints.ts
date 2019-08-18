@@ -2,16 +2,10 @@ import {Request} from "express";
 import {Err, JsonDecoder} from "ts.data.json";
 import * as Blueprint from "../data/Blueprint";
 
-import {
-    badRequest,
-    corruptData,
-    EndpointResult,
-    forbidden,
-    found,
-    notFound,
-    ok,
-} from "../data/EndpointResult";
-import {fromDecodeResult, values} from "../data/Result";
+import * as Board from "../data/Board";
+import {badRequest, EndpointResult, forbidden, found, notFound, ok} from "../data/EndpointResult";
+import * as InstructionTool from "../data/InstructionTool";
+import * as IO from "../data/IO";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import * as Firestore from "../service/firestore";
@@ -34,39 +28,30 @@ async function get(req: Request): Promise<EndpointResult<Blueprint.Blueprint | B
     if (authResult.tag === "failure") {
         return authResult.error;
     }
-    const request = decode(
-        req.query,
-        JsonDecoder.object({
-            blueprintId: JsonDecoder.oneOf([
-                JsonDecoder.string,
-                JsonDecoder.isUndefined(undefined),
-            ], "blueprintId"),
-        }, "GetBlueprintsRequest"));
-    if (request.tag === "failure") {
+    const request = JsonDecoder.object({
+        blueprintId: JsonDecoder.oneOf([
+            JsonDecoder.string,
+            JsonDecoder.isUndefined(undefined),
+        ], "blueprintId"),
+    }, "GetBlueprintsRequest")
+        .decode(req.query);
+    if (request instanceof Err) {
         return badRequest(request.error);
     }
+
     const user = await Firestore.getUserBySubject(authResult.value);
     if (typeof request.value.blueprintId !== "undefined") {
-        const blueprintSnapshot = await Firestore.getBlueprintById(request.value.blueprintId)
-            .then(ref => ref.get());
-        if (!blueprintSnapshot.exists) {
+        const blueprint = await Firestore.getBlueprintById(request.value.blueprintId);
+        if (typeof blueprint === "undefined") {
             return notFound();
         }
-        const blueprint = Blueprint.decoder.decode(blueprintSnapshot.data());
-        if (blueprint instanceof Err) {
-            return corruptData("blueprints", request.value.blueprintId, blueprint.error);
-        }
-        if (blueprint.value.authorId !== user.id) {
+        if (blueprint.authorId !== user.id) {
             return forbidden(user.id, "read", "blueprint", request.value.blueprintId);
         } else {
-            return found(blueprint.value);
+            return found(blueprint);
         }
     } else {
-        return Firestore.getBlueprints({
-            authorId: user.id,
-        })
-            .then(snapshot => snapshot.docs.map(doc => fromDecodeResult(Blueprint.decoder.decode(doc.data()))))
-            .then(values)
+        return Firestore.getBlueprints({authorId: user.id})
             .then(found);
     }
 }
@@ -76,31 +61,38 @@ async function put(req: Request): Promise<EndpointResult<never>> {
     if (authResult.tag === "failure") {
         return authResult.error;
     }
-    const request = decode(req.body, Blueprint.decoder);
-    if (request.tag === "failure") {
+    const request = JsonDecoder.object({
+        id: JsonDecoder.string,
+        index: JsonDecoder.number,
+        name: JsonDecoder.string,
+        description: JsonDecoder.array(JsonDecoder.string, "description"),
+        io: IO.decoder,
+        initialBoard: Board.decoder,
+        instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
+    }, "Blueprint").decode(req.body);
+    if (request instanceof Err) {
         return badRequest(request.error);
     }
+
     const user = await Firestore.getUserBySubject(authResult.value);
-    const ref = await Firestore.getBlueprintById(request.value.id);
-    const blueprint = await ref.get()
-        .then(r => r.data());
-    if (typeof blueprint === "undefined") {
-        const time = Date.now();
-        const newBlueprint: Blueprint.Blueprint = {
-            ...request.value,
-            authorId: user.id,
-            createdTime: time,
-            modifiedTime: time,
-        };
-        return ref.set(newBlueprint)
-            .then(() => ok());
-    } else {
-        if (blueprint.authorId !== user.id) {
+    const existingBlueprint = await Firestore.getBlueprintById(request.value.id);
+    if (typeof existingBlueprint !== "undefined") {
+        if (existingBlueprint.authorId !== user.id) {
             return forbidden(user.id, "edit", "blueprint", request.value.id);
         }
-        return ref.set({...request.value, modifiedTime: Date.now()}, {merge: true})
-            .then(() => ok());
     }
+
+    const time = Date.now();
+    const blueprint: Blueprint.Blueprint = {
+        ...request.value,
+        authorId: user.id,
+        createdTime: time,
+        modifiedTime: time,
+        version: 1,
+    };
+
+    return Firestore.saveBlueprint(blueprint)
+        .then(() => ok());
 }
 
 async function del(req: Request): Promise<EndpointResult<never>> {
@@ -115,19 +107,14 @@ async function del(req: Request): Promise<EndpointResult<never>> {
         return badRequest(request.error);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    const snapshot = await Firestore.getBlueprintById(request.value.blueprintId)
-        .then(ref => ref.get());
-    if (!snapshot.exists) {
+    const blueprint = await Firestore.getBlueprintById(request.value.blueprintId);
+    if (typeof blueprint === "undefined") {
         return ok();
     }
 
-    const blueprint = Blueprint.decoder.decode(snapshot.data());
-    if (blueprint instanceof Err) {
-        return corruptData("blueprints", request.value.blueprintId, blueprint.error);
-    }
-    if (blueprint.value.authorId !== user.id) {
+    if (blueprint.authorId !== user.id) {
         return forbidden(user.id, "delete", "blueprint", request.value.blueprintId);
     }
-    return snapshot.ref.delete()
+    return Firestore.deleteBlueprint(request.value.blueprintId)
         .then(() => ok());
 }

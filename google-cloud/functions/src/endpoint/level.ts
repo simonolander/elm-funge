@@ -1,22 +1,12 @@
 import {Request} from "express";
 import {Err, JsonDecoder} from "ts.data.json";
-import * as Blueprint from "../data/Blueprint";
 import * as Board from "../data/Board";
 
-import {
-    badRequest,
-    corruptData,
-    EndpointResult,
-    forbidden,
-    found,
-    internalServerError,
-    notFound, ok,
-} from "../data/EndpointResult";
+import {badRequest, EndpointResult, forbidden, found, internalServerError, notFound, ok} from "../data/EndpointResult";
 import * as InstructionTool from "../data/InstructionTool";
 import * as Integer from "../data/Integer";
 import * as IO from "../data/IO";
 import * as Level from "../data/Level";
-import {fromDecodeResult, values} from "../data/Result";
 import * as Score from "../data/Score";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
@@ -37,8 +27,7 @@ export async function endpoint(req: Request): Promise<EndpointResult<any>> {
 }
 
 async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Level[]>> {
-    const requestResult = decode(
-        req.query,
+    const request =
         JsonDecoder.object({
             campaignId: JsonDecoder.oneOf([
                 JsonDecoder.string,
@@ -56,29 +45,22 @@ async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Lev
                 Integer.decoder({minValue: 0, fromString: true}),
                 JsonDecoder.isUndefined(undefined),
             ], "limit"),
-        }, "GetLevelsRequest"));
-    if (requestResult.tag === "failure") {
-        return badRequest(requestResult.error);
+        }, "GetLevelsRequest")
+            .decode(req.query);
+    if (request instanceof Err) {
+        return badRequest(request.error);
     }
 
-    if (typeof requestResult.value.levelId !== "undefined") {
-        const documentSnapshot = await Firestore.getLevelById(requestResult.value.levelId)
-            .then(ref => ref.get());
-        if (!documentSnapshot.exists) {
+    if (typeof request.value.levelId !== "undefined") {
+        const level = await Firestore.getLevelById(request.value.levelId);
+        if (typeof level === "undefined") {
             return notFound();
         }
-        const level = Level.decoder.decode(documentSnapshot.data());
-        if (level instanceof Err) {
-            return corruptData("levels", requestResult.value.levelId, level.error);
-        }
-        return found(level.value);
+        return found(level);
     }
 
-    return Firestore.getLevels(requestResult.value)
-        .then(snapshot => snapshot.docs.map(doc => doc.data()))
-        .then(data => data.map(Level.decoder.decode))
-        .then(data => data.map(fromDecodeResult))
-        .then(results => found(values(results)));
+    return Firestore.getLevels(request.value)
+        .then(found);
 }
 
 async function post(req: Request): Promise<EndpointResult<never>> {
@@ -95,26 +77,22 @@ async function post(req: Request): Promise<EndpointResult<never>> {
         return badRequest(request.error);
     }
     const user = await Firestore.getUserBySubject(authResult.value);
-    const blueprintRef = await Firestore.getBlueprintById(request.value.blueprintId);
-    const blueprintSnapshot = await blueprintRef.get();
-    if (!blueprintSnapshot.exists) {
+    const blueprint = await Firestore.getBlueprintById(request.value.blueprintId);
+    if (typeof blueprint === "undefined") {
         return badRequest(`Blueprint ${request.value.blueprintId} does not exist`);
     }
-    const blueprint = decode(blueprintSnapshot.data(), Blueprint.decoder);
-    if (blueprint.tag === "failure") {
-        return corruptData("blueprints", request.value.blueprintId, blueprint.error);
-    }
-    if (blueprint.value.authorId !== user.id) {
+    if (blueprint.authorId !== user.id) {
         return forbidden(user.id, "publish", "blueprint", request.value.blueprintId);
     }
 
-    const level = Level.fromBlueprint(blueprint.value);
+    const level = Level.fromBlueprint(blueprint);
     const solutionError = isSolutionValid(level, request.value.board, request.value.score);
     if (typeof solutionError !== "undefined") {
         console.warn(`3259a409    Invalid solution posted by user ${user.id}`, solutionError);
-        return badRequest([`Invalid solution posted by user ${user.id}`, solutionError]);
+        return badRequest(`Invalid solution: ${solutionError}`);
     }
 
+    // TODO
     return internalServerError("not implemented");
 }
 
@@ -139,7 +117,6 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         createdTime: new Date().getTime(),
         authorId: "root",
     };
-    return Firestore.getLevelById(levelResult.value.id)
-        .then(ref => ref.set(level))
+    return Firestore.saveLevel(level)
         .then(() => ok());
 }

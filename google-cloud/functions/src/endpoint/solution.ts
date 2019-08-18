@@ -4,16 +4,13 @@ import * as Board from "../data/Board";
 import {
     badRequest,
     conflictingId,
-    corruptData, duplicate,
+    duplicate,
     EndpointResult,
     forbidden,
     found,
     notFound,
     ok,
 } from "../data/EndpointResult";
-import * as Level from "../data/Level";
-import * as Result from "../data/Result";
-import {fromDecodeResult, values} from "../data/Result";
 import * as Score from "../data/Score";
 import * as Solution from "../data/Solution";
 import {verifyJwt} from "../misc/auth";
@@ -39,68 +36,50 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
     }
     const user = await Firestore.getUserBySubject(authResult.value);
 
-    const request = decode(
-        req.query,
-        JsonDecoder.object(
-            {
-                levelId: JsonDecoder.oneOf([
-                        JsonDecoder.string,
-                        JsonDecoder.isUndefined(undefined),
-                    ],
-                    "levelId?: string"),
-                solutionId: JsonDecoder.oneOf([
-                        JsonDecoder.string,
-                        JsonDecoder.isUndefined(undefined),
-                    ],
-                    "solutionId?: string"),
-                levelIds: JsonDecoder.oneOf([
-                        JsonDecoder.string.map(levelIdString => levelIdString.split(",")),
-                        JsonDecoder.isUndefined(undefined),
-                    ],
-                    "levelIds?: string[]"),
-            },
-            "GetSolutionsRequest",
-        ),
-    );
-    if (request.tag === "failure") {
+    const request = JsonDecoder.object({
+            levelId: JsonDecoder.oneOf([
+                    JsonDecoder.string,
+                    JsonDecoder.isUndefined(undefined),
+                ],
+                "levelId?: string"),
+            solutionId: JsonDecoder.oneOf([
+                    JsonDecoder.string,
+                    JsonDecoder.isUndefined(undefined),
+                ],
+                "solutionId?: string"),
+            levelIds: JsonDecoder.oneOf([
+                    JsonDecoder.string.map(levelIdString => levelIdString.split(",")),
+                    JsonDecoder.isUndefined(undefined),
+                ],
+                "levelIds?: string[]"),
+        },
+        "GetSolutionsRequest",
+    ).decode(req.query);
+
+    if (request instanceof Err) {
         return badRequest(request.error);
     }
 
     if (typeof request.value.solutionId !== "undefined") {
-        const snapshot = await Firestore.getSolutionById(request.value.solutionId)
-            .then(ref => ref.get());
-        if (!snapshot.exists) {
+        const solution = await Firestore.getSolutionById(request.value.solutionId);
+        if (typeof solution === "undefined") {
             return notFound();
         }
-        const solution = Solution.decoder.decode(snapshot.data());
-        if (solution instanceof Err) {
-            return corruptData("solutions", request.value.solutionId, solution.error);
-        }
-        if (solution.value.authorId !== user.id) {
+        if (solution.authorId !== user.id) {
             return forbidden(user.id, "read", "solution", request.value.solutionId);
         }
-        return found(solution.value);
+        return found(solution);
     }
 
     if (typeof request.value.levelIds !== "undefined") {
-        return Promise.all(
-            request.value.levelIds.map(levelId => Firestore.getSolutions({authorId: user.id, levelId})
-                .then(snapshot => snapshot.docs.map(doc => doc.data()))
-                .then(data => data.map(Solution.decoder.decode))
-                .then(results => results.map(fromDecodeResult))
-                .then(values)))
-            .then(lists => lists.reduce((acc, list) => acc.concat(list), []))
-            .then(found);
+        const solutions: Solution.Solution[] = [];
+        for (const levelId of request.value.levelIds) {
+            solutions.push(...await Firestore.getSolutions({authorId: user.id, levelId}));
+        }
+        return found(solutions);
     }
 
-    return Firestore.getSolutions({
-        authorId: user.id,
-        levelId: request.value.levelId,
-    })
-        .then(snapshot => snapshot.docs.map(doc => doc.data()))
-        .then(data => data.map(Solution.decoder.decode))
-        .then(results => results.map(fromDecodeResult))
-        .then(values)
+    return Firestore.getSolutions({authorId: user.id, levelId: request.value.levelId})
         .then(found);
 }
 
@@ -127,54 +106,34 @@ async function post(req: Request): Promise<EndpointResult<never>> {
         version: 1,
     };
 
-    const solutionRef = await Firestore.getSolutionById(request.value.id);
-    const existingSolution = await solutionRef.get()
-        .then(ref => ref.data())
-        .then(data => JsonDecoder.oneOf([Solution.decoder, JsonDecoder.isUndefined(undefined)], "Solution || undefined").decode(data));
-    if (existingSolution instanceof Err) {
-        return corruptData("solutions", request.value.id, existingSolution.error);
-    }
-    if (typeof existingSolution.value !== "undefined") {
-        if (user.id !== existingSolution.value.authorId) {
+    const existingSolution = await Firestore.getSolutionById(request.value.id);
+    if (typeof existingSolution !== "undefined") {
+        if (user.id !== existingSolution.authorId) {
             return conflictingId();
         }
-        if (Solution.isSame(solution, existingSolution.value)) {
+        if (Solution.isSame(solution, existingSolution)) {
             return ok();
         }
         return conflictingId();
     }
 
-    const levelSnapshot = await Firestore.getLevelById(request.value.levelId)
-        .then((ref) => ref.get());
-
-    if (!levelSnapshot.exists) {
+    const level = await Firestore.getLevelById(request.value.levelId);
+    if (typeof level === "undefined") {
         return badRequest(`Level ${request.value.levelId} does not exist`);
     }
 
     const similarSolutionExists = await Firestore.getSolutions({levelId: request.value.levelId, authorId: user.id})
-        .then((snapshot) => {
-            const boards = Result.values(snapshot.docs
-                .map((doc) => doc.get("board"))
-                .map((board) => decode(board, Board.decoder)));
-
-            return boards.some((board) => Board.equals(request.value.board, board));
-        });
+        .then(solutions => solutions.some(sol => Board.equals(request.value.board, sol.board)));
     if (similarSolutionExists) {
         duplicate();
     }
 
-    const level = decode(levelSnapshot.data(), Level.decoder);
-
-    if (level.tag === "failure") {
-        return corruptData("levels", request.value.levelId, level.error);
-    }
-
-    const solutionError = isSolutionValid(level.value, request.value.board, request.value.score);
+    const solutionError = isSolutionValid(level, request.value.board, request.value.score);
     if (typeof solutionError !== "undefined") {
         console.warn(`645de896    Invalid solution posted by user ${user.id}`, solutionError);
         return badRequest(solutionError);
     }
 
-    return solutionRef.set(solution)
+    return Firestore.saveSolution(solution)
         .then(() => ok());
 }
