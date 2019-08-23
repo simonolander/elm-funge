@@ -118,5 +118,8 @@ parentRoute session =
         Just (Route.Blueprint levelId) ->
             Just (Route.Campaign CampaignId.blueprints (Just levelId))
 
+        Just Route.Credits ->
+            Just Route.Home
+
         Nothing ->
             Nothing

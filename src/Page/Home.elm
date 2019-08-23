@@ -1,13 +1,11 @@
 module Page.Home exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
-import Api.Auth0 as Auth0
 import Browser exposing (Document)
 import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd)
-import Json.Encode as Encode
 import Route exposing (Route)
 import View.Header
 import View.Layout
@@ -97,7 +95,7 @@ view model =
                 [ titleView
                 , link "Levels" (Route.Campaign CampaignId.standard Nothing)
                 , link "Blueprints" (Route.Blueprints Nothing)
-                , link "Credits" (Route.Campaign "credits" Nothing)
+                , link "Credits" Route.Credits
                 ]
 
         body =

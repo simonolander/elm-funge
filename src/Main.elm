@@ -23,6 +23,7 @@ import Maybe.Extra
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
 import Page.Campaign as Campaign
+import Page.Credits as Credits
 import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
@@ -49,6 +50,7 @@ type alias Flags =
 type Model
     = Home Home.Model
     | Campaign Campaign.Model
+    | Credits Credits.Model
     | Execution Execution.Model
     | Draft Draft.Model
     | Blueprint Blueprint.Model
@@ -110,6 +112,10 @@ view model =
             Campaign.view mdl
                 |> msgMap CampaignMsg
 
+        Credits mdl ->
+            Credits.view mdl
+                |> msgMap CreditsMsg
+
         Execution mdl ->
             Execution.view mdl
                 |> msgMap ExecutionMsg
@@ -139,6 +145,7 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | CampaignMsg Campaign.Msg
+    | CreditsMsg Credits.Msg
     | ExecutionMsg Execution.Msg
     | DraftMsg Draft.Msg
     | HomeMsg Home.Msg
@@ -277,6 +284,10 @@ changeUrl url oldSession =
             Just (Route.Blueprint levelId) ->
                 Blueprint.init levelId session
                     |> updateWith Blueprint BlueprintMsg
+
+            Just Route.Credits ->
+                Credits.init session
+                    |> updateWith Credits CreditsMsg
 
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
@@ -450,6 +461,9 @@ localStorageResponseUpdate response mainModel =
             Campaign model ->
                 updateWith Campaign CampaignMsg (onResponse model)
 
+            Credits model ->
+                updateWith Credits CreditsMsg (onResponse model)
+
             Execution model ->
                 updateWith Execution ExecutionMsg (onResponse model)
 
@@ -480,6 +494,9 @@ subscriptions model =
 
                 Campaign mdl ->
                     Sub.map CampaignMsg (Campaign.subscriptions mdl)
+
+                Credits mdl ->
+                    Sub.map CreditsMsg (Credits.subscriptions mdl)
 
                 Execution mdl ->
                     Sub.map ExecutionMsg (Execution.subscriptions mdl)
@@ -518,6 +535,9 @@ getSession model =
         Campaign mdl ->
             Campaign.getSession mdl
 
+        Credits mdl ->
+            mdl.session
+
         Execution mdl ->
             Execution.getSession mdl
 
@@ -545,6 +565,10 @@ load ( mainModel, cmd ) =
             Campaign model ->
                 Campaign.load model
                     |> updateWith Campaign CampaignMsg
+
+            Credits model ->
+                Credits.load model
+                    |> updateWith Credits CreditsMsg
 
             Execution model ->
                 Execution.load model
@@ -575,6 +599,9 @@ withSession session model =
 
         Campaign mdl ->
             Campaign { mdl | session = session }
+
+        Credits mdl ->
+            Credits { mdl | session = session }
 
         Execution mdl ->
             Execution { mdl | session = session }

@@ -17,6 +17,7 @@ type Route
     | ExecuteDraft DraftId.DraftId
     | Blueprints (Maybe LevelId.LevelId)
     | Blueprint LevelId.LevelId
+    | Credits
 
 
 fromUrl : Url -> Maybe Route
@@ -55,6 +56,9 @@ toString route =
 
                 Campaign campaignId (Just levelId) ->
                     [ "campaign", campaignId, "level", levelId ]
+
+                Credits ->
+                    [ "credits" ]
 
                 EditDraft draftId ->
                     [ "drafts", DraftId.toString draftId ]
@@ -100,4 +104,5 @@ parser =
         , Parser.map (Blueprints Nothing) (s "blueprints")
         , Parser.map (Blueprints << Just) (s "blueprints" </> LevelId.urlParser)
         , Parser.map Blueprint (s "blueprints" </> LevelId.urlParser </> s "edit")
+        , Parser.map Credits (s "credits")
         ]
