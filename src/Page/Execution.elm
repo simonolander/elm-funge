@@ -10,6 +10,7 @@ import Data.Direction exposing (Direction(..))
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.GetError as GetError exposing (GetError)
+import Data.HighScore as HighScore
 import Data.History as History exposing (History)
 import Data.Input exposing (Input)
 import Data.Instruction exposing (Instruction(..))
@@ -95,6 +96,7 @@ type InternalMsg
     | ClickedFastForward
     | ClickedPause
     | ClickedNavigateBrowseLevels
+    | ClickedContinueEditing
     | GeneratedSolution Solution
     | Tick
 
@@ -303,6 +305,9 @@ update msg model =
                 ClickedPause ->
                     ( { model | state = Paused }, Cmd.none )
 
+                ClickedContinueEditing ->
+                    ( model, Route.pushUrl model.session.key (Route.EditDraft model.draftId) )
+
                 ClickedNavigateBrowseLevels ->
                     let
                         levelId =
@@ -334,10 +339,17 @@ update msg model =
                                 |> SolutionBook.withSolutionId solution.id
                                 |> flip (Cache.withValue solution.levelId) model.session.solutionBooks
 
+                        highScoreCache =
+                            Cache.update
+                                solution.levelId
+                                (RemoteData.withDefault (HighScore.empty solution.levelId) >> HighScore.withScore solution.score >> RemoteData.Success)
+                                model.session.highScores
+
                         modelWithSolution =
                             model.session
                                 |> Session.withSolutionBookCache solutionBookCache
                                 |> Session.withSolutionCache solutionCache
+                                |> Session.withHighScoreCache highScoreCache
                                 |> flip withSession model
                     in
                     case Session.getAccessToken model.session of
@@ -1218,6 +1230,17 @@ viewVictoryModal execution =
             { onPress = Just (InternalMsg ClickedNavigateBrowseLevels)
             , label =
                 el [ centerX, centerY ] (text "Back to levels")
+            }
+        , Input.button
+            [ width fill
+            , Border.width 4
+            , Border.color (rgb 1 1 1)
+            , padding 10
+            , mouseOver [ Background.color (rgba 1 1 1 0.5) ]
+            ]
+            { onPress = Just (InternalMsg ClickedContinueEditing)
+            , label =
+                el [ centerX, centerY ] (text "Continue editing")
             }
         ]
 

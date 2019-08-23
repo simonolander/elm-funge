@@ -26,6 +26,7 @@ import Data.RemoteCache as RemoteCache
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
+import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -627,21 +628,33 @@ viewSidebar level model =
                 [ text solvedStatus
                 ]
 
-        highScore =
-            if Maybe.Extra.isJust (Session.getAccessToken model.session) then
-                Session.getHighScore level.id model.session
-                    |> View.HighScore.view
+        highScoreView =
+            let
+                highScore =
+                    Cache.get level.id model.session.highScores
 
-            else
-                View.Box.simpleNonInteractive "Sign in to enable high scores"
+                solutions =
+                    Cache.get level.id model.session.solutionBooks
+                        |> RemoteData.map (.solutionIds >> Set.toList)
+                        |> RemoteData.withDefault []
+                        |> List.filterMap (flip Cache.get model.session.solutions.local >> RemoteData.toMaybe)
+                        |> Maybe.Extra.values
+            in
+            View.HighScore.view solutions highScore
 
+        --            if Maybe.Extra.isJust (Session.getAccessToken model.session) then
+        --                Session.getHighScore level.id model.session
+        --                    |> View.HighScore.view []
+        --
+        --            else
+        --                View.Box.simpleNonInteractive "Sign in to enable high scores"
         draftsView =
             viewDrafts level model.session
     in
     [ levelNameView
     , solvedStatusView
     , descriptionView
-    , highScore
+    , highScoreView
     , draftsView
     ]
 

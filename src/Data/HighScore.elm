@@ -1,9 +1,10 @@
-module Data.HighScore exposing (HighScore, decoder, encode, loadFromServer)
+module Data.HighScore exposing (HighScore, decoder, empty, encode, loadFromServer, withScore)
 
 import Api.GCP as GCP
 import Data.GetError as HttpError exposing (GetError)
 import Data.LevelId as LevelId exposing (LevelId)
-import Data.RequestResult as RequestResult exposing (RequestResult)
+import Data.Score exposing (Score)
+import Data.Solution exposing (Solution)
 import Dict exposing (Dict)
 import Extra.Decode
 import Extra.Encode
@@ -17,6 +18,22 @@ type alias HighScore =
     { levelId : LevelId
     , numberOfSteps : Dict Int Int
     , numberOfInstructions : Dict Int Int
+    }
+
+
+empty : LevelId -> HighScore
+empty levelId =
+    { levelId = levelId
+    , numberOfSteps = Dict.empty
+    , numberOfInstructions = Dict.empty
+    }
+
+
+withScore : Score -> HighScore -> HighScore
+withScore score highScore =
+    { highScore
+        | numberOfSteps = Dict.update score.numberOfSteps (Maybe.withDefault 0 >> (+) 1 >> Just) highScore.numberOfSteps
+        , numberOfInstructions = Dict.update score.numberOfInstructions (Maybe.withDefault 0 >> (+) 1 >> Just) highScore.numberOfInstructions
     }
 
 

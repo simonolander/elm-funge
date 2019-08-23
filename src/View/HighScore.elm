@@ -2,35 +2,19 @@ module View.HighScore exposing (view)
 
 import Data.GetError as DetailedHttpError exposing (GetError)
 import Data.HighScore exposing (HighScore)
+import Data.Solution exposing (Solution)
 import Dict
 import Element exposing (..)
+import Element.Border as Border
 import Element.Font as Font
 import RemoteData exposing (RemoteData)
+import View.BarChart as BarChart
 import View.Box
 import View.Constant exposing (color)
 
 
-view : RemoteData GetError HighScore -> Element msg
-view remoteData =
-    --    let
-    --        remoteData =
-    --            RemoteData.Success
-    --                { levelId = "12380f983038a019"
-    --                , numberOfSteps =
-    --                    Dict.fromList
-    --                        [ ( 0, 51 )
-    --                        , ( 1, 34 )
-    --                        , ( 6, 13 )
-    --                        , ( 9, 57 )
-    --                        ]
-    --                , numberOfInstructions =
-    --                    Dict.fromList
-    --                        [ ( 0, 7 )
-    --                        , ( 1, 94 )
-    --                        , ( 9, 45 )
-    --                        ]
-    --                }
-    --    in
+view : List Solution -> RemoteData GetError HighScore -> Element msg
+view solutions remoteData =
     case remoteData of
         RemoteData.NotAsked ->
             notAsked
@@ -42,66 +26,49 @@ view remoteData =
             failure error
 
         RemoteData.Success highScore ->
-            success highScore
+            if List.isEmpty solutions && Dict.isEmpty highScore.numberOfInstructions then
+                View.Box.simpleNonInteractive "No high scores"
+
+            else
+                column
+                    [ width fill
+                    , spacing 20
+                    ]
+                    [ graph
+                        { title = "Number of steps"
+                        , personalBest =
+                            solutions
+                                |> List.map (.score >> .numberOfSteps)
+                                |> List.minimum
+                        , data = Dict.toList highScore.numberOfSteps
+                        }
+                    , graph
+                        { title = "Number of instructions"
+                        , personalBest =
+                            solutions
+                                |> List.map (.score >> .numberOfInstructions)
+                                |> List.minimum
+                        , data = Dict.toList highScore.numberOfInstructions
+                        }
+                    ]
 
 
-success : HighScore -> Element msg
-success highScore =
-    if Dict.isEmpty highScore.numberOfInstructions then
-        View.Box.simpleNonInteractive "No high scores"
-
-    else
-        let
-            numberOfStepsView =
-                highScore.numberOfSteps
-                    |> Dict.toList
-                    |> List.sortBy Tuple.first
-                    |> List.map
-                        (\( key, value ) ->
-                            row
-                                [ width fill
-                                , spacing 20
-                                ]
-                                [ text (String.fromInt key)
-                                , text (String.fromInt value)
-                                ]
-                        )
-                    |> (::)
-                        (paragraph []
-                            [ text "Number of steps:"
-                            ]
-                        )
-                    |> column
-                        [ width fill ]
-
-            numberOfInstructionsView =
-                highScore.numberOfInstructions
-                    |> Dict.toList
-                    |> List.sortBy Tuple.first
-                    |> List.map
-                        (\( key, value ) ->
-                            row
-                                [ width fill
-                                , spacing 20
-                                ]
-                                [ text (String.fromInt key)
-                                , text (String.fromInt value)
-                                ]
-                        )
-                    |> (::)
-                        (paragraph []
-                            [ text "Number of instructions:"
-                            ]
-                        )
-                    |> column
-                        [ width fill ]
-        in
-        [ numberOfInstructionsView
-        , numberOfStepsView
+graph : { title : String, personalBest : Maybe Int, data : List ( Int, Int ) } -> Element msg
+graph { title, personalBest, data } =
+    column
+        [ width fill
+        , spacing 10
+        , paddingEach { left = 0, top = 10, right = 0, bottom = 0 }
+        , Border.width 3
+        , Border.color (rgb 1 1 1)
         ]
-            |> column
-                [ spacing 20 ]
-            |> View.Box.nonInteractive
+        [ paragraph
+            [ width fill
+            , Font.center
+            ]
+            [ text title ]
+        , html (BarChart.view personalBest data)
+        ]
 
 
 loading : Element msg

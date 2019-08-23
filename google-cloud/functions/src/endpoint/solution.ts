@@ -72,11 +72,12 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
     }
 
     if (typeof request.value.levelIds !== "undefined") {
-        const solutions: Solution.Solution[] = [];
-        for (const levelId of request.value.levelIds) {
-            solutions.push(...await Firestore.getSolutions({authorId: user.id, levelId}));
-        }
-        return found(solutions);
+        return Promise.all(request.value.levelIds.map(levelId => Firestore.getSolutions({authorId: user.id, levelId})))
+            .then(solutions => solutions.reduce((acc, array) => {
+                acc.push(...array);
+                return acc;
+            }, []))
+            .then(found);
     }
 
     return Firestore.getSolutions({authorId: user.id, levelId: request.value.levelId})

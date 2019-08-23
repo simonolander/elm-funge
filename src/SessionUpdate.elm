@@ -157,8 +157,10 @@ update msg session =
         GotLoadSolutionsByLevelIdsResponse levelIds result ->
             case result of
                 Ok solutions ->
-                    solutions
-                        |> Dict.Extra.groupBy .levelId
+                    levelIds
+                        |> List.map (flip Tuple.pair [])
+                        |> Dict.fromList
+                        |> Dict.union (Dict.Extra.groupBy .levelId solutions)
                         |> Dict.toList
                         |> List.map (\( levelId, solutionsByLevelId ) -> gotSolutionsByLevelId levelId solutionsByLevelId)
                         |> flip Extra.Cmd.fold session
@@ -256,7 +258,7 @@ update msg session =
                         |> RemoteCache.withActualValue solution.id (Just solution)
                         |> RemoteCache.withExpectedValue solution.id (Just solution)
                         |> flip Session.withSolutionCache session
-                        |> withCmd (Solution.saveToLocalStorage solution)
+                        |> withCmd (Solution.saveRemoteToLocalStorage solution)
 
                 Just error ->
                     case error of
