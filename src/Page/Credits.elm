@@ -87,6 +87,15 @@ view model =
                         , ( "Music", [] )
                         ]
                     )
+                , section "Source"
+                    (link
+                        [ centerX
+                        , mouseOver [ Font.color (rgb 0.5 0.5 1) ]
+                        ]
+                        { label = text "https://github.com/simonolander/elm-funge"
+                        , url = "https://github.com/simonolander/elm-funge"
+                        }
+                    )
                 , section "Play testing"
                     ([ "Anita Chainiau"
                      , "Anton Håkanson"
