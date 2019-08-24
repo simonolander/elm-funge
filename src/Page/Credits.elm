@@ -4,7 +4,9 @@ import Basics.Extra exposing (flip, uncurry)
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
+import Element.Background as Background
 import Element.Font as Font exposing (Font)
+import Html.Attributes
 import Json.Encode as Encode
 import View.Header
 import View.Layout
@@ -76,13 +78,13 @@ view model =
                 [ section "Credits"
                     (taskAndAuthor
                         [ ( "Development", [ "Simon Olander Sahlén" ] )
-                        , ( "Music", [] )
                         , ( "Icons", [ "Simon Olander Sahlén" ] )
                         , ( "UX counselling"
                           , [ "Anita Chainiau"
                             , "Anton Håkanson"
                             ]
                           )
+                        , ( "Music", [] )
                         ]
                     )
                 , section "Play testing"
@@ -174,26 +176,21 @@ section title element =
 taskAndAuthor : List ( String, List String ) -> Element msg
 taskAndAuthor tasks =
     let
-        size =
-            tasks
-                |> List.map (Tuple.mapFirst String.length)
-                |> List.map (Tuple.mapSecond (List.map String.length >> List.maximum >> Maybe.withDefault 4))
-                |> List.map (uncurry (+))
-                |> List.maximum
-                |> Maybe.withDefault 0
-                |> (+) 10
-
         top task author =
-            let
-                dots =
-                    String.repeat (size - String.length task - String.length author) "."
-            in
-            row []
-                [ text task
-                , text " "
-                , el [ Font.color (rgb 0.25 0.25 0.25) ] (text dots)
-                , text " "
-                , el [ mouseOver [ Font.color (rgb 0.5 0.5 1) ] ] (text author)
+            row [ width fill, htmlAttribute (Html.Attributes.class "dotted") ]
+                [ el
+                    [ alignLeft
+                    , Background.color (rgb 0 0 0)
+                    , paddingEach { left = 0, top = 0, right = 11, bottom = 0 }
+                    ]
+                    (text task)
+                , el
+                    [ mouseOver [ Font.color (rgb 0.5 0.5 1) ]
+                    , alignRight
+                    , Background.color (rgb 0 0 0)
+                    , paddingEach { left = 11, top = 0, right = 0, bottom = 0 }
+                    ]
+                    (text author)
                 ]
     in
     tasks
@@ -211,6 +208,6 @@ taskAndAuthor tasks =
                         tail
                             |> List.map (text >> el [ width fill, Font.alignRight, mouseOver [ Font.color (rgb 0.5 0.5 1) ] ])
                             |> (::) (top task author)
-                            |> column []
+                            |> column [ width fill ]
             )
-        |> column [ centerX, spacing 20 ]
+        |> column [ width fill, centerX, spacing 20 ]

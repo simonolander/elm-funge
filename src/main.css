@@ -42,3 +42,10 @@ body > div {
 input.number:invalid {
   background-color: rgb(26, 0, 0);
 }
+
+.dotted {
+  background: radial-gradient(ellipse at center, #444 25%, #444 25%, transparent 25%);
+  background-size: 10px 10px;
+  background-repeat: repeat-x;
+  background-position: bottom;
+}
