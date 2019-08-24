@@ -629,25 +629,23 @@ viewSidebar level model =
                 ]
 
         highScoreView =
-            let
-                highScore =
-                    Cache.get level.id model.session.highScores
+            if Maybe.Extra.isJust (Session.getAccessToken model.session) then
+                let
+                    highScore =
+                        Cache.get level.id model.session.highScores
 
-                solutions =
-                    Cache.get level.id model.session.solutionBooks
-                        |> RemoteData.map (.solutionIds >> Set.toList)
-                        |> RemoteData.withDefault []
-                        |> List.filterMap (flip Cache.get model.session.solutions.local >> RemoteData.toMaybe)
-                        |> Maybe.Extra.values
-            in
-            View.HighScore.view solutions highScore
+                    solutions =
+                        Cache.get level.id model.session.solutionBooks
+                            |> RemoteData.map (.solutionIds >> Set.toList)
+                            |> RemoteData.withDefault []
+                            |> List.filterMap (flip Cache.get model.session.solutions.local >> RemoteData.toMaybe)
+                            |> Maybe.Extra.values
+                in
+                View.HighScore.view solutions highScore
 
-        --            if Maybe.Extra.isJust (Session.getAccessToken model.session) then
-        --                Session.getHighScore level.id model.session
-        --                    |> View.HighScore.view []
-        --
-        --            else
-        --                View.Box.simpleNonInteractive "Sign in to enable high scores"
+            else
+                View.Box.simpleNonInteractive "Sign in to enable high scores"
+
         draftsView =
             viewDrafts level model.session
     in

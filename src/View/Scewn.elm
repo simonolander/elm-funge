@@ -107,6 +107,7 @@ view { south, center, east, west, north, modal } =
                         (el
                             [ width fill
                             , height fill
+                            , scrollbars
                             ]
                             c
                         )

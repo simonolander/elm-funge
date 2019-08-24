@@ -1,10 +1,14 @@
 module Page.Credits exposing (Model, Msg, init, load, subscriptions, update, view)
 
-import Basics.Extra exposing (flip)
+import Basics.Extra exposing (flip, uncurry)
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
+import Element.Font as Font exposing (Font)
 import Json.Encode as Encode
+import View.Header
+import View.Layout
+import View.Scewn
 
 
 
@@ -60,9 +64,153 @@ subscriptions model =
 view : Model -> Document Msg
 view model =
     let
+        body =
+            column
+                [ width (maximum 1000 fill)
+                , height fill
+                , padding 60
+                , spacing 80
+                , centerX
+                , scrollbars
+                ]
+                [ section "Credits"
+                    (taskAndAuthor
+                        [ ( "Development", [ "Simon Olander Sahlén" ] )
+                        , ( "Music", [] )
+                        , ( "Icons", [ "Simon Olander Sahlén" ] )
+                        , ( "UX counselling"
+                          , [ "Anita Chainiau"
+                            , "Anton Håkanson"
+                            ]
+                          )
+                        ]
+                    )
+                , section "Play testing"
+                    ([ "Anita Chainiau"
+                     , "Anton Håkanson"
+                     , "Isac Olander Sahlén"
+                     , "Adelie Fournier"
+                     , "Benjamin Becquet"
+                     , "Erik Bodin"
+                     , "Anton Pervorsek"
+                     , "Edvin Wallin"
+                     , "Carl-Henrik Klåvus"
+                     , "Johan von Konow"
+                     , "Harald Nicander"
+                     , "Karin Aldheimer"
+                     , "Malin Molin"
+                     ]
+                        |> List.map (String.replace " " "\u{00A0}")
+                        |> List.sort
+                        |> List.map text
+                        |> List.map
+                            (el
+                                [ mouseOver [ Font.color (rgb 0.5 0.5 1) ]
+                                , padding 10
+                                ]
+                            )
+                        |> List.intersperse (text " ")
+                        |> paragraph [ Font.center ]
+                    )
+                , section "Special thanks"
+                    ([ ( "Zachtronics"
+                       , [ text "For making "
+                         , link []
+                            { label = text "TIS-100"
+                            , url = "http://www.zachtronics.com/tis-100/"
+                            }
+                         , text " and "
+                         , link []
+                            { label = text "Shenzhen I/O"
+                            , url = "http://www.zachtronics.com/shenzhen-io/"
+                            }
+                         , text ", games I enjoyed and that inspired this work."
+                         ]
+                       )
+                     , ( "Befunge"
+                       , [ text "For inspiring the computer language of this game." ]
+                       )
+                     ]
+                        |> List.map (Tuple.mapFirst (text >> el [ Font.size 24, Font.center, width fill ]))
+                        |> List.map (Tuple.mapSecond (paragraph [ Font.size 20, Font.center, width fill ]))
+                        |> List.map (\( a, b ) -> [ a, b ])
+                        |> List.map (column [ width fill, spacing 20 ])
+                        |> column [ width fill, spacing 30 ]
+                    )
+                ]
+
         content =
-            layout [] none
+            View.Layout.layout <|
+                View.Scewn.view
+                    { north = Just <| View.Header.view model.session
+                    , center = Just body
+                    , south = Nothing
+                    , east = Nothing
+                    , west = Nothing
+                    , modal = Nothing
+                    }
     in
     { body = [ content ]
     , title = "Credits"
     }
+
+
+section : String -> Element msg -> Element msg
+section title element =
+    column
+        [ width fill
+        , spacing 40
+        ]
+        [ el
+            [ Font.center
+            , Font.size 28
+            , width fill
+            ]
+            (text title)
+        , element
+        ]
+
+
+taskAndAuthor : List ( String, List String ) -> Element msg
+taskAndAuthor tasks =
+    let
+        size =
+            tasks
+                |> List.map (Tuple.mapFirst String.length)
+                |> List.map (Tuple.mapSecond (List.map String.length >> List.maximum >> Maybe.withDefault 4))
+                |> List.map (uncurry (+))
+                |> List.maximum
+                |> Maybe.withDefault 0
+                |> (+) 10
+
+        top task author =
+            let
+                dots =
+                    String.repeat (size - String.length task - String.length author) "."
+            in
+            row []
+                [ text task
+                , text " "
+                , el [ Font.color (rgb 0.25 0.25 0.25) ] (text dots)
+                , text " "
+                , el [ mouseOver [ Font.color (rgb 0.5 0.5 1) ] ] (text author)
+                ]
+    in
+    tasks
+        |> List.map (Tuple.mapSecond List.sort)
+        |> List.map
+            (\( task, authors ) ->
+                case authors of
+                    [ author ] ->
+                        top task author
+
+                    [] ->
+                        top task "null"
+
+                    author :: tail ->
+                        tail
+                            |> List.map (text >> el [ width fill, Font.alignRight, mouseOver [ Font.color (rgb 0.5 0.5 1) ] ])
+                            |> (::) (top task author)
+                            |> column []
+            )
+        |> column [ centerX, spacing 20 ]
