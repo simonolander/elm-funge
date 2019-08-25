@@ -1,4 +1,4 @@
-# EFNG
+# Manick
 
 Try it out live [here](http://efng.simonolander.com).
 

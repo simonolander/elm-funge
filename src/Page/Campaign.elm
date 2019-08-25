@@ -446,7 +446,7 @@ viewCampaign campaign model =
                 [ centerX
                 , Font.size 32
                 ]
-                (text "EFNG")
+                (text "Manick")
             , paragraph
                 [ width fill
                 , Font.center

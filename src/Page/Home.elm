@@ -4,7 +4,6 @@ import Browser exposing (Document)
 import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
-import Element.Background as Background
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd)
 import Route exposing (Route)
@@ -71,10 +70,11 @@ view : Model -> Document msg
 view model =
     let
         titleView =
-            text "EFNG"
+            text "Manick"
                 |> el
                     [ centerX
-                    , Font.size 32
+                    , Font.size 42
+                    , padding 20
                     ]
 
         link text route =
@@ -88,10 +88,10 @@ view model =
 
         main =
             column
-                [ padding 100
+                [ padding 60
                 , spacing 20
                 , centerX
-                , width (maximum 800 fill)
+                , width (maximum 1000 fill)
                 ]
                 [ titleView
                 , link "Levels" (Route.Campaign CampaignId.standard Nothing)
