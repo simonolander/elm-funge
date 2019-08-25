@@ -4,7 +4,7 @@
   "description": "",
   "main": "build/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha -r ts-node/register src/test/**/*.test.ts",
     "lint": "tslint --fix --project .",
     "build": "npm install && npm run lint && tsc && echo '    :)\n'",
     "deploy": "npm run build && gcloud functions deploy drafts --runtime nodejs8 --trigger-http && gcloud functions deploy solutions --runtime nodejs8 --trigger-http && gcloud functions deploy highScores --runtime nodejs8 --trigger-http && gcloud functions deploy levels --runtime nodejs8 --trigger-http && gcloud functions deploy userInfo --runtime nodejs8 --trigger-http"
@@ -14,12 +14,20 @@
   "dependencies": {
     "@google-cloud/firestore": "1.1.0",
     "jsonwebtoken": "8.5.1",
-    "ts.data.json": "^0.2.0"
+    "ts.data.json": "^0.2.1"
   },
   "devDependencies": {
-    "@types/express": "^4.16.1",
-    "@types/jsonwebtoken": "^8.3.2",
-    "tslint": "^5.18.0",
+    "@types/chai": "^4.2.0",
+    "@types/express": "^4.17.1",
+    "@types/jsonwebtoken": "^8.3.3",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.7.2",
+    "@types/supertest": "^2.0.8",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "supertest": "^4.0.2",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.19.0",
     "typescript": "^3.5.3"
   }
 }

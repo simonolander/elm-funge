@@ -1,4 +1,11 @@
 {
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
+  ],
   "compilerOptions": {
     "alwaysStrict": true,
     "esModuleInterop": true,
@@ -12,12 +19,12 @@
     "noUnusedParameters": true,
     "outDir": "./build",
     "strict": true,
-//    "strict-boolean-expressions": true,
+    //    "strict-boolean-expressions": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "ES2016",
+    "target": "ES2016"
     // "lib": [],                             /* Specify library files to be included in the compilation. */
     // "allowJs": true,                       /* Allow javascript files to be compiled. */
     // "checkJs": true,                       /* Report errors in .js files. */
