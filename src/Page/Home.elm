@@ -4,6 +4,7 @@ import Browser exposing (Document)
 import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
+import Element.Background as Background
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd)
 import Route exposing (Route)
@@ -98,13 +99,30 @@ view model =
                 , link "Credits" Route.Credits
                 ]
 
+        footer =
+            row
+                [ width fill
+                ]
+                [ Element.link
+                    [ padding 20
+                    , alignRight
+                    , Font.color (rgb 0.25 0.25 0.25)
+                    , mouseOver
+                        [ Font.color (rgb 0.25 0.25 0.5)
+                        ]
+                    ]
+                    { url = "https://github.com/simonolander/elm-funge"
+                    , label = text "1.0.0"
+                    }
+                ]
+
         body =
             View.Scewn.view
                 { north = Just header
                 , center = Just main
                 , west = Nothing
                 , east = Nothing
-                , south = Nothing
+                , south = Just footer
                 , modal = Nothing
                 }
                 |> View.Layout.layout
