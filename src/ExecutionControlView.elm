@@ -9,6 +9,7 @@ type ExecutionControlInstruction
     | Play
     | FastForward
     | Pause
+    | Home
 
 
 view : List (Attribute msg) -> ExecutionControlInstruction -> Element msg
@@ -42,4 +43,10 @@ view attributes instruction =
             image attributes
                 { src = "assets/execution-control-images/pause.svg"
                 , description = "Pause"
+                }
+
+        Home ->
+            image attributes
+                { src = "assets/execution-control-images/home.svg"
+                , description = "Home"
                 }

@@ -81,7 +81,7 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
     }
 
     const currentBoard = Board.toMatrix(board);
-    const currentInput = [...level.io.input];
+    const currentInput = [...level.io.input].reverse();
     const currentOutput: Int16.Int16[] = [];
     const currentStack: Int16.Int16[] = [];
     let x = 0;
@@ -195,7 +195,7 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
                 break;
             case "Read":
                 const input = currentInput.pop();
-                push(typeof input === "undefined" ? 0 : 1);
+                push(typeof input === "undefined" ? 0 : input);
                 break;
             case "Print":
                 currentOutput.push(peek());

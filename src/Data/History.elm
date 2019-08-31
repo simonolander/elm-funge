@@ -6,6 +6,7 @@ module Data.History exposing
     , forward
     , hasFuture
     , hasPast
+    , home
     , push
     , pushflip
     , singleton
@@ -86,9 +87,14 @@ size history =
 
 first : History a -> a
 first history =
+    current (home history)
+
+
+home : History a -> History a
+home history =
     case history.past of
         [] ->
-            current history
+            history
 
-        past ->
-            back history |> first
+        _ ->
+            home (back history)

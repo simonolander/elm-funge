@@ -95,6 +95,7 @@ type InternalMsg
     | ClickedRun
     | ClickedFastForward
     | ClickedPause
+    | ClickedHome
     | ClickedNavigateBrowseLevels
     | ClickedContinueEditing
     | GeneratedSolution Solution
@@ -304,6 +305,14 @@ update msg model =
 
                 ClickedPause ->
                     ( { model | state = Paused }, Cmd.none )
+
+                ClickedHome ->
+                    ( { model
+                        | execution = Just { execution | executionHistory = History.home execution.executionHistory }
+                        , state = Paused
+                      }
+                    , Cmd.none
+                    )
 
                 ClickedContinueEditing ->
                     ( model, Route.pushUrl model.session.key (Route.EditDraft model.draftId) )
@@ -1000,6 +1009,9 @@ viewExecutionSidebar execution model =
                         executionControlInstruction
                 }
 
+        homeButtonView =
+            viewButton ExecutionControlView.Home (Just (InternalMsg ClickedHome))
+
         undoButtonView =
             viewButton ExecutionControlView.Undo (Just (InternalMsg ClickedUndo))
 
@@ -1020,7 +1032,8 @@ viewExecutionSidebar execution model =
                 [ spacing 10
                 , centerX
                 ]
-                [ undoButtonView
+                [ homeButtonView
+                , undoButtonView
                 , stepButtonView
                 , runButtonView
                 , fastForwardButtonView

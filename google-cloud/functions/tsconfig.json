@@ -1,6 +1,6 @@
 {
   "include": [
-    "src/**/*.ts"
+    "src/main/ts/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -24,6 +24,7 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
+    "resolveJsonModule": true,
     "target": "ES2016"
     // "lib": [],                             /* Specify library files to be included in the compilation. */
     // "allowJs": true,                       /* Allow javascript files to be compiled. */

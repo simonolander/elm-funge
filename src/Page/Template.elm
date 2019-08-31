@@ -1,9 +1,8 @@
-module Page.Template exposing (Model, Msg, getSession, init, subscriptions, update, view)
+module Page.Template exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
-import Json.Encode as Encode
 
 
 
@@ -15,36 +14,31 @@ type alias Model =
     }
 
 
+type Msg
+    = InternalMsg InternalMsg
+    | SessionMsg Session
+
+
+type alias InternalMsg =
+    ()
+
+
 init : Session -> ( Model, Cmd Msg )
 init session =
     ( { session = session }, Cmd.none )
 
 
-getSession : Model -> Session
-getSession { session } =
-    session
-
-
-setSession : Model -> Session -> Model
-setSession model session =
-    { model | session = session }
+load : Session -> ( Session, Cmd Msg )
+load session =
+    ( session, Cmd.none )
 
 
 
 -- UPDATE
 
 
-type alias Msg =
-    ()
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
     ( model, Cmd.none )
 
 
