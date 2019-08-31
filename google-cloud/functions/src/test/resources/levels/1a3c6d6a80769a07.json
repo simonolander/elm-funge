@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "id": "1a3c6d6a80769a07",
+  "index": 5,
+  "campaignId": "standard",
+  "name": "One minus the other",
+  "description": [
+    "> Read two numbers a and b from input",
+    "> Output a - b",
+    "The last input is 0 and should not be printed"
+  ],
+  "io": {
+    "input": [
+      18,
+      4,
+      9,
+      17,
+      13,
+      13,
+      12,
+      1,
+      17,
+      3,
+      0
+    ],
+    "output": [
+      14,
+      -8,
+      0,
+      11,
+      14
+    ]
+  },
+  "initialBoard": {
+    "width": 7,
+    "height": 7,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Increment"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Decrement"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Swap"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

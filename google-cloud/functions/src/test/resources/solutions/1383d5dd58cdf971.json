@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "id": "1383d5dd58cdf971",
+  "levelId": "42fe70779bd30656",
+  "score": {
+    "numberOfSteps": 60,
+    "numberOfInstructions": 9
+  },
+  "board": {
+    "width": 4,
+    "height": 4,
+    "instructions": [
+      {
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Read"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Down",
+          "falseDirection": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Duplicate"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Up"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Add"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      }
+    ]
+  },
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

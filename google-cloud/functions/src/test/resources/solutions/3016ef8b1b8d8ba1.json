@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "id": "3016ef8b1b8d8ba1",
+  "levelId": "88c653c6c3a5b5e7",
+  "score": {
+    "numberOfSteps": 11,
+    "numberOfInstructions": 11
+  },
+  "board": {
+    "width": 4,
+    "height": 4,
+    "instructions": [
+      {
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Increment"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Increment"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Increment"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      }
+    ]
+  },
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

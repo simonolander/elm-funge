@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "id": "b96e6c12476716a3",
+  "index": 12,
+  "campaignId": "standard",
+  "name": "Sequence sorter",
+  "description": [
+    "> Read a sequence from the input",
+    "> Output the sequence sorted from lowest to highest",
+    "The last input is 0 should not be outputed"
+  ],
+  "io": {
+    "input": [
+      1,
+      4,
+      3,
+      7,
+      11,
+      15,
+      4,
+      14,
+      4,
+      10,
+      8,
+      7,
+      0
+    ],
+    "output": [
+      1,
+      3,
+      4,
+      4,
+      4,
+      7,
+      7,
+      8,
+      10,
+      11,
+      14,
+      15
+    ]
+  },
+  "initialBoard": {
+    "width": 7,
+    "height": 7,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Increment"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Decrement"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Swap"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "SendToBottom"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "CompareLessThan"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "JumpForward"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

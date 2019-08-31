@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "id": "88c653c6c3a5b5e7",
+  "index": 2,
+  "campaignId": "standard",
+  "name": "One, two, three",
+  "description": [
+    "> Output the numbers 1, 2, and 3"
+  ],
+  "io": {
+    "input": [],
+    "output": [
+      1,
+      2,
+      3
+    ]
+  },
+  "initialBoard": {
+    "width": 4,
+    "height": 4,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Increment"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

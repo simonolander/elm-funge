@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "id": "9abf854cff37e96b",
+  "index": 10,
+  "campaignId": "standard",
+  "name": "Divide and conquer",
+  "description": [
+    "> Read two positive numbers x and y from the input",
+    "> Output ⌊x / y⌋",
+    "The last input is 0 should not be outputed"
+  ],
+  "io": {
+    "input": [
+      12,
+      1,
+      8,
+      2,
+      8,
+      8,
+      11,
+      2,
+      5,
+      7,
+      10,
+      4,
+      0
+    ],
+    "output": [
+      12,
+      4,
+      1,
+      5,
+      0,
+      2
+    ]
+  },
+  "initialBoard": {
+    "width": 7,
+    "height": 7,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Increment"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Decrement"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Swap"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "SendToBottom"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PushToStack",
+        "value": 0
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "JumpForward"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

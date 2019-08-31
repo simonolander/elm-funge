@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "id": "42fe70779bd30656",
+  "index": 1,
+  "campaignId": "standard",
+  "name": "Double the fun",
+  "description": [
+    "> Read a number n from input",
+    "> Output n * 2",
+    "The last input is 0 and should not be printed"
+  ],
+  "io": {
+    "input": [
+      1,
+      8,
+      19,
+      3,
+      5,
+      31,
+      9,
+      0
+    ],
+    "output": [
+      2,
+      16,
+      38,
+      6,
+      10,
+      62,
+      18
+    ]
+  },
+  "initialBoard": {
+    "width": 4,
+    "height": 4,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Add"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

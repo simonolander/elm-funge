@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "id": "e2f96c5345e5f1f6",
+  "index": 3,
+  "campaignId": "standard",
+  "name": "Count down",
+  "description": [
+    "> Read a number n from input",
+    "> Output all the numbers from n to 0",
+    "The last input is 0 and should not be printed"
+  ],
+  "io": {
+    "input": [
+      7,
+      3,
+      10,
+      0
+    ],
+    "output": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0,
+      3,
+      2,
+      1,
+      0,
+      10,
+      9,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ]
+  },
+  "initialBoard": {
+    "width": 7,
+    "height": 7,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Decrement"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

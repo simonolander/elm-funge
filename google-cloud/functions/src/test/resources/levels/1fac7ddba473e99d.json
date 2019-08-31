@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "id": "1fac7ddba473e99d",
+  "index": 13,
+  "campaignId": "standard",
+  "name": "Less is more",
+  "description": [
+    "> Read two numbers a and b from the input",
+    "> If a < b output a, otherwise output b",
+    "The last input is 0 is not part of the sequence"
+  ],
+  "io": {
+    "input": [
+      6,
+      15,
+      11,
+      3,
+      9,
+      7,
+      15,
+      15,
+      3,
+      7,
+      0
+    ],
+    "output": [
+      6,
+      3,
+      7,
+      15,
+      3
+    ]
+  },
+  "initialBoard": {
+    "width": 8,
+    "height": 8,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Increment"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Decrement"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Swap"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "JumpForward"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}

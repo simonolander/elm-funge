@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "id": "3ee1f15ae601fc94",
+  "index": 6,
+  "campaignId": "standard",
+  "name": "Powers of two",
+  "description": [
+    "> Read a number n from input",
+    "> Output 2^n ",
+    "The last input is 0 and should not be printed"
+  ],
+  "io": {
+    "input": [
+      1,
+      4,
+      3,
+      2,
+      5,
+      6,
+      0
+    ],
+    "output": [
+      2,
+      16,
+      8,
+      4,
+      32,
+      64
+    ]
+  },
+  "initialBoard": {
+    "width": 8,
+    "height": 8,
+    "instructions": []
+  },
+  "instructionTools": [
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "NoOp"
+      }
+    },
+    {
+      "tag": "ChangeAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Duplicate"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Increment"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Decrement"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "PopFromStack"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Swap"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Read"
+      }
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Print"
+      }
+    },
+    {
+      "tag": "BranchAnyDirection"
+    },
+    {
+      "tag": "JustInstruction",
+      "instruction": {
+        "tag": "Terminate"
+      }
+    }
+  ],
+  "authorId": "7e577e577e577e57",
+  "createdTime": 1566887680
+}
