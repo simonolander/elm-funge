@@ -362,7 +362,14 @@ gotActualDraft draftId maybeActualDraft session =
                         ( sessionWithActualDraft, Cmd.none )
 
         Nothing ->
-            ( sessionWithActualDraft, Cmd.none )
+            if RemoteData.isNotAsked (Cache.get draftId session.drafts.local) then
+                sessionWithActualDraft.drafts
+                    |> RemoteCache.withLocalLoading draftId
+                    |> flip Session.withDraftCache sessionWithActualDraft
+                    |> withCmd (Draft.loadFromLocalStorage draftId)
+
+            else
+                ( sessionWithActualDraft, Cmd.none )
 
 
 gotActualSolution : SolutionId -> Maybe Solution -> Session -> ( Session, Cmd msg )

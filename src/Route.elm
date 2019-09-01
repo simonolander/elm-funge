@@ -18,6 +18,7 @@ type Route
     | Blueprints (Maybe LevelId.LevelId)
     | Blueprint LevelId.LevelId
     | Credits
+    | NotFound
 
 
 fromUrl : Url -> Maybe Route
@@ -74,6 +75,9 @@ toString route =
 
                 Blueprint levelId ->
                     [ "blueprints", levelId, "edit" ]
+
+                NotFound ->
+                    [ "notFound" ]
     in
     "/#" ++ String.join "/" pieces
 

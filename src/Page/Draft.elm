@@ -31,11 +31,14 @@ import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import SessionUpdate exposing (SessionMsg(..))
 import View.Board
+import View.Constant as Constant
 import View.ErrorScreen
 import View.Header
+import View.Info
 import View.InstructionTools
 import View.Layout
 import View.LoadingScreen
+import View.NotFound
 import View.Scewn
 import ViewComponents exposing (..)
 
@@ -468,7 +471,14 @@ view model =
                             View.ErrorScreen.view (Decode.errorToString error)
 
                         Success Nothing ->
-                            View.ErrorScreen.view ("Draft " ++ model.draftId ++ " not found")
+                            View.Scewn.view
+                                { south = Nothing
+                                , center = Just <| View.NotFound.view { id = model.draftId, noun = "draft" }
+                                , east = Nothing
+                                , west = Nothing
+                                , north = Just <| View.Header.view session
+                                , modal = Nothing
+                                }
 
                         Success (Just draft) ->
                             case Session.getLevel draft.levelId session of

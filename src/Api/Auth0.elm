@@ -98,7 +98,7 @@ loginResponseFromUrl url =
                 |> Maybe.andThen Url.percentDecode
                 |> Maybe.map (\path -> { url | fragment = Just path })
                 |> Maybe.andThen Route.fromUrl
-                |> Maybe.withDefault Route.Home
+                |> Maybe.withDefault Route.NotFound
     in
     case ( maybeAccessToken, maybeExpiresIn ) of
         ( Just accessToken, Just expiresIn ) ->

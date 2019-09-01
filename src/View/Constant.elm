@@ -1,4 +1,4 @@
-module View.Constant exposing (color)
+module View.Constant exposing (color, icons)
 
 import Element exposing (rgb)
 
@@ -15,3 +15,7 @@ color =
         , error = rgb 1 0.51 0.35
         }
     }
+
+
+icons =
+    { exceptionOrange = "assets/exception-orange.svg" }

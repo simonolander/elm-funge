@@ -35,7 +35,6 @@ import Extra.Cmd exposing (noCmd, withCmd)
 import Extra.Result
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Levels
 import Maybe.Extra
 import Ports.Console
 import Random
@@ -44,6 +43,7 @@ import Route exposing (Route)
 import Url
 import View.Constant exposing (color)
 import View.ErrorScreen
+import View.Info as Info
 import View.Layout
 import View.LoadingScreen
 import ViewComponents
@@ -886,7 +886,7 @@ view model =
 
                         RemoteData.Success actualUserInfo ->
                             View.Layout.layout <|
-                                viewInfo
+                                Info.view
                                     { title = "New sign in detected"
                                     , icon =
                                         { src = "assets/exception-orange.svg"
@@ -969,7 +969,7 @@ viewHttpError : Model -> GetError -> Element Msg
 viewHttpError model error =
     case error of
         GetError.NetworkError ->
-            viewInfo
+            Info.view
                 { title = "Unable to connect to server"
                 , icon =
                     { src = "assets/exception-orange.svg"
@@ -1180,7 +1180,7 @@ viewResolveDraftConflict { local, expected, actual } =
                     , ViewComponents.textButton [] (Just (ClickedDraftDeleteLocal local.id)) "Discard it"
                     ]
     in
-    viewInfo
+    Info.view
         { title = "Conflict in draft " ++ local.id
         , icon =
             { src = "assets/exception-orange.svg"
@@ -1214,34 +1214,6 @@ viewLoading { title, elements } =
             { src = "assets/spinner.svg"
             , description = "Loading spinner"
             }
-         ]
-            ++ elements
-        )
-
-
-viewInfo :
-    { title : String
-    , icon : { src : String, description : String }
-    , elements : List (Element msg)
-    }
-    -> Element msg
-viewInfo { title, icon, elements } =
-    column
-        [ centerX
-        , centerY
-        , spacing 20
-        , padding 40
-        ]
-        ([ image
-            [ width (px 72)
-            , centerX
-            ]
-            icon
-         , paragraph
-            [ Font.size 28
-            , Font.center
-            ]
-            [ text title ]
          ]
             ++ elements
         )

@@ -28,6 +28,7 @@ import Page.Draft as Draft
 import Page.Execution as Execution
 import Page.Home as Home
 import Page.Initialize as Initialize
+import Page.NotFound as NotFound
 import Ports.Console
 import Ports.LocalStorage
 import Route
@@ -56,6 +57,22 @@ type Model
     | Blueprint Blueprint.Model
     | Blueprints Blueprints.Model
     | Initialize Initialize.Model
+    | NotFound NotFound.Model
+
+
+type Msg
+    = ChangedUrl Url
+    | ClickedLink Browser.UrlRequest
+    | CampaignMsg Campaign.Msg
+    | CreditsMsg Credits.Msg
+    | ExecutionMsg Execution.Msg
+    | DraftMsg Draft.Msg
+    | HomeMsg Home.Msg
+    | BlueprintsMsg Blueprints.Msg
+    | BlueprintMsg Blueprint.Msg
+    | InitializeMsg Initialize.Msg
+    | NotFoundMsg NotFound.Msg
+    | LocalStorageResponse ( String, Encode.Value )
 
 
 
@@ -136,23 +153,13 @@ view model =
             Initialize.view mdl
                 |> msgMap InitializeMsg
 
+        NotFound mdl ->
+            NotFound.view mdl
+                |> msgMap NotFoundMsg
+
 
 
 -- UPDATE
-
-
-type Msg
-    = ChangedUrl Url
-    | ClickedLink Browser.UrlRequest
-    | CampaignMsg Campaign.Msg
-    | CreditsMsg Credits.Msg
-    | ExecutionMsg Execution.Msg
-    | DraftMsg Draft.Msg
-    | HomeMsg Home.Msg
-    | BlueprintsMsg Blueprints.Msg
-    | BlueprintMsg Blueprint.Msg
-    | InitializeMsg Initialize.Msg
-    | LocalStorageResponse ( String, Encode.Value )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -258,8 +265,8 @@ changeUrl url oldSession =
     load <|
         case Route.fromUrl url of
             Nothing ->
-                Home.init session
-                    |> updateWith Home HomeMsg
+                NotFound.init session
+                    |> updateWith NotFound NotFoundMsg
 
             Just Route.Home ->
                 Home.init session
@@ -289,6 +296,10 @@ changeUrl url oldSession =
                 Credits.init session
                     |> updateWith Credits CreditsMsg
 
+            Just Route.NotFound ->
+                NotFound.init session
+                    |> updateWith NotFound NotFoundMsg
+
 
 localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
 localStorageResponseUpdate response mainModel =
@@ -314,7 +325,7 @@ localStorageResponseUpdate response mainModel =
                         Ok Nothing ->
                             let
                                 errorMessage =
-                                    name ++ " " ++ request ++ " not found"
+                                    "1d2c9ff5    " ++ name ++ " " ++ request ++ " not found"
                             in
                             ( { mdl | session = notFound request mdl.session }
                             , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
@@ -479,6 +490,9 @@ localStorageResponseUpdate response mainModel =
             Initialize model ->
                 updateWith Initialize InitializeMsg (onResponse model)
 
+            NotFound model ->
+                updateWith NotFound NotFoundMsg (onResponse model)
+
 
 
 -- SUBSCRIPTIONS
@@ -512,6 +526,9 @@ subscriptions model =
 
                 Initialize mdl ->
                     Sub.map InitializeMsg (Initialize.subscriptions mdl)
+
+                NotFound mdl ->
+                    Sub.map NotFoundMsg (NotFound.subscriptions mdl)
 
         localStorageSubscriptions =
             Ports.LocalStorage.storageGetItemResponse LocalStorageResponse
@@ -553,6 +570,9 @@ getSession model =
         Initialize mdl ->
             mdl.session
 
+        NotFound mdl ->
+            mdl.session
+
 
 load : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 load ( mainModel, cmd ) =
@@ -590,6 +610,10 @@ load ( mainModel, cmd ) =
                 Initialize.load model
                     |> updateWith Initialize InitializeMsg
 
+            NotFound model ->
+                NotFound.load model
+                    |> updateWith NotFound NotFoundMsg
+
 
 withSession : Session -> Model -> Model
 withSession session model =
@@ -617,3 +641,6 @@ withSession session model =
 
         Initialize mdl ->
             Initialize { mdl | session = session }
+
+        NotFound mdl ->
+            NotFound { mdl | session = session }

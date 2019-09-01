@@ -107,7 +107,7 @@ parentRoute session =
                     Just (Route.Campaign level.campaignId (Just level.id))
 
                 Nothing ->
-                    Nothing
+                    Just Route.Home
 
         Just (Route.ExecuteDraft draftId) ->
             Just (Route.EditDraft draftId)
@@ -121,5 +121,8 @@ parentRoute session =
         Just Route.Credits ->
             Just Route.Home
 
+        Just Route.NotFound ->
+            Just Route.Home
+
         Nothing ->
-            Nothing
+            Just Route.Home

@@ -851,7 +851,7 @@ subscriptions model =
                 Time.every 250 (always (InternalMsg Tick))
 
             FastForwarding ->
-                Time.every 100 (always (InternalMsg Tick))
+                Time.every 16 (always (InternalMsg Tick))
 
     else
         Sub.none

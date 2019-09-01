@@ -1,8 +1,11 @@
-module Page.Template exposing (Model, Msg(..), init, load, subscriptions, update, view)
+module Page.NotFound exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
 import Browser exposing (Document)
 import Data.Session exposing (Session)
-import Element exposing (..)
+import Url
+import View.Header
+import View.NotFound
+import View.Scewn
 
 
 
@@ -59,8 +62,20 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            layout [] none
+            View.Scewn.layout
+                { south = Nothing
+                , center =
+                    Just <|
+                        View.NotFound.view
+                            { noun = "page"
+                            , id = Url.toString model.session.url
+                            }
+                , east = Nothing
+                , west = Nothing
+                , north = Just <| View.Header.view model.session
+                , modal = Nothing
+                }
     in
     { body = [ content ]
-    , title = "Template"
+    , title = "Not Found"
     }
