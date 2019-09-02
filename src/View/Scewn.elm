@@ -1,4 +1,4 @@
-module View.Scewn exposing (layout, view)
+module View.Scewn exposing (empty, layout, view)
 
 import Element exposing (..)
 import Html
@@ -13,6 +13,17 @@ type alias Scewn msg =
     , west : Maybe (Element msg)
     , north : Maybe (Element msg)
     , modal : Maybe (Element msg)
+    }
+
+
+empty : Scewn msg
+empty =
+    { south = Nothing
+    , center = Nothing
+    , east = Nothing
+    , west = Nothing
+    , north = Nothing
+    , modal = Nothing
     }
 
 

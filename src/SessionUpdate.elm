@@ -18,6 +18,7 @@ import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
 import Data.SolutionId exposing (SolutionId)
 import Data.SubmitSolutionError as SubmitSolutionError exposing (SubmitSolutionError)
+import Data.User as User
 import Dict
 import Dict.Extra
 import Extra.Cmd exposing (withCmd, withExtraCmd)
@@ -411,3 +412,10 @@ gotSolutionsByLevelId levelId solutions session =
     session
         |> Session.withSolutionBookCache solutionBookCache
         |> Extra.Cmd.fold (List.map (\solution -> gotActualSolution solution.id (Just solution)) solutions)
+
+
+withInvalidAccessToken : Session -> Session
+withInvalidAccessToken session =
+    session.user
+        |> User.withAccessToken Nothing
+        |> flip Session.withUser session

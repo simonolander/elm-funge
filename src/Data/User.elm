@@ -1,4 +1,4 @@
-module Data.User exposing (User, authorizedUser, getToken, getUserInfo, guest, withUserInfo)
+module Data.User exposing (User, authorizedUser, getToken, getUserInfo, guest, withAccessToken, withUserInfo)
 
 import Data.AccessToken exposing (AccessToken)
 import Data.UserInfo exposing (UserInfo)

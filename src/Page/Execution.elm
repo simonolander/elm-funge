@@ -3,6 +3,7 @@ module Page.Execution exposing (Model, Msg(..), getSession, init, load, subscrip
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Browser.Events
 import Data.Board as Board exposing (Board)
 import Data.Cache as Cache
 import Data.CampaignId as CampaignId
@@ -851,7 +852,7 @@ subscriptions model =
                 Time.every 250 (always (InternalMsg Tick))
 
             FastForwarding ->
-                Time.every 16 (always (InternalMsg Tick))
+                Browser.Events.onAnimationFrame (always (InternalMsg Tick))
 
     else
         Sub.none
