@@ -390,8 +390,22 @@ stepModel oldExecution model =
             else
                 Paused
 
-        ( session, saveDraftCmd ) =
-            if isSolved execution then
+        generateSolutionCmd =
+            let
+                initialBoard =
+                    execution.executionHistory
+                        |> History.first
+                        |> .board
+
+                isNewSolution board =
+                    model.session.solutions.local
+                        |> Cache.values
+                        |> List.filterMap (RemoteData.toMaybe >> Maybe.Extra.join)
+                        |> List.filter (.levelId >> (==) execution.level.id)
+                        |> List.any (.board >> (==) board)
+                        |> Debug.log "isNewSolution"
+            in
+            if isSolved execution && isNewSolution initialBoard then
                 let
                     numberOfSteps =
                         History.current execution.executionHistory
@@ -412,35 +426,26 @@ stepModel oldExecution model =
                         { numberOfSteps = numberOfSteps
                         , numberOfInstructions = numberOfInstructions
                         }
-
-                    initialBoard =
-                        execution.executionHistory
-                            |> History.first
-                            |> .board
-
-                    generateSolutionCmd =
-                        Random.generate
-                            (InternalMsg << GeneratedSolution)
-                            (Solution.generator
-                                execution.level.id
-                                score
-                                initialBoard
-                            )
                 in
-                ( model.session, generateSolutionCmd )
+                Random.generate
+                    (InternalMsg << GeneratedSolution)
+                    (Solution.generator
+                        execution.level.id
+                        score
+                        initialBoard
+                    )
 
             else
-                ( model.session, Cmd.none )
+                Cmd.none
 
         newModel =
             { model
-                | session = session
-                , execution = Just execution
+                | execution = Just execution
                 , state = state
             }
 
         cmd =
-            saveDraftCmd
+            generateSolutionCmd
     in
     ( newModel
     , cmd
