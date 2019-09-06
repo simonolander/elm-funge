@@ -2,30 +2,23 @@ import {Score} from "./Score";
 
 export interface HighScore {
     readonly levelId: string;
-    readonly numberOfSteps: Array<[number, number]>;
-    readonly numberOfInstructions: Array<[number, number]>;
+    readonly numberOfSteps: Map<number, number>;
+    readonly numberOfInstructions: Map<number, number>;
 }
 
 export function fromScores(levelId: string, scores: Score[]): HighScore {
-    const numberOfSteps: {[s: number]: number} = {};
-    scores.forEach(score => {
-        const oldCount = typeof numberOfSteps[score.numberOfSteps] === "number"
-            ? numberOfSteps[score.numberOfSteps]
-            : 0;
-        numberOfSteps[score.numberOfSteps] = oldCount + 1;
-    });
-
-    const numberOfInstructions: {[s: number]: number} = {};
-    scores.forEach(score => {
-        const oldCount = typeof numberOfInstructions[score.numberOfInstructions] === "number"
-            ? numberOfInstructions[score.numberOfInstructions]
-            : 0;
-        numberOfInstructions[score.numberOfInstructions] = oldCount + 1;
-    });
-
-    return {
+    const highScore = {
         levelId,
-        numberOfSteps: Object.entries(numberOfSteps).map(([key, value]) => [parseInt(key), value]),
-        numberOfInstructions: Object.entries(numberOfInstructions).map(([key, value]) => [parseInt(key), value]),
+        numberOfSteps: new Map(),
+        numberOfInstructions: new Map(),
     };
+
+    for (const score of scores) {
+        const numberOfSteps = highScore.numberOfSteps.get(score.numberOfSteps);
+        highScore.numberOfSteps.set(score.numberOfSteps, numberOfSteps === undefined ? 1 : numberOfSteps + 1);
+        const numberOfInstructions = highScore.numberOfInstructions.get(score.numberOfInstructions);
+        highScore.numberOfInstructions.set(score.numberOfInstructions, numberOfInstructions === undefined ? 1 : numberOfInstructions + 1);
+    }
+
+    return highScore;
 }

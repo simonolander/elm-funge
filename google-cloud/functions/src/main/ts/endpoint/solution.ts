@@ -1,6 +1,7 @@
 import {Request} from "express";
 import {Err, JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
+import * as SolutionDto from "../data/dto/SolutionDto";
 import {
     badRequest,
     conflictingId,
@@ -15,10 +16,11 @@ import * as Score from "../data/Score";
 import * as Solution from "../data/Solution";
 import auth from "../misc/auth";
 import {decode} from "../misc/json";
+import {concat, map} from "../misc/utils";
 import {isSolutionValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request): Promise<EndpointResult<Solution.Solution | Solution.Solution[] | never>> {
+export async function endpoint(req: Request): Promise<EndpointResult<SolutionDto.SolutionDto | SolutionDto.SolutionDto[] | never>> {
     switch (req.method) {
         case "GET":
             return get(req);
@@ -29,8 +31,8 @@ export async function endpoint(req: Request): Promise<EndpointResult<Solution.So
     }
 }
 
-async function get(req: Request): Promise<EndpointResult<Solution.Solution | Solution.Solution[]>> {
-    const authResult = auth.verifyJwt<Solution.Solution>(req, ["openid", "read:solutions"]);
+async function get(req: Request): Promise<EndpointResult<SolutionDto.SolutionDto | SolutionDto.SolutionDto[]>> {
+    const authResult = auth.verifyJwt<SolutionDto.SolutionDto>(req, ["openid", "read:solutions"]);
     if (authResult.tag === "failure") {
         return authResult.error;
     }
@@ -68,19 +70,21 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
         if (solution.authorId !== user.id) {
             return forbidden(user.id, "read", "solution", request.value.solutionId);
         }
-        return found(solution);
+        return found(SolutionDto.encode(solution));
     }
 
     if (typeof request.value.levelIds !== "undefined") {
-        return Promise.all(request.value.levelIds.map(levelId => Firestore.getSolutions({authorId: user.id, levelId})))
-            .then(solutions => solutions.reduce((acc, array) => {
-                acc.push(...array);
-                return acc;
-            }, []))
+        return Promise.all(
+            request.value.levelIds
+                .map(levelId =>
+                    Firestore.getSolutions({authorId: user.id, levelId})))
+            .then(concat)
+            .then(map(SolutionDto.encode))
             .then(found);
     }
 
     return Firestore.getSolutions({authorId: user.id, levelId: request.value.levelId})
+        .then(map(SolutionDto.encode))
         .then(found);
 }
 
@@ -104,7 +108,6 @@ async function post(req: Request): Promise<EndpointResult<never>> {
     const solution: Solution.Solution = {
         ...request.value,
         authorId: user.id,
-        version: 1,
     };
 
     const existingSolution = await Firestore.getSolutionById(request.value.id);

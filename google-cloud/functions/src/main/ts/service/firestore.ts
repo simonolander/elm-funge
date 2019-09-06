@@ -2,6 +2,10 @@ import {Firestore} from "@google-cloud/firestore";
 import {JsonDecoder, Ok} from "ts.data.json";
 import * as Blueprint from "../data/Blueprint";
 import * as Draft from "../data/Draft";
+import * as BlueprintDto from "../data/dto/BlueprintDto";
+import * as DraftDto from "../data/dto/DraftDto";
+import * as LevelDto from "../data/dto/LevelDto";
+import * as SolutionDto from "../data/dto/SolutionDto";
 import * as Level from "../data/Level";
 import * as Solution from "../data/Solution";
 
@@ -90,16 +94,16 @@ function getById<T>(collectionName: Collection, decoder: JsonDecoder.Decoder<T>)
  * DRAFTS
  */
 
-export const getDraftById = getById("drafts", Draft.decoder);
+export const getDraftById = getById("drafts", DraftDto.decoder);
 
 export async function saveDraft(draft: Draft.Draft): Promise<void> {
     firestore.collection("drafts")
         .doc(draft.id)
-        .set(draft);
+        .set(DraftDto.encode(draft));
 }
 
 export async function getDrafts(parameters: { authorId: string, draftId?: string, levelId?: string }): Promise<Draft.Draft[]> {
-    return get("drafts", parameters, Draft.decoder);
+    return get("drafts", parameters, DraftDto.decoder);
 }
 
 export async function deleteDraft(id: string): Promise<void> {
@@ -112,16 +116,16 @@ export async function deleteDraft(id: string): Promise<void> {
  * LEVELS
  */
 
-export const getLevelById = getById("levels", Level.decoder);
+export const getLevelById = getById("levels", LevelDto.decoder);
 
 export async function saveLevel(level: Level.Level): Promise<void> {
     firestore.collection("levels")
         .doc(level.id)
-        .set(level);
+        .set(LevelDto.encode(level));
 }
 
 export async function getLevels(parameters: { campaignId?: string, offset?: number, limit?: number }): Promise<Level.Level[]> {
-    return get("levels", parameters, Level.decoder);
+    return get("levels", parameters, LevelDto.decoder);
 }
 
 export async function deleteLevel(id: string): Promise<void> {
@@ -134,16 +138,16 @@ export async function deleteLevel(id: string): Promise<void> {
  * BLUEPRINTS
  */
 
-export const getBlueprintById = getById("blueprints", Blueprint.decoder);
+export const getBlueprintById = getById("blueprints", BlueprintDto.decoder);
 
 export async function saveBlueprint(blueprint: Blueprint.Blueprint): Promise<void> {
     firestore.collection("blueprints")
         .doc(blueprint.id)
-        .set(blueprint);
+        .set(BlueprintDto.encode(blueprint));
 }
 
 export async function getBlueprints(parameters: { authorId: string, offset?: number, limit?: number }): Promise<Blueprint.Blueprint[]> {
-    return get("blueprints", parameters, Blueprint.decoder);
+    return get("blueprints", parameters, BlueprintDto.decoder);
 }
 
 export async function deleteBlueprint(id: string): Promise<void> {
@@ -156,16 +160,16 @@ export async function deleteBlueprint(id: string): Promise<void> {
  * SOLUTIONS
  */
 
-export const getSolutionById = getById("solutions", Solution.decoder);
+export const getSolutionById = getById("solutions", SolutionDto.decoder);
 
 export async function saveSolution(solution: Solution.Solution): Promise<void> {
     firestore.collection("solutions")
         .doc(solution.id)
-        .set(solution);
+        .set(SolutionDto.encode(solution));
 }
 
 export async function getSolutions(parameters: { levelId?: string, authorId?: string, campaignId?: string }): Promise<Solution.Solution[]> {
-    return get("solutions", parameters, Solution.decoder);
+    return get("solutions", parameters, SolutionDto.decoder);
 }
 
 export async function deleteSolution(id: string): Promise<void> {

@@ -1,5 +1,6 @@
 import {Request} from "express";
 import {Board} from "../../../main/ts/data/Board";
+import * as SolutionDto from "../../../main/ts/data/dto/SolutionDto";
 import {BadRequest, EndpointResult, Found, invalidAccessToken} from "../../../main/ts/data/EndpointResult";
 import {Level} from "../../../main/ts/data/Level";
 import * as Result from "../../../main/ts/data/Result";
@@ -98,7 +99,7 @@ describe("solution endpoint", () => {
                 const getUserBySubjectSpy = spyGetUserBySubject();
                 return get({solutionId})
                     .then(value => {
-                        expect(value).toEqual({tag: "Found", body: solution});
+                        expect(value).toEqual({tag: "Found", body: SolutionDto.encode(solution)});
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
                         expect(getUserBySubjectSpy).toHaveBeenCalledWith(testSubject);
@@ -193,7 +194,7 @@ describe("solution endpoint", () => {
                     .then(value => {
                         expect(value).toEqual({
                             tag: "Found",
-                            body: solutions,
+                            body: solutions.map(SolutionDto.encode),
                         });
                         expect(getSolutionsSpy).toHaveBeenCalledWith({levelId, authorId: testUserId});
                     });
@@ -222,7 +223,7 @@ describe("solution endpoint", () => {
                     .then(value => {
                         expect(value.tag).toEqual("Found");
                         const expectedSolutions = solutions.filter(({authorId, levelId}) => authorId === testUserId && contains(levelId, chosenLevelIds));
-                        expectArraySameContent((value as Found<Solution[]>).body, expectedSolutions);
+                        expectArraySameContent((value as Found<Solution[]>).body, expectedSolutions.map(SolutionDto.encode));
                         expect(spy).toHaveBeenCalledTimes(chosenLevelIds.length);
                     });
             });

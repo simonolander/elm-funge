@@ -1,6 +1,7 @@
 import {Request} from "express";
 import {JsonDecoder} from "ts.data.json";
 
+import * as HighScoreDto from "../data/dto/HighScoreDto";
 import {badRequest, EndpointResult, found} from "../data/EndpointResult";
 import * as HighScore from "../data/HighScore";
 import {decode} from "../misc/json";
@@ -15,7 +16,7 @@ export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     }
 }
 
-async function get(req: Request): Promise<EndpointResult<any>> {
+async function get(req: Request): Promise<EndpointResult<HighScoreDto.HighScoreDto>> {
     const result = decode(
         req.query,
         JsonDecoder.object({
@@ -29,5 +30,6 @@ async function get(req: Request): Promise<EndpointResult<any>> {
     return Firestore.getSolutions({levelId: result.value.levelId})
         .then(solutions => solutions.map(solution => solution.score))
         .then(scores => HighScore.fromScores(result.value.levelId, scores))
-        .then(highScore => found(highScore));
+        .then(HighScoreDto.encode)
+        .then(found);
 }

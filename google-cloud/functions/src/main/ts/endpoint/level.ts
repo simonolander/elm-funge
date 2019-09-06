@@ -2,6 +2,7 @@ import {Request} from "express";
 import {Err, JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
 
+import * as LevelDto from "../data/dto/LevelDto";
 import {badRequest, EndpointResult, forbidden, found, internalServerError, notFound, ok} from "../data/EndpointResult";
 import * as InstructionTool from "../data/InstructionTool";
 import * as Integer from "../data/Integer";
@@ -10,10 +11,11 @@ import * as Level from "../data/Level";
 import * as Score from "../data/Score";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
+import {map} from "../misc/utils";
 import {isSolutionValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request): Promise<EndpointResult<any>> {
+export async function endpoint(req: Request): Promise<EndpointResult<never | LevelDto.LevelDto | LevelDto.LevelDto[]>> {
     switch (req.method) {
         case "GET":
             return get(req);
@@ -26,7 +28,7 @@ export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     }
 }
 
-async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Level[]>> {
+async function get(req: Request): Promise<EndpointResult<LevelDto.LevelDto | LevelDto.LevelDto[]>> {
     const request =
         JsonDecoder.object({
             campaignId: JsonDecoder.oneOf([
@@ -56,10 +58,11 @@ async function get(req: Request): Promise<EndpointResult<Level.Level | Level.Lev
         if (typeof level === "undefined") {
             return notFound();
         }
-        return found(level);
+        return found(LevelDto.encode(level));
     }
 
     return Firestore.getLevels(request.value)
+        .then(map(LevelDto.encode))
         .then(found);
 }
 
@@ -112,7 +115,7 @@ async function put(req: Request): Promise<EndpointResult<never>> {
     if (levelResult.tag === "failure") {
         return badRequest(levelResult.error);
     }
-    const level: Level.Level = {
+    const level = {
         ...levelResult.value,
         createdTime: new Date().getTime(),
         authorId: "root",

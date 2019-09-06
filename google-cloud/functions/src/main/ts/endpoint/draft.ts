@@ -2,8 +2,10 @@ import {Request} from "express";
 import {Err, JsonDecoder} from "ts.data.json";
 import * as Board from "../data/Board";
 import * as Draft from "../data/Draft";
+import * as DraftDto from "../data/dto/DraftDto";
 import {badRequest, conflictingId, EndpointResult, forbidden, found, notFound, ok} from "../data/EndpointResult";
 import {verifyJwt} from "../misc/auth";
+import {map} from "../misc/utils";
 import {isBoardValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
@@ -20,8 +22,8 @@ export async function endpoint(req: Request): Promise<EndpointResult<any>> {
     }
 }
 
-async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Draft[]>> {
-    const authResult = verifyJwt<Draft.Draft>(req, ["openid", "read:drafts"]);
+async function get(req: Request): Promise<EndpointResult<DraftDto.DraftDto | DraftDto.DraftDto[]>> {
+    const authResult = verifyJwt<DraftDto.DraftDto>(req, ["openid", "read:drafts"]);
     if (authResult.tag === "failure") {
         return authResult.error;
     }
@@ -47,9 +49,10 @@ async function get(req: Request): Promise<EndpointResult<Draft.Draft | Draft.Dra
         if (draft.authorId !== user.id) {
             return forbidden(user.id, "read", "draft", request.value.draftId);
         }
-        return found(draft);
+        return found(DraftDto.encode(draft));
     } else {
         return Firestore.getDrafts({authorId: user.id, levelId: request.value.levelId})
+            .then(map(DraftDto.encode))
             .then(found);
     }
 }

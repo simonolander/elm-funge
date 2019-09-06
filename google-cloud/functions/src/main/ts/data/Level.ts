@@ -1,4 +1,3 @@
-import {JsonDecoder} from "ts.data.json";
 import {Blueprint} from "./Blueprint";
 import * as Board from "./Board";
 import * as InstructionTool from "./InstructionTool";
@@ -15,32 +14,12 @@ export interface Level {
     readonly instructionTools: InstructionTool.InstructionTool[];
     readonly authorId: string;
     readonly createdTime: number;
-    readonly version: number;
 }
-
-export const decoder: JsonDecoder.Decoder<Level> = JsonDecoder.object(
-    {
-        id: JsonDecoder.string,
-        index: JsonDecoder.number,
-        campaignId: JsonDecoder.string,
-        name: JsonDecoder.string,
-        description: JsonDecoder.array(JsonDecoder.string, "description"),
-        io: IO.decoder,
-        initialBoard: Board.decoder,
-        instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
-        authorId: JsonDecoder.string,
-        createdTime: JsonDecoder.number,
-        version: JsonDecoder.number,
-    },
-    "Level",
-);
-
-decoder.decode = decoder.decode.bind(decoder);
 
 export function fromBlueprint(blueprint: Blueprint): Level {
     return {
         id: blueprint.id,
-        index: blueprint.index,
+        index: 0,
         campaignId: "blueprints",
         name: blueprint.name,
         description: blueprint.description,
@@ -49,6 +28,5 @@ export function fromBlueprint(blueprint: Blueprint): Level {
         instructionTools: blueprint.instructionTools,
         authorId: blueprint.authorId,
         createdTime: Date.now(),
-        version: 2,
     };
 }
