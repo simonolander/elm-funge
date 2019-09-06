@@ -4,7 +4,6 @@ import Api.GCP as GCP
 import Data.GetError as HttpError exposing (GetError)
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.Score exposing (Score)
-import Data.Solution exposing (Solution)
 import Dict exposing (Dict)
 import Extra.Decode
 import Extra.Encode
@@ -48,7 +47,8 @@ encode highScore =
             Dict.toList >> Encode.list (Extra.Encode.tuple Encode.int Encode.int)
     in
     Encode.object
-        [ ( "levelId", LevelId.encode highScore.levelId )
+        [ ( "version", Encode.int 1 )
+        , ( "levelId", LevelId.encode highScore.levelId )
         , ( "numberOfSteps", encodeDictIntInt highScore.numberOfSteps )
         , ( "numberOfInstructions", encodeDictIntInt highScore.numberOfInstructions )
         ]
@@ -61,23 +61,35 @@ decoder =
             Extra.Decode.tuple Decode.int Decode.int
                 |> Decode.list
                 |> Decode.map Dict.fromList
+
+        v1 =
+            Decode.field "numberOfSteps" intIntDictDecoder
+                |> Decode.andThen
+                    (\numberOfSteps ->
+                        Decode.field "numberOfInstructions" intIntDictDecoder
+                            |> Decode.andThen
+                                (\numberOfInstructions ->
+                                    Decode.field "levelId" LevelId.decoder
+                                        |> Decode.andThen
+                                            (\levelId ->
+                                                Decode.succeed
+                                                    { levelId = levelId
+                                                    , numberOfSteps = numberOfSteps
+                                                    , numberOfInstructions = numberOfInstructions
+                                                    }
+                                            )
+                                )
+                    )
     in
-    Decode.field "numberOfSteps" intIntDictDecoder
+    Decode.field "version" Decode.int
         |> Decode.andThen
-            (\numberOfSteps ->
-                Decode.field "numberOfInstructions" intIntDictDecoder
-                    |> Decode.andThen
-                        (\numberOfInstructions ->
-                            Decode.field "levelId" LevelId.decoder
-                                |> Decode.andThen
-                                    (\levelId ->
-                                        Decode.succeed
-                                            { levelId = levelId
-                                            , numberOfSteps = numberOfSteps
-                                            , numberOfInstructions = numberOfInstructions
-                                            }
-                                    )
-                        )
+            (\version ->
+                case version of
+                    1 ->
+                        v1
+
+                    _ ->
+                        Decode.fail ("Unknown high score decoder version " ++ String.fromInt version)
             )
 
 

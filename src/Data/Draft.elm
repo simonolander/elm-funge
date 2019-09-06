@@ -114,7 +114,8 @@ generator level =
 encode : Draft -> Encode.Value
 encode draft =
     Encode.object
-        [ ( "id", DraftId.encode draft.id )
+        [ ( "version", Encode.int 1 )
+        , ( "id", DraftId.encode draft.id )
         , ( "levelId", LevelId.encode draft.levelId )
         , ( "board", Board.encode (History.current draft.boardHistory) )
         ]
@@ -122,22 +123,35 @@ encode draft =
 
 decoder : Decode.Decoder Draft
 decoder =
-    Decode.field "id" DraftId.decoder
+    let
+        v1 =
+            Decode.field "id" DraftId.decoder
+                |> Decode.andThen
+                    (\id ->
+                        Decode.field "levelId" LevelId.decoder
+                            |> Decode.andThen
+                                (\levelId ->
+                                    Decode.field "board" Board.decoder
+                                        |> Decode.andThen
+                                            (\board ->
+                                                Decode.succeed
+                                                    { id = id
+                                                    , boardHistory = History.singleton board
+                                                    , levelId = levelId
+                                                    }
+                                            )
+                                )
+                    )
+    in
+    Decode.field "version" Decode.int
         |> Decode.andThen
-            (\id ->
-                Decode.field "levelId" LevelId.decoder
-                    |> Decode.andThen
-                        (\levelId ->
-                            Decode.field "board" Board.decoder
-                                |> Decode.andThen
-                                    (\board ->
-                                        Decode.succeed
-                                            { id = id
-                                            , boardHistory = History.singleton board
-                                            , levelId = levelId
-                                            }
-                                    )
-                        )
+            (\version ->
+                case version of
+                    1 ->
+                        v1
+
+                    _ ->
+                        Decode.fail ("Unknown draft decoder version " ++ String.fromInt version)
             )
 
 

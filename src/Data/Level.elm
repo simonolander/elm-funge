@@ -181,51 +181,7 @@ encode level =
 decoder : Decode.Decoder Level
 decoder =
     let
-        levelDecoderV1 =
-            Decode.field "id" Decode.string
-                |> Decode.andThen
-                    (\id ->
-                        Decode.field "index" Decode.int
-                            |> Decode.andThen
-                                (\index ->
-                                    Decode.field "campaignId" CampaignId.decoder
-                                        |> Decode.andThen
-                                            (\campaignId ->
-                                                Decode.field "name" Decode.string
-                                                    |> Decode.andThen
-                                                        (\name ->
-                                                            Decode.field "description" (Decode.list Decode.string)
-                                                                |> Decode.andThen
-                                                                    (\description ->
-                                                                        Decode.field "io" IO.decoder
-                                                                            |> Decode.andThen
-                                                                                (\io ->
-                                                                                    Decode.field "initialBoard" Board.decoder
-                                                                                        |> Decode.andThen
-                                                                                            (\initialBoard ->
-                                                                                                Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
-                                                                                                    |> Decode.andThen
-                                                                                                        (\instructionTools ->
-                                                                                                            Decode.succeed
-                                                                                                                { id = id
-                                                                                                                , name = name
-                                                                                                                , index = index
-                                                                                                                , campaignId = campaignId
-                                                                                                                , description = description
-                                                                                                                , io = io
-                                                                                                                , initialBoard = initialBoard
-                                                                                                                , instructionTools = instructionTools
-                                                                                                                }
-                                                                                                        )
-                                                                                            )
-                                                                                )
-                                                                    )
-                                                        )
-                                            )
-                                )
-                    )
-
-        levelDecoderV2 =
+        v1 =
             Decode.field "id" Decode.string
                 |> Decode.andThen
                     (\id ->
@@ -274,10 +230,7 @@ decoder =
             (\version ->
                 case version of
                     1 ->
-                        levelDecoderV1
-
-                    2 ->
-                        levelDecoderV2
+                        v1
 
                     _ ->
                         Decode.fail

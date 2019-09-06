@@ -74,40 +74,39 @@ encode solution =
         ]
 
 
-decoderV1 : Decode.Decoder Solution
-decoderV1 =
-    Decode.field "id" SolutionId.decoder
-        |> Decode.andThen
-            (\id ->
-                Decode.field "levelId" LevelId.decoder
-                    |> Decode.andThen
-                        (\levelId ->
-                            Decode.field "score" Score.decoder
-                                |> Decode.andThen
-                                    (\score ->
-                                        Decode.field "board" Board.decoder
-                                            |> Decode.andThen
-                                                (\board ->
-                                                    Decode.succeed
-                                                        { id = id
-                                                        , levelId = levelId
-                                                        , score = score
-                                                        , board = board
-                                                        }
-                                                )
-                                    )
-                        )
-            )
-
-
 decoder : Decode.Decoder Solution
 decoder =
+    let
+        v1 =
+            Decode.field "id" SolutionId.decoder
+                |> Decode.andThen
+                    (\id ->
+                        Decode.field "levelId" LevelId.decoder
+                            |> Decode.andThen
+                                (\levelId ->
+                                    Decode.field "score" Score.decoder
+                                        |> Decode.andThen
+                                            (\score ->
+                                                Decode.field "board" Board.decoder
+                                                    |> Decode.andThen
+                                                        (\board ->
+                                                            Decode.succeed
+                                                                { id = id
+                                                                , levelId = levelId
+                                                                , score = score
+                                                                , board = board
+                                                                }
+                                                        )
+                                            )
+                                )
+                    )
+    in
     Decode.field "version" Decode.int
         |> Decode.andThen
             (\version ->
                 case version of
                     1 ->
-                        decoderV1
+                        v1
 
                     _ ->
                         Decode.fail ("Unknown version: " ++ String.fromInt version)
