@@ -1,12 +1,12 @@
 {
   "name": "firestore-function",
   "version": "1.0.0",
-  "description": "",
+  "description": "The server for the game",
   "main": "build/index.js",
   "scripts": {
-    "test": "mocha -r ts-node/register src/test/**/*.test.ts",
+    "test": "jest src/test --notify --config=jest.config.js",
     "lint": "tslint --fix --project .",
-    "build": "npm install && npm run lint && tsc && echo '    :)\n'",
+    "build": "npm install && npm run lint && tsc && npm test && echo '    :)\n'",
     "deploy": "npm run build && gcloud functions deploy drafts --runtime nodejs8 --trigger-http && gcloud functions deploy solutions --runtime nodejs8 --trigger-http && gcloud functions deploy highScores --runtime nodejs8 --trigger-http && gcloud functions deploy levels --runtime nodejs8 --trigger-http && gcloud functions deploy userInfo --runtime nodejs8 --trigger-http"
   },
   "author": "Simon Olander",
@@ -17,15 +17,12 @@
     "ts.data.json": "^0.2.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.0",
     "@types/express": "^4.17.1",
+    "@types/jest": "^24.0.18",
     "@types/jsonwebtoken": "^8.3.3",
-    "@types/mocha": "^5.2.7",
     "@types/node": "^12.7.2",
-    "@types/supertest": "^2.0.8",
-    "chai": "^4.2.0",
-    "mocha": "^6.2.0",
-    "supertest": "^4.0.2",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
     "tslint": "^5.19.0",
     "typescript": "^3.5.3"

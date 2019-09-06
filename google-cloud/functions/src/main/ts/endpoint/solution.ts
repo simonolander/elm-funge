@@ -13,12 +13,12 @@ import {
 } from "../data/EndpointResult";
 import * as Score from "../data/Score";
 import * as Solution from "../data/Solution";
-import {verifyJwt} from "../misc/auth";
+import auth from "../misc/auth";
 import {decode} from "../misc/json";
 import {isSolutionValid} from "../service/engine";
 import * as Firestore from "../service/firestore";
 
-export async function endpoint(req: Request): Promise<EndpointResult<any>> {
+export async function endpoint(req: Request): Promise<EndpointResult<Solution.Solution | Solution.Solution[] | never>> {
     switch (req.method) {
         case "GET":
             return get(req);
@@ -30,7 +30,7 @@ export async function endpoint(req: Request): Promise<EndpointResult<any>> {
 }
 
 async function get(req: Request): Promise<EndpointResult<Solution.Solution | Solution.Solution[]>> {
-    const authResult = verifyJwt<Solution.Solution>(req, ["openid", "read:solutions"]);
+    const authResult = auth.verifyJwt<Solution.Solution>(req, ["openid", "read:solutions"]);
     if (authResult.tag === "failure") {
         return authResult.error;
     }
@@ -85,7 +85,7 @@ async function get(req: Request): Promise<EndpointResult<Solution.Solution | Sol
 }
 
 async function post(req: Request): Promise<EndpointResult<never>> {
-    const authResult = verifyJwt<never>(req, ["openid", "submit:solutions"]);
+    const authResult = auth.verifyJwt<never>(req, ["openid", "submit:solutions"]);
     if (authResult.tag === "failure") {
         return authResult.error;
     }
@@ -126,12 +126,12 @@ async function post(req: Request): Promise<EndpointResult<never>> {
     const similarSolutionExists = await Firestore.getSolutions({levelId: request.value.levelId, authorId: user.id})
         .then(solutions => solutions.some(sol => Board.equals(request.value.board, sol.board)));
     if (similarSolutionExists) {
-        duplicate();
+        return duplicate();
     }
 
     const solutionError = isSolutionValid(level, request.value.board, request.value.score);
     if (typeof solutionError !== "undefined") {
-        console.warn(`645de896    Invalid solution posted by user ${user.id}`, solutionError);
+        console.warn(`645de896    Invalid solution posted by user ${user.id}:`, solutionError);
         return badRequest(solutionError);
     }
 

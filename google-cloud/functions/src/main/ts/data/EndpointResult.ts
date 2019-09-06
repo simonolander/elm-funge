@@ -11,7 +11,7 @@ export type EndpointResult<T> =
     | Duplicate
     | InternalServerError;
 
-interface Found<T> {
+export interface Found<T> {
     tag: "Found";
     body: T;
 }
@@ -24,7 +24,7 @@ interface NotFound {
     tag: "NotFound";
 }
 
-interface BadRequest {
+export interface BadRequest {
     tag: "BadRequest";
     messages: string[];
 }

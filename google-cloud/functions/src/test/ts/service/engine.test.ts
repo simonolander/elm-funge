@@ -1,4 +1,3 @@
-import {expect} from "chai";
 import * as Level from "../../../main/ts/data/Level";
 import * as Solution from "../../../main/ts/data/Solution";
 import {decodeOrThrow} from "../../../main/ts/misc/json";
@@ -8,7 +7,7 @@ import solutions from "../../resources/solutions/index";
 
 describe("test", () => {
     it("should always pass", () => {
-        expect(true).to.equal(true);
+        expect(0).toEqual(0);
     });
 });
 
@@ -17,7 +16,7 @@ describe("engine test", () => {
         const solution = decodeOrThrow(Solution.decoder, value);
         const level = decodeOrThrow(Level.decoder, (levels as any)[solution.levelId]);
         it (`solution ${solution.id} should solve level ${solution.levelId}`, () => {
-            expect(engine.isSolutionValid(level, solution.board, solution.score)).to.equal(undefined);
+            expect(engine.isSolutionValid(level, solution.board, solution.score)).toEqual(undefined);
         });
     }
 });
