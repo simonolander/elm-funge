@@ -7,11 +7,8 @@ import * as Result from "../../../main/ts/data/Result";
 import {Score} from "../../../main/ts/data/Score";
 import {Solution} from "../../../main/ts/data/Solution";
 import * as solutionEndpoint from "../../../main/ts/endpoint/solution";
-import auth from "../../../main/ts/misc/auth";
 import * as firestore from "../../../main/ts/service/firestore";
-import {
-    defaultTestSubject, defaultTestUserId, spyConsoleWarn, spyGetLevelById, spyGetSolutionById, spyGetSolutions, spyGetUserBySubject, spyIsSolutionValid, spySaveSolution, spyVerifyJwt,
-} from "../spies";
+import * as spies from "../spies";
 import {chooseN, chooseOne, contains, expectArraySameContent, randomId, range} from "../utils";
 
 jest.mock("../../../main/ts/service/firestore");
@@ -22,10 +19,9 @@ describe("solution endpoint", () => {
             return solutionEndpoint.endpoint({method: "GET", query: params} as Request);
         }
 
-        test("should return forbidden if verifyJwt fails", () => {
+        test("should return forbidden if spies.verifyJwt fails", () => {
             const message = "4bf174096ed37be1";
-            const verifyJwtSpy = jest.spyOn(auth, "verifyJwt")
-                .mockReturnValue(Result.failure(invalidAccessToken([message])));
+            const verifyJwtSpy = spies.verifyJwt(Result.failure(invalidAccessToken([message])));
             return get({})
                 .then(value => {
                     expect(value).toEqual({tag: "InvalidAccessToken", messages: [message]});
@@ -34,15 +30,15 @@ describe("solution endpoint", () => {
         });
 
         test("should retrieve an empty list when database is empty", () => {
-            const verifyJwtSpy = spyVerifyJwt();
-            const getSolutionsSpy = spyGetSolutions([]);
-            const getUserBySubjectSpy = spyGetUserBySubject();
+            const verifyJwtSpy = spies.verifyJwt();
+            const getSolutionsSpy = spies.getSolutions([]);
+            const getUserBySubjectSpy = spies.getUserBySubject();
             return get({})
                 .then(value => {
                     expect(value).toEqual({tag: "Found", body: []});
                     expect(verifyJwtSpy).toHaveBeenCalled();
-                    expect(getSolutionsSpy).toHaveBeenCalledWith({authorId: defaultTestUserId});
-                    expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
+                    expect(getSolutionsSpy).toHaveBeenCalledWith({authorId: spies.defaultTestUserId});
+                    expect(getUserBySubjectSpy).toHaveBeenCalledWith(spies.defaultTestSubject);
                 });
         });
 
@@ -50,55 +46,55 @@ describe("solution endpoint", () => {
             const solutionId = "51b4aa0e9b0ceef5";
             test("should retrieve the the solution if database has it", () => {
                 const solution = {
-                    id: solutionId, authorId: defaultTestUserId,
+                    id: solutionId, authorId: spies.defaultTestUserId,
                 } as Solution;
-                const verifyJwtSpy = spyVerifyJwt();
-                const getSolutionByIdSpy = spyGetSolutionById(solution);
-                const getUserBySubjectSpy = spyGetUserBySubject();
+                const verifyJwtSpy = spies.verifyJwt();
+                const getSolutionByIdSpy = spies.getSolutionById(solution);
+                const getUserBySubjectSpy = spies.getUserBySubject();
                 return get({solutionId})
                     .then(value => {
                         expect(value).toEqual({tag: "Found", body: SolutionDto.encode(solution)});
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
-                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
+                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(spies.defaultTestSubject);
                     });
             });
 
             test("should return forbidden if requesting solution that you don't own", () => {
                 const solution = {
-                    id: solutionId, authorId: `not-${defaultTestUserId}`,
+                    id: solutionId, authorId: `not-${spies.defaultTestUserId}`,
                 } as Solution;
-                const verifyJwtSpy = spyVerifyJwt();
-                const getSolutionByIdSpy = spyGetSolutionById(solution);
-                const getUserBySubjectSpy = spyGetUserBySubject();
+                const verifyJwtSpy = spies.verifyJwt();
+                const getSolutionByIdSpy = spies.getSolutionById(solution);
+                const getUserBySubjectSpy = spies.getUserBySubject();
                 return get({solutionId})
                     .then(value => {
                         expect(value).toEqual({
-                            tag: "Forbidden", messages: [`User ${defaultTestUserId} does not have permission to read solution ${solution.id}`],
+                            tag: "Forbidden", messages: [`User ${spies.defaultTestUserId} does not have permission to read solution ${solution.id}`],
                         });
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
-                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
+                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(spies.defaultTestSubject);
                     });
             });
 
             test("should return not found if the database doesn't have the solution", () => {
-                const verifyJwtSpy = spyVerifyJwt();
-                const getSolutionByIdSpy = spyGetSolutionById(undefined);
-                const getUserBySubjectSpy = spyGetUserBySubject();
+                const verifyJwtSpy = spies.verifyJwt();
+                const getSolutionByIdSpy = spies.getSolutionById(undefined);
+                const getUserBySubjectSpy = spies.getUserBySubject();
                 return get({solutionId})
                     .then(value => {
                         expect(value).toEqual({tag: "NotFound"});
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
-                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
+                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(spies.defaultTestSubject);
                     });
             });
         });
 
         describe("bad requests", () => {
             test("should return bad request if levelId is not a string", () => {
-                spyVerifyJwt();
+                spies.verifyJwt();
                 return get({levelId: 3} as {})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -107,7 +103,7 @@ describe("solution endpoint", () => {
             });
 
             test("should return bad request if solutionId is not a string", () => {
-                spyVerifyJwt();
+                spies.verifyJwt();
                 return get({solutionId: new Date()} as {})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -116,7 +112,7 @@ describe("solution endpoint", () => {
             });
 
             test("should return bad request if levelIds is not a string", () => {
-                spyVerifyJwt();
+                spies.verifyJwt();
                 return get({levelIds: () => 3} as {})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -129,22 +125,22 @@ describe("solution endpoint", () => {
             const levelId = "0049119831de9cd6";
             test("should call firestore with the id and return its solutions", () => {
                 const solutions = [{
-                    id: "c9f03b3b3420ea9a", authorId: `${defaultTestUserId}`,
+                    id: "c9f03b3b3420ea9a", authorId: `${spies.defaultTestUserId}`,
                 }, {
-                    id: "705ff9777e72aa84", authorId: `${defaultTestUserId}`,
+                    id: "705ff9777e72aa84", authorId: `${spies.defaultTestUserId}`,
                 }, {
-                    id: "4fa7a3547674542b", authorId: `${defaultTestUserId}`,
+                    id: "4fa7a3547674542b", authorId: `${spies.defaultTestUserId}`,
                 }] as Solution[];
-                spyVerifyJwt();
+                spies.verifyJwt();
                 const getSolutionsSpy = jest.spyOn(firestore, "getSolutions")
                     .mockResolvedValue(solutions);
-                spyGetUserBySubject();
+                spies.getUserBySubject();
                 return get({levelId})
                     .then(value => {
                         expect(value).toEqual({
                             tag: "Found", body: solutions.map(SolutionDto.encode),
                         });
-                        expect(getSolutionsSpy).toHaveBeenCalledWith({levelId, authorId: defaultTestUserId});
+                        expect(getSolutionsSpy).toHaveBeenCalledWith({levelId, authorId: spies.defaultTestUserId});
                     });
             });
         });
@@ -152,20 +148,20 @@ describe("solution endpoint", () => {
         describe("get solution by level ids", () => {
             test("should get all solutions with matching level ids", () => {
                 const levelIds = range(10).map(randomId);
-                const authorIds = [defaultTestUserId, `not-${defaultTestUserId}`];
+                const authorIds = [spies.defaultTestUserId, `not-${spies.defaultTestUserId}`];
                 const solutions = range(100)
                     .map(() => ({
                         id: randomId(), levelId: chooseOne(levelIds), authorId: chooseOne(authorIds),
                     })) as Solution[];
                 const chosenLevelIds = chooseN(5, levelIds);
-                spyVerifyJwt();
+                spies.verifyJwt();
                 const spy = jest.spyOn(firestore, "getSolutions")
                     .mockImplementation(({levelId, authorId}) => Promise.resolve(solutions.filter(solution => solution.levelId === levelId && solution.authorId === authorId)));
-                spyGetUserBySubject();
+                spies.getUserBySubject();
                 return get({levelIds: chosenLevelIds.join(",")})
                     .then(value => {
                         expect(value.tag).toEqual("Found");
-                        const expectedSolutions = solutions.filter(({authorId, levelId}) => authorId === defaultTestUserId && contains(levelId, chosenLevelIds));
+                        const expectedSolutions = solutions.filter(({authorId, levelId}) => authorId === spies.defaultTestUserId && contains(levelId, chosenLevelIds));
                         expectArraySameContent((value as Found<Solution[]>).body, expectedSolutions.map(SolutionDto.encode));
                         expect(spy).toHaveBeenCalledTimes(chosenLevelIds.length);
                     });
@@ -185,7 +181,7 @@ describe("solution endpoint", () => {
                 numberOfSteps: 10, numberOfInstructions: 20,
             }, board: {
                 width: 4, height: 4, instructions: [],
-            }, authorId: defaultTestUserId,
+            }, authorId: spies.defaultTestUserId,
         };
 
         const body = {
@@ -195,9 +191,8 @@ describe("solution endpoint", () => {
         describe("bad jwt token", () => {
             test("should fail if jwt verifier fails", () => {
                 const messages = ["51574963486dd5d0"];
-                const verifyJwtSpy = jest.spyOn(auth, "verifyJwt")
-                    .mockReturnValue(Result.failure(invalidAccessToken(messages)));
-                const saveSolutionSpy = spySaveSolution();
+                const verifyJwtSpy = spies.verifyJwt(Result.failure(invalidAccessToken(messages)));
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value).toEqual({tag: "InvalidAccessToken", messages});
@@ -209,9 +204,9 @@ describe("solution endpoint", () => {
 
         describe("bad request", () => {
             test("should return bad request if board is not a valid board", () => {
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                const saveSolutionSpy = spies.saveSolution();
                 return post({...body, board: {} as Board})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -221,9 +216,9 @@ describe("solution endpoint", () => {
             });
 
             test("should return bad request if id is not a string", () => {
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                const saveSolutionSpy = spies.saveSolution();
                 return post({...body, id: {} as string})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -234,9 +229,9 @@ describe("solution endpoint", () => {
             });
 
             test("should return bad request if levelId is not a string", () => {
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                const saveSolutionSpy = spies.saveSolution();
                 return post({...body, levelId: {} as string})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -247,9 +242,9 @@ describe("solution endpoint", () => {
             });
 
             test("should return bad request if score is not a valid score", () => {
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                const saveSolutionSpy = spies.saveSolution();
                 return post({...body, score: {} as Score})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -259,10 +254,10 @@ describe("solution endpoint", () => {
             });
 
             test("should return bad request if level doesn't exist", () => {
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetLevelById(undefined);
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getLevelById(undefined);
+                const saveSolutionSpy = spies.saveSolution();
                 return post({...body})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -273,13 +268,13 @@ describe("solution endpoint", () => {
 
             test("should return bad request if the solution is invalid", () => {
                 const message = "some message about invalid solution";
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetLevelById({} as Level);
-                spyGetSolutions([]);
-                const isSolutionValid = spyIsSolutionValid(message);
-                const consoleWarnSpy = spyConsoleWarn();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getLevelById({} as Level);
+                spies.getSolutions([]);
+                const isSolutionValid = spies.isSolutionValid(message);
+                const consoleWarnSpy = spies.consoleWarn();
+                const saveSolutionSpy = spies.saveSolution();
                 return post({...body})
                     .then(value => {
                         expect(value.tag).toEqual("BadRequest");
@@ -293,11 +288,11 @@ describe("solution endpoint", () => {
 
         describe("solution with same id or board exists", () => {
             test("should return conflicting id if there exists a solution with the same id from another user", () => {
-                const otherSolution = {...solution, authorId: `not-${defaultTestUserId}`};
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetSolutionById(otherSolution);
-                const saveSolutionSpy = spySaveSolution();
+                const otherSolution = {...solution, authorId: `not-${spies.defaultTestUserId}`};
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getSolutionById(otherSolution);
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value.tag).toEqual("ConflictingId");
@@ -309,10 +304,10 @@ describe("solution endpoint", () => {
                 const otherSolution = {
                     ...solution, board: {...body.board, height: body.board.height + 1},
                 };
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetSolutionById(otherSolution);
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getSolutionById(otherSolution);
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value.tag).toEqual("ConflictingId");
@@ -322,10 +317,10 @@ describe("solution endpoint", () => {
 
             test("should return ok if there exists the same solution with the same id from this user", () => {
                 const otherSolution = {...solution};
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetSolutionById(otherSolution);
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getSolutionById(otherSolution);
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value.tag).toEqual("Ok");
@@ -335,13 +330,13 @@ describe("solution endpoint", () => {
 
             test("should return duplicate if there exists a solution with different id but same board from this user", () => {
                 const otherSolutions = [{...solution, id: "f36d59076ea308f8"}];
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetSolutionById(undefined);
-                spyGetSolutions(otherSolutions);
-                spyGetLevelById({} as Level);
-                spyIsSolutionValid(undefined);
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getSolutionById(undefined);
+                spies.getSolutions(otherSolutions);
+                spies.getLevelById({} as Level);
+                spies.isSolutionValid(undefined);
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value).toEqual({tag: "Duplicate"});
@@ -352,14 +347,14 @@ describe("solution endpoint", () => {
 
         describe("happy case", () => {
             test("should return ok if solution is valid and it doesn't already exist in some way", () => {
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetSolutionById(undefined);
-                spyGetSolutions([]);
-                spyGetLevelById({} as Level);
-                spyIsSolutionValid(undefined);
-                spySaveSolution();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getSolutionById(undefined);
+                spies.getSolutions([]);
+                spies.getLevelById({} as Level);
+                spies.isSolutionValid(undefined);
+                spies.saveSolution();
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value).toEqual({tag: "Ok"});
@@ -377,14 +372,13 @@ describe("solution endpoint", () => {
                         ...solution.board, id: "44d83467c127dc76", height: solution.board.width - 1,
                     },
                 }];
-                spyVerifyJwt();
-                spyGetUserBySubject();
-                spyGetSolutionById(undefined);
-                spyGetSolutions(otherSolutions);
-                spyGetLevelById({} as Level);
-                spyIsSolutionValid(undefined);
-                spySaveSolution();
-                const saveSolutionSpy = spySaveSolution();
+                spies.verifyJwt();
+                spies.getUserBySubject();
+                spies.getSolutionById(undefined);
+                spies.getSolutions(otherSolutions);
+                spies.getLevelById({} as Level);
+                spies.isSolutionValid(undefined);
+                const saveSolutionSpy = spies.saveSolution();
                 return post(body)
                     .then(value => {
                         expect(value).toEqual({tag: "Ok"});

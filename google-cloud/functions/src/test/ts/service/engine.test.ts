@@ -5,12 +5,6 @@ import * as engine from "../../../main/ts/service/engine";
 import levels from "../../resources/levels/index";
 import solutions from "../../resources/solutions/index";
 
-describe("test", () => {
-    it("should always pass", () => {
-        expect(0).toEqual(0);
-    });
-});
-
 describe("engine test", () => {
     for (const value of Object.values(solutions)) {
         const solution = decodeOrThrow(SolutionDto.decoder, value);

@@ -96,7 +96,3 @@ export function verifyJwt<T>(req: Request, scopes: Scope[]): Result.Result<strin
         }
     }
 }
-
-export default {
-    verifyJwt,
-};

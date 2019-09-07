@@ -1,4 +1,4 @@
-import {JsonDecoder} from "ts.data.json";
+import {Err, JsonDecoder} from "ts.data.json";
 import * as Board from "../Board";
 import {Draft} from "../Draft";
 
@@ -52,3 +52,11 @@ export function encode(draft: Draft): DraftDto {
 
 export const decoder: JsonDecoder.Decoder<Draft> =
     JsonDecoder.oneOf([versions.v1.decoder], "Draft");
+
+export function decodeOrThrow(draft: any): Draft {
+    const result = decoder.decode(draft);
+    if (result instanceof Err) {
+        throw new Error(result.error);
+    }
+    return result.value;
+}

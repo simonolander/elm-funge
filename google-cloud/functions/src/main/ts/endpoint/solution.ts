@@ -14,7 +14,7 @@ import {
 } from "../data/EndpointResult";
 import * as Score from "../data/Score";
 import * as Solution from "../data/Solution";
-import auth from "../misc/auth";
+import * as auth from "../misc/auth";
 import {decode} from "../misc/json";
 import {concat, map} from "../misc/utils";
 import {isSolutionValid} from "../service/engine";
