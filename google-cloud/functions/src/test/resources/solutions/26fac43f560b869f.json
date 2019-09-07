@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "id": "1383d5dd58cdf971",
-  "levelId": "42fe70779bd30656",
+  "id": "26fac43f560b869f",
+  "levelId": "88c653c6c3a5b5e7",
   "score": {
-    "numberOfSteps": 60,
+    "numberOfSteps": 11,
     "numberOfInstructions": 9
   },
   "board": {
@@ -16,43 +16,13 @@
           "y": 0
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
+          "tag": "Increment"
         }
       },
       {
         "position": {
           "x": 1,
           "y": 0
-        },
-        "instruction": {
-          "tag": "Read"
-        }
-      },
-      {
-        "position": {
-          "x": 2,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Branch",
-          "trueDirection": "Down",
-          "falseDirection": "Right"
-        }
-      },
-      {
-        "position": {
-          "x": 3,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Terminate"
-        }
-      },
-      {
-        "position": {
-          "x": 0,
-          "y": 1
         },
         "instruction": {
           "tag": "Print"
@@ -61,16 +31,26 @@
       {
         "position": {
           "x": 2,
-          "y": 1
+          "y": 0
         },
         "instruction": {
-          "tag": "Duplicate"
+          "tag": "Increment"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
         }
       },
       {
         "position": {
           "x": 0,
-          "y": 2
+          "y": 1
         },
         "instruction": {
           "tag": "ChangeDirection",
@@ -79,25 +59,43 @@
       },
       {
         "position": {
-          "x": 1,
-          "y": 2
+          "x": 2,
+          "y": 1
         },
         "instruction": {
-          "tag": "Add"
+          "tag": "Print"
         }
       },
       {
         "position": {
-          "x": 2,
-          "y": 2
+          "x": 3,
+          "y": 1
         },
         "instruction": {
           "tag": "ChangeDirection",
           "direction": "Left"
         }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Print"
+        }
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

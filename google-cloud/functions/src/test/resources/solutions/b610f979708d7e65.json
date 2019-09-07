@@ -1,18 +1,28 @@
 {
   "version": 1,
-  "id": "87385e3763cfd6e5",
-  "levelId": "e2f96c5345e5f1f6",
+  "id": "b610f979708d7e65",
+  "levelId": "42fe70779bd30656",
   "score": {
-    "numberOfSteps": 149,
-    "numberOfInstructions": 9
+    "numberOfSteps": 88,
+    "numberOfInstructions": 10
   },
   "board": {
-    "width": 7,
-    "height": 7,
+    "width": 4,
+    "height": 4,
     "instructions": [
       {
         "position": {
           "x": 0,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
           "y": 0
         },
         "instruction": {
@@ -21,19 +31,38 @@
       },
       {
         "position": {
-          "x": 1,
+          "x": 2,
           "y": 0
         },
         "instruction": {
           "tag": "Branch",
-          "trueDirection": "Down",
-          "falseDirection": "Right"
+          "trueDirection": "Right",
+          "falseDirection": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Print"
         }
       },
       {
         "position": {
           "x": 2,
-          "y": 0
+          "y": 1
         },
         "instruction": {
           "tag": "Terminate"
@@ -41,64 +70,44 @@
       },
       {
         "position": {
-          "x": 4,
-          "y": 0
+          "x": 3,
+          "y": 2
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
+          "tag": "Duplicate"
         }
       },
       {
         "position": {
-          "x": 5,
-          "y": 0
+          "x": 0,
+          "y": 3
         },
         "instruction": {
-          "tag": "Print"
+          "tag": "ChangeDirection",
+          "direction": "Up"
         }
       },
       {
         "position": {
           "x": 1,
-          "y": 1
+          "y": 3
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
-        }
-      },
-      {
-        "position": {
-          "x": 2,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "Print"
+          "tag": "Add"
         }
       },
       {
         "position": {
           "x": 3,
-          "y": 1
+          "y": 3
         },
         "instruction": {
-          "tag": "Decrement"
-        }
-      },
-      {
-        "position": {
-          "x": 4,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "Branch",
-          "trueDirection": "Right",
-          "falseDirection": "Up"
+          "tag": "ChangeDirection",
+          "direction": "Left"
         }
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

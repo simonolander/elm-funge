@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "id": "4f478390ab105dbc",
-  "levelId": "be13bbdd076a586c",
+  "id": "bf9a4a695aca846f",
+  "levelId": "5ed6d025ab5937e4",
   "score": {
-    "numberOfSteps": 3,
-    "numberOfInstructions": 6
+    "numberOfSteps": 5,
+    "numberOfInstructions": 1
   },
   "board": {
     "width": 5,
@@ -12,7 +12,7 @@
     "instructions": [
       {
         "position": {
-          "x": 0,
+          "x": 2,
           "y": 0
         },
         "instruction": {
@@ -22,7 +22,7 @@
       },
       {
         "position": {
-          "x": 2,
+          "x": 3,
           "y": 0
         },
         "instruction": {
@@ -36,8 +36,7 @@
           "y": 0
         },
         "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
+          "tag": "JumpForward"
         }
       },
       {
@@ -46,18 +45,7 @@
           "y": 1
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
-        }
-      },
-      {
-        "position": {
-          "x": 1,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
+          "tag": "JumpForward"
         }
       },
       {
@@ -72,12 +60,11 @@
       },
       {
         "position": {
-          "x": 0,
+          "x": 1,
           "y": 2
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
+          "tag": "JumpForward"
         }
       },
       {
@@ -86,8 +73,16 @@
           "y": 2
         },
         "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "JumpForward"
         }
       },
       {
@@ -96,28 +91,17 @@
           "y": 3
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
-        }
-      },
-      {
-        "position": {
-          "x": 1,
-          "y": 3
-        },
-        "instruction": {
           "tag": "Exception",
           "exceptionMessage": "Don't hit the exceptions"
         }
       },
       {
         "position": {
-          "x": 0,
-          "y": 4
+          "x": 4,
+          "y": 3
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Left"
+          "tag": "JumpForward"
         }
       },
       {
@@ -126,8 +110,16 @@
           "y": 4
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
+          "tag": "JumpForward"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "JumpForward"
         }
       },
       {
@@ -136,21 +128,11 @@
           "y": 4
         },
         "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
-        }
-      },
-      {
-        "position": {
-          "x": 4,
-          "y": 4
-        },
-        "instruction": {
-          "tag": "Terminate"
+          "tag": "JumpForward"
         }
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

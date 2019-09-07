@@ -98,6 +98,6 @@
       "tag": "ChangeAnyDirection"
     }
   ],
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

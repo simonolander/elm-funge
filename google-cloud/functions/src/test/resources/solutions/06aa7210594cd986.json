@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "id": "bef85d570a643bfc",
-  "levelId": "be13bbdd076a586c",
+  "id": "06aa7210594cd986",
+  "levelId": "519983570eefe19c",
   "score": {
-    "numberOfSteps": 11,
-    "numberOfInstructions": 5
+    "numberOfSteps": 18,
+    "numberOfInstructions": 4
   },
   "board": {
     "width": 5,
@@ -12,22 +12,12 @@
     "instructions": [
       {
         "position": {
-          "x": 0,
+          "x": 1,
           "y": 0
         },
         "instruction": {
           "tag": "ChangeDirection",
           "direction": "Down"
-        }
-      },
-      {
-        "position": {
-          "x": 2,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
         }
       },
       {
@@ -42,7 +32,7 @@
       },
       {
         "position": {
-          "x": 1,
+          "x": 0,
           "y": 1
         },
         "instruction": {
@@ -58,6 +48,36 @@
         "instruction": {
           "tag": "Exception",
           "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Exception",
+          "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Exception",
+          "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
         }
       },
       {
@@ -72,18 +92,8 @@
       },
       {
         "position": {
-          "x": 1,
-          "y": 3
-        },
-        "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
-        }
-      },
-      {
-        "position": {
-          "x": 2,
-          "y": 3
+          "x": 3,
+          "y": 2
         },
         "instruction": {
           "tag": "ChangeDirection",
@@ -93,16 +103,56 @@
       {
         "position": {
           "x": 4,
-          "y": 3
+          "y": 2
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Down"
+          "tag": "PushToStack",
+          "value": 1
         }
       },
       {
         "position": {
           "x": 0,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Exception",
+          "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Exception",
+          "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Exception",
+          "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "Exception",
+          "exceptionMessage": "Don't hit the exceptions"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
           "y": 4
         },
         "instruction": {
@@ -112,22 +162,13 @@
       },
       {
         "position": {
-          "x": 2,
-          "y": 4
-        },
-        "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Up"
-        }
-      },
-      {
-        "position": {
           "x": 3,
           "y": 4
         },
         "instruction": {
-          "tag": "Exception",
-          "exceptionMessage": "Don't hit the exceptions"
+          "tag": "Branch",
+          "trueDirection": "Right",
+          "falseDirection": "Up"
         }
       },
       {
@@ -141,6 +182,6 @@
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

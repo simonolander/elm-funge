@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "id": "69fe92265705136a",
-  "levelId": "c2003520d988f8d0",
+  "id": "fe00b4583b006914",
+  "levelId": "e2f96c5345e5f1f6",
   "score": {
-    "numberOfSteps": 255,
-    "numberOfInstructions": 13
+    "numberOfSteps": 167,
+    "numberOfInstructions": 12
   },
   "board": {
     "width": 7,
@@ -16,64 +16,8 @@
           "y": 0
         },
         "instruction": {
-          "tag": "Read"
-        }
-      },
-      {
-        "position": {
-          "x": 1,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Read"
-        }
-      },
-      {
-        "position": {
-          "x": 2,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Branch",
-          "trueDirection": "Down",
-          "falseDirection": "Right"
-        }
-      },
-      {
-        "position": {
-          "x": 3,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Terminate"
-        }
-      },
-      {
-        "position": {
-          "x": 4,
-          "y": 0
-        },
-        "instruction": {
           "tag": "ChangeDirection",
-          "direction": "Right"
-        }
-      },
-      {
-        "position": {
-          "x": 5,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "PopFromStack"
-        }
-      },
-      {
-        "position": {
-          "x": 6,
-          "y": 0
-        },
-        "instruction": {
-          "tag": "Print"
+          "direction": "Up"
         }
       },
       {
@@ -82,13 +26,44 @@
           "y": 1
         },
         "instruction": {
-          "tag": "Swap"
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Up"
         }
       },
       {
         "position": {
           "x": 1,
-          "y": 1
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Right",
+          "falseDirection": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 3
         },
         "instruction": {
           "tag": "Decrement"
@@ -96,8 +71,47 @@
       },
       {
         "position": {
+          "x": 0,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 5
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Right",
+          "falseDirection": "Up"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 5
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Up"
+        }
+      },
+      {
+        "position": {
           "x": 2,
-          "y": 1
+          "y": 5
         },
         "instruction": {
           "tag": "ChangeDirection",
@@ -106,35 +120,15 @@
       },
       {
         "position": {
-          "x": 4,
-          "y": 1
+          "x": 0,
+          "y": 6
         },
         "instruction": {
-          "tag": "Branch",
-          "trueDirection": "Left",
-          "falseDirection": "Up"
-        }
-      },
-      {
-        "position": {
-          "x": 5,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "Swap"
-        }
-      },
-      {
-        "position": {
-          "x": 6,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "Increment"
+          "tag": "Read"
         }
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

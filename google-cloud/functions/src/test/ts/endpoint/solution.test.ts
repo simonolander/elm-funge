@@ -8,56 +8,15 @@ import {Score} from "../../../main/ts/data/Score";
 import {Solution} from "../../../main/ts/data/Solution";
 import * as solutionEndpoint from "../../../main/ts/endpoint/solution";
 import auth from "../../../main/ts/misc/auth";
-import * as engine from "../../../main/ts/service/engine";
 import * as firestore from "../../../main/ts/service/firestore";
+import {
+    defaultTestSubject, defaultTestUserId, spyConsoleWarn, spyGetLevelById, spyGetSolutionById, spyGetSolutions, spyGetUserBySubject, spyIsSolutionValid, spySaveSolution, spyVerifyJwt,
+} from "../spies";
 import {chooseN, chooseOne, contains, expectArraySameContent, randomId, range} from "../utils";
 
 jest.mock("../../../main/ts/service/firestore");
 
-const testSubject = "test-subject";
-const testUserId = "test-user-id";
-
 describe("solution endpoint", () => {
-    function spyVerifyJwt() {
-        return jest.spyOn(auth, "verifyJwt")
-            .mockReturnValue(Result.success(testSubject));
-    }
-
-    function spyGetUserBySubject() {
-        return jest.spyOn(firestore, "getUserBySubject")
-            .mockResolvedValue({id: testUserId} as FirebaseFirestore.DocumentReference);
-    }
-
-    function spyGetSolutions(value: Solution[]) {
-        return jest.spyOn(firestore, "getSolutions")
-            .mockResolvedValue(value);
-    }
-
-    function spyGetSolutionById(value: Solution | undefined) {
-        return jest.spyOn(firestore, "getSolutionById")
-            .mockResolvedValue(value);
-    }
-
-    function spyGetLevelById(value: Level | undefined) {
-        return jest.spyOn(firestore, "getLevelById")
-            .mockResolvedValue(value);
-    }
-
-    function spySaveSolution() {
-        return jest.spyOn(firestore, "saveSolution")
-            .mockResolvedValue(undefined);
-    }
-
-    function spyIsSolutionValid(value: string | undefined) {
-        return jest.spyOn(engine, "isSolutionValid")
-            .mockReturnValue(value);
-    }
-
-    function spyConsoleWarn() {
-        return jest.spyOn(console, "warn")
-            .mockImplementation(() => undefined);
-    }
-
     describe("get", () => {
         async function get(params: { levelId?: string, solutionId?: string, levelIds?: string }): Promise<EndpointResult<Solution | Solution[]>> {
             return solutionEndpoint.endpoint({method: "GET", query: params} as Request);
@@ -82,8 +41,8 @@ describe("solution endpoint", () => {
                 .then(value => {
                     expect(value).toEqual({tag: "Found", body: []});
                     expect(verifyJwtSpy).toHaveBeenCalled();
-                    expect(getSolutionsSpy).toHaveBeenCalledWith({authorId: testUserId});
-                    expect(getUserBySubjectSpy).toHaveBeenCalledWith(testSubject);
+                    expect(getSolutionsSpy).toHaveBeenCalledWith({authorId: defaultTestUserId});
+                    expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
                 });
         });
 
@@ -91,8 +50,7 @@ describe("solution endpoint", () => {
             const solutionId = "51b4aa0e9b0ceef5";
             test("should retrieve the the solution if database has it", () => {
                 const solution = {
-                    id: solutionId,
-                    authorId: testUserId,
+                    id: solutionId, authorId: defaultTestUserId,
                 } as Solution;
                 const verifyJwtSpy = spyVerifyJwt();
                 const getSolutionByIdSpy = spyGetSolutionById(solution);
@@ -102,14 +60,13 @@ describe("solution endpoint", () => {
                         expect(value).toEqual({tag: "Found", body: SolutionDto.encode(solution)});
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
-                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(testSubject);
+                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
                     });
             });
 
             test("should return forbidden if requesting solution that you don't own", () => {
                 const solution = {
-                    id: solutionId,
-                    authorId: `not-${testUserId}`,
+                    id: solutionId, authorId: `not-${defaultTestUserId}`,
                 } as Solution;
                 const verifyJwtSpy = spyVerifyJwt();
                 const getSolutionByIdSpy = spyGetSolutionById(solution);
@@ -117,12 +74,11 @@ describe("solution endpoint", () => {
                 return get({solutionId})
                     .then(value => {
                         expect(value).toEqual({
-                            tag: "Forbidden",
-                            messages: [`User ${testUserId} does not have permission to read solution ${solution.id}`],
+                            tag: "Forbidden", messages: [`User ${defaultTestUserId} does not have permission to read solution ${solution.id}`],
                         });
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
-                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(testSubject);
+                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
                     });
             });
 
@@ -135,7 +91,7 @@ describe("solution endpoint", () => {
                         expect(value).toEqual({tag: "NotFound"});
                         expect(verifyJwtSpy).toHaveBeenCalled();
                         expect(getSolutionByIdSpy).toHaveBeenCalledWith(solutionId);
-                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(testSubject);
+                        expect(getUserBySubjectSpy).toHaveBeenCalledWith(defaultTestSubject);
                     });
             });
         });
@@ -172,20 +128,13 @@ describe("solution endpoint", () => {
         describe("get solution by level id", () => {
             const levelId = "0049119831de9cd6";
             test("should call firestore with the id and return its solutions", () => {
-                const solutions = [
-                    {
-                        id: "c9f03b3b3420ea9a",
-                        authorId: `${testUserId}`,
-                    },
-                    {
-                        id: "705ff9777e72aa84",
-                        authorId: `${testUserId}`,
-                    },
-                    {
-                        id: "4fa7a3547674542b",
-                        authorId: `${testUserId}`,
-                    },
-                ] as Solution[];
+                const solutions = [{
+                    id: "c9f03b3b3420ea9a", authorId: `${defaultTestUserId}`,
+                }, {
+                    id: "705ff9777e72aa84", authorId: `${defaultTestUserId}`,
+                }, {
+                    id: "4fa7a3547674542b", authorId: `${defaultTestUserId}`,
+                }] as Solution[];
                 spyVerifyJwt();
                 const getSolutionsSpy = jest.spyOn(firestore, "getSolutions")
                     .mockResolvedValue(solutions);
@@ -193,10 +142,9 @@ describe("solution endpoint", () => {
                 return get({levelId})
                     .then(value => {
                         expect(value).toEqual({
-                            tag: "Found",
-                            body: solutions.map(SolutionDto.encode),
+                            tag: "Found", body: solutions.map(SolutionDto.encode),
                         });
-                        expect(getSolutionsSpy).toHaveBeenCalledWith({levelId, authorId: testUserId});
+                        expect(getSolutionsSpy).toHaveBeenCalledWith({levelId, authorId: defaultTestUserId});
                     });
             });
         });
@@ -204,25 +152,20 @@ describe("solution endpoint", () => {
         describe("get solution by level ids", () => {
             test("should get all solutions with matching level ids", () => {
                 const levelIds = range(10).map(randomId);
-                const authorIds = [testUserId, `not-${testUserId}`];
-                const solutions =
-                    range(100)
-                        .map(() => ({
-                            id: randomId(),
-                            levelId: chooseOne(levelIds),
-                            authorId: chooseOne(authorIds),
-                        })) as Solution[];
+                const authorIds = [defaultTestUserId, `not-${defaultTestUserId}`];
+                const solutions = range(100)
+                    .map(() => ({
+                        id: randomId(), levelId: chooseOne(levelIds), authorId: chooseOne(authorIds),
+                    })) as Solution[];
                 const chosenLevelIds = chooseN(5, levelIds);
                 spyVerifyJwt();
                 const spy = jest.spyOn(firestore, "getSolutions")
-                    .mockImplementation(({levelId, authorId}) =>
-                        Promise.resolve(solutions.filter(solution =>
-                            solution.levelId === levelId && solution.authorId === authorId)));
+                    .mockImplementation(({levelId, authorId}) => Promise.resolve(solutions.filter(solution => solution.levelId === levelId && solution.authorId === authorId)));
                 spyGetUserBySubject();
                 return get({levelIds: chosenLevelIds.join(",")})
                     .then(value => {
                         expect(value.tag).toEqual("Found");
-                        const expectedSolutions = solutions.filter(({authorId, levelId}) => authorId === testUserId && contains(levelId, chosenLevelIds));
+                        const expectedSolutions = solutions.filter(({authorId, levelId}) => authorId === defaultTestUserId && contains(levelId, chosenLevelIds));
                         expectArraySameContent((value as Found<Solution[]>).body, expectedSolutions.map(SolutionDto.encode));
                         expect(spy).toHaveBeenCalledTimes(chosenLevelIds.length);
                     });
@@ -232,35 +175,21 @@ describe("solution endpoint", () => {
 
     describe("post", () => {
         async function post(params: {
-            id: string,
-            levelId: string,
-            board: Board,
-            score: Score,
+            id: string, levelId: string, board: Board, score: Score,
         }): Promise<EndpointResult<Solution | Solution[]>> {
             return solutionEndpoint.endpoint({method: "POST", body: params} as Request);
         }
 
         const solution = {
-            version: 1,
-            id: "b4613392fcdff3e6",
-            levelId: "4ffebe95707abd7d",
-            score: {
-                numberOfSteps: 10,
-                    numberOfInstructions: 20,
-            },
-            board: {
-                width: 4,
-                    height: 4,
-                    instructions: [],
-            },
-            authorId: testUserId,
+            version: 1, id: "b4613392fcdff3e6", levelId: "4ffebe95707abd7d", score: {
+                numberOfSteps: 10, numberOfInstructions: 20,
+            }, board: {
+                width: 4, height: 4, instructions: [],
+            }, authorId: defaultTestUserId,
         };
 
         const body = {
-            id: solution.id,
-            levelId: solution.levelId,
-            board: solution.board,
-            score: solution.score,
+            id: solution.id, levelId: solution.levelId, board: solution.board, score: solution.score,
         };
 
         describe("bad jwt token", () => {
@@ -364,7 +293,7 @@ describe("solution endpoint", () => {
 
         describe("solution with same id or board exists", () => {
             test("should return conflicting id if there exists a solution with the same id from another user", () => {
-                const otherSolution = {...solution, authorId: `not-${testUserId}`};
+                const otherSolution = {...solution, authorId: `not-${defaultTestUserId}`};
                 spyVerifyJwt();
                 spyGetUserBySubject();
                 spyGetSolutionById(otherSolution);
@@ -378,8 +307,7 @@ describe("solution endpoint", () => {
 
             test("should return conflicting id if there exists a different solution with the same id from this user", () => {
                 const otherSolution = {
-                    ...solution,
-                    board: {...body.board, height: body.board.height + 1},
+                    ...solution, board: {...body.board, height: body.board.height + 1},
                 };
                 spyVerifyJwt();
                 spyGetUserBySubject();
@@ -440,10 +368,15 @@ describe("solution endpoint", () => {
             });
 
             test("should return ok if solution is valid and it doesn't already exist in some way and there are other solutions", () => {
-                const otherSolutions = [
-                    {...solution, board: {...solution.board, id: "3fb139c74934d45d", height: solution.board.height - 1}},
-                    {...solution, board: {...solution.board, id: "44d83467c127dc76", height: solution.board.width - 1}},
-                ];
+                const otherSolutions = [{
+                    ...solution, board: {
+                        ...solution.board, id: "3fb139c74934d45d", height: solution.board.height - 1,
+                    },
+                }, {
+                    ...solution, board: {
+                        ...solution.board, id: "44d83467c127dc76", height: solution.board.width - 1,
+                    },
+                }];
                 spyVerifyJwt();
                 spyGetUserBySubject();
                 spyGetSolutionById(undefined);

@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "id": "f0a91b97e78f59d5",
+  "id": "9511e611bc6b692d",
   "levelId": "be13bbdd076a586c",
   "score": {
-    "numberOfSteps": 3,
-    "numberOfInstructions": 3
+    "numberOfSteps": 11,
+    "numberOfInstructions": 5
   },
   "board": {
     "width": 5,
@@ -17,7 +17,7 @@
         },
         "instruction": {
           "tag": "ChangeDirection",
-          "direction": "Up"
+          "direction": "Down"
         }
       },
       {
@@ -68,16 +68,6 @@
         "instruction": {
           "tag": "Exception",
           "exceptionMessage": "Don't hit the exceptions"
-        }
-      },
-      {
-        "position": {
-          "x": 4,
-          "y": 2
-        },
-        "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
         }
       },
       {
@@ -92,12 +82,42 @@
       },
       {
         "position": {
+          "x": 2,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
           "x": 0,
           "y": 4
         },
         "instruction": {
           "tag": "ChangeDirection",
-          "direction": "Left"
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Up"
         }
       },
       {
@@ -121,6 +141,6 @@
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }

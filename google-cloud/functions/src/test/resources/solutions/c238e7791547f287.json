@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "id": "3016ef8b1b8d8ba1",
-  "levelId": "88c653c6c3a5b5e7",
+  "id": "c238e7791547f287",
+  "levelId": "407410b1638112a9",
   "score": {
-    "numberOfSteps": 11,
-    "numberOfInstructions": 11
+    "numberOfSteps": 76,
+    "numberOfInstructions": 12
   },
   "board": {
-    "width": 4,
-    "height": 4,
+    "width": 5,
+    "height": 5,
     "instructions": [
       {
         "position": {
@@ -16,7 +16,7 @@
           "y": 0
         },
         "instruction": {
-          "tag": "Increment"
+          "tag": "Read"
         }
       },
       {
@@ -25,7 +25,9 @@
           "y": 0
         },
         "instruction": {
-          "tag": "Print"
+          "tag": "Branch",
+          "trueDirection": "Right",
+          "falseDirection": "Down"
         }
       },
       {
@@ -34,7 +36,7 @@
           "y": 0
         },
         "instruction": {
-          "tag": "Increment"
+          "tag": "Read"
         }
       },
       {
@@ -43,18 +45,9 @@
           "y": 0
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Down"
-        }
-      },
-      {
-        "position": {
-          "x": 0,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Down"
+          "tag": "Branch",
+          "trueDirection": "Left",
+          "falseDirection": "Down"
         }
       },
       {
@@ -63,16 +56,8 @@
           "y": 1
         },
         "instruction": {
-          "tag": "Increment"
-        }
-      },
-      {
-        "position": {
-          "x": 2,
-          "y": 1
-        },
-        "instruction": {
-          "tag": "Print"
+          "tag": "ChangeDirection",
+          "direction": "Down"
         }
       },
       {
@@ -82,17 +67,7 @@
         },
         "instruction": {
           "tag": "ChangeDirection",
-          "direction": "Left"
-        }
-      },
-      {
-        "position": {
-          "x": 0,
-          "y": 2
-        },
-        "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Right"
+          "direction": "Down"
         }
       },
       {
@@ -101,13 +76,51 @@
           "y": 2
         },
         "instruction": {
-          "tag": "Print"
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Right",
+          "falseDirection": "Down"
         }
       },
       {
         "position": {
           "x": 2,
-          "y": 2
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 4
         },
         "instruction": {
           "tag": "Terminate"
@@ -115,6 +128,6 @@
       }
     ]
   },
-  "authorId": "7e577e577e577e57",
-  "createdTime": 1566887680
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
 }
