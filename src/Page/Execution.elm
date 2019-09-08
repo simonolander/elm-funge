@@ -403,7 +403,7 @@ stepModel oldExecution model =
                         |> List.filterMap (RemoteData.toMaybe >> Maybe.Extra.join)
                         |> List.filter (.levelId >> (==) execution.level.id)
                         |> List.any (.board >> (==) board)
-                        |> Debug.log "isNewSolution"
+                        |> not
             in
             if isSolved execution && isNewSolution initialBoard then
                 let
