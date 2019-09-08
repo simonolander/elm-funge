@@ -1144,6 +1144,308 @@
       ]
     }
   },
+  "drafts.9bfd1959c4dc9bfd": {
+    "version": 1,
+    "id": "9bfd1959c4dc9bfd",
+    "levelId": "b96e6c12476716a3",
+    "board": {
+      "width": 7,
+      "height": 7,
+      "instructions": [
+        {
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Read"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Down",
+            "falseDirection": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "CompareLessThan"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Right",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Print"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "Terminate"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        }
+      ]
+    }
+  },
   "solutions.e1acc6ac4d51b453": {
     "version": 1,
     "id": "e1acc6ac4d51b453",
@@ -3409,6 +3711,315 @@
   "levels.24c7efb5c41f8f8f.solutionBook": [
     "e1acc6ac4d51b453"
   ],
+  "levels.b96e6c12476716a3.draftBook": [
+    "9bfd1959c4dc9bfd"
+  ],
+  "solutions.5409e6a2a96bd765.remote": {
+    "version": 1,
+    "id": "5409e6a2a96bd765",
+    "levelId": "b96e6c12476716a3",
+    "score": {
+      "numberOfSteps": 1106,
+      "numberOfInstructions": 30
+    },
+    "board": {
+      "width": 7,
+      "height": 7,
+      "instructions": [
+        {
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Read"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Down",
+            "falseDirection": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "CompareLessThan"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Right",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Print"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "Terminate"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        }
+      ]
+    }
+  },
   "solutions.cb7d3d5e6e2a843f.remote": {
     "version": 1,
     "id": "cb7d3d5e6e2a843f",
@@ -6054,6 +6665,9 @@
       }
     ]
   },
+  "levels.b96e6c12476716a3.solutionBook": [
+    "5409e6a2a96bd765"
+  ],
   "solutions.26fac43f560b869f.remote": {
     "version": 1,
     "id": "26fac43f560b869f",
@@ -6347,6 +6961,308 @@
           "instruction": {
             "tag": "ChangeDirection",
             "direction": "Up"
+          }
+        }
+      ]
+    }
+  },
+  "drafts.9bfd1959c4dc9bfd.remote": {
+    "version": 1,
+    "id": "9bfd1959c4dc9bfd",
+    "levelId": "b96e6c12476716a3",
+    "board": {
+      "width": 7,
+      "height": 7,
+      "instructions": [
+        {
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Read"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Down",
+            "falseDirection": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "CompareLessThan"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Right",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Print"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "Terminate"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
           }
         }
       ]
@@ -12172,6 +13088,312 @@
           },
           "instruction": {
             "tag": "PopFromStack"
+          }
+        }
+      ]
+    }
+  },
+  "solutions.5409e6a2a96bd765": {
+    "version": 1,
+    "id": "5409e6a2a96bd765",
+    "levelId": "b96e6c12476716a3",
+    "score": {
+      "numberOfSteps": 1106,
+      "numberOfInstructions": 30
+    },
+    "board": {
+      "width": 7,
+      "height": 7,
+      "instructions": [
+        {
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Read"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Down",
+            "falseDirection": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "CompareLessThan"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 2
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Right"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Right",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "Swap"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "JumpForward"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Branch",
+            "trueDirection": "Left",
+            "falseDirection": "Down"
+          }
+        },
+        {
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "SendToBottom"
+          }
+        },
+        {
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Up"
+          }
+        },
+        {
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "PopFromStack"
+          }
+        },
+        {
+          "position": {
+            "x": 6,
+            "y": 5
+          },
+          "instruction": {
+            "tag": "Print"
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "Terminate"
+          }
+        },
+        {
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "instruction": {
+            "tag": "ChangeDirection",
+            "direction": "Left"
           }
         }
       ]
