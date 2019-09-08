@@ -8,6 +8,7 @@ import _391e211d935e4ad2 from "./391e211d935e4ad2.json";
 import _3b430d458cf5b7fc from "./3b430d458cf5b7fc.json";
 import _4e7f850875d027fb from "./4e7f850875d027fb.json";
 import _5462d544217494b0 from "./5462d544217494b0.json";
+import _5fd762bed6702cd5 from "./5fd762bed6702cd5.json";
 import _8c0bb6947d15f272 from "./8c0bb6947d15f272.json";
 import _9511e611bc6b692d from "./9511e611bc6b692d.json";
 import _9efe9b2012392f97 from "./9efe9b2012392f97.json";
@@ -31,6 +32,7 @@ export default {
     "3b430d458cf5b7fc": _3b430d458cf5b7fc,
     "4e7f850875d027fb": _4e7f850875d027fb,
     "5462d544217494b0": _5462d544217494b0,
+    "5fd762bed6702cd5": _5fd762bed6702cd5,
     "8c0bb6947d15f272": _8c0bb6947d15f272,
     "9511e611bc6b692d": _9511e611bc6b692d,
     "9efe9b2012392f97": _9efe9b2012392f97,
