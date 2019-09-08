@@ -2,12 +2,14 @@ module Page.Credits exposing (Model, Msg, init, load, subscriptions, update, vie
 
 import Basics.Extra exposing (flip, uncurry)
 import Browser exposing (Document)
+import Color
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font exposing (Font)
 import Html.Attributes
 import Json.Encode as Encode
+import View.Constant exposing (color)
 import View.Header
 import View.Layout
 import View.Scewn
@@ -90,35 +92,52 @@ view model =
                 , section "Source"
                     (link
                         [ centerX
-                        , mouseOver [ Font.color (rgb 0.5 0.5 1) ]
+                        , mouseOver [ Font.color color.font.linkHover ]
+                        , Font.color color.font.link
                         ]
                         { label = text "https://github.com/simonolander/elm-funge"
                         , url = "https://github.com/simonolander/elm-funge"
                         }
                     )
-                , section "Play testing"
-                    ([ "Anita Chainiau"
-                     , "Anton Håkanson"
-                     , "Isac Olander Sahlén"
-                     , "Adelie Fournier"
-                     , "Benjamin Becquet"
-                     , "Erik Bodin"
-                     , "Anton Pervorsek"
-                     , "Edvin Wallin"
-                     , "Carl-Henrik Klåvus"
-                     , "Johan von Konow"
-                     , "Harald Nicander"
-                     , "Karin Aldheimer"
-                     , "Malin Molin"
-                     ]
+                , let
+                    playTesters =
+                        [ "Anita Chainiau"
+                        , "Anton Håkanson"
+                        , "Isac Olander Sahlén"
+                        , "Adelie Fournier"
+                        , "Benjamin Becquet"
+                        , "Erik Bodin"
+                        , "Anton Pervorsek"
+                        , "Edvin Wallin"
+                        , "Carl-Henrik Klåvus"
+                        , "Johan von Konow"
+                        , "Harald Nicander"
+                        , "Karin Aldheimer"
+                        , "Malin Molin"
+                        ]
+
+                    color index =
+                        let
+                            t =
+                                toFloat index / toFloat (List.length playTesters)
+
+                            { red, green, blue, alpha } =
+                                Color.hsl t 1 0.75
+                                    |> Color.toRgba
+                        in
+                        Font.color (rgba red green blue alpha)
+                  in
+                  section "Play testing"
+                    (playTesters
                         |> List.map (String.replace " " "\u{00A0}")
                         |> List.sort
                         |> List.map text
-                        |> List.map
-                            (el
-                                [ mouseOver [ Font.color (rgb 0.5 0.5 1) ]
-                                , padding 10
-                                ]
+                        |> List.indexedMap
+                            (\index ->
+                                el
+                                    [ mouseOver [ color index ]
+                                    , padding 10
+                                    ]
                             )
                         |> List.intersperse (text " ")
                         |> paragraph [ Font.center ]
@@ -126,12 +145,18 @@ view model =
                 , section "Special thanks"
                     ([ ( "Zachtronics"
                        , [ text "For making "
-                         , link []
+                         , link
+                            [ Font.color color.font.link
+                            , mouseOver [ Font.color color.font.linkHover ]
+                            ]
                             { label = text "TIS-100"
                             , url = "http://www.zachtronics.com/tis-100/"
                             }
                          , text " and "
-                         , link []
+                         , link
+                            [ Font.color color.font.link
+                            , mouseOver [ Font.color color.font.linkHover ]
+                            ]
                             { label = text "Shenzhen I/O"
                             , url = "http://www.zachtronics.com/shenzhen-io/"
                             }
@@ -194,7 +219,7 @@ taskAndAuthor tasks =
                     ]
                     (text task)
                 , el
-                    [ mouseOver [ Font.color (rgb 0.5 0.5 1) ]
+                    [ mouseOver [ Font.color color.font.subtle ]
                     , alignRight
                     , Background.color (rgb 0 0 0)
                     , paddingEach { left = 11, top = 0, right = 0, bottom = 0 }
@@ -215,7 +240,14 @@ taskAndAuthor tasks =
 
                     author :: tail ->
                         tail
-                            |> List.map (text >> el [ width fill, Font.alignRight, mouseOver [ Font.color (rgb 0.5 0.5 1) ] ])
+                            |> List.map
+                                (text
+                                    >> el
+                                        [ width fill
+                                        , Font.alignRight
+                                        , mouseOver [ Font.color color.font.subtle ]
+                                        ]
+                                )
                             |> (::) (top task author)
                             |> column [ width fill ]
             )

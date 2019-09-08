@@ -13,6 +13,8 @@ color =
         { default = rgb 1 1 1
         , subtle = rgb 0.5 0.5 0.5
         , error = rgb 1 0.51 0.35
+        , link = rgb 0.5 0.5 1
+        , linkHover = rgb 0.75 0.75 1
         }
     }
 
