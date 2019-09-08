@@ -95,7 +95,8 @@ view model =
                 ]
                 [ titleView
                 , link "Levels" (Route.Campaign CampaignId.standard Nothing)
-                , link "Blueprints" (Route.Blueprints Nothing)
+
+                --                , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" Route.Credits
                 ]
 
