@@ -2,6 +2,9 @@ module Api.Auth0 exposing (LoginResponse, login, loginResponseFromUrl, logout, r
 
 import Data.AccessToken as AccessToken exposing (AccessToken)
 import Dict
+import Json.Decode
+import Json.Encode
+import Json.Encode.Extra
 import Maybe.Extra
 import Route exposing (Route)
 import Set
@@ -57,11 +60,34 @@ audience =
 -- MODEL
 
 
+type alias State =
+    { route : String }
+
+
 type alias LoginResponse =
     { accessToken : AccessToken
     , expiresIn : Int
     , route : Route
     }
+
+
+encodeState : State -> Json.Encode.Value
+encodeState state =
+    Json.Encode.object
+        [ ( "route", Json.Encode.string state.route )
+        ]
+
+
+stateDecoder : Json.Decode.Decoder State
+stateDecoder =
+    let
+        routeDecoder =
+            Json.Decode.field "route" Json.Decode.string
+                |> Json.Decode.maybe
+                |> Json.Decode.map (Maybe.withDefault "")
+    in
+    routeDecoder
+        |> Json.Decode.andThen (\route -> Json.Decode.succeed { route = route })
 
 
 loginResponseFromUrl : Url -> Maybe LoginResponse
@@ -72,7 +98,7 @@ loginResponseFromUrl url =
                 |> Maybe.withDefault ""
                 |> String.split "&"
                 |> List.map (String.split "=")
-                --                |> Debug.log "fragment"
+                |> Debug.log "fragment"
                 |> List.map
                     (\list ->
                         case list of
@@ -93,12 +119,16 @@ loginResponseFromUrl url =
             Dict.get "expires_in" fragmentParameters
                 |> Maybe.andThen String.toInt
 
-        route =
+        state =
             Dict.get "state" fragmentParameters
                 |> Maybe.andThen Url.percentDecode
-                |> Maybe.map (\path -> { url | fragment = Just path })
-                |> Maybe.andThen Route.fromUrl
-                |> Maybe.withDefault Route.NotFound
+                |> Maybe.andThen (Json.Decode.decodeString stateDecoder >> Result.toMaybe)
+                |> Maybe.withDefault { route = "" }
+
+        route =
+            { url | fragment = Just state.route }
+                |> Route.fromUrl
+                |> Maybe.withDefault Route.Home
     in
     case ( maybeAccessToken, maybeExpiresIn ) of
         ( Just accessToken, Just expiresIn ) ->
@@ -123,17 +153,24 @@ login url =
                 |> Set.toList
                 |> String.join " "
 
-        parameters =
-            Maybe.Extra.values
-                [ Just (Url.Builder.string "client_id" clientId)
-                , Just (Url.Builder.string "response_type" responseType)
-                , Just (Url.Builder.string "redirect_uri" redirectUri)
-                , Just (Url.Builder.string "scope" scopes)
-                , Just (Url.Builder.string "audience" audience)
-                , url
+        state =
+            { route =
+                url
+                    |> Maybe.Extra.orElse (Route.toUrl Route.Home)
                     |> Maybe.andThen .fragment
-                    |> Maybe.map (Url.Builder.string "state")
-                ]
+                    |> Maybe.withDefault ""
+            }
+                |> encodeState
+                |> Json.Encode.encode 0
+
+        parameters =
+            [ Url.Builder.string "client_id" clientId
+            , Url.Builder.string "response_type" responseType
+            , Url.Builder.string "redirect_uri" redirectUri
+            , Url.Builder.string "scope" scopes
+            , Url.Builder.string "audience" audience
+            , Url.Builder.string "state" state
+            ]
     in
     Url.Builder.crossOrigin prePath
         path
