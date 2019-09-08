@@ -11,6 +11,7 @@ import _5462d544217494b0 from "./5462d544217494b0.json";
 import _5fd762bed6702cd5 from "./5fd762bed6702cd5.json";
 import _8c0bb6947d15f272 from "./8c0bb6947d15f272.json";
 import _9511e611bc6b692d from "./9511e611bc6b692d.json";
+import _97cf5c1b2de72532 from "./97cf5c1b2de72532.json";
 import _9efe9b2012392f97 from "./9efe9b2012392f97.json";
 import _b610f979708d7e65 from "./b610f979708d7e65.json";
 import _bf9a4a695aca846f from "./bf9a4a695aca846f.json";
@@ -35,6 +36,7 @@ export default {
     "5fd762bed6702cd5": _5fd762bed6702cd5,
     "8c0bb6947d15f272": _8c0bb6947d15f272,
     "9511e611bc6b692d": _9511e611bc6b692d,
+    "97cf5c1b2de72532": _97cf5c1b2de72532,
     "9efe9b2012392f97": _9efe9b2012392f97,
     "b610f979708d7e65": _b610f979708d7e65,
     "bf9a4a695aca846f": _bf9a4a695aca846f,
