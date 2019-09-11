@@ -52,8 +52,19 @@ Each level consists of the following:
 The description is typically a couple of sentences describing the program that you are required to build.
 
 ### The initial board
-The initial board is your program board before you've made any changes. It has a fixed width and height, constraining how large a program you can make for the level. It may also contain already placed instructions. Any initial instructions are also fixed, meaning you can not overwrite them with instructions of your own. 
+The initial board is your program board before you have made any changes. It has a fixed width and height, constraining how large a program you can make for the level. It may also contain already placed instructions. Any initial instructions are also fixed, meaning you can not overwrite them with instructions of your own. 
  
 ### The instruction tools
+Each level provides you with a set of instruction tools that you can use to place instructions on the board. This limits the available instructions for your program, as you can not use instructions not apart from the ones provided.
 
 ### The test suites
+A test suite is a pair of input and expected output, and is used to verify that your program conforms to the specification in the description.
+
+## Scoring
+Each level has an accompanying score board. As you complete levels, your solutions will automatically be uploaded and compared to the solutions of other people. Your solutions are graded on two independent criteria, the number of steps and the number of instructions.
+
+### The number of steps
+The number of steps is the number of times the instruction pointer had to execute an instruction (including NoOps and Terminate) before the program terminated. A well optimised program terminates after as few steps as possible.
+
+### The number of instructions 
+The number of instructions is the the number of non-NoOp instructions on the board, excluding any instructions in the initial board. A well optimised program uses as few instructions as possible.
