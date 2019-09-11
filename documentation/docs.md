@@ -1,4 +1,4 @@
-#Manick
+# Manick
 
 ## Objective
 Manick is a puzzle game where each level requires you to write a program to solve it. 
@@ -43,7 +43,7 @@ There is a number of different instructions available for you to construct your 
 Each level consists of the following:
 
 - A description of the objective
-- A board
+- An initial board
 - A set of instructions tools that you are allowed to use
 - One or several test suites
 
