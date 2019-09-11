@@ -1,4 +1,4 @@
-module View.Box exposing (link, nonInteractive, simpleError, simpleLoading, simpleNonInteractive)
+module View.Box exposing (link, nonInteractive, simpleError, simpleInteractive, simpleLoading, simpleNonInteractive)
 
 import Element exposing (..)
 import Element.Background as Background

@@ -7,6 +7,7 @@ import Element exposing (..)
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd)
 import Route exposing (Route)
+import View.Box as Box
 import View.Header
 import View.Layout
 import View.Scewn
@@ -98,6 +99,10 @@ view model =
 
                 --                , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" Route.Credits
+                , Element.link [ width fill ]
+                    { url = "https://github.com/simonolander/elm-funge/blob/documentation-page/documentation/docs.md"
+                    , label = Box.simpleInteractive "Documentation"
+                    }
                 ]
 
         footer =
