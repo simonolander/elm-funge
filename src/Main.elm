@@ -124,6 +124,7 @@ view model =
     case model of
         Home mdl ->
             Home.view mdl
+                |> msgMap HomeMsg
 
         Campaign mdl ->
             Campaign.view mdl
