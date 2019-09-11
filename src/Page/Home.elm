@@ -100,7 +100,7 @@ view model =
                 --                , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" Route.Credits
                 , Element.link [ width fill ]
-                    { url = "https://github.com/simonolander/elm-funge/blob/documentation-page/documentation/docs.md"
+                    { url = "https://github.com/simonolander/elm-funge/blob/master/documentation/docs.md"
                     , label = Box.simpleInteractive "Documentation"
                     }
                 ]
