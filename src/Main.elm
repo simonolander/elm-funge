@@ -124,6 +124,7 @@ view model =
     case model of
         Home mdl ->
             Home.view mdl
+                |> msgMap HomeMsg
 
         Campaign mdl ->
             Campaign.view mdl
@@ -205,31 +206,28 @@ update msg model =
                 Execution.update message mdl
                     |> updateWith Execution ExecutionMsg
 
-            ( ExecutionMsg (Execution.SessionMsg message), mdl ) ->
-                mdl
-                    |> getSession
+            ( ExecutionMsg (Execution.SessionMsg message), _ ) ->
+                getSession model
                     |> SessionUpdate.update message
-                    |> updateWith (flip withSession mdl) (ExecutionMsg << Execution.SessionMsg)
+                    |> updateWith (flip withSession model) (ExecutionMsg << Execution.SessionMsg)
 
             ( DraftMsg (Draft.InternalMsg message), Draft mdl ) ->
                 Draft.update message mdl
                     |> updateWith Draft DraftMsg
 
-            ( DraftMsg (Draft.SessionMsg message), mdl ) ->
-                mdl
-                    |> getSession
+            ( DraftMsg (Draft.SessionMsg message), _ ) ->
+                getSession model
                     |> SessionUpdate.update message
-                    |> updateWith (flip withSession mdl) (DraftMsg << Draft.SessionMsg)
+                    |> updateWith (flip withSession model) (DraftMsg << Draft.SessionMsg)
 
             ( CampaignMsg (Campaign.InternalMsg message), Campaign mdl ) ->
                 Campaign.update message mdl
                     |> updateWith Campaign CampaignMsg
 
-            ( CampaignMsg (Campaign.SessionMsg message), mdl ) ->
-                mdl
-                    |> getSession
+            ( CampaignMsg (Campaign.SessionMsg message), _ ) ->
+                getSession model
                     |> SessionUpdate.update message
-                    |> updateWith (flip withSession mdl) (CampaignMsg << Campaign.SessionMsg)
+                    |> updateWith (flip withSession model) (CampaignMsg << Campaign.SessionMsg)
 
             ( HomeMsg message, Home mdl ) ->
                 Home.update message mdl
