@@ -2,7 +2,7 @@ import {JsonDecoder} from "ts.data.json";
 import {Blueprint} from "../Blueprint";
 import * as Board from "../Board";
 import * as InstructionTool from "../InstructionTool";
-import * as IO from "../IO";
+import * as Suite from "../Suite";
 
 export type BlueprintDto = V1;
 
@@ -11,7 +11,7 @@ interface V1 {
     readonly id: string;
     readonly name: string;
     readonly description: string[];
-    readonly io: IO.IO;
+    readonly io: Suite.Suite;
     readonly initialBoard: Board.Board;
     readonly instructionTools: InstructionTool.InstructionTool[];
     readonly authorId: string;
@@ -40,7 +40,7 @@ const versions = {
             id: JsonDecoder.string,
             name: JsonDecoder.string,
             description: JsonDecoder.array(JsonDecoder.string, "description"),
-            io: IO.decoder,
+            io: Suite.decoder,
             initialBoard: Board.decoder,
             instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
             authorId: JsonDecoder.string,

@@ -2,9 +2,9 @@ module View.InstructionTools exposing (view)
 
 import Array exposing (Array)
 import Data.Direction as Direction
-import Data.IO as IO
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
+import Data.Suite as Suite
 import Element exposing (..)
 import Element.Background as Background
 import Html.Attributes
@@ -131,8 +131,8 @@ view conf =
                                 , text = value
                                 , placeholder = Nothing
                                 , labelText = "Enter value"
-                                , min = Just IO.constraints.min
-                                , max = Just IO.constraints.max
+                                , min = Just Suite.constraints.min
+                                , max = Just Suite.constraints.max
                                 , step = Just 1
                                 }
                                 |> Just

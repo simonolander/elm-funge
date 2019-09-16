@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "bc27b58a0cafb0ba",
   "index": 9,
   "campaignId": "standard",
@@ -7,33 +7,63 @@
   "description": [
     "> Read two positive numbers x and y from the input",
     "> Output x * y",
-    "The last input is 0 should not be outputed"
+    "The last input is 0 should not be outputted"
   ],
-  "io": {
-    "input": [
-      12,
-      2,
-      6,
-      6,
-      5,
-      7,
-      1,
-      1,
-      7,
-      11,
-      6,
-      3,
-      0
-    ],
-    "output": [
-      24,
-      36,
-      35,
-      1,
-      77,
-      18
-    ]
-  },
+  "suites": [
+    {
+      "input": [
+        12,
+        2,
+        6,
+        6,
+        5,
+        7,
+        1,
+        1,
+        7,
+        11,
+        6,
+        3,
+        0
+      ],
+      "output": [
+        24,
+        36,
+        35,
+        1,
+        77,
+        18
+      ]
+    },
+    {
+      "input": [
+        0
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        8,
+        2,
+        8,
+        4,
+        7,
+        3,
+        9,
+        5,
+        3,
+        9,
+        0
+      ],
+      "output": [
+        16,
+        32,
+        21,
+        45,
+        27
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 7,
     "height": 7,

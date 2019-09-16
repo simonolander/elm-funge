@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "e2f96c5345e5f1f6",
   "index": 3,
   "campaignId": "standard",
@@ -9,39 +9,66 @@
     "> Output all the numbers from n to 0",
     "The last input is 0 and should not be printed"
   ],
-  "io": {
-    "input": [
-      7,
-      3,
-      10,
-      0
-    ],
-    "output": [
-      7,
-      6,
-      5,
-      4,
-      3,
-      2,
-      1,
-      0,
-      3,
-      2,
-      1,
-      0,
-      10,
-      9,
-      8,
-      7,
-      6,
-      5,
-      4,
-      3,
-      2,
-      1,
-      0
-    ]
-  },
+  "suites": [
+    {
+      "input": [
+        7,
+        3,
+        10,
+        0
+      ],
+      "output": [
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1,
+        0,
+        3,
+        2,
+        1,
+        0,
+        10,
+        9,
+        8,
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "input": [
+        0
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        3,
+        5,
+        0
+      ],
+      "output": [
+        3,
+        2,
+        1,
+        0,
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 7,
     "height": 7,

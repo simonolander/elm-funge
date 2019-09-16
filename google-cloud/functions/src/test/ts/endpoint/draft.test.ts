@@ -10,7 +10,7 @@ import * as spies from "../spies";
 
 jest.mock("../../../main/ts/service/firestore");
 
-const defaultDraft = DraftDto.decodeOrThrow(drafts.a26a952ddd2209f0);
+const defaultDraft = DraftDto.decodeOrThrow(drafts.b3e9a55d719d8200);
 
 beforeEach(() => {
     spies.verifyJwt();

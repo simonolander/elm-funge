@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "e6d9465e4aacaa0f",
   "index": 15,
   "campaignId": "standard",
@@ -8,10 +8,12 @@
     "> Terminate the program",
     "> Don't hit any of the exceptions"
   ],
-  "io": {
-    "input": [],
-    "output": []
-  },
+  "suites": [
+    {
+      "input": [],
+      "output": []
+    }
+  ],
   "initialBoard": {
     "width": 5,
     "height": 5,

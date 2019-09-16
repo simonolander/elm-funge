@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "42cdf083b26bb8ab",
   "index": 21,
   "campaignId": "standard",
@@ -8,15 +8,17 @@
     "> Output 1, 2, 3, 4",
     "> Terminate the program"
   ],
-  "io": {
-    "input": [],
-    "output": [
-      1,
-      2,
-      3,
-      4
-    ]
-  },
+  "suites": [
+    {
+      "input": [],
+      "output": [
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 5,
     "height": 5,

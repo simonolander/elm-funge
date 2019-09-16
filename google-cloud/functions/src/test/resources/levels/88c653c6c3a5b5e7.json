@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "88c653c6c3a5b5e7",
   "index": 2,
   "campaignId": "standard",
@@ -7,14 +7,16 @@
   "description": [
     "> Output the numbers 1, 2, and 3"
   ],
-  "io": {
-    "input": [],
-    "output": [
-      1,
-      2,
-      3
-    ]
-  },
+  "suites": [
+    {
+      "input": [],
+      "output": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 4,
     "height": 4,

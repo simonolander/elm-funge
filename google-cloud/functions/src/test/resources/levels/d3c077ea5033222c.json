@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "d3c077ea5033222c",
   "index": 8,
   "campaignId": "standard",
@@ -7,35 +7,60 @@
   "description": [
     "> Read a number x from the input",
     "> Output x + 10",
-    "The last input is 0 should not be outputed"
+    "The last input is 0 should not be outputted"
   ],
-  "io": {
-    "input": [
-      24,
-      145,
-      49,
-      175,
-      166,
-      94,
-      38,
-      90,
-      165,
-      211,
-      0
-    ],
-    "output": [
-      34,
-      155,
-      59,
-      185,
-      176,
-      104,
-      48,
-      100,
-      175,
-      221
-    ]
-  },
+  "suites": [
+    {
+      "input": [
+        24,
+        145,
+        49,
+        175,
+        166,
+        94,
+        38,
+        90,
+        165,
+        211,
+        0
+      ],
+      "output": [
+        34,
+        155,
+        59,
+        185,
+        176,
+        104,
+        48,
+        100,
+        175,
+        221
+      ]
+    },
+    {
+      "input": [
+        0
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        88,
+        733,
+        50,
+        619,
+        115,
+        0
+      ],
+      "output": [
+        98,
+        743,
+        60,
+        629,
+        125
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 5,
     "height": 5,

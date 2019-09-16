@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "407410b1638112a9",
   "index": 11,
   "campaignId": "standard",
@@ -9,33 +9,67 @@
     "> Output the sequence in reverse",
     "The last input is 0 is not part of the sequence"
   ],
-  "io": {
-    "input": [
-      -19,
-      -2,
-      94,
-      -5,
-      19,
-      7,
-      33,
-      -92,
-      29,
-      -39,
-      0
-    ],
-    "output": [
-      -39,
-      29,
-      -92,
-      33,
-      7,
-      19,
-      -5,
-      94,
-      -2,
-      -19
-    ]
-  },
+  "suites": [
+    {
+      "input": [
+        -19,
+        -2,
+        94,
+        -5,
+        19,
+        7,
+        33,
+        -92,
+        29,
+        -39,
+        0
+      ],
+      "output": [
+        -39,
+        29,
+        -92,
+        33,
+        7,
+        19,
+        -5,
+        94,
+        -2,
+        -19
+      ]
+    },
+    {
+      "input": [
+        0
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        39,
+        0
+      ],
+      "output": [
+        39
+      ]
+    },
+    {
+      "input": [
+        1,
+        2,
+        3,
+        2,
+        1,
+        0
+      ],
+      "output": [
+        1,
+        2,
+        3,
+        2,
+        1
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 5,
     "height": 5,
