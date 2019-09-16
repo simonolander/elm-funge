@@ -7,13 +7,13 @@ import Data.Board as Board
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
 import Data.CampaignId as CampaignId
 import Data.GetError as GetError
-import Data.IO as IO
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Int16 as Int16
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
+import Data.Suite as Suite
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -100,11 +100,17 @@ load =
                             , width = String.fromInt (Board.width level.initialBoard)
                             , height = String.fromInt (Board.height level.initialBoard)
                             , input =
-                                level.io.input
+                                level.suites
+                                    |> List.head
+                                    |> Maybe.withDefault Suite.empty
+                                    |> .input
                                     |> List.map Int16.toString
                                     |> String.join ","
                             , output =
-                                level.io.output
+                                level.suites
+                                    |> List.head
+                                    |> Maybe.withDefault Suite.empty
+                                    |> .output
                                     |> List.map Int16.toString
                                     |> String.join ","
                             , enabledInstructionTools =
@@ -130,11 +136,17 @@ initWithLevel level model =
         , width = String.fromInt (Board.width level.initialBoard)
         , height = String.fromInt (Board.height level.initialBoard)
         , input =
-            level.io.input
+            level.suites
+                |> List.head
+                |> Maybe.withDefault Suite.empty
+                |> .input
                 |> List.map Int16.toString
                 |> String.join ","
         , output =
-            level.io.output
+            level.suites
+                |> List.head
+                |> Maybe.withDefault Suite.empty
+                |> .output
                 |> List.map Int16.toString
                 |> String.join ","
         , enabledInstructionTools =
@@ -254,10 +266,14 @@ update msg model =
                                 |> List.map Int16.fromString
                                 |> Maybe.Extra.values
 
+                        suite =
+                            level.suites
+                                |> List.head
+                                |> Maybe.withDefault Suite.empty
+                                |> Suite.withInput input
+
                         newLevel =
-                            input
-                                |> flip IO.withInput level.io
-                                |> flip Level.withIO level
+                            Level.withSuites [ suite ] level
 
                         newSession =
                             Session.withLevel newLevel model.session
@@ -279,10 +295,14 @@ update msg model =
                                 |> List.map Int16.fromString
                                 |> Maybe.Extra.values
 
+                        suite =
+                            level.suites
+                                |> List.head
+                                |> Maybe.withDefault Suite.empty
+                                |> Suite.withOutput output
+
                         newLevel =
-                            output
-                                |> flip IO.withOutput level.io
-                                |> flip Level.withIO level
+                            Level.withSuites [ suite ] level
 
                         newSession =
                             Session.withLevel newLevel model.session

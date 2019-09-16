@@ -4,13 +4,19 @@ module Data.History exposing
     , current
     , first
     , forward
+    , fromList
     , hasFuture
     , hasPast
-    , home
+    , last
+    , map
     , push
-    , pushflip
     , singleton
     , size
+    , toBeginning
+    , toEnd
+    , toList
+    , toPastPresentFuture
+    , update
     )
 
 
@@ -24,6 +30,45 @@ type alias History a =
 singleton : a -> History a
 singleton a =
     { past = [], current = a, future = [] }
+
+
+fromList : List a -> Maybe (History a)
+fromList list =
+    case list of
+        head :: tail ->
+            Just
+                { past = []
+                , current = head
+                , future = tail
+                }
+
+        [] ->
+            Nothing
+
+
+toList : History a -> List a
+toList history =
+    List.concat
+        [ List.reverse history.past
+        , [ history.current ]
+        , history.future
+        ]
+
+
+toPastPresentFuture : History a -> { past : List a, present : a, future : List a }
+toPastPresentFuture history =
+    { past = List.reverse history.past
+    , present = history.current
+    , future = history.future
+    }
+
+
+map : (a -> b) -> History a -> History b
+map function history =
+    { past = List.map function history.past
+    , current = function history.current
+    , future = List.map function history.future
+    }
 
 
 current : History a -> a
@@ -75,9 +120,9 @@ push a history =
     }
 
 
-pushflip : History a -> a -> History a
-pushflip history a =
-    push a history
+update : (a -> a) -> History a -> History a
+update fn history =
+    { history | current = fn history.current }
 
 
 size : History a -> Int
@@ -87,14 +132,29 @@ size history =
 
 first : History a -> a
 first history =
-    current (home history)
+    current (toBeginning history)
 
 
-home : History a -> History a
-home history =
+last : History a -> a
+last history =
+    current (toEnd history)
+
+
+toBeginning : History a -> History a
+toBeginning history =
     case history.past of
         [] ->
             history
 
         _ ->
-            home (back history)
+            toBeginning (back history)
+
+
+toEnd : History a -> History a
+toEnd history =
+    case history.future of
+        [] ->
+            history
+
+        _ ->
+            toEnd (forward history)

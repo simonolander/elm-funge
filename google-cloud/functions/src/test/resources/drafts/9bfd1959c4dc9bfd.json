@@ -47,6 +47,15 @@
       },
       {
         "position": {
+          "x": 6,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
           "x": 3,
           "y": 1
         },
@@ -63,6 +72,17 @@
           "tag": "Branch",
           "trueDirection": "Down",
           "falseDirection": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 6,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Left",
+          "falseDirection": "Up"
         }
       },
       {
@@ -129,8 +149,9 @@
           "y": 2
         },
         "instruction": {
-          "tag": "ChangeDirection",
-          "direction": "Left"
+          "tag": "Branch",
+          "trueDirection": "Left",
+          "falseDirection": "Down"
         }
       },
       {
@@ -160,6 +181,35 @@
         "instruction": {
           "tag": "ChangeDirection",
           "direction": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Duplicate"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Swap"
+        }
+      },
+      {
+        "position": {
+          "x": 6,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Up",
+          "falseDirection": "Left"
         }
       },
       {

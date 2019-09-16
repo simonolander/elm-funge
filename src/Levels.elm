@@ -20,7 +20,7 @@ levelTest =
     , campaignId = CampaignId.standard
     , name = "test"
     , description = [ "For testing purposes" ]
-    , io =
+    , suites =
         { input =
             List.range 980 1020
                 |> List.map Int16.constructor
@@ -56,7 +56,7 @@ levelDoubleTheFun =
     , campaignId = CampaignId.standard
     , name = "Double the fun"
     , description = [ "> Read a number n from input", "> Output n * 2", "The last input is 0 and should not be printed" ]
-    , io =
+    , suites =
         { input =
             [ 1, 8, 19, 3, 5, 31, 9, 0 ]
                 |> List.map Int16.constructor
@@ -88,7 +88,7 @@ level123 =
     , campaignId = CampaignId.standard
     , name = "One, two, three"
     , description = [ "> Output the numbers 1, 2, and 3" ]
-    , io =
+    , suites =
         { input = []
         , output =
             [ 1, 2, 3 ]
@@ -118,7 +118,7 @@ levelCountDown =
     , campaignId = CampaignId.standard
     , name = "Count down"
     , description = [ "> Read a number n from input", "> Output all the numbers from n to 0", "The last input is 0 and should not be printed" ]
-    , io =
+    , suites =
         { input =
             [ 7, 3, 10, 0 ]
                 |> List.map Int16.constructor
@@ -153,7 +153,7 @@ levelSomeSums =
     , campaignId = CampaignId.standard
     , name = "Some sums"
     , description = [ "> Read two numbers a and b from input", "> Output a + b", "The last input is 0 and should not be printed" ]
-    , io =
+    , suites =
         { input =
             [ 1, 5, 13, 10, 11, 10, 8, 8, 0 ]
                 |> List.map Int16.constructor
@@ -187,7 +187,7 @@ levelOneMinusTheOther =
     , campaignId = CampaignId.standard
     , name = "One minus the other"
     , description = [ "> Read two numbers a and b from input", "> Output a - b", "The last input is 0 and should not be printed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 18, 4, 9, 17, 13, 13, 12, 1, 17, 3 ]
@@ -228,7 +228,7 @@ levelPowersOfTwo =
     , campaignId = CampaignId.standard
     , name = "Powers of two"
     , description = [ "> Read a number n from input", "> Output 2^n ", "The last input is 0 and should not be printed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 1, 4, 3, 2, 5, 6 ]
@@ -268,7 +268,7 @@ levelTriangularNumbers =
     , campaignId = CampaignId.standard
     , name = "Triangular numbers"
     , description = [ "> Read a number n from input", "> Output n*(n+1)/2 ", "The last input is 0 and should not be printed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 5, 13, 7, 11, 1, 10, 3 ]
@@ -308,7 +308,7 @@ levelSignalAmplifier =
     , campaignId = CampaignId.standard
     , name = "Signal amplifier"
     , description = [ "> Read a number x from the input", "> Output x + 10", "The last input is 0 should not be outputed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 24, 145, 49, 175, 166, 94, 38, 90, 165, 211 ]
@@ -349,7 +349,7 @@ levelMultiplier =
     , campaignId = CampaignId.standard
     , name = "Multiplier"
     , description = [ "> Read two positive numbers x and y from the input", "> Output x * y", "The last input is 0 should not be outputed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 12, 2, 6, 6, 5, 7, 1, 1, 7, 11, 6, 3 ]
@@ -392,7 +392,7 @@ levelDivideAndConquer =
     , campaignId = CampaignId.standard
     , name = "Divide and conquer"
     , description = [ "> Read two positive numbers x and y from the input", "> Output ⌊x / y⌋", "The last input is 0 should not be outputed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 12, 1, 8, 2, 8, 8, 11, 2, 5, 7, 10, 4 ]
@@ -436,7 +436,7 @@ levelSequenceReverser =
     , campaignId = CampaignId.standard
     , name = "Sequence reverser"
     , description = [ "> Read a sequence of numbers from input", "> Output the sequence in reverse", "The last input is 0 is not part of the sequence" ]
-    , io =
+    , suites =
         let
             input =
                 [ -19, -2, 94, -5, 19, 7, 33, -92, 29, -39 ]
@@ -477,7 +477,7 @@ levelSequenceSorter =
     , campaignId = CampaignId.standard
     , name = "Sequence sorter"
     , description = [ "> Read a sequence from the input", "> Output the sequence sorted from lowest to highest", "The last input is 0 should not be outputed" ]
-    , io =
+    , suites =
         let
             input =
                 [ 1, 4, 3, 7, 11, 15, 4, 14, 4, 10, 8, 7 ]
@@ -520,7 +520,7 @@ levelLessIsMore =
     , campaignId = CampaignId.standard
     , name = "Less is more"
     , description = [ "> Read two numbers a and b from the input", "> If a < b output a, otherwise output b", "The last input is 0 is not part of the sequence" ]
-    , io =
+    , suites =
         let
             input =
                 [ 6, 15, 11, 3, 9, 7, 15, 15, 3, 7 ]
@@ -569,7 +569,7 @@ levelLabyrinth1 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 1"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -598,7 +598,7 @@ levelLabyrinth2 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 2"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -626,7 +626,7 @@ levelLabyrinth3 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 3"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -658,7 +658,7 @@ levelLabyrinth4 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 4"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -693,7 +693,7 @@ levelLabyrinth5 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 5"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -727,7 +727,7 @@ levelLabyrinth6 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 6"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -763,7 +763,7 @@ levelLabyrinth7 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 7"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -802,7 +802,7 @@ levelLabyrinth8 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 8"
     , description = [ "> Output 1, 2, 3, 4", "> Terminate the program" ]
-    , io =
+    , suites =
         { input = []
         , output =
             [ 1, 2, 3, 4 ]
@@ -830,7 +830,7 @@ levelLabyrinth9 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 9"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }
@@ -863,7 +863,7 @@ levelLabyrinth10 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 10"
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output =
             [ 1 ]
@@ -901,7 +901,7 @@ levelLabyrinth11 =
     , campaignId = CampaignId.standard
     , name = "Labyrinth 11"
     , description = [ "> Output 1", "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output =
             [ 1 ]
@@ -938,7 +938,7 @@ levelLabyrinthLab =
     , campaignId = CampaignId.standard
     , name = "Labyrinth lab"
     , description = [ "> Terminate the program", "> Don't hit any of the exceptions" ]
-    , io =
+    , suites =
         { input = []
         , output = []
         }

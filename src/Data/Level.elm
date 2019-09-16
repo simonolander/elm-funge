@@ -12,11 +12,11 @@ module Data.Level exposing
     , removeFromLocalStorage
     , saveToLocalStorage
     , withDescription
-    , withIO
     , withInitialBoard
     , withInstructionTool
     , withInstructionTools
     , withName
+    , withSuites
     )
 
 import Api.GCP as GCP
@@ -24,11 +24,11 @@ import Array exposing (Array)
 import Data.Board as Board exposing (Board)
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.GetError as HttpError exposing (GetError)
-import Data.IO as IO exposing (IO)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
+import Data.Suite as Suite exposing (Suite)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Ports.LocalStorage as LocalStorage
@@ -42,7 +42,7 @@ type alias Level =
     , campaignId : CampaignId
     , name : String
     , description : List String
-    , io : IO
+    , suites : List Suite
     , initialBoard : Board
     , instructionTools : Array InstructionTool
     }
@@ -77,9 +77,9 @@ withDescription description level =
     { level | description = description }
 
 
-withIO : IO -> Level -> Level
-withIO io level =
-    { level | io = io }
+withSuites : List Suite -> Level -> Level
+withSuites suites level =
+    { level | suites = suites }
 
 
 withInitialBoard : Board -> Level -> Level
@@ -145,10 +145,11 @@ generator =
             , campaignId = CampaignId.blueprints
             , name = "New level"
             , description = [ "Enter a description" ]
-            , io =
-                { input = []
-                , output = []
-                }
+            , suites =
+                [ { input = []
+                  , output = []
+                  }
+                ]
             , initialBoard = Board.empty 4 4
             , instructionTools =
                 JustInstruction NoOp
@@ -166,13 +167,13 @@ generator =
 encode : Level -> Encode.Value
 encode level =
     Encode.object
-        [ ( "version", Encode.int 1 )
+        [ ( "version", Encode.int 2 )
         , ( "id", Encode.string level.id )
         , ( "index", Encode.int level.index )
         , ( "campaignId", CampaignId.encode level.campaignId )
         , ( "name", Encode.string level.name )
         , ( "description", Encode.list Encode.string level.description )
-        , ( "io", IO.encode level.io )
+        , ( "suites", Encode.list Suite.encode level.suites )
         , ( "initialBoard", Board.encode level.initialBoard )
         , ( "instructionTools", Encode.array InstructionTool.encode level.instructionTools )
         ]
@@ -197,7 +198,7 @@ decoder =
                                                             Decode.field "description" (Decode.list Decode.string)
                                                                 |> Decode.andThen
                                                                     (\description ->
-                                                                        Decode.field "io" IO.decoder
+                                                                        Decode.field "io" Suite.decoder
                                                                             |> Decode.andThen
                                                                                 (\io ->
                                                                                     Decode.field "initialBoard" Board.decoder
@@ -212,7 +213,51 @@ decoder =
                                                                                                                 , campaignId = campaignId
                                                                                                                 , name = name
                                                                                                                 , description = description
-                                                                                                                , io = io
+                                                                                                                , suites = [ io ]
+                                                                                                                , initialBoard = initialBoard
+                                                                                                                , instructionTools = instructionTools
+                                                                                                                }
+                                                                                                        )
+                                                                                            )
+                                                                                )
+                                                                    )
+                                                        )
+                                            )
+                                )
+                    )
+
+        v2 =
+            Decode.field "id" Decode.string
+                |> Decode.andThen
+                    (\id ->
+                        Decode.field "index" Decode.int
+                            |> Decode.andThen
+                                (\index ->
+                                    Decode.field "campaignId" CampaignId.decoder
+                                        |> Decode.andThen
+                                            (\campaignId ->
+                                                Decode.field "name" Decode.string
+                                                    |> Decode.andThen
+                                                        (\name ->
+                                                            Decode.field "description" (Decode.list Decode.string)
+                                                                |> Decode.andThen
+                                                                    (\description ->
+                                                                        Decode.field "suites" (Decode.list Suite.decoder)
+                                                                            |> Decode.andThen
+                                                                                (\suites ->
+                                                                                    Decode.field "initialBoard" Board.decoder
+                                                                                        |> Decode.andThen
+                                                                                            (\initialBoard ->
+                                                                                                Decode.field "instructionTools" (Decode.array InstructionTool.decoder)
+                                                                                                    |> Decode.andThen
+                                                                                                        (\instructionTools ->
+                                                                                                            Decode.succeed
+                                                                                                                { id = id
+                                                                                                                , index = index
+                                                                                                                , campaignId = campaignId
+                                                                                                                , name = name
+                                                                                                                , description = description
+                                                                                                                , suites = suites
                                                                                                                 , initialBoard = initialBoard
                                                                                                                 , instructionTools = instructionTools
                                                                                                                 }
@@ -231,6 +276,9 @@ decoder =
                 case version of
                     1 ->
                         v1
+
+                    2 ->
+                        v2
 
                     _ ->
                         Decode.fail

@@ -21,10 +21,12 @@ import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Output exposing (Output)
 import Data.RemoteCache as RemoteCache
+import Data.Score exposing (Score)
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
 import Data.Stack exposing (Stack)
+import Data.Suite as Suite exposing (Suite)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -41,6 +43,7 @@ import Route
 import SessionUpdate exposing (SessionMsg(..))
 import Time
 import View.Box
+import View.Constant exposing (color, icons)
 import View.ErrorScreen
 import View.Header
 import View.LoadingScreen
@@ -64,8 +67,14 @@ type alias ExecutionStep =
     }
 
 
-type alias Execution =
+type alias ExecutionSuite =
     { executionHistory : History ExecutionStep
+    , expectedOutput : Output
+    }
+
+
+type alias Execution =
+    { executionSuites : History ExecutionSuite
     , level : Level
     }
 
@@ -243,34 +252,61 @@ initialExecution level draft =
         board =
             History.current draft.boardHistory
 
-        input =
-            level.io.input
+        executionSuite suite =
+            { executionHistory = History.singleton (initialExecutionStep board suite.input)
+            , expectedOutput = suite.output
+            }
 
-        executionHistory =
-            initialExecutionStep board input
-                |> History.singleton
+        suites =
+            History.fromList level.suites
+                |> Maybe.withDefault (History.singleton Suite.empty)
+                |> History.map executionSuite
     in
     { level = level
-    , executionHistory = executionHistory
+    , executionSuites = suites
     }
 
 
-isSolved : Execution -> Bool
-isSolved execution =
+isExecutionSolved : Execution -> Bool
+isExecutionSolved execution =
+    History.toList execution.executionSuites
+        |> List.all isSuiteSolved
+
+
+getNumberOfStepsForSuite : ExecutionSuite -> Int
+getNumberOfStepsForSuite suite =
+    History.current suite.executionHistory
+        |> .stepCount
+
+
+getScore : Execution -> Score
+getScore execution =
     let
-        executionStep =
-            History.current execution.executionHistory
+        numberOfSteps =
+            execution.executionSuites
+                |> History.toList
+                |> List.map getNumberOfStepsForSuite
+                |> List.sum
 
-        hasException =
-            Maybe.Extra.isJust executionStep.exception
+        initialNumberOfInstructions =
+            Board.count ((/=) NoOp) execution.level.initialBoard
 
-        isTerminated =
-            executionStep.terminated
+        totalNumberOfInstructions =
+            History.current execution.executionSuites
+                |> .executionHistory
+                |> History.first
+                |> .board
+                |> Board.count ((/=) NoOp)
 
-        isOutputCorrect =
-            List.reverse executionStep.output == execution.level.io.output
+        numberOfInstructions =
+            totalNumberOfInstructions - initialNumberOfInstructions
+
+        score =
+            { numberOfSteps = numberOfSteps
+            , numberOfInstructions = numberOfInstructions
+            }
     in
-    isTerminated && not hasException && isOutputCorrect
+    score
 
 
 
@@ -308,8 +344,21 @@ update msg model =
                     ( { model | state = Paused }, Cmd.none )
 
                 ClickedHome ->
+                    let
+                        newExecution =
+                            { execution
+                                | executionSuites =
+                                    History.update
+                                        (\suite ->
+                                            { suite
+                                                | executionHistory = History.toBeginning suite.executionHistory
+                                            }
+                                        )
+                                        execution.executionSuites
+                            }
+                    in
                     ( { model
-                        | execution = Just { execution | executionHistory = History.home execution.executionHistory }
+                        | execution = Just newExecution
                         , state = Paused
                       }
                     , Cmd.none
@@ -380,20 +429,18 @@ update msg model =
 stepModel : Execution -> Model -> ( Model, Cmd Msg )
 stepModel oldExecution model =
     let
-        execution =
-            stepExecution oldExecution
-
-        state =
-            if canStepExecution execution then
-                model.state
+        ( execution, state ) =
+            if canStepExecution oldExecution then
+                ( stepExecution oldExecution, model.state )
 
             else
-                Paused
+                ( oldExecution, Paused )
 
         generateSolutionCmd =
             let
                 initialBoard =
-                    execution.executionHistory
+                    History.current execution.executionSuites
+                        |> .executionHistory
                         |> History.first
                         |> .board
 
@@ -405,27 +452,10 @@ stepModel oldExecution model =
                         |> List.any (.board >> (==) board)
                         |> not
             in
-            if isSolved execution && isNewSolution initialBoard then
+            if isExecutionSolved execution && isNewSolution initialBoard then
                 let
-                    numberOfSteps =
-                        History.current execution.executionHistory
-                            |> .stepCount
-
-                    initialNumberOfInstructions =
-                        Board.count ((/=) NoOp) execution.level.initialBoard
-
-                    totalNumberOfInstructions =
-                        History.first execution.executionHistory
-                            |> .board
-                            |> Board.count ((/=) NoOp)
-
-                    numberOfInstructions =
-                        totalNumberOfInstructions - initialNumberOfInstructions
-
                     score =
-                        { numberOfSteps = numberOfSteps
-                        , numberOfInstructions = numberOfInstructions
-                        }
+                        getScore execution
                 in
                 Random.generate
                     (InternalMsg << GeneratedSolution)
@@ -452,32 +482,88 @@ stepModel oldExecution model =
     )
 
 
+undoExecution : Execution -> Execution
+undoExecution execution =
+    let
+        undoSuite suite =
+            { suite | executionHistory = History.back suite.executionHistory }
+    in
+    { execution
+        | executionSuites = History.update undoSuite execution.executionSuites
+    }
+
+
+isOutputCorrect : ExecutionSuite -> Bool
+isOutputCorrect suite =
+    History.current suite.executionHistory
+        |> .output
+        |> List.reverse
+        |> (==) suite.expectedOutput
+
+
+isTerminated : ExecutionSuite -> Bool
+isTerminated suite =
+    History.current suite.executionHistory
+        |> .terminated
+
+
+hasException : ExecutionSuite -> Bool
+hasException suite =
+    History.current suite.executionHistory
+        |> .exception
+        |> Maybe.Extra.isJust
+
+
+isSuiteFailed : ExecutionSuite -> Bool
+isSuiteFailed suite =
+    hasException suite || (isTerminated suite && (not << isOutputCorrect) suite)
+
+
+isSuiteSolved : ExecutionSuite -> Bool
+isSuiteSolved suite =
+    isTerminated suite && (not << isSuiteFailed) suite
+
+
+hasNextSuite : Execution -> Bool
+hasNextSuite =
+    .executionSuites >> History.hasFuture
+
+
+canStepSuite : ExecutionSuite -> Bool
+canStepSuite suite =
+    (not << isTerminated) suite && (not << hasException) suite
+
+
 canStepExecution : Execution -> Bool
 canStepExecution execution =
     let
-        step =
-            History.current execution.executionHistory
+        suite =
+            History.current execution.executionSuites
     in
-    not step.terminated && Maybe.Extra.isNothing step.exception
+    canStepSuite suite || (hasNextSuite execution && isSuiteSolved suite)
 
 
-undoExecution : Execution -> Execution
-undoExecution execution =
-    { execution
-        | executionHistory = History.back execution.executionHistory
-    }
+stepSuite : ExecutionSuite -> ExecutionSuite
+stepSuite executionSuite =
+    let
+        nextExecutionStep =
+            History.current executionSuite.executionHistory
+                |> stepExecutionStep
+    in
+    { executionSuite | executionHistory = History.push nextExecutionStep executionSuite.executionHistory }
 
 
 stepExecution : Execution -> Execution
 stepExecution execution =
-    if canStepExecution execution then
-        { execution
-            | executionHistory =
-                execution.executionHistory
-                    |> History.current
-                    |> stepExecutionStep
-                    |> History.pushflip execution.executionHistory
-        }
+    let
+        suite =
+            History.current execution.executionSuites
+    in
+    if canStepSuite suite then
+        { execution | executionSuites = History.update stepSuite execution.executionSuites }
+
+    else if isSuiteSolved suite then
+        { execution | executionSuites = History.forward execution.executionSuites }
 
     else
         execution
@@ -955,19 +1041,24 @@ viewLoaded execution model =
             View.Header.view model.session
 
         modal =
-            case getExceptionMessage execution of
+            case
+                History.current execution.executionSuites
+                    |> .executionHistory
+                    |> History.current
+                    |> .exception
+            of
                 Just message ->
                     Just (viewExceptionModal execution model message)
 
                 Nothing ->
-                    if isSolved execution then
+                    if canStepExecution execution then
+                        Nothing
+
+                    else if isExecutionSolved execution then
                         Just (viewVictoryModal execution)
 
-                    else if History.current execution.executionHistory |> .terminated then
-                        Just (viewWrongOutputModal model execution)
-
                     else
-                        Nothing
+                        Just (viewWrongOutputModal model execution)
     in
     View.Scewn.view
         { west = Just west
@@ -1033,6 +1124,92 @@ viewExecutionSidebar execution model =
         pauseButtonView =
             viewButton ExecutionControlView.Pause (Just (InternalMsg ClickedPause))
 
+        suiteView =
+            let
+                { passedSuites, currentSuite, futureSuites } =
+                    let
+                        { past, present, future } =
+                            History.toPastPresentFuture execution.executionSuites
+                    in
+                    { passedSuites = past, currentSuite = present, futureSuites = future }
+
+                size =
+                    { left = 0, top = 0, right = 0, bottom = 0 }
+
+                running =
+                    el [ alignLeft, paddingEach { size | left = 10 } ] (image [ width (px 10) ] { src = icons.spinner, description = "Running" })
+
+                passed =
+                    el [ alignLeft, paddingEach { size | left = 10 } ] (image [ width (px 10) ] { src = icons.circle.green, description = "Passed" })
+
+                failed =
+                    el [ alignLeft, paddingEach { size | left = 10 } ] (image [ width (px 10) ] { src = icons.circle.red, description = "Failed" })
+
+                paused =
+                    el [ alignLeft, paddingEach { size | left = 10 } ] (image [ width (px 10) ] { src = icons.pause, description = "Paused" })
+
+                passedView =
+                    List.indexedMap
+                        (\index suite ->
+                            row
+                                [ width fill
+                                ]
+                                [ el [ alignLeft ] (text ("Suite " ++ String.fromInt (index + 1)))
+                                , passed
+                                , el [ alignRight ] (text (String.fromInt (getNumberOfStepsForSuite suite)))
+                                ]
+                        )
+                        passedSuites
+
+                currentView =
+                    row
+                        [ width fill
+                        ]
+                        [ el [ alignLeft ] (text ("Suite " ++ String.fromInt (List.length passedSuites + 1)))
+                        , if isSuiteSolved currentSuite then
+                            passed
+
+                          else if isSuiteFailed currentSuite then
+                            failed
+
+                          else if model.state == Paused then
+                            paused
+
+                          else
+                            running
+                        , el [ alignRight ] (text (String.fromInt (getNumberOfStepsForSuite currentSuite)))
+                        ]
+
+                futureView =
+                    List.indexedMap
+                        (\index _ ->
+                            text ("Suite " ++ String.fromInt (index + List.length passedSuites + 2))
+                        )
+                        futureSuites
+
+                totalView =
+                    row
+                        [ width fill
+                        , Border.widthEach
+                            { size | top = 2 }
+                        , Border.color color.font.subtle
+                        , paddingEach
+                            { size | top = 6 }
+                        ]
+                        [ text "Total "
+                        , el [ alignRight ] (text (String.fromInt (getScore execution).numberOfSteps))
+                        ]
+            in
+            column
+                [ width fill, spacing 5, padding 10, Border.width 3 ]
+                (List.concat
+                    [ passedView
+                    , [ currentView ]
+                    , futureView
+                    , [ totalView ]
+                    ]
+                )
+
         executionControlInstructionsView =
             wrappedRow
                 [ spacing 10
@@ -1047,12 +1224,12 @@ viewExecutionSidebar execution model =
                 ]
     in
     column
-        [ px 350 |> width
+        [ width (px 350)
         , height fill
         , Background.color (rgb 0.08 0.08 0.08)
         , alignTop
         , padding 10
-        , spacing 10
+        , spacing 20
         , scrollbarY
         ]
         [ column
@@ -1065,15 +1242,18 @@ viewExecutionSidebar execution model =
             , descriptionView
             ]
         , executionControlInstructionsView
+        , suiteView
         ]
 
 
 viewBoard : Execution -> Model -> Element Msg
 viewBoard execution model =
     let
+        executionSuite =
+            History.current execution.executionSuites
+
         executionStep =
-            execution.executionHistory
-                |> History.current
+            History.current executionSuite.executionHistory
 
         instructionPointer =
             executionStep.instructionPointer
@@ -1200,21 +1380,8 @@ viewWrongOutputModal model execution =
 viewVictoryModal : Execution -> Element Msg
 viewVictoryModal execution =
     let
-        numberOfSteps =
-            execution.executionHistory
-                |> History.current
-                |> .stepCount
-
-        numberOfInitialInstructions =
-            execution.level
-                |> .initialBoard
-                |> Board.count ((/=) NoOp)
-
-        numberOfInstructions =
-            History.first execution.executionHistory
-                |> .board
-                |> Board.count ((/=) NoOp)
-                |> flip (-) numberOfInitialInstructions
+        { numberOfSteps, numberOfInstructions } =
+            getScore execution
 
         viewRow ( label, value ) =
             row [ width fill, spaceEvenly ]
@@ -1267,8 +1434,11 @@ viewVictoryModal execution =
 viewIOSidebar : Execution -> Model -> Element Msg
 viewIOSidebar execution model =
     let
+        executionSuite =
+            History.current execution.executionSuites
+
         executionStep =
-            History.current execution.executionHistory
+            History.current executionSuite.executionHistory
 
         characterWidth =
             6
@@ -1424,7 +1594,7 @@ viewIOSidebar execution model =
             viewSingle "Stack" executionStep.stack
 
         outputView =
-            viewDouble "Output" execution.level.io.output executionStep.output
+            viewDouble "Output" executionSuite.expectedOutput executionStep.output
     in
     row
         [ width (px totalWidth)
@@ -1436,10 +1606,3 @@ viewIOSidebar execution model =
         , scrollbars
         ]
         [ inputView, stackView, outputView ]
-
-
-getExceptionMessage : Execution -> Maybe String
-getExceptionMessage execution =
-    execution.executionHistory
-        |> History.current
-        |> .exception

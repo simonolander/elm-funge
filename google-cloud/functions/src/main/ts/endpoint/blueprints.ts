@@ -4,7 +4,7 @@ import * as Board from "../data/Board";
 import * as BlueprintDto from "../data/dto/BlueprintDto";
 import {badRequest, EndpointResult, forbidden, found, notFound, ok} from "../data/EndpointResult";
 import * as InstructionTool from "../data/InstructionTool";
-import * as IO from "../data/IO";
+import * as Suite from "../data/Suite";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import {map} from "../misc/utils";
@@ -67,7 +67,7 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         index: JsonDecoder.number,
         name: JsonDecoder.string,
         description: JsonDecoder.array(JsonDecoder.string, "description"),
-        io: IO.decoder,
+        io: Suite.decoder,
         initialBoard: Board.decoder,
         instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
     }, "BlueprintDto").decode(req.body);

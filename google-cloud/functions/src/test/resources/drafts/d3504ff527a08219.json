@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "id": "d3504ff527a08219",
+  "levelId": "24c7efb5c41f8f8f",
+  "board": {
+    "width": 8,
+    "height": 8,
+    "instructions": [
+      {
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Read"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Down",
+          "falseDirection": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Decrement"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Duplicate"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Left",
+          "falseDirection": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Decrement"
+        }
+      },
+      {
+        "position": {
+          "x": 6,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Duplicate"
+        }
+      },
+      {
+        "position": {
+          "x": 7,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Left",
+          "falseDirection": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 6,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 7,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Swap"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Increment"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Swap"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Decrement"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Left",
+          "falseDirection": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 7,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 5
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 6,
+          "y": 5
+        },
+        "instruction": {
+          "tag": "Swap"
+        }
+      },
+      {
+        "position": {
+          "x": 7,
+          "y": 5
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Up",
+          "falseDirection": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 5,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 6,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 7,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 7
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      }
+    ]
+  },
+  "createdTime": 1566887680,
+  "authorId": "test-user-id",
+  "modifiedTime": 1566887680
+}

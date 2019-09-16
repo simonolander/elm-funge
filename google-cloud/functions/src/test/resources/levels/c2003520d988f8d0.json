@@ -1,33 +1,57 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "c2003520d988f8d0",
   "index": 4,
   "campaignId": "standard",
   "name": "Some sums",
   "description": [
-    "> Read two numbers a and b from input",
+    "> Read two positive numbers a and b from input",
     "> Output a + b",
     "The last input is 0 and should not be printed"
   ],
-  "io": {
-    "input": [
-      1,
-      5,
-      13,
-      10,
-      11,
-      10,
-      8,
-      8,
-      0
-    ],
-    "output": [
-      6,
-      23,
-      21,
-      16
-    ]
-  },
+  "suites": [
+    {
+      "input": [
+        1,
+        5,
+        13,
+        10,
+        11,
+        10,
+        8,
+        8,
+        0
+      ],
+      "output": [
+        6,
+        23,
+        21,
+        16
+      ]
+    },
+    {
+      "input": [
+        0
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        4,
+        2,
+        8,
+        4,
+        3,
+        2,
+        0
+      ],
+      "output": [
+        6,
+        12,
+        5
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 7,
     "height": 7,

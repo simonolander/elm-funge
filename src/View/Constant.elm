@@ -20,4 +20,11 @@ color =
 
 
 icons =
-    { exceptionOrange = "assets/exception-orange.svg" }
+    { exceptionOrange = "assets/exception-orange.svg"
+    , circle =
+        { green = "assets/misc/circle-green.svg"
+        , red = "assets/misc/circle-red.svg"
+        }
+    , spinner = "assets/spinner.svg"
+    , pause = "assets/execution-control-images/pause.svg"
+    }

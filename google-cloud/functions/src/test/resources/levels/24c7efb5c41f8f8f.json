@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "24c7efb5c41f8f8f",
   "index": 7,
   "campaignId": "standard",
@@ -9,27 +9,54 @@
     "> Output n*(n+1)/2 ",
     "The last input is 0 and should not be printed"
   ],
-  "io": {
-    "input": [
-      5,
-      13,
-      7,
-      11,
-      1,
-      10,
-      3,
-      0
-    ],
-    "output": [
-      15,
-      91,
-      28,
-      66,
-      1,
-      55,
-      6
-    ]
-  },
+  "suites": [
+    {
+      "input": [
+        5,
+        13,
+        7,
+        11,
+        1,
+        10,
+        3,
+        0
+      ],
+      "output": [
+        15,
+        91,
+        28,
+        66,
+        1,
+        55,
+        6
+      ]
+    },
+    {
+      "input": [
+        0
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        3,
+        17,
+        8,
+        4,
+        12,
+        10,
+        0
+      ],
+      "output": [
+        6,
+        153,
+        36,
+        10,
+        78,
+        55
+      ]
+    }
+  ],
   "initialBoard": {
     "width": 8,
     "height": 8,

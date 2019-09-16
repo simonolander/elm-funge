@@ -6,9 +6,9 @@ import * as LevelDto from "../data/dto/LevelDto";
 import {badRequest, EndpointResult, forbidden, found, internalServerError, notFound, ok} from "../data/EndpointResult";
 import * as InstructionTool from "../data/InstructionTool";
 import * as Integer from "../data/Integer";
-import * as IO from "../data/IO";
 import * as Level from "../data/Level";
 import * as Score from "../data/Score";
+import * as Suite from "../data/Suite";
 import {verifyJwt} from "../misc/auth";
 import {decode} from "../misc/json";
 import {map} from "../misc/utils";
@@ -107,7 +107,14 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         campaignId: JsonDecoder.string,
         name: JsonDecoder.string,
         description: JsonDecoder.array(JsonDecoder.string, "description"),
-        io: IO.decoder,
+        suites: JsonDecoder.oneOf([
+            JsonDecoder.array(Suite.decoder, "Suite[]"),
+            JsonDecoder.isUndefined(undefined),
+        ], "suite[] | undefined"),
+        io: JsonDecoder.oneOf([
+            Suite.decoder,
+            JsonDecoder.isUndefined(undefined),
+        ], "suite | undefined"),
         initialBoard: Board.decoder,
         instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
         version: Integer.nonNegativeDecoder,
@@ -115,8 +122,17 @@ async function put(req: Request): Promise<EndpointResult<never>> {
     if (levelResult.tag === "failure") {
         return badRequest(levelResult.error);
     }
+    let suites;
+    if (typeof levelResult.value.suites !== "undefined") {
+        suites = levelResult.value.suites;
+    } else if (typeof levelResult.value.io !== "undefined") {
+        suites = [levelResult.value.io];
+    } else {
+        return badRequest("missing io or suites");
+    }
     const level = {
         ...levelResult.value,
+        suites,
         createdTime: new Date().getTime(),
         authorId: "root",
     };

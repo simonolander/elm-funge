@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "id": "a8ff0e7db18a7b4f",
+  "levelId": "1a3c6d6a80769a07",
+  "score": {
+    "numberOfSteps": 2211,
+    "numberOfInstructions": 16
+  },
+  "board": {
+    "width": 7,
+    "height": 7,
+    "instructions": [
+      {
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Down"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Print"
+        }
+      },
+      {
+        "position": {
+          "x": 2,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "PopFromStack"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Right",
+          "falseDirection": "Left"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 0
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Up"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 1
+        },
+        "instruction": {
+          "tag": "Read"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Read"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 2
+        },
+        "instruction": {
+          "tag": "Swap"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Branch",
+          "trueDirection": "Down",
+          "falseDirection": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Terminate"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 3
+        },
+        "instruction": {
+          "tag": "Decrement"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 4
+        },
+        "instruction": {
+          "tag": "Swap"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 5
+        },
+        "instruction": {
+          "tag": "Decrement"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Right"
+        }
+      },
+      {
+        "position": {
+          "x": 3,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Up"
+        }
+      },
+      {
+        "position": {
+          "x": 4,
+          "y": 6
+        },
+        "instruction": {
+          "tag": "ChangeDirection",
+          "direction": "Left"
+        }
+      }
+    ]
+  },
+  "createdTime": 1566887680,
+  "authorId": "test-user-id"
+}
