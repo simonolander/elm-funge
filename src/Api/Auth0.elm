@@ -4,7 +4,6 @@ import Data.AccessToken as AccessToken exposing (AccessToken)
 import Dict
 import Json.Decode
 import Json.Encode
-import Json.Encode.Extra
 import Maybe.Extra
 import Route exposing (Route)
 import Set
@@ -31,8 +30,8 @@ responseType =
 
 
 redirectUri =
-    "http://localhost:3000"
-
+--    "http://localhost:3000"
+    "https://efng.simonolander.com
 
 returnTo =
     redirectUri
