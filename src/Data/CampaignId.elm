@@ -19,6 +19,11 @@ standard =
     "standard"
 
 
+labyrinth : CampaignId
+labyrinth =
+    "labyrinth"
+
+
 
 -- URL
 
