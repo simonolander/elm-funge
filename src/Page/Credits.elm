@@ -75,7 +75,6 @@ view model =
                 , padding 60
                 , spacing 80
                 , centerX
-                , scrollbars
                 ]
                 [ section "Credits"
                     (taskAndAuthor
