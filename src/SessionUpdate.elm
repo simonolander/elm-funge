@@ -24,7 +24,7 @@ import Dict.Extra
 import Extra.Cmd exposing (withCmd, withExtraCmd)
 import Extra.Result
 import Maybe.Extra
-import Ports.Console
+import Ports.Console as Console
 import Random
 import RemoteData exposing (RemoteData(..))
 import Set
@@ -209,7 +209,7 @@ update msg session =
 
                 Err GetError.NetworkError ->
                     Session.withoutAccessToken sessionWithActualDraft
-                        |> withCmd (Ports.Console.infoString "No network, going offline")
+                        |> withCmd (Console.infoString "No network, going offline")
 
                 Err error ->
                     sessionWithActualDraft
@@ -263,11 +263,12 @@ update msg session =
 
                 Just error ->
                     case error of
+                        -- TODO
                         SubmitSolutionError.NetworkError ->
-                            Debug.todo "Offline"
+                            ( session, Console.infoString "n09trhsx9ehqwgxw    Go offline" )
 
                         SubmitSolutionError.InvalidAccessToken message ->
-                            ( Session.withoutAccessToken session, Ports.Console.errorString message )
+                            ( Session.withoutAccessToken session, Console.errorString message )
 
                         SubmitSolutionError.Duplicate ->
                             let

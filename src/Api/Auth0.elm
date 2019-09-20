@@ -98,7 +98,7 @@ loginResponseFromUrl url =
                 |> Maybe.withDefault ""
                 |> String.split "&"
                 |> List.map (String.split "=")
-                |> Debug.log "fragment"
+                --                |> Debug.log "fragment"
                 |> List.map
                     (\list ->
                         case list of

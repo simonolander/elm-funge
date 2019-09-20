@@ -29,7 +29,7 @@ import Page.Execution as Execution
 import Page.Home as Home
 import Page.Initialize as Initialize
 import Page.NotFound as NotFound
-import Ports.Console
+import Ports.Console as Console
 import Ports.LocalStorage
 import Route
 import SessionUpdate
@@ -245,8 +245,9 @@ update msg model =
                 Initialize.update message mdl
                     |> updateWith Initialize InitializeMsg
 
+            --                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
             ( message, mdl ) ->
-                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
+                ( model, Console.errorString "Wrong message for model" )
 
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
@@ -326,12 +327,12 @@ localStorageResponseUpdate response mainModel =
                                     "1d2c9ff5    " ++ name ++ " " ++ request ++ " not found"
                             in
                             ( { mdl | session = notFound request mdl.session }
-                            , Cmd.batch [ cmd, Ports.Console.errorString errorMessage ]
+                            , Cmd.batch [ cmd, Console.errorString errorMessage ]
                             )
 
                         Err error ->
                             ( { mdl | session = failure request error mdl.session }
-                            , Cmd.batch [ cmd, Ports.Console.errorString (Decode.errorToString error) ]
+                            , Cmd.batch [ cmd, Console.errorString (Decode.errorToString error) ]
                             )
 
                 Nothing ->
@@ -355,7 +356,7 @@ localStorageResponseUpdate response mainModel =
 
                         Err error ->
                             ( { mdl | session = failure request (RequestResult.badBody error) mdl.session }
-                            , Cmd.batch [ cmd, Ports.Console.errorString (Decode.errorToString error) ]
+                            , Cmd.batch [ cmd, Console.errorString (Decode.errorToString error) ]
                             )
 
                 Nothing ->
