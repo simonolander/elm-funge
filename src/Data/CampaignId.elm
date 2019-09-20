@@ -1,4 +1,4 @@
-module Data.CampaignId exposing (CampaignId, blueprints, decoder, encode, standard, urlParser)
+module Data.CampaignId exposing (CampaignId, all, blueprints, decoder, encode, standard, urlParser)
 
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -22,6 +22,11 @@ standard =
 labyrinth : CampaignId
 labyrinth =
     "labyrinth"
+
+
+all : List CampaignId
+all =
+    [ standard, labyrinth ]
 
 
 

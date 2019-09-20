@@ -1,6 +1,7 @@
 module Page.Campaigns exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
 import Browser exposing (Document)
+import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Html
@@ -82,6 +83,6 @@ viewCampaigns : Model -> Element InternalMsg
 viewCampaigns model =
     let
         campaigns =
-            []
+            CampaignId.all
     in
     none
