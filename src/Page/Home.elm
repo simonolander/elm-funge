@@ -1,4 +1,4 @@
-module Page.Home exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
+module Page.Home exposing (Model, Msg, init, load, subscriptions, update, view)
 
 import Browser exposing (Document)
 import Data.CampaignId as CampaignId
@@ -29,11 +29,6 @@ init session =
       }
     , Cmd.none
     )
-
-
-getSession : Model -> Session
-getSession { session } =
-    session
 
 
 load : Model -> ( Model, Cmd Msg )
@@ -96,6 +91,7 @@ view model =
                 ]
                 [ titleView
                 , link "Levels" (Route.Campaign CampaignId.standard Nothing)
+                , link "Campaigns" Route.Campaigns
 
                 --                , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" Route.Credits

@@ -1,9 +1,12 @@
-module Page.Template exposing (Model, Msg(..), init, load, subscriptions, update, view)
+module Page.Campaigns exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
+import Html
 import SessionUpdate exposing (SessionMsg)
+import View.Header
+import View.Scewn as Scewn
 
 
 
@@ -60,8 +63,25 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            layout [] none
+            Scewn.layout
+                { south = Nothing
+                , center = Just <| viewCampaigns model
+                , east = Nothing
+                , west = Nothing
+                , north = Just <| View.Header.view model.session
+                , modal = Nothing
+                }
     in
-    { body = [ content ]
-    , title = "Template"
+    { body =
+        List.map (Html.map InternalMsg) [ content ]
+    , title = "Campaigns"
     }
+
+
+viewCampaigns : Model -> Element InternalMsg
+viewCampaigns model =
+    let
+        campaigns =
+            []
+    in
+    none

@@ -91,6 +91,9 @@ parentRoute session =
             Nothing
 
         Just (Route.Campaign _ _) ->
+            Just Route.Campaigns
+
+        Just Route.Campaigns ->
             Just Route.Home
 
         Just (Route.EditDraft draftId) ->

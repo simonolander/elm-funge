@@ -1,7 +1,6 @@
 module Page.Campaign exposing
     ( Model
     , Msg(..)
-    , getSession
     , init
     , load
     , subscriptions
@@ -26,7 +25,6 @@ import Data.RemoteCache as RemoteCache
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook
-import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -277,11 +275,6 @@ load =
         , loadSelectedLevelDrafts
         , loadSelectedLevelHighScore
         ]
-
-
-getSession : Model -> Session
-getSession model =
-    model.session
 
 
 withSession : Session -> Model -> Model
