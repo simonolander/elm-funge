@@ -1737,7 +1737,7 @@
     "version": 1,
     "id": "be13bbdd076a586c",
     "index": 14,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 1",
     "description": [
       "> Terminate the program",
@@ -1848,7 +1848,7 @@
     "version": 1,
     "id": "e6d9465e4aacaa0f",
     "index": 15,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 2",
     "description": [
       "> Terminate the program",
@@ -1949,7 +1949,7 @@
     "version": 1,
     "id": "e81d1f82a8a37103",
     "index": 16,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 3",
     "description": [
       "> Terminate the program",
@@ -2086,7 +2086,7 @@
     "version": 1,
     "id": "e7d5826a6db19981",
     "index": 17,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 4",
     "description": [
       "> Terminate the program",
@@ -2253,7 +2253,7 @@
     "version": 1,
     "id": "519983570eefe19c",
     "index": 18,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 5",
     "description": [
       "> Terminate the program",
@@ -2415,7 +2415,7 @@
     "version": 1,
     "id": "81101cdad21a4ed2",
     "index": 19,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 6",
     "description": [
       "> Terminate the program",
@@ -2593,7 +2593,7 @@
     "version": 1,
     "id": "36ae04449442c355",
     "index": 20,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 7",
     "description": [
       "> Terminate the program",
@@ -2793,7 +2793,7 @@
     "version": 1,
     "id": "42cdf083b26bb8ab",
     "index": 21,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 8",
     "description": [
       "> Output 1, 2, 3, 4",
@@ -2875,7 +2875,7 @@
     "version": 1,
     "id": "5ed6d025ab5937e4",
     "index": 22,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 9",
     "description": [
       "> Terminate the program",
@@ -3018,7 +3018,7 @@
     "version": 1,
     "id": "b4c862e5dcfb82c1",
     "index": 23,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 10",
     "description": [
       "> Output 1",
@@ -3191,7 +3191,7 @@
     "version": 1,
     "id": "f8ba39bc9d01ef03",
     "index": 24,
-    "campaignId": "standard",
+    "campaignId": "labyrinth",
     "name": "Labyrinth 11",
     "description": [
       "> Output 1",
