@@ -1,7 +1,6 @@
 module Page.Home exposing (Model, Msg, init, load, subscriptions, update, view)
 
 import Browser exposing (Document)
-import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
@@ -90,7 +89,6 @@ view model =
                 , width (maximum 1000 fill)
                 ]
                 [ titleView
-                , link "Levels" (Route.Campaign CampaignId.standard Nothing)
                 , link "Campaigns" Route.Campaigns
 
                 --                , link "Blueprints" (Route.Blueprints Nothing)

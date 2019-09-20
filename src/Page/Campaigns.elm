@@ -5,8 +5,10 @@ import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Html
+import Route
 import SessionUpdate exposing (SessionMsg)
 import View.Header
+import View.Link as Link
 import View.Scewn as Scewn
 
 
@@ -84,5 +86,19 @@ viewCampaigns model =
     let
         campaigns =
             CampaignId.all
+                |> List.map (viewCampaign model)
     in
-    none
+    column
+        [ width (maximum 1000 fill)
+        , centerX
+        , spacing 20
+        ]
+        campaigns
+
+
+viewCampaign : Model -> CampaignId -> Element InternalMsg
+viewCampaign model campaignId =
+    Link.button
+        { url = Route.toString (Route.Campaign campaignId Nothing)
+        , text = campaignId
+        }

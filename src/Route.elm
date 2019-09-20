@@ -1,4 +1,4 @@
-module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl, toUrl)
+module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl, toString, toUrl)
 
 import Basics.Extra exposing (flip)
 import Browser.Navigation as Navigation
