@@ -23,6 +23,7 @@ import Maybe.Extra
 import Page.Blueprint as Blueprint
 import Page.Blueprints as Blueprints
 import Page.Campaign as Campaign
+import Page.Campaigns as Campaigns
 import Page.Credits as Credits
 import Page.Draft as Draft
 import Page.Execution as Execution
@@ -51,6 +52,7 @@ type alias Flags =
 type Model
     = Home Home.Model
     | Campaign Campaign.Model
+    | Campaigns Campaigns.Model
     | Credits Credits.Model
     | Execution Execution.Model
     | Draft Draft.Model
@@ -64,6 +66,7 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | CampaignMsg Campaign.Msg
+    | CampaignsMsg Campaigns.Msg
     | CreditsMsg Credits.Msg
     | ExecutionMsg Execution.Msg
     | DraftMsg Draft.Msg
@@ -129,6 +132,10 @@ view model =
         Campaign mdl ->
             Campaign.view mdl
                 |> msgMap CampaignMsg
+
+        Campaigns mdl ->
+            Campaigns.view mdl
+                |> msgMap CampaignsMsg
 
         Credits mdl ->
             Credits.view mdl
@@ -229,6 +236,15 @@ update msg model =
                     |> SessionUpdate.update message
                     |> updateWith (flip withSession model) (CampaignMsg << Campaign.SessionMsg)
 
+            ( CampaignsMsg (Campaigns.InternalMsg message), Campaigns mdl ) ->
+                Campaigns.update message mdl
+                    |> updateWith Campaigns CampaignsMsg
+
+            ( CampaignsMsg (Campaigns.SessionMsg message), _ ) ->
+                getSession model
+                    |> SessionUpdate.update message
+                    |> updateWith (flip withSession model) (CampaignsMsg << Campaigns.SessionMsg)
+
             ( HomeMsg message, Home mdl ) ->
                 Home.update message mdl
                     |> updateWith Home HomeMsg
@@ -247,7 +263,7 @@ update msg model =
 
             --                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
             ( message, mdl ) ->
-                ( model, Console.errorString "Wrong message for model" )
+                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
 
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
@@ -274,6 +290,10 @@ changeUrl url oldSession =
             Just (Route.Campaign campaignId maybeLevelId) ->
                 Campaign.init campaignId maybeLevelId session
                     |> updateWith Campaign CampaignMsg
+
+            Just Route.Campaigns ->
+                Campaigns.init session
+                    |> updateWith Campaigns CampaignsMsg
 
             Just (Route.EditDraft draftId) ->
                 Draft.init draftId session
@@ -471,6 +491,9 @@ localStorageResponseUpdate response mainModel =
             Campaign model ->
                 updateWith Campaign CampaignMsg (onResponse model)
 
+            Campaigns model ->
+                updateWith Campaigns CampaignsMsg (onResponse model)
+
             Credits model ->
                 updateWith Credits CreditsMsg (onResponse model)
 
@@ -507,6 +530,9 @@ subscriptions model =
 
                 Campaign mdl ->
                     Sub.map CampaignMsg (Campaign.subscriptions mdl)
+
+                Campaigns mdl ->
+                    Sub.map CampaignsMsg (Campaigns.subscriptions mdl)
 
                 Credits mdl ->
                     Sub.map CreditsMsg (Credits.subscriptions mdl)
@@ -546,16 +572,19 @@ getSession : Model -> Session
 getSession model =
     case model of
         Home mdl ->
-            Home.getSession mdl
+            mdl.session
 
         Campaign mdl ->
-            Campaign.getSession mdl
+            mdl.session
+
+        Campaigns mdl ->
+            mdl.session
 
         Credits mdl ->
             mdl.session
 
         Execution mdl ->
-            Execution.getSession mdl
+            mdl.session
 
         Draft mdl ->
             Draft.getSession mdl
@@ -584,6 +613,10 @@ load ( mainModel, cmd ) =
             Campaign model ->
                 Campaign.load model
                     |> updateWith Campaign CampaignMsg
+
+            Campaigns model ->
+                Campaigns.load model
+                    |> updateWith Campaigns CampaignsMsg
 
             Credits model ->
                 Credits.load model
@@ -622,6 +655,9 @@ withSession session model =
 
         Campaign mdl ->
             Campaign { mdl | session = session }
+
+        Campaigns mdl ->
+            Campaigns { mdl | session = session }
 
         Credits mdl ->
             Credits { mdl | session = session }

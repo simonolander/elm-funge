@@ -263,9 +263,8 @@ update msg session =
 
                 Just error ->
                     case error of
-                        -- TODO
                         SubmitSolutionError.NetworkError ->
-                            ( session, Console.infoString "n09trhsx9ehqwgxw    Go offline" )
+                            Debug.todo "Offline"
 
                         SubmitSolutionError.InvalidAccessToken message ->
                             ( Session.withoutAccessToken session, Console.errorString message )

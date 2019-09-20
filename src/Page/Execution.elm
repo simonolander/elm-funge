@@ -1,4 +1,4 @@
-module Page.Execution exposing (Model, Msg(..), getSession, init, load, subscriptions, update, view)
+module Page.Execution exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
@@ -218,11 +218,6 @@ load =
         , loadLevel
         , initializeExecution
         ]
-
-
-getSession : Model -> Session
-getSession { session } =
-    session
 
 
 withSession : Session -> Model -> Model

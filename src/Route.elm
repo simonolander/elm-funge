@@ -13,6 +13,7 @@ import Url.Parser as Parser exposing ((</>), Parser, oneOf, s)
 type Route
     = Home
     | Campaign CampaignId (Maybe LevelId.LevelId)
+    | Campaigns
     | EditDraft DraftId.DraftId
     | ExecuteDraft DraftId.DraftId
     | Blueprints (Maybe LevelId.LevelId)
@@ -58,6 +59,9 @@ toString route =
                 Campaign campaignId (Just levelId) ->
                     [ "campaign", campaignId, "level", levelId ]
 
+                Campaigns ->
+                    [ "campaigns" ]
+
                 Credits ->
                     [ "credits" ]
 
@@ -102,6 +106,7 @@ parser =
     oneOf
         [ Parser.map Home Parser.top
         , Parser.map (flip Campaign Nothing) (s "campaign" </> CampaignId.urlParser)
+        , Parser.map Campaigns (s "campaigns")
         , Parser.map (\campaignId levelId -> Campaign campaignId (Just levelId)) (s "campaign" </> CampaignId.urlParser </> s "level" </> LevelId.urlParser)
         , Parser.map EditDraft (s "drafts" </> DraftId.urlParser)
         , Parser.map ExecuteDraft (s "drafts" </> DraftId.urlParser </> s "execute")
