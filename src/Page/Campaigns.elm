@@ -5,9 +5,7 @@ import Browser exposing (Document)
 import Data.Cache as Cache
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.GetError as GetError
-import Data.Level as Level
-import Data.Session as Session exposing (Session)
-import Data.Solution as Solution
+import Data.Session exposing (Session)
 import Data.SolutionBook
 import Element exposing (..)
 import Extra.Cmd
