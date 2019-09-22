@@ -34,6 +34,8 @@ import Extra.RemoteData
 import Html
 import Html.Attributes
 import Json.Decode as Decode
+import List.Extra
+import Loaders
 import Maybe.Extra
 import Random
 import RemoteData exposing (RemoteData(..))
@@ -78,173 +80,22 @@ load : Model -> ( Model, Cmd Msg )
 load =
     let
         loadCampaign model =
-            case Session.getCampaign model.campaignId model.session of
-                NotAsked ->
-                    let
-                        loadCampaignRemotely =
-                            Level.loadFromServerByCampaignId (SessionMsg << GotLoadLevelsByCampaignIdResponse model.campaignId) model.campaignId
-                    in
-                    ( model.session
-                        |> Session.campaignLoading model.campaignId
-                        |> flip withSession model
-                    , loadCampaignRemotely
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+            Loaders.loadCampaignByCampaignId model.campaignId model.session
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
         loadLevels model =
-            case
-                model.session
-                    |> Session.getCampaign model.campaignId
-                    |> RemoteData.toMaybe
-            of
-                Just campaign ->
-                    let
-                        notAskedLevelIds =
-                            campaign.levelIds
-                                |> List.filter (flip Cache.isNotAsked model.session.levels)
-                    in
-                    ( notAskedLevelIds
-                        |> List.foldl Session.levelLoading model.session
-                        |> flip withSession model
-                    , notAskedLevelIds
-                        |> List.map (\levelId -> Level.loadFromServer (SessionMsg << GotLoadLevelByLevelIdResponse levelId) levelId)
-                        |> Cmd.batch
-                    )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        loadSolutionBooks model =
-            case
-                model.session
-                    |> Session.getCampaign model.campaignId
-                    |> RemoteData.toMaybe
-            of
-                Just campaign ->
-                    let
-                        notAskedLevelIds =
-                            campaign.levelIds
-                                |> List.filter (flip Cache.isNotAsked model.session.solutionBooks)
-                    in
-                    case Session.getAccessToken model.session of
-                        Just accessToken ->
-                            ( notAskedLevelIds
-                                |> List.foldl Cache.loading model.session.solutionBooks
-                                |> flip Session.withSolutionBookCache model.session
-                                |> flip withSession model
-                            , if List.isEmpty notAskedLevelIds then
-                                Cmd.none
-
-                              else
-                                Solution.loadFromServerByLevelIds (SessionMsg << GotLoadSolutionsByLevelIdsResponse notAskedLevelIds) accessToken notAskedLevelIds
-                            )
-
-                        Nothing ->
-                            ( notAskedLevelIds
-                                |> List.foldl Cache.loading model.session.solutionBooks
-                                |> flip Session.withSolutionBookCache model.session
-                                |> flip withSession model
-                            , notAskedLevelIds
-                                |> List.map SolutionBook.loadFromLocalStorage
-                                |> Cmd.batch
-                            )
-
-                Nothing ->
-                    ( model, Cmd.none )
+            Loaders.loadLevelsByCampaignId model.campaignId model.session
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
         loadSolutions model =
-            case
-                model.session
-                    |> Session.getCampaign model.campaignId
-                    |> RemoteData.toMaybe
-            of
-                Just campaign ->
-                    let
-                        solutionIds =
-                            campaign.levelIds
-                                |> List.map (flip Session.getSolutionBook model.session)
-                                |> Extra.RemoteData.successes
-                                |> List.map .solutionIds
-                                |> List.map Set.toList
-                                |> List.concat
-                    in
-                    case Session.getAccessToken model.session of
-                        Just accessToken ->
-                            let
-                                notAskedSolutionIds =
-                                    List.filter (flip Cache.isNotAsked model.session.solutions.actual) solutionIds
-                            in
-                            ( notAskedSolutionIds
-                                |> List.foldl RemoteCache.withActualLoading model.session.solutions
-                                |> flip Session.withSolutionCache model.session
-                                |> flip withSession model
-                            , notAskedSolutionIds
-                                |> List.map (\solutionId -> Solution.loadFromServerBySolutionId (SessionMsg << GotLoadSolutionsBySolutionIdResponse solutionId) accessToken solutionId)
-                                |> Cmd.batch
-                            )
+            Loaders.loadSolutionsByCampaignId model.campaignId model.session
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
-                        Nothing ->
-                            let
-                                notAskedSolutionIds =
-                                    List.filter (flip Cache.isNotAsked model.session.solutions.local) solutionIds
-                            in
-                            ( notAskedSolutionIds
-                                |> List.foldl RemoteCache.withLocalLoading model.session.solutions
-                                |> flip Session.withSolutionCache model.session
-                                |> flip withSession model
-                            , notAskedSolutionIds
-                                |> List.map Solution.loadFromLocalStorage
-                                |> Cmd.batch
-                            )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        loadSelectedLevelDraftBook model =
+        loadDraftsBySelectedLevelId model =
             case model.selectedLevelId of
                 Just levelId ->
-                    case Session.getDraftBook levelId model.session of
-                        NotAsked ->
-                            ( model.session
-                                |> Session.draftBookLoading levelId
-                                |> flip withSession model
-                            , case Session.getAccessToken model.session of
-                                Just accessToken ->
-                                    Draft.loadFromServerByLevelId (SessionMsg << GotLoadDraftsByLevelIdResponse levelId) accessToken levelId
-
-                                Nothing ->
-                                    DraftBook.loadFromLocalStorage levelId
-                            )
-
-                        _ ->
-                            ( model, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        loadSelectedLevelDrafts model =
-            case
-                model.selectedLevelId
-                    |> Maybe.map (flip Session.getDraftBook model.session)
-                    |> Maybe.andThen RemoteData.toMaybe
-            of
-                Just draftBook ->
-                    let
-                        notAskedDraftIds =
-                            draftBook.draftIds
-                                |> Set.toList
-                                |> List.filter (flip Cache.isNotAsked model.session.drafts.local)
-                    in
-                    ( notAskedDraftIds
-                        |> List.foldl RemoteCache.withLocalLoading model.session.drafts
-                        |> flip Session.withDraftCache model.session
-                        |> flip withSession model
-                    , notAskedDraftIds
-                        |> List.map Draft.loadFromLocalStorage
-                        |> Cmd.batch
-                    )
+                    Loaders.loadDraftsByLevelId levelId model.session
+                        |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -252,16 +103,8 @@ load =
         loadSelectedLevelHighScore model =
             case model.selectedLevelId of
                 Just levelId ->
-                    case Cache.get levelId model.session.highScores of
-                        NotAsked ->
-                            ( model.session
-                                |> Session.loadingHighScore levelId
-                                |> flip withSession model
-                            , HighScore.loadFromServer levelId (SessionMsg << GotLoadHighScoreResponse levelId)
-                            )
-
-                        _ ->
-                            ( model, Cmd.none )
+                    Loaders.loadHighScoreByLevelId levelId model.session
+                        |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -269,10 +112,8 @@ load =
     Extra.Cmd.fold
         [ loadCampaign
         , loadLevels
-        , loadSolutionBooks
         , loadSolutions
-        , loadSelectedLevelDraftBook
-        , loadSelectedLevelDrafts
+        , loadDraftsBySelectedLevelId
         , loadSelectedLevelHighScore
         ]
 
@@ -450,18 +291,15 @@ viewCampaign campaign model =
         numberOfLevels =
             List.length campaign.levelIds
 
-        numberOfSolvedLevels =
-            model.session.solutionBooks
-                |> Cache.values
-                |> List.filterMap RemoteData.toMaybe
-                |> List.filter (not << Set.isEmpty << .solutionIds)
-                |> List.length
+        solutionBookRemoteData =
+            List.map (flip Cache.get model.session.solutionBooks) campaign.levelIds
 
-        -- Not counting solutions not in solution books
+        numberOfSolvedLevels =
+            List.filterMap RemoteData.toMaybe solutionBookRemoteData
+                |> List.Extra.count (not << Set.isEmpty << .solutionIds)
+
         allSolutionsLoaded =
-            campaign.levelIds
-                |> List.map (flip Cache.get model.session.solutionBooks)
-                |> List.map RemoteData.toMaybe
+            List.map RemoteData.toMaybe solutionBookRemoteData
                 |> List.all Maybe.Extra.isJust
 
         sidebar =

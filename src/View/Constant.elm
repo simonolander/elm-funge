@@ -1,6 +1,7 @@
-module View.Constant exposing (color, icons)
+module View.Constant exposing (color, icons, size)
 
 import Element exposing (rgb)
+import Element.Font as Font
 
 
 color =
@@ -15,6 +16,14 @@ color =
         , error = rgb 1 0.51 0.35
         , link = rgb 0.5 0.5 1
         , linkHover = rgb 0.75 0.75 1
+        }
+    }
+
+
+size =
+    { font =
+        { card = { title = Font.size 24 }
+        , section = { title = Font.size 28 }
         }
     }
 

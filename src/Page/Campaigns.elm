@@ -1,14 +1,26 @@
 module Page.Campaigns exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
+import Basics.Extra exposing (flip)
 import Browser exposing (Document)
+import Data.Cache as Cache
 import Data.CampaignId as CampaignId exposing (CampaignId)
-import Data.Session exposing (Session)
+import Data.Level as Level
+import Data.Session as Session exposing (Session)
+import Data.Solution as Solution
+import Data.SolutionBook
 import Element exposing (..)
+import Extra.Cmd
 import Html
+import List.Extra
+import Loaders
+import RemoteData exposing (RemoteData(..))
 import Route
-import SessionUpdate exposing (SessionMsg)
+import SessionUpdate exposing (SessionMsg(..))
+import Set
+import String.Extra
+import View.Card as Card
+import View.Constant exposing (icons, size)
 import View.Header
-import View.Link as Link
 import View.Scewn as Scewn
 
 
@@ -19,6 +31,11 @@ import View.Scewn as Scewn
 type alias Model =
     { session : Session
     }
+
+
+withSession : Session -> Model -> Model
+withSession session model =
+    { model | session = session }
 
 
 type Msg
@@ -36,8 +53,20 @@ init session =
 
 
 load : Model -> ( Model, Cmd Msg )
-load model =
-    ( model, Cmd.none )
+load =
+    let
+        loadCampaigns model =
+            Loaders.loadCampaignsByCampaignIds CampaignId.all model.session
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
+
+        loadSolutions model =
+            Loaders.loadSolutionsByCampaignIds CampaignId.all model.session
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
+    in
+    Extra.Cmd.fold
+        [ loadCampaigns
+        , loadSolutions
+        ]
 
 
 
@@ -98,7 +127,57 @@ viewCampaigns model =
 
 viewCampaign : Model -> CampaignId -> Element InternalMsg
 viewCampaign model campaignId =
-    Link.button
-        { url = Route.toString (Route.Campaign campaignId Nothing)
-        , text = campaignId
-        }
+    let
+        title =
+            String.Extra.toSentenceCase campaignId
+    in
+    case Cache.get campaignId model.session.campaigns of
+        NotAsked ->
+            text (title ++ ": NotAsked")
+
+        Loading ->
+            text (title ++ ": Loading")
+
+        Failure error ->
+            text (title ++ ": Failure")
+
+        Success campaign ->
+            let
+                numberOfLevels =
+                    List.length campaign.levelIds
+
+                solutionBooks =
+                    List.map (flip Cache.get model.session.solutionBooks) campaign.levelIds
+
+                numberOfLoadingLevels =
+                    List.Extra.count RemoteData.isLoading solutionBooks
+
+                numberOfSolvedLevels =
+                    List.filterMap RemoteData.toMaybe solutionBooks
+                        |> List.Extra.count (.solutionIds >> Set.isEmpty >> not)
+
+                content =
+                    if numberOfLoadingLevels > 0 then
+                        column
+                            [ width fill, spacing 20 ]
+                            [ text title
+                            , image [ width (px 20) ] { src = icons.spinner, description = "Loading" }
+                            ]
+
+                    else
+                        column
+                            [ width fill, spacing 20 ]
+                            [ el [ size.font.card.title, centerX ] (text title)
+                            , row [ centerX ]
+                                [ text (String.fromInt numberOfSolvedLevels)
+                                , text "/"
+                                , text (String.fromInt numberOfLevels)
+                                ]
+                            ]
+            in
+            Card.link
+                { url = Route.toString (Route.Campaign campaignId Nothing)
+                , content = content
+                , marked = numberOfLevels == numberOfSolvedLevels
+                , selected = False
+                }
