@@ -3,4 +3,4 @@ module Version exposing (version)
 
 version : String
 version =
-    "1.0.3"
+    "1.0.4"
