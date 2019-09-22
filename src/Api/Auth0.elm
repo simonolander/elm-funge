@@ -30,8 +30,11 @@ responseType =
 
 
 redirectUri =
-    --    "http://localhost:3000"
-    "https://efng.simonolander.com"
+    "http://localhost:3000"
+
+
+
+--    "https://efng.simonolander.com"
 
 
 returnTo =

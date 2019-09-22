@@ -9,7 +9,7 @@ import Element.Background as Background
 import Element.Font as Font exposing (Font)
 import Html.Attributes
 import Json.Encode as Encode
-import View.Constant exposing (color)
+import View.Constant exposing (color, size)
 import View.Header
 import View.Layout
 import View.Scewn
@@ -198,7 +198,7 @@ section title element =
         ]
         [ el
             [ Font.center
-            , Font.size 28
+            , size.font.section.title
             , width fill
             ]
             (text title)

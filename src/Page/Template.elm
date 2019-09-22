@@ -3,6 +3,7 @@ module Page.Template exposing (Model, Msg(..), init, load, subscriptions, update
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
+import Extra.Cmd
 import SessionUpdate exposing (SessionMsg)
 
 
@@ -30,8 +31,14 @@ init session =
 
 
 load : Model -> ( Model, Cmd Msg )
-load model =
-    ( model, Cmd.none )
+load =
+    let
+        loadNothing model =
+            ( model, Cmd.none )
+    in
+    Extra.Cmd.fold
+        [ loadNothing
+        ]
 
 
 
