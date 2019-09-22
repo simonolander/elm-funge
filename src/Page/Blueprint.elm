@@ -1,5 +1,6 @@
 module Page.Blueprint exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
@@ -403,7 +404,7 @@ view model =
                 |> List.singleton
     in
     { body = body
-    , title = "Blueprint"
+    , title = String.concat [ "Blueprint", " - ", applicationName ]
     }
 
 

@@ -1,5 +1,6 @@
 module Page.Campaigns exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Cache as Cache
@@ -105,7 +106,7 @@ view model =
     in
     { body =
         List.map (Html.map InternalMsg) [ content ]
-    , title = "Campaigns"
+    , title = String.concat [ "Campaigns", " - ", applicationName ]
     }
 
 

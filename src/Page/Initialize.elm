@@ -9,6 +9,7 @@ module Page.Initialize exposing
     )
 
 import Api.Auth0 as Auth0
+import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation
@@ -919,7 +920,7 @@ view model =
                     viewProgress model
                         |> View.Layout.layout
     in
-    { title = "Synchronizing"
+    { title = String.concat [ "Synchronizing", " - ", applicationName ]
     , body = [ element ]
     }
 

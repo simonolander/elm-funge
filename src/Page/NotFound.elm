@@ -1,5 +1,6 @@
 module Page.NotFound exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Url
@@ -77,5 +78,5 @@ view model =
                 }
     in
     { body = [ content ]
-    , title = "Not Found"
+    , title = String.concat [ "Not Found", " - ", applicationName ]
     }

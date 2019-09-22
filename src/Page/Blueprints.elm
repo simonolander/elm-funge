@@ -1,5 +1,6 @@
 module Page.Blueprints exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Blueprint as Blueprint
@@ -311,7 +312,7 @@ view model =
                             viewCampaign campaign model
     in
     { body = [ content ]
-    , title = "Blueprints"
+    , title = String.concat [ "Blueprints", " - ", applicationName ]
     }
 
 

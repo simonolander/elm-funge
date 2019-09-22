@@ -1,5 +1,6 @@
 module Page.Home exposing (Model, Msg, init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
@@ -67,7 +68,7 @@ view : Model -> Document msg
 view model =
     let
         titleView =
-            text "Manick"
+            text applicationName
                 |> el
                     [ centerX
                     , size.font.page.title
@@ -129,6 +130,6 @@ view model =
                 |> View.Layout.layout
                 |> List.singleton
     in
-    { title = "Home"
+    { title = String.concat [ "Home", " - ", applicationName ]
     , body = body
     }

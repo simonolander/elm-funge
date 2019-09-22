@@ -1,5 +1,6 @@
 module Page.Template exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
@@ -70,5 +71,5 @@ view model =
             layout [] none
     in
     { body = [ content ]
-    , title = "Template"
+    , title = String.concat [ "Template", " - ", applicationName ]
     }

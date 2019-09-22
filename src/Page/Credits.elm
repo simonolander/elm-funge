@@ -1,5 +1,6 @@
 module Page.Credits exposing (Model, Msg, init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip, uncurry)
 import Browser exposing (Document)
 import Color
@@ -186,7 +187,7 @@ view model =
                     }
     in
     { body = [ content ]
-    , title = "Credits"
+    , title = String.concat [ "Credits", " - ", applicationName ]
     }
 
 

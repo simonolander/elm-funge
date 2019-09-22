@@ -1,5 +1,6 @@
 module Page.Draft exposing (InternalMsg, Model, Msg(..), getSession, init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
@@ -506,7 +507,7 @@ view model =
                 |> Html.map InternalMsg
                 |> List.singleton
     in
-    { title = "Draft"
+    { title = String.concat [ "Draft", " - ", applicationName ]
     , body = body
     }
 

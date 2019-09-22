@@ -8,6 +8,7 @@ module Page.Campaign exposing
     , view
     )
 
+import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Cache as Cache
@@ -42,6 +43,7 @@ import RemoteData exposing (RemoteData(..))
 import Route exposing (Route)
 import SessionUpdate exposing (SessionMsg(..))
 import Set
+import String.Extra
 import View.Box
 import View.ErrorScreen
 import View.HighScore
@@ -250,7 +252,7 @@ view model =
                         Success campaign ->
                             viewCampaign campaign model
     in
-    { title = "Levels"
+    { title = String.concat [ "Campaign", " - ", applicationName ]
     , body =
         content
             |> layout
@@ -280,7 +282,7 @@ viewCampaign campaign model =
                 [ centerX
                 , Font.size 32
                 ]
-                (text "Manick")
+                (text (String.Extra.toSentenceCase model.campaignId))
             , paragraph
                 [ width fill
                 , Font.center

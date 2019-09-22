@@ -1,5 +1,6 @@
 module Page.Execution exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
+import ApplicationName exposing (applicationName)
 import Array exposing (Array)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
@@ -1015,7 +1016,7 @@ view model =
                 content
                 |> List.singleton
     in
-    { title = "Executing"
+    { title = String.concat [ "Execution", " - ", applicationName ]
     , body = body
     }
 
