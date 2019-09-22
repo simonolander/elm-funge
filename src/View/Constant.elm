@@ -25,6 +25,7 @@ size =
         { card = { title = Font.size 24 }
         , section = { title = Font.size 28 }
         , page = { title = Font.size 42 }
+        , sidebar = { title = Font.size 30 }
         }
     }
 

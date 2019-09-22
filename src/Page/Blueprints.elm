@@ -20,6 +20,7 @@ import Random
 import RemoteData exposing (RemoteData(..))
 import Result exposing (Result)
 import Route
+import View.Constant exposing (size)
 import View.ErrorScreen
 import View.LevelButton
 import View.LoadingScreen
@@ -376,7 +377,7 @@ viewCampaign campaign model =
                     ]
 
                 Nothing ->
-                    [ el [ centerX ] (text "Blueprints") ]
+                    [ el [ centerX, size.font.sidebar.title ] (text "Blueprints") ]
 
         mainContent =
             let
