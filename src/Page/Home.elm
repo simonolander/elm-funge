@@ -93,7 +93,8 @@ view model =
                 ]
                 [ titleView
                 , link "Campaigns" Route.Campaigns
-                , link "Blueprints" (Route.Blueprints Nothing)
+
+                --                , link "Blueprints" (Route.Blueprints Nothing)
                 , link "Credits" Route.Credits
                 , Element.link [ width fill ]
                     { url = "https://github.com/simonolander/elm-funge/blob/master/documentation/docs.md"
