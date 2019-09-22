@@ -4,6 +4,7 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Cache as Cache
 import Data.CampaignId as CampaignId exposing (CampaignId)
+import Data.GetError as GetError
 import Data.Level as Level
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution
@@ -113,16 +114,26 @@ view model =
 viewCampaigns : Model -> Element InternalMsg
 viewCampaigns model =
     let
+        title =
+            el [ size.font.page.title, centerX, padding 20 ] (text "Campaigns")
+
         campaigns =
             CampaignId.all
                 |> List.map (viewCampaign model)
+
+        elements =
+            List.concat
+                [ [ title ]
+                , campaigns
+                ]
     in
     column
         [ width (maximum 1000 fill)
         , centerX
         , spacing 20
+        , padding 20
         ]
-        campaigns
+        elements
 
 
 viewCampaign : Model -> CampaignId -> Element InternalMsg
@@ -130,16 +141,48 @@ viewCampaign model campaignId =
     let
         title =
             String.Extra.toSentenceCase campaignId
+                |> text
+                |> el [ size.font.card.title, centerX ]
     in
     case Cache.get campaignId model.session.campaigns of
         NotAsked ->
-            text (title ++ ": NotAsked")
+            Card.link
+                { url = Route.toString (Route.Campaign campaignId Nothing)
+                , content =
+                    column
+                        [ width fill, spacing 20 ]
+                        [ title
+                        , text "Request not sent"
+                        ]
+                , marked = False
+                , selected = False
+                }
 
         Loading ->
-            text (title ++ ": Loading")
+            Card.link
+                { url = Route.toString (Route.Campaign campaignId Nothing)
+                , content =
+                    column
+                        [ width fill, spacing 20 ]
+                        [ title
+                        , image [ width (px 20), centerX ] { src = icons.spinner, description = "Loading" }
+                        ]
+                , marked = False
+                , selected = False
+                }
 
         Failure error ->
-            text (title ++ ": Failure")
+            Card.link
+                { url = Route.toString (Route.Campaign campaignId Nothing)
+                , content =
+                    column
+                        [ width fill, spacing 20 ]
+                        [ title
+                        , text (GetError.toString error)
+                        ]
+                , marked = False
+                , selected = False
+                }
 
         Success campaign ->
             let
@@ -160,14 +203,18 @@ viewCampaign model campaignId =
                     if numberOfLoadingLevels > 0 then
                         column
                             [ width fill, spacing 20 ]
-                            [ text title
-                            , image [ width (px 20) ] { src = icons.spinner, description = "Loading" }
+                            [ title
+                            , row [ centerX ]
+                                [ image [ width (px 20) ] { src = icons.spinner, description = "Loading" }
+                                , text " /"
+                                , text (String.fromInt numberOfLevels)
+                                ]
                             ]
 
                     else
                         column
                             [ width fill, spacing 20 ]
-                            [ el [ size.font.card.title, centerX ] (text title)
+                            [ title
                             , row [ centerX ]
                                 [ text (String.fromInt numberOfSolvedLevels)
                                 , text "/"
