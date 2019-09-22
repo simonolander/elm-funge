@@ -7,6 +7,7 @@ import Element.Font as Font
 import Extra.Cmd exposing (noCmd)
 import Route exposing (Route)
 import View.Box as Box
+import View.Constant exposing (size)
 import View.Header
 import View.Layout
 import View.Scewn
@@ -68,7 +69,7 @@ view model =
             text "Manick"
                 |> el
                     [ centerX
-                    , Font.size 42
+                    , size.font.page.title
                     , padding 20
                     ]
 
