@@ -42,6 +42,7 @@ import SessionUpdate exposing (SessionMsg(..))
 import Set
 import String.Extra
 import View.Box
+import View.Constant exposing (size)
 import View.ErrorScreen
 import View.HighScore
 import View.LevelButton
@@ -277,7 +278,7 @@ viewCampaign campaign model =
         viewTemporarySidebar elements =
             [ el
                 [ centerX
-                , Font.size 32
+                , size.font.sidebar.title
                 ]
                 (text (String.Extra.toSentenceCase model.campaignId))
             , paragraph
