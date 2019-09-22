@@ -6,6 +6,7 @@ import Element exposing (..)
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd)
 import Route exposing (Route)
+import Version exposing (version)
 import View.Box as Box
 import View.Constant exposing (size)
 import View.Header
@@ -113,7 +114,7 @@ view model =
                         ]
                     ]
                     { url = "https://github.com/simonolander/elm-funge"
-                    , label = text "1.0.0"
+                    , label = text version
                     }
                 ]
 
