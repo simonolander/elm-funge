@@ -2,6 +2,7 @@ module Api.Auth0 exposing (LoginResponse, login, loginResponseFromUrl, logout, r
 
 import Data.AccessToken as AccessToken exposing (AccessToken)
 import Dict
+import Environment exposing (Environment(..), environment)
 import Json.Decode
 import Json.Encode
 import Maybe.Extra
@@ -30,11 +31,12 @@ responseType =
 
 
 redirectUri =
-    "http://localhost:3000"
+    case environment of
+        Local ->
+            "http://localhost:3000"
 
-
-
---    "https://efng.simonolander.com"
+        Production ->
+            "https://efng.simonolander.com"
 
 
 returnTo =
