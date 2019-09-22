@@ -129,7 +129,7 @@ viewCampaigns model =
         [ width (maximum 1000 fill)
         , centerX
         , spacing 20
-        , padding 20
+        , padding 60
         ]
         elements
 
