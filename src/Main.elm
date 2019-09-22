@@ -261,9 +261,8 @@ update msg model =
                 Initialize.update message mdl
                     |> updateWith Initialize InitializeMsg
 
-            --                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
             ( message, mdl ) ->
-                Debug.todo ("Wrong message for model: " ++ Debug.toString ( message, mdl ))
+                ( model, Console.errorString "v51oox6osqnrm33f    Wrong message for model" )
 
 
 updateWith : (a -> Model) -> (b -> Msg) -> ( a, Cmd b ) -> ( Model, Cmd Msg )
