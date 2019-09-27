@@ -10,9 +10,7 @@ export interface Board {
 }
 
 export const decoder: JsonDecoder.Decoder<Board> = JsonDecoder.object({
-    width: Integer.nonNegativeDecoder,
-    height: Integer.nonNegativeDecoder,
-    instructions: JsonDecoder.array(BoardInstruction.decoder, "instructions"),
+    width: Integer.nonNegativeDecoder, height: Integer.nonNegativeDecoder, instructions: JsonDecoder.array(BoardInstruction.decoder, "instructions"),
 }, "Board");
 
 export function equals(board1: Board, board2: Board): boolean {
@@ -30,14 +28,17 @@ export function equals(board1: Board, board2: Board): boolean {
 
     board1.instructions.sort(BoardInstruction.compareFn);
     board2.instructions.sort(BoardInstruction.compareFn);
-
-    board1.instructions.every((v1, index) => {
+    const allInstructionsAreEqual = board1.instructions.every((v1, index) => {
         const v2 = board2.instructions[index];
         if (typeof v2 === "undefined") {
             return false;
         }
         return BoardInstruction.compareFn(v1, v2) === 0;
     });
+    if (!allInstructionsAreEqual) {
+        return false;
+    }
+
     return true;
 }
 
