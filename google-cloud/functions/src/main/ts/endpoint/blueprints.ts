@@ -67,7 +67,7 @@ async function put(req: Request): Promise<EndpointResult<never>> {
         index: JsonDecoder.number,
         name: JsonDecoder.string,
         description: JsonDecoder.array(JsonDecoder.string, "description"),
-        io: Suite.decoder,
+        suites: JsonDecoder.array(Suite.decoder, "Suite[]"),
         initialBoard: Board.decoder,
         instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
     }, "BlueprintDto").decode(req.body);

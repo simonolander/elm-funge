@@ -224,7 +224,7 @@ loadFromServerByLevelId : (Result GetError (List Solution) -> msg) -> AccessToke
 loadFromServerByLevelId toMsg accessToken levelId =
     GCP.get
         |> GCP.withPath [ "solutions" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.withStringQueryParameter "levelId" levelId
         |> GCP.withAccessToken accessToken
         |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
 
@@ -233,7 +233,7 @@ loadFromServerByLevelIds : (Result GetError (List Solution) -> msg) -> AccessTok
 loadFromServerByLevelIds toMsg accessToken levelIds =
     GCP.get
         |> GCP.withPath [ "solutions" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "levelIds" (String.join "," levelIds) ]
+        |> GCP.withStringQueryParameter "levelIds" (String.join "," levelIds)
         |> GCP.withAccessToken accessToken
         |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
 
@@ -242,6 +242,6 @@ loadFromServerBySolutionId : (Result GetError (Maybe Solution) -> msg) -> Access
 loadFromServerBySolutionId toMsg accessToken solutionId =
     GCP.get
         |> GCP.withPath [ "solutions" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "solutionId" solutionId ]
+        |> GCP.withStringQueryParameter "solutionId" solutionId
         |> GCP.withAccessToken accessToken
         |> GCP.request (HttpError.expectMaybe decoder toMsg)

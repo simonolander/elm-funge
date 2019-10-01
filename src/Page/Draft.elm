@@ -2,7 +2,7 @@ module Page.Draft exposing (InternalMsg, Model, Msg(..), getSession, init, load,
 
 import ApplicationName exposing (applicationName)
 import Array exposing (Array)
-import Basics.Extra exposing (flip)
+import Basics.Extra exposing (flip, uncurry)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.Board as Board exposing (Board)
@@ -384,8 +384,9 @@ update msg model =
 
                         removeRemotelyCmd =
                             Session.getAccessToken model.session
-                                |> Maybe.map (flip (Draft.deleteFromServer (SessionMsg << GotDeleteDraftResponse draft.id)) draft.id)
+                                |> Maybe.map (flip (Draft.deleteFromServer GotDeleteDraftResponse) draft.id)
                                 |> Maybe.withDefault Cmd.none
+                                |> Cmd.map SessionMsg
 
                         changeRouteCmd =
                             maybeLevel

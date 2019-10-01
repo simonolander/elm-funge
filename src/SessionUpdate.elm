@@ -1,6 +1,8 @@
 module SessionUpdate exposing (SessionMsg(..), update)
 
 import Basics.Extra exposing (flip)
+import Data.Blueprint exposing (Blueprint)
+import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
 import Data.Campaign as Campaign
 import Data.CampaignId exposing (CampaignId)
@@ -38,10 +40,13 @@ type SessionMsg
     | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
     | GotLoadLevelByLevelIdResponse LevelId (Result GetError Level)
     | GotLoadLevelsByCampaignIdResponse CampaignId (Result GetError (List Level))
+    | GotLoadBlueprintResponse BlueprintId (Result GetError (Maybe Blueprint))
+    | GotLoadBlueprintsResponse (Result GetError (List Blueprint))
     | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
     | GotLoadSolutionsByLevelIdsResponse (List LevelId) (Result GetError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
     | GotSaveDraftResponse Draft (Maybe SaveError)
+    | GotDeleteBlueprintResponse BlueprintId (Maybe SaveError)
     | GotSaveSolutionResponse Solution (Maybe SubmitSolutionError)
 
 
@@ -321,6 +326,14 @@ update msg session =
 
                         SubmitSolutionError.Other _ ->
                             ( session, SubmitSolutionError.consoleError error )
+
+        GotLoadBlueprintsResponse result ->
+            case result of
+                Ok blueprints ->
+                    Debug.todo "ok"
+
+                Err error ->
+                    Debug.todo "error"
 
 
 gotActualDraft : DraftId -> Maybe Draft -> Session -> ( Session, Cmd msg )
