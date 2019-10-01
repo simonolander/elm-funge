@@ -11,7 +11,7 @@ interface V1 {
     readonly id: string;
     readonly name: string;
     readonly description: string[];
-    readonly io: Suite.Suite;
+    readonly suites: Suite.Suite[];
     readonly initialBoard: Board.Board;
     readonly instructionTools: InstructionTool.InstructionTool[];
     readonly authorId: string;
@@ -27,7 +27,7 @@ const versions = {
                 id: blueprint.id,
                 name: blueprint.name,
                 description: blueprint.description,
-                io: blueprint.io,
+                suites: blueprint.suites,
                 initialBoard: blueprint.initialBoard,
                 instructionTools: blueprint.instructionTools,
                 authorId: blueprint.authorId,
@@ -40,7 +40,7 @@ const versions = {
             id: JsonDecoder.string,
             name: JsonDecoder.string,
             description: JsonDecoder.array(JsonDecoder.string, "description"),
-            io: Suite.decoder,
+            suites: JsonDecoder.array(Suite.decoder, "suites"),
             initialBoard: Board.decoder,
             instructionTools: JsonDecoder.array(InstructionTool.decoder, "instructionTools"),
             authorId: JsonDecoder.string,
@@ -51,7 +51,7 @@ const versions = {
                     id: v1.id,
                     name: v1.name,
                     description: v1.description,
-                    io: v1.io,
+                    suites: v1.suites,
                     initialBoard: v1.initialBoard,
                     instructionTools: v1.instructionTools,
                     authorId: v1.authorId,

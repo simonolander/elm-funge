@@ -101,5 +101,5 @@ loadFromServer : LevelId -> (Result GetError HighScore -> msg) -> Cmd msg
 loadFromServer levelId toMsg =
     GCP.get
         |> GCP.withPath [ "highScores" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.withStringQueryParameter "levelId" levelId
         |> GCP.request (HttpError.expect decoder toMsg)

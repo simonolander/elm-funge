@@ -1,28 +1,31 @@
-module Page.Blueprints exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
+module Page.Blueprints exposing (Model, Msg(..), init, load, subscriptions, update, view)
 
 import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
 import Browser exposing (Document)
-import Data.Blueprint as Blueprint
+import Data.Blueprint as Blueprint exposing (Blueprint)
+import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
 import Data.Campaign as Campaign exposing (Campaign)
-import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.GetError as GetError exposing (GetError(..))
-import Data.Level as Level exposing (Level)
-import Data.LevelId exposing (LevelId)
-import Data.Session as Session exposing (Session)
+import Data.Session as Session exposing (Session, withSession)
 import Element exposing (..)
 import Element.Background as Background
+import Element.Font as Font
 import Element.Input as Input
+import Extra.Cmd exposing (withExtraCmd)
 import Html exposing (Html)
-import Ports.Console
+import Maybe.Extra
+import Ports.Console as Console
 import Random
 import RemoteData exposing (RemoteData(..))
-import Result exposing (Result)
 import Route
+import SessionUpdate exposing (SessionMsg(..))
+import String.Extra
+import Update.Blueprint
 import View.Constant exposing (size)
 import View.ErrorScreen
-import View.LevelButton
+import View.Layout
 import View.LoadingScreen
 import View.SingleSidebar
 import ViewComponents
@@ -32,82 +35,54 @@ import ViewComponents
 -- MODEL
 
 
+type Modal
+    = ConfirmDelete BlueprintId
+
+
 type alias Model =
     { session : Session
-    , selectedLevelId : Maybe LevelId
-    , error : Maybe String
+    , selectedBlueprintId : Maybe BlueprintId
+    , modal : Maybe Modal
     }
 
 
-campaignId : CampaignId
-campaignId =
-    CampaignId.blueprints
+type Msg
+    = InternalMsg InternalMsg
+    | SessionMsg SessionMsg
 
 
-init : Maybe LevelId -> Session -> ( Model, Cmd Msg )
-init selectedLevelId session =
+type InternalMsg
+    = BlueprintGenerated Blueprint
+    | SelectedBlueprintId BlueprintId
+    | BlueprintNameChanged String
+    | BlueprintDescriptionChanged String
+    | ClickedNewBlueprint
+    | ClickedDeleteBlueprint BlueprintId
+    | ClickedConfirmDeleteBlueprint
+    | ClickedCancelDeleteBlueprint
+
+
+init : Maybe BlueprintId -> Session -> ( Model, Cmd Msg )
+init selectedBlueprintId session =
     let
         model =
             { session = session
-            , selectedLevelId = selectedLevelId
-            , error = Nothing
+            , selectedBlueprintId = selectedBlueprintId
+            , modal = Nothing
             }
     in
     ( model, Cmd.none )
 
 
 load : Model -> ( Model, Cmd Msg )
-load model =
-    case Cache.get CampaignId.blueprints model.session.campaigns of
-        NotAsked ->
-            case Session.getAccessToken model.session of
-                Just accessToken ->
-                    ( model.session
-                        |> Session.campaignLoading campaignId
-                        |> setSession model
-                    , Blueprint.loadAllFromServer accessToken GotLoadBlueprintsResponse
-                    )
-
-                Nothing ->
-                    ( model.session
-                        |> Session.campaignLoading campaignId
-                        |> setSession model
-                    , Campaign.loadFromLocalStorage campaignId
-                    )
-
-        -- TODO Blueprints should be a campaign
-        Failure error ->
-            let
-                campaign =
-                    Campaign.empty campaignId
-            in
-            ( model.session
-                |> Session.withCampaign campaign
-                |> setSession model
-            , Campaign.saveToLocalStorage campaign
-            )
-
-        Success campaign ->
-            let
-                notAskedLevelIds =
-                    campaign.levelIds
-                        |> List.filter (flip Cache.isNotAsked model.session.levels)
-            in
-            ( notAskedLevelIds
-                |> List.foldl Session.levelLoading model.session
-                |> setSession model
-            , notAskedLevelIds
-                |> List.map Level.loadFromLocalStorage
-                |> Cmd.batch
-            )
-
-        Loading ->
-            ( model, Cmd.none )
-
-
-getSession : Model -> Session
-getSession { session } =
-    session
+load =
+    let
+        loadBlueprints model =
+            Update.Blueprint.loadBlueprints model.session
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
+    in
+    Extra.Cmd.fold
+        [ loadBlueprints ]
 
 
 setSession : Model -> Session -> Model
@@ -119,159 +94,68 @@ setSession model session =
 -- UPDATE
 
 
-type Msg
-    = ClickedNewLevel
-    | LevelGenerated Level
-    | SelectedLevelId LevelId
-    | LevelNameChanged String
-    | LevelDeleted LevelId
-    | LevelDescriptionChanged String
-    | GotLoadBlueprintsResponse (Result GetError (List Level))
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : InternalMsg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LevelDeleted levelId ->
-            case
-                Session.getCampaign campaignId model.session
-                    |> RemoteData.toMaybe
-            of
-                Just campaign ->
-                    let
-                        newCampaign =
-                            Campaign.withoutLevelId levelId campaign
-
-                        newModel =
-                            Session.withCampaign newCampaign model.session
-                                |> Session.withoutLevel levelId
-                                |> setSession model
-
-                        cmd =
-                            Cmd.batch
-                                [ Level.removeFromLocalStorage levelId
-                                , Campaign.saveToLocalStorage newCampaign
-                                ]
-                    in
-                    ( newModel, cmd )
+        ClickedConfirmDeleteBlueprint ->
+            case model.modal of
+                Just (ConfirmDelete blueprintId) ->
+                    Update.Blueprint.deleteBlueprint blueprintId model.session
+                        |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
-                    ( model, Ports.Console.errorString ("v1mC6LQO : Could not delete level " ++ levelId) )
+                    ( model, Cmd.none )
 
-        LevelNameChanged newName ->
+        ClickedDeleteBlueprint blueprintId ->
+            ( { model | modal = Just (ConfirmDelete blueprintId) }, Cmd.none )
+
+        ClickedCancelDeleteBlueprint ->
+            case model.modal of
+                Just (ConfirmDelete _) ->
+                    ( { model | modal = Nothing }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        BlueprintNameChanged newName ->
             case
-                model.selectedLevelId
-                    |> Maybe.map (flip Session.getLevel model.session)
+                Maybe.map (flip Cache.get model.session.blueprints.local) model.selectedBlueprintId
                     |> Maybe.andThen RemoteData.toMaybe
+                    |> Maybe.andThen Maybe.Extra.join
             of
-                Just oldLevel ->
-                    let
-                        newLevel =
-                            Level.withName newName oldLevel
-
-                        newModel =
-                            Session.withLevel newLevel model.session
-                                |> setSession model
-
-                        cmd =
-                            Level.saveToLocalStorage newLevel
-                    in
-                    ( newModel, cmd )
+                Just blueprint ->
+                    Update.Blueprint.saveBlueprint { blueprint | name = newName } model.session
+                        |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
-                    ( model, Ports.Console.errorString "tWy71t5l : Could not update level name" )
+                    ( model, Console.errorString "tWy71t5l    Could not update blueprint name" )
 
-        LevelDescriptionChanged newDescription ->
+        BlueprintDescriptionChanged newDescription ->
             case
-                model.selectedLevelId
-                    |> Maybe.map (flip Session.getLevel model.session)
+                Maybe.map (flip Cache.get model.session.blueprints.local) model.selectedBlueprintId
                     |> Maybe.andThen RemoteData.toMaybe
+                    |> Maybe.andThen Maybe.Extra.join
             of
-                Just oldLevel ->
-                    let
-                        newLevel =
-                            Level.withDescription (String.lines newDescription) oldLevel
-
-                        newModel =
-                            Session.withLevel newLevel model.session
-                                |> setSession model
-
-                        cmd =
-                            Level.saveToLocalStorage newLevel
-                    in
-                    ( newModel, cmd )
+                Just blueprint ->
+                    Update.Blueprint.saveBlueprint { blueprint | description = String.lines newDescription } model.session
+                        |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
-                    ( model, Ports.Console.errorString "Pm6iHnXM : Could not update level description" )
+                    ( model, Console.errorString "Pm6iHnXM    Could not update blueprint description" )
 
-        SelectedLevelId levelId ->
-            ( { model | selectedLevelId = Just levelId }
-            , Route.replaceUrl model.session.key (Route.Blueprints (Just levelId))
+        SelectedBlueprintId blueprintId ->
+            ( { model | selectedBlueprintId = Just blueprintId }
+            , Route.replaceUrl model.session.key (Route.Blueprints (Just blueprintId))
             )
 
-        ClickedNewLevel ->
-            ( model, Random.generate LevelGenerated Level.generator )
+        ClickedNewBlueprint ->
+            ( model, Random.generate (InternalMsg << BlueprintGenerated) Blueprint.generator )
 
-        LevelGenerated level ->
-            let
-                session =
-                    model.session
-
-                campaign =
-                    Session.getCampaign campaignId session
-                        |> RemoteData.withDefault (Campaign.empty campaignId)
-                        |> Campaign.withLevelId level.id
-
-                newModel =
-                    { model
-                        | session =
-                            model.session
-                                |> Session.withLevel level
-                                |> Session.withCampaign campaign
-                        , selectedLevelId = Just level.id
-                    }
-
-                cmd =
-                    Cmd.batch
-                        [ Level.saveToLocalStorage level
-                        , Campaign.saveToLocalStorage campaign
-                        , Route.replaceUrl model.session.key (Route.Blueprints (Just level.id))
-                        ]
-            in
-            ( newModel, cmd )
-
-        GotLoadBlueprintsResponse result ->
-            case result of
-                Ok blueprints ->
-                    let
-                        campaign =
-                            { id = campaignId
-                            , levelIds =
-                                blueprints
-                                    |> List.map .id
-                            }
-
-                        cmd =
-                            Cmd.batch
-                                [ Campaign.saveToLocalStorage campaign
-                                , blueprints
-                                    |> List.map Level.saveToLocalStorage
-                                    |> Cmd.batch
-                                ]
-                    in
-                    ( model.session
-                        |> Session.withCampaign campaign
-                        |> Session.withLevels blueprints
-                        |> setSession model
-                    , cmd
-                    )
-
-                Err error ->
-                    ( model.session
-                        |> Session.campaignError campaignId error
-                        |> setSession model
-                    , Ports.Console.errorString (GetError.toString error)
-                    )
+        BlueprintGenerated blueprint ->
+            Update.Blueprint.saveBlueprint blueprint
+                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
+                |> Tuple.mapFirst (withSelectedBlueprintId blueprint.id)
+                |> withExtraCmd (Route.replaceUrl model.session.key (Route.Blueprints (Just blueprint.id)))
 
 
 
@@ -294,30 +178,27 @@ view model =
             model.session
 
         content =
-            case model.error of
-                Just error ->
-                    View.ErrorScreen.layout error
+            case Session.getCampaign campaignId session of
+                NotAsked ->
+                    View.ErrorScreen.layout "Not asked :/"
 
-                Nothing ->
-                    case Session.getCampaign campaignId session of
-                        NotAsked ->
-                            View.ErrorScreen.layout "Not asked :/"
+                Loading ->
+                    View.LoadingScreen.layout ("Loading " ++ campaignId)
 
-                        Loading ->
-                            View.LoadingScreen.layout ("Loading " ++ campaignId)
+                Failure error ->
+                    View.ErrorScreen.layout (GetError.toString error)
 
-                        Failure error ->
-                            View.ErrorScreen.layout (GetError.toString error)
-
-                        Success campaign ->
-                            viewCampaign campaign model
+                Success campaign ->
+                    viewCampaign campaign model
+                        |> View.Layout.layout
+                        |> Html.map InternalMsg
     in
     { body = [ content ]
     , title = String.concat [ "Blueprints", " - ", applicationName ]
     }
 
 
-viewCampaign : Campaign -> Model -> Html Msg
+viewCampaign : Campaign -> Model -> Element InternalMsg
 viewCampaign campaign model =
     let
         session =
@@ -325,36 +206,36 @@ viewCampaign campaign model =
 
         sidebarContent =
             case
-                model.selectedLevelId
-                    |> Maybe.map (flip Session.getLevel session)
+                model.selectedBlueprintId
+                    |> Maybe.map (flip Session.getBlueprint session)
                     |> Maybe.andThen RemoteData.toMaybe
             of
-                Just level ->
+                Just blueprint ->
                     let
-                        levelName =
+                        blueprintName =
                             Input.text
                                 [ Background.color (rgb 0.1 0.1 0.1) ]
-                                { onChange = LevelNameChanged
-                                , text = level.name
+                                { onChange = BlueprintNameChanged
+                                , text = blueprint.name
                                 , placeholder = Nothing
                                 , label =
                                     Input.labelAbove
                                         []
-                                        (text "Level name")
+                                        (text "Blueprint name")
                                 }
 
-                        levelDescription =
+                        blueprintDescription =
                             Input.multiline
                                 [ Background.color (rgb 0.1 0.1 0.1)
                                 , height (minimum 200 shrink)
                                 ]
-                                { onChange = LevelDescriptionChanged
-                                , text = String.join "\n" level.description
+                                { onChange = BlueprintDescriptionChanged
+                                , text = String.join "\n" blueprint.description
                                 , placeholder = Nothing
                                 , label =
                                     Input.labelAbove
                                         []
-                                        (text "Level description")
+                                        (text "Blueprint description")
                                 , spellcheck = True
                                 }
 
@@ -362,53 +243,55 @@ viewCampaign campaign model =
                             Route.link
                                 [ width fill ]
                                 (ViewComponents.textButton [] Nothing "Open")
-                                (Route.Blueprint level.id)
+                                (Route.Blueprint blueprint.id)
 
                         deleteBlueprint =
                             ViewComponents.textButton
                                 []
-                                (Just (LevelDeleted level.id))
+                                (Just (ClickedDeleteBlueprint blueprint.id))
                                 "Delete"
                     in
-                    [ levelName
-                    , levelDescription
+                    [ blueprintName
+                    , blueprintDescription
                     , openBlueprint
                     , deleteBlueprint
                     ]
 
                 Nothing ->
-                    [ el [ centerX, size.font.sidebar.title ] (text "Blueprints") ]
+                    [ el [ centerX, size.font.sidebar.title ] (text "Blueprints")
+                    , paragraph [ Font.center ] [ text "Here you can make your own blueprints. A blueprint is a blueprint that is not yet published. Once you publish a blueprint, you cannot change it." ]
+                    ]
 
         mainContent =
             let
                 default =
-                    View.LevelButton.default
+                    View.BlueprintButton.default
 
                 plusButton =
-                    ViewComponents.textButton [] (Just ClickedNewLevel) "Create new level"
+                    ViewComponents.textButton [] (Just ClickedNewBlueprint) "Create new blueprint"
 
-                levelButton levelId =
+                blueprintButton blueprintId =
                     case
-                        Session.getLevel levelId session
+                        Session.getBlueprint blueprintId session
                             |> RemoteData.toMaybe
                     of
-                        Just level ->
-                            View.LevelButton.view
+                        Just blueprint ->
+                            View.BlueprintButton.view
                                 { default
-                                    | onPress = Just (SelectedLevelId levelId)
+                                    | onPress = Just (SelectedBlueprintId blueprintId)
                                     , selected =
-                                        model.selectedLevelId
-                                            |> Maybe.map ((==) levelId)
+                                        model.selectedBlueprintId
+                                            |> Maybe.map ((==) blueprintId)
                                             |> Maybe.withDefault False
                                 }
-                                level
+                                blueprint
 
                         -- TODO Maybe different cases for loading, error and not asked?
                         Nothing ->
-                            View.LevelButton.loading levelId
+                            View.BlueprintButton.loading blueprintId
 
-                levelButtons =
-                    List.map levelButton campaign.levelIds
+                blueprintButtons =
+                    List.map blueprintButton campaign.blueprintIds
             in
             column
                 [ width fill, spacing 30 ]
@@ -416,7 +299,44 @@ viewCampaign campaign model =
                 , wrappedRow
                     [ spacing 20
                     ]
-                    levelButtons
+                    blueprintButtons
                 ]
+
+        modal =
+            Maybe.map (flip viewModal model) model.modal
     in
-    View.SingleSidebar.layout sidebarContent mainContent model.session
+    View.SingleSidebar.view
+        { sidebar = sidebarContent
+        , main = mainContent
+        , session = model.session
+        , modal = modal
+        }
+
+
+viewModal : Modal -> Model -> Element InternalMsg
+viewModal modal model =
+    case modal of
+        ConfirmDelete blueprintId ->
+            let
+                blueprintName =
+                    Cache.get blueprintId model.session.blueprints.local
+                        |> RemoteData.toMaybe
+                        |> Maybe.Extra.join
+                        |> Maybe.map .name
+                        |> Maybe.map String.trim
+                        |> Maybe.andThen String.Extra.nonEmpty
+                        |> Maybe.withDefault "no name"
+            in
+            column
+                []
+                [ paragraph [ Font.center ]
+                    [ text "Do you really want to delete blueprint "
+                    , text blueprintName
+                    , text " ("
+                    , text blueprintId
+                    , text ")"
+                    , text "?"
+                    ]
+                , ViewComponents.textButton [] (Just ClickedConfirmDeleteBlueprint) "Delete"
+                , ViewComponents.textButton [] (Just ClickedCancelDeleteBlueprint) "Cancel"
+                ]

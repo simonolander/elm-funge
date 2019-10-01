@@ -14,12 +14,17 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Browser.Navigation
 import Data.AccessToken as AccessToken exposing (AccessToken)
+import Data.Blueprint as Blueprint exposing (Blueprint)
+import Data.BlueprintBook as BlueprintBook
+import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache exposing (Cache)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
 import Data.GetError as GetError exposing (GetError)
 import Data.LevelId exposing (LevelId)
+import Data.OneOrBoth as OneOrBoth exposing (OneOrBoth(..))
+import Data.RemoteCache exposing (RemoteCache)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.SaveError as SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
@@ -33,14 +38,17 @@ import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd, withCmd)
+import Extra.List exposing (flist)
 import Extra.Result
 import Json.Decode as Decode
 import Json.Encode as Encode
+import List.Extra
 import Maybe.Extra
-import Ports.Console
+import Ports.Console as Console
 import Random
 import RemoteData
 import Route exposing (Route)
+import String.Extra
 import Url
 import View.Constant exposing (color)
 import View.ErrorScreen
@@ -54,21 +62,22 @@ import ViewComponents
 -- MODEL
 
 
-type ConflictResolution a
+type ConflictResolution id a
     = DoNothing
-    | KeepLocal a
-    | KeepActual a
+    | OverwriteLocal a
+    | OverwriteActual a
+    | DiscardLocal id
+    | DiscardActual id
     | ResolveManually
-        { local : a
-        , expected : Maybe a
-        , actual : Maybe a
+        { localOrExpected : OneOrBoth a
+        , maybeActual : Maybe a
         }
     | Error GetError
 
 
-type Saving e a
-    = Saving a
-    | Saved (Result e a)
+type Saving e
+    = Saving
+    | Saved (Maybe e)
 
 
 type AccessTokenState
@@ -91,12 +100,16 @@ type alias Model =
     , localDrafts : Dict DraftId Draft
     , expectedDrafts : Dict DraftId Draft
     , actualDrafts : Cache DraftId GetError (Maybe Draft)
-    , savingDrafts : Dict DraftId (Saving SaveError Draft)
+    , savingDrafts : Dict DraftId (Saving SaveError)
     , localSolutionBooks : Dict LevelId SolutionBook
     , localSolutions : Dict SolutionId Solution
     , expectedSolutions : Dict SolutionId Solution
     , actualSolutions : Cache SolutionId GetError (Maybe Solution)
-    , savingSolutions : Dict SolutionId (Saving SubmitSolutionError Solution)
+    , savingSolutions : Dict SolutionId (Saving SubmitSolutionError)
+    , localBlueprints : Dict BlueprintId Blueprint
+    , expectedBlueprints : Dict BlueprintId Blueprint
+    , actualBlueprints : Cache BlueprintId GetError (Maybe Blueprint)
+    , savingBlueprints : Dict BlueprintId (Saving SaveError)
     }
 
 
@@ -104,12 +117,21 @@ type Msg
     = GeneratedSolution Solution
     | GotUserInfoResponse (Result GetError UserInfo)
     | GotDraftLoadResponse DraftId (Result GetError (Maybe Draft))
+    | GotDraftDeleteResponse DraftId (Maybe SaveError)
+    | GotLoadBlueprintResponse BlueprintId (Result GetError (Maybe Blueprint))
+    | GotBlueprintSaveResponse Blueprint (Maybe SaveError)
+    | GotBlueprintDeleteResponse BlueprintId (Maybe SaveError)
     | GotDraftSaveResponse Draft (Maybe SaveError)
     | GotSolutionSaveResponse Solution (Maybe SubmitSolutionError)
     | ClickedContinueOffline
-    | ClickedDraftDeleteLocal DraftId
-    | ClickedDraftKeepLocal DraftId
-    | ClickedDraftKeepServer DraftId
+    | ClickedDraftDiscardLocal DraftId
+    | ClickedDraftDiscardActual DraftId
+    | ClickedDraftOverwriteActual Draft
+    | ClickedDraftOverwriteLocal Draft
+    | ClickedBlueprintOverwriteActual Blueprint
+    | ClickedBlueprintOverwriteLocal Blueprint
+    | ClickedBlueprintDiscardLocal BlueprintId
+    | ClickedBlueprintDiscardActual BlueprintId
     | ClickedImportLocalData
     | ClickedDeleteLocalData
     | ClickedSignInToOtherAccount
@@ -146,7 +168,7 @@ init { navigationKey, localStorageEntries, url } =
                         |> Maybe.Extra.join
                     , case accessTokenResult of
                         Just (Err error) ->
-                            Ports.Console.errorString (Decode.errorToString error)
+                            Console.errorString (Decode.errorToString error)
 
                         _ ->
                             Cmd.none
@@ -193,6 +215,18 @@ init { navigationKey, localStorageEntries, url } =
                 |> List.filterMap SolutionBook.localStorageResponse
                 |> RequestResult.split
 
+        ( localBlueprints, localBlueprintErrors ) =
+            localStorageEntries
+                |> List.filterMap Blueprint.localStorageResponse
+                |> List.filterMap RequestResult.extractMaybe
+                |> RequestResult.split
+
+        ( expectedBlueprints, expectedBlueprintErrors ) =
+            localStorageEntries
+                |> List.filterMap Blueprint.localRemoteStorageResponse
+                |> List.filterMap RequestResult.extractMaybe
+                |> RequestResult.split
+
         model : Model
         model =
             { session =
@@ -216,6 +250,10 @@ init { navigationKey, localStorageEntries, url } =
             , expectedSolutions = Dict.fromList expectedSolutions
             , actualSolutions = Cache.empty
             , savingSolutions = Dict.empty
+            , localBlueprints = Dict.fromList localBlueprints
+            , expectedBlueprints = Dict.fromList expectedBlueprints
+            , actualBlueprints = Cache.empty
+            , savingBlueprints = Dict.empty
             }
 
         cmd : Cmd Msg
@@ -225,38 +263,25 @@ init { navigationKey, localStorageEntries, url } =
                 , expectedUserInfoResult
                     |> Maybe.andThen Extra.Result.getError
                     |> Maybe.map Decode.errorToString
-                    |> Maybe.map Ports.Console.errorString
+                    |> Maybe.map Console.errorString
                     |> Maybe.withDefault Cmd.none
-                , localDraftErrors
-                    |> List.map Tuple.second
-                    |> List.map Decode.errorToString
-                    |> List.map Ports.Console.errorString
-                    |> Cmd.batch
-                , expectedDraftErrors
-                    |> List.map Tuple.second
-                    |> List.map Decode.errorToString
-                    |> List.map Ports.Console.errorString
-                    |> Cmd.batch
-                , localDraftBookErrors
-                    |> List.map Tuple.second
-                    |> List.map Decode.errorToString
-                    |> List.map Ports.Console.errorString
-                    |> Cmd.batch
-                , localSolutionErrors
-                    |> List.map Tuple.second
-                    |> List.map Decode.errorToString
-                    |> List.map Ports.Console.errorString
-                    |> Cmd.batch
-                , expectedSolutionErrors
-                    |> List.map Tuple.second
-                    |> List.map Decode.errorToString
-                    |> List.map Ports.Console.errorString
-                    |> Cmd.batch
-                , localSolutionBookErrors
-                    |> List.map Tuple.second
-                    |> List.map Decode.errorToString
-                    |> List.map Ports.Console.errorString
-                    |> Cmd.batch
+                , Cmd.batch
+                    (List.map
+                        (List.map Tuple.second
+                            >> List.map Decode.errorToString
+                            >> List.map Console.errorString
+                            >> Cmd.batch
+                        )
+                        [ localDraftErrors
+                        , expectedDraftErrors
+                        , localDraftBookErrors
+                        , localSolutionErrors
+                        , expectedSolutionErrors
+                        , localSolutionBookErrors
+                        , localBlueprintErrors
+                        , expectedBlueprintErrors
+                        ]
+                    )
                 ]
     in
     ( model, cmd )
@@ -329,13 +354,47 @@ load =
 
                         savingSolutions =
                             unpublishedSolutions
-                                |> List.foldl (\solution -> Dict.insert solution.id (Saving solution)) model.savingSolutions
+                                |> List.foldl (\solution -> Dict.insert solution.id Saving) model.savingSolutions
                     in
-                    ( { model
-                        | savingSolutions = savingSolutions
-                      }
+                    ( { model | savingSolutions = savingSolutions }
                     , unpublishedSolutions
                         |> List.map (\solution -> Solution.saveToServer (GotSolutionSaveResponse solution) accessToken solution)
+                        |> Cmd.batch
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        loadBlueprints model =
+            case model.accessTokenState of
+                Verified { accessToken } ->
+                    let
+                        blueprintIds =
+                            List.concat
+                                [ Dict.keys model.localBlueprints
+                                , Dict.keys model.expectedBlueprints
+                                ]
+                                |> List.Extra.unique
+                                |> List.filter
+                                    (\id ->
+                                        let
+                                            localBlueprint =
+                                                Dict.get id model.localBlueprints
+
+                                            expectedBlueprint =
+                                                Dict.get id model.localBlueprints
+
+                                            isNotAsked =
+                                                Cache.isNotAsked id model.actualBlueprints
+                                        in
+                                        isNotAsked && localBlueprint /= expectedBlueprint
+                                    )
+
+                        actualBlueprints =
+                            List.foldl Cache.loading model.actualBlueprints blueprintIds
+                    in
+                    ( { model | actualBlueprints = actualBlueprints }
+                    , List.map (Blueprint.loadFromServerByBlueprintId GotLoadBlueprintResponse accessToken) blueprintIds
                         |> Cmd.batch
                     )
 
@@ -367,14 +426,24 @@ load =
                 Verified { accessToken, userInfo } ->
                     let
                         hasDraftConflicts =
-                            Dict.keys model.localDrafts
-                                |> List.map (\draftId -> ( Dict.get draftId model.localDrafts, Dict.get draftId model.expectedDrafts ))
-                                |> List.filter (\( local, expected ) -> local /= expected)
-                                |> List.isEmpty
+                            OneOrBoth.fromDicts model.localDrafts model.expectedDrafts
+                                |> List.all (OneOrBoth.areSame Draft.eq)
                                 |> not
 
                         hasSavingDrafts =
                             model.savingDrafts
+                                |> Dict.values
+                                |> List.filter isSaving
+                                |> List.isEmpty
+                                |> not
+
+                        hasBlueprintConflicts =
+                            OneOrBoth.fromDicts model.localBlueprints model.expectedBlueprints
+                                |> List.all (OneOrBoth.areSame (==))
+                                |> not
+
+                        hasSavingBlueprints =
+                            model.savingBlueprints
                                 |> Dict.values
                                 |> List.filter isSaving
                                 |> List.isEmpty
@@ -388,11 +457,13 @@ load =
                                 |> not
 
                         done =
-                            [ hasDraftConflicts
-                            , hasSavingDrafts
-                            , hasSavingSolutions
-                            ]
-                                |> List.any identity
+                            List.any identity
+                                [ hasDraftConflicts
+                                , hasSavingDrafts
+                                , hasBlueprintConflicts
+                                , hasSavingBlueprints
+                                , hasSavingSolutions
+                                ]
                                 |> not
                     in
                     if done then
@@ -412,20 +483,51 @@ load =
                                 , actual = model.actualDrafts
                                 }
 
+                            blueprintCache =
+                                { local =
+                                    model.localBlueprints
+                                        |> Dict.map (always Just)
+                                        |> Cache.fromValueDict
+                                , expected =
+                                    model.expectedBlueprints
+                                        |> Dict.map (always Just)
+                                        |> Cache.fromValueDict
+                                , actual = model.actualBlueprints
+                                }
+
                             session =
                                 model.session
                                     |> Session.withUser user
                                     |> Session.withDraftCache draftCache
+                                    |> Session.withBlueprintCache blueprintCache
 
                             saveDraftsLocallyCmd =
                                 Cmd.batch
-                                    [ model.localDrafts
-                                        |> Dict.values
+                                    [ Dict.values model.localDrafts
                                         |> List.map Draft.saveToLocalStorage
                                         |> Cmd.batch
-                                    , model.expectedDrafts
-                                        |> Dict.values
+                                    , Dict.values model.expectedDrafts
                                         |> List.map Draft.saveRemoteToLocalStorage
+                                        |> Cmd.batch
+                                    , Cache.toList model.actualDrafts
+                                        |> List.filterMap (\( key, data ) -> Maybe.map (Tuple.pair key) (RemoteData.toMaybe data))
+                                        |> List.filter (Tuple.second >> Maybe.Extra.isNothing)
+                                        |> List.map (Tuple.first >> flist [ Draft.removeFromLocalStorage, Draft.removeRemoteFromLocalStorage ] >> Cmd.batch)
+                                        |> Cmd.batch
+                                    ]
+
+                            saveBlueprintsLocallyCmd =
+                                Cmd.batch
+                                    [ Dict.values model.localBlueprints
+                                        |> List.map Blueprint.saveToLocalStorage
+                                        |> Cmd.batch
+                                    , Dict.values model.expectedBlueprints
+                                        |> List.map Blueprint.saveRemoteToLocalStorage
+                                        |> Cmd.batch
+                                    , Cache.toList model.actualBlueprints
+                                        |> List.filterMap (\( key, data ) -> Maybe.map (Tuple.pair key) (RemoteData.toMaybe data))
+                                        |> List.filter (Tuple.second >> Maybe.Extra.isNothing)
+                                        |> List.map (Tuple.first >> flist [ Blueprint.removeFromLocalStorage, Blueprint.removeRemoteFromLocalStorage ] >> Cmd.batch)
                                         |> Cmd.batch
                                     ]
                         in
@@ -434,6 +536,7 @@ load =
                             [ AccessToken.saveToLocalStorage accessToken
                             , UserInfo.saveToLocalStorage userInfo
                             , saveDraftsLocallyCmd
+                            , saveBlueprintsLocallyCmd
                             , Route.replaceUrl model.session.key model.route
                             ]
                         )
@@ -444,6 +547,7 @@ load =
     Extra.Cmd.fold
         [ loadUserData
         , loadDrafts
+        , loadBlueprints
         , publishSolutions
         , finish
         ]
@@ -451,17 +555,7 @@ load =
 
 withSavingDraft : Draft -> Model -> Model
 withSavingDraft draft model =
-    { model | savingDrafts = Dict.insert draft.id (Saving draft) model.savingDrafts }
-
-
-withSavedDraft : Draft -> Maybe SaveError -> Model -> Model
-withSavedDraft draft maybeError model =
-    case maybeError of
-        Just error ->
-            { model | savingDrafts = Dict.insert draft.id (Saved (Err error)) model.savingDrafts }
-
-        Nothing ->
-            { model | savingDrafts = Dict.insert draft.id (Saved (Ok draft)) model.savingDrafts }
+    { model | savingDrafts = Dict.insert draft.id Saving model.savingDrafts }
 
 
 withActualDrafts : Cache DraftId GetError (Maybe Draft) -> Model -> Model
@@ -488,10 +582,10 @@ withExpiredAccessToken model =
     }
 
 
-isSaving : Saving e a -> Bool
+isSaving : Saving e -> Bool
 isSaving saving =
     case saving of
-        Saving _ ->
+        Saving ->
             True
 
         Saved _ ->
@@ -580,7 +674,7 @@ update msg model =
 
                 Err error ->
                     ( withExpiredAccessToken modelWithActualUserInfo
-                    , Ports.Console.errorString (GetError.toString error)
+                    , GetError.consoleError error
                     )
 
         GotDraftLoadResponse draftId result ->
@@ -588,58 +682,59 @@ update msg model =
                 modelWithActualDraft =
                     Cache.withResult draftId result model.actualDrafts
                         |> flip withActualDrafts model
-            in
-            case
-                determineDraftConflict
-                    { local = Dict.get draftId modelWithActualDraft.localDrafts
-                    , expected = Dict.get draftId modelWithActualDraft.expectedDrafts
-                    , actual = RemoteData.fromResult result
-                    }
-            of
-                DoNothing ->
-                    modelWithActualDraft
-                        |> noCmd
 
-                KeepLocal localDraft ->
-                    case modelWithActualDraft.accessTokenState of
+                resolution =
+                    determineConflictResolution
+                        { id = draftId
+                        , maybeLocal = Dict.get draftId modelWithActualDraft.localDrafts
+                        , maybeExpected = Dict.get draftId modelWithActualDraft.expectedDrafts
+                        , remoteActual = RemoteData.fromResult result
+                        , eq = Draft.eq
+                        }
+
+                overwriteLocalDraft d m =
+                    ( { m | localDrafts = Dict.insert d.id d m.localDrafts }, Cmd.none )
+
+                overwriteExpectedDraft d m =
+                    ( { m | expectedDrafts = Dict.insert d.id d m.expectedDrafts }, Cmd.none )
+
+                overwriteActualDraft d m =
+                    case m.accessTokenState of
                         Verified { accessToken } ->
-                            modelWithActualDraft
-                                |> withSavingDraft localDraft
-                                |> withCmd (Draft.saveToServer (GotDraftSaveResponse localDraft) accessToken localDraft)
+                            ( withSavingDraft d m, Draft.saveToServer (GotDraftSaveResponse d) accessToken d )
 
                         _ ->
-                            modelWithActualDraft
-                                |> withCmd (Ports.Console.errorString "aa167786    Access token expired during initialization")
+                            ( m, Console.errorString "aa167786    Access token expired during initialization" )
 
-                KeepActual actualDraft ->
-                    { modelWithActualDraft
-                        | localDrafts = Dict.insert draftId actualDraft modelWithActualDraft.localDrafts
-                        , expectedDrafts = Dict.insert draftId actualDraft modelWithActualDraft.expectedDrafts
-                    }
-                        |> noCmd
+                discardLocalDraft id m =
+                    ( { m | localDrafts = Dict.remove id m.localDrafts }, Cmd.none )
 
-                Error (GetError.InvalidAccessToken message) ->
-                    modelWithActualDraft
-                        |> withExpiredAccessToken
-                        |> withCmd (Ports.Console.errorString message)
+                discardExpectedDraft id m =
+                    ( { m | expectedDrafts = Dict.remove id m.expectedDrafts }, Cmd.none )
 
-                Error error ->
-                    modelWithActualDraft
-                        |> withCmd (GetError.consoleError error)
+                discardActualDraft id m =
+                    ( { m | actualDrafts = Cache.remove id m.actualDrafts }, Cmd.none )
+            in
+            resolveConflict
+                { overwriteLocal = overwriteLocalDraft
+                , overwriteExpected = overwriteExpectedDraft
+                , overwriteActual = overwriteActualDraft
+                , discardLocal = discardLocalDraft
+                , discardExpected = discardExpectedDraft
+                , discardActual = discardActualDraft
+                }
+                modelWithActualDraft
+                resolution
 
-                ResolveManually _ ->
-                    modelWithActualDraft
-                        |> noCmd
-
-        GotDraftSaveResponse draft result ->
+        GotDraftSaveResponse draft maybeError ->
             let
                 modelWithSavedDraft =
-                    withSavedDraft draft result model
+                    { model | savingDrafts = Dict.insert draft.id (Saved maybeError) model.savingDrafts }
             in
-            case result of
+            case maybeError of
                 Nothing ->
                     ( { modelWithSavedDraft
-                        | actualDrafts = Cache.withValue draft.id (Just draft) model.actualDrafts
+                        | actualDrafts = Cache.withValue draft.id (Just draft) modelWithSavedDraft.actualDrafts
                         , localDrafts = Dict.insert draft.id draft modelWithSavedDraft.localDrafts
                         , expectedDrafts = Dict.insert draft.id draft modelWithSavedDraft.expectedDrafts
                       }
@@ -648,9 +743,8 @@ update msg model =
 
                 Just error ->
                     case error of
-                        SaveError.InvalidAccessToken message ->
-                            ( modelWithSavedDraft
-                                |> withExpiredAccessToken
+                        SaveError.InvalidAccessToken _ ->
+                            ( withExpiredAccessToken modelWithSavedDraft
                             , SaveError.consoleError error
                             )
 
@@ -659,22 +753,92 @@ update msg model =
                             , SaveError.consoleError error
                             )
 
+        GotDraftDeleteResponse draftId maybeError ->
+            let
+                modelWithSavedDraft =
+                    { model | savingDrafts = Dict.insert draftId (Saved maybeError) model.savingDrafts }
+            in
+            case maybeError of
+                Nothing ->
+                    ( { modelWithSavedDraft
+                        | actualDrafts = Cache.withValue draftId Nothing modelWithSavedDraft.actualDrafts
+                        , localDrafts = Dict.remove draftId modelWithSavedDraft.localDrafts
+                        , expectedDrafts = Dict.remove draftId modelWithSavedDraft.expectedDrafts
+                      }
+                    , Cmd.none
+                    )
+
+                Just error ->
+                    case error of
+                        SaveError.InvalidAccessToken _ ->
+                            ( withExpiredAccessToken modelWithSavedDraft
+                            , SaveError.consoleError error
+                            )
+
+                        _ ->
+                            ( modelWithSavedDraft
+                            , SaveError.consoleError error
+                            )
+
+        GotBlueprintSaveResponse blueprint maybeError ->
+            let
+                modelWithSaveResponse =
+                    { model | savingBlueprints = Dict.insert blueprint.id (Saved maybeError) model.savingBlueprints }
+            in
+            case maybeError of
+                Just error ->
+                    case error of
+                        SaveError.InvalidAccessToken _ ->
+                            ( withExpiredAccessToken modelWithSaveResponse
+                            , SaveError.consoleError error
+                            )
+
+                        _ ->
+                            ( modelWithSaveResponse
+                            , SaveError.consoleError error
+                            )
+
+                Nothing ->
+                    ( { modelWithSaveResponse
+                        | actualBlueprints = Cache.withValue blueprint.id (Just blueprint) modelWithSaveResponse.actualBlueprints
+                        , localBlueprints = Dict.insert blueprint.id blueprint modelWithSaveResponse.localBlueprints
+                        , expectedBlueprints = Dict.insert blueprint.id blueprint modelWithSaveResponse.expectedBlueprints
+                      }
+                    , Cmd.none
+                    )
+
+        GotBlueprintDeleteResponse blueprintId maybeError ->
+            let
+                modelWithSavedBlueprint =
+                    { model | savingBlueprints = Dict.insert blueprintId (Saved maybeError) model.savingBlueprints }
+            in
+            case maybeError of
+                Nothing ->
+                    ( { modelWithSavedBlueprint
+                        | actualBlueprints = Cache.withValue blueprintId Nothing modelWithSavedBlueprint.actualBlueprints
+                        , localBlueprints = Dict.remove blueprintId modelWithSavedBlueprint.localBlueprints
+                        , expectedBlueprints = Dict.remove blueprintId modelWithSavedBlueprint.expectedBlueprints
+                      }
+                    , Cmd.none
+                    )
+
+                Just error ->
+                    case error of
+                        SaveError.InvalidAccessToken _ ->
+                            ( withExpiredAccessToken modelWithSavedBlueprint
+                            , SaveError.consoleError error
+                            )
+
+                        _ ->
+                            ( modelWithSavedBlueprint
+                            , SaveError.consoleError error
+                            )
+
         GotSolutionSaveResponse solution maybeError ->
             let
                 modelWithSavedResponse =
                     { model
-                        | savingSolutions =
-                            Dict.insert solution.id
-                                (Saved
-                                    (case maybeError of
-                                        Just error ->
-                                            Err error
-
-                                        Nothing ->
-                                            Ok solution
-                                    )
-                                )
-                                model.savingSolutions
+                        | savingSolutions = Dict.insert solution.id (Saved maybeError) model.savingSolutions
                     }
             in
             case maybeError of
@@ -759,45 +923,77 @@ update msg model =
             , Cmd.none
             )
 
-        ClickedDraftDeleteLocal draftId ->
+        ClickedDraftOverwriteActual draft ->
+            case model.accessTokenState of
+                Verified { accessToken } ->
+                    model
+                        |> withSavingDraft draft
+                        |> withCmd (Draft.saveToServer (GotDraftSaveResponse draft) accessToken draft)
+
+                _ ->
+                    ( model, Console.errorString "3l4aq6eg50kkfxj2    Access token expired during initialization" )
+
+        ClickedDraftOverwriteLocal draft ->
+            ( { model
+                | localDrafts = Dict.insert draft.id draft model.localDrafts
+                , expectedDrafts = Dict.insert draft.id draft model.expectedDrafts
+              }
+            , Cmd.none
+            )
+
+        ClickedDraftDiscardLocal draftId ->
             ( { model
                 | localDrafts = Dict.remove draftId model.localDrafts
                 , expectedDrafts = Dict.remove draftId model.expectedDrafts
               }
-            , Cmd.batch
-                [ Draft.removeFromLocalStorage draftId
-                , Draft.removeRemoteFromLocalStorage draftId
-                ]
+            , Cmd.none
             )
 
-        ClickedDraftKeepLocal draftId ->
-            case ( model.accessTokenState, Dict.get draftId model.localDrafts ) of
-                ( Verified { accessToken }, Just localDraft ) ->
-                    model
-                        |> withSavingDraft localDraft
-                        |> withCmd (Draft.saveToServer (GotDraftSaveResponse localDraft) accessToken localDraft)
+        ClickedDraftDiscardActual draftId ->
+            case model.accessTokenState of
+                Verified { accessToken } ->
+                    ( { model | savingDrafts = Dict.insert draftId Saving model.savingDrafts }
+                    , Draft.deleteFromServer GotDraftDeleteResponse accessToken draftId
+                    )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( model, Console.errorString "zxhy329qlqfv7czn    Can't discard draft, access token expired during initialization" )
 
-        ClickedDraftKeepServer draftId ->
-            case Cache.get draftId model.actualDrafts of
-                RemoteData.Success (Just actualDraft) ->
-                    { model
-                        | localDrafts = Dict.insert draftId actualDraft model.localDrafts
-                        , expectedDrafts = Dict.insert draftId actualDraft model.expectedDrafts
-                    }
-                        |> noCmd
-
-                RemoteData.Success Nothing ->
-                    { model
-                        | localDrafts = Dict.remove draftId model.localDrafts
-                        , expectedDrafts = Dict.remove draftId model.expectedDrafts
-                    }
-                        |> noCmd
+        ClickedBlueprintOverwriteActual blueprint ->
+            case model.accessTokenState of
+                Verified { accessToken } ->
+                    ( { model | savingBlueprints = Dict.insert blueprint.id Saving model.savingBlueprints }
+                    , Blueprint.saveToServer GotBlueprintSaveResponse accessToken blueprint
+                    )
 
                 _ ->
-                    ( model, Cmd.none )
+                    ( model, Console.errorString "5mn2a7llho75d04s    Can't discard blueprint, access token expired during initialization" )
+
+        ClickedBlueprintOverwriteLocal blueprint ->
+            ( { model
+                | localBlueprints = Dict.insert blueprint.id blueprint model.localBlueprints
+                , expectedBlueprints = Dict.insert blueprint.id blueprint model.expectedBlueprints
+              }
+            , Cmd.none
+            )
+
+        ClickedBlueprintDiscardLocal blueprintId ->
+            ( { model
+                | localBlueprints = Dict.remove blueprintId model.localBlueprints
+                , expectedBlueprints = Dict.remove blueprintId model.expectedBlueprints
+              }
+            , Cmd.none
+            )
+
+        ClickedBlueprintDiscardActual blueprintId ->
+            case model.accessTokenState of
+                Verified { accessToken } ->
+                    ( { model | savingBlueprints = Dict.insert blueprintId Saving model.savingBlueprints }
+                    , Blueprint.deleteFromServer GotBlueprintDeleteResponse accessToken blueprintId
+                    )
+
+                _ ->
+                    ( model, Console.errorString "5mn2a7llho75d04s    Can't discard blueprint, access token expired during initialization" )
 
         ClickedImportLocalData ->
             case ( model.accessTokenState, RemoteData.toMaybe model.actualUserInfo ) of
@@ -813,7 +1009,6 @@ update msg model =
 
         ClickedDeleteLocalData ->
             case ( model.accessTokenState, RemoteData.toMaybe model.actualUserInfo ) of
-                -- TODO Remove blueprints
                 ( Verifying accessToken, Just actualUserInfo ) ->
                     ( { model
                         | accessTokenState =
@@ -822,20 +1017,31 @@ update msg model =
                                 , userInfo = actualUserInfo
                                 }
                         , localDrafts = Dict.empty
+                        , expectedDrafts = Dict.empty
+                        , localBlueprints = Dict.empty
+                        , expectedBlueprints = Dict.empty
                       }
                     , Cmd.batch
-                        [ model.localDrafts
-                            |> Dict.keys
-                            |> List.map Draft.removeFromLocalStorage
-                            |> Cmd.batch
-                        , model.expectedDrafts
-                            |> Dict.keys
-                            |> List.map Draft.removeRemoteFromLocalStorage
-                            |> Cmd.batch
-                        , model.localDraftBooks
-                            |> Dict.keys
-                            |> List.map DraftBook.removeFromLocalStorage
-                            |> Cmd.batch
+                        [ Cmd.batch
+                            [ Dict.keys model.localDrafts
+                                |> List.map Draft.removeFromLocalStorage
+                                |> Cmd.batch
+                            , Dict.keys model.expectedDrafts
+                                |> List.map Draft.removeRemoteFromLocalStorage
+                                |> Cmd.batch
+                            , Dict.keys model.localDraftBooks
+                                |> List.map DraftBook.removeFromLocalStorage
+                                |> Cmd.batch
+                            ]
+                        , Cmd.batch
+                            [ Dict.keys model.localBlueprints
+                                |> List.map Blueprint.removeFromLocalStorage
+                                |> Cmd.batch
+                            , Dict.keys model.expectedBlueprints
+                                |> List.map Blueprint.removeRemoteFromLocalStorage
+                                |> Cmd.batch
+                            , BlueprintBook.removeFromLocalStorage
+                            ]
                         ]
                     )
 
@@ -846,6 +1052,56 @@ update msg model =
             ( model
             , Browser.Navigation.load (Auth0.reLogin (Route.toUrl model.route))
             )
+
+        GotLoadBlueprintResponse blueprintId result ->
+            let
+                modelWithActualBlueprint =
+                    { model | actualBlueprints = Cache.withResult blueprintId result model.actualBlueprints }
+
+                resolution =
+                    determineConflictResolution
+                        { id = blueprintId
+                        , maybeLocal = Dict.get blueprintId modelWithActualBlueprint.localBlueprints
+                        , maybeExpected = Dict.get blueprintId modelWithActualBlueprint.expectedBlueprints
+                        , remoteActual = RemoteData.fromResult result
+                        , eq = (==)
+                        }
+
+                overwriteLocalBlueprint d m =
+                    ( { m | localBlueprints = Dict.insert d.id d m.localBlueprints }, Cmd.none )
+
+                overwriteExpectedBlueprint d m =
+                    ( { m | expectedBlueprints = Dict.insert d.id d m.expectedBlueprints }, Cmd.none )
+
+                overwriteActualBlueprint d m =
+                    case m.accessTokenState of
+                        Verified { accessToken } ->
+                            ( { m | savingBlueprints = Dict.insert d.id Saving m.savingBlueprints }
+                            , Blueprint.saveToServer GotBlueprintSaveResponse accessToken d
+                            )
+
+                        _ ->
+                            ( m, Console.errorString "0liotkiw    Access token expired during initialization" )
+
+                discardLocalBlueprint id m =
+                    ( { m | localBlueprints = Dict.remove id m.localBlueprints }, Cmd.none )
+
+                discardExpectedBlueprint id m =
+                    ( { m | expectedBlueprints = Dict.remove id m.expectedBlueprints }, Cmd.none )
+
+                discardActualBlueprint id m =
+                    ( { m | actualBlueprints = Cache.remove id m.actualBlueprints }, Cmd.none )
+            in
+            resolveConflict
+                { overwriteLocal = overwriteLocalBlueprint
+                , overwriteExpected = overwriteExpectedBlueprint
+                , overwriteActual = overwriteActualBlueprint
+                , discardLocal = discardLocalBlueprint
+                , discardExpected = discardExpectedBlueprint
+                , discardActual = discardActualBlueprint
+                }
+                modelWithActualBlueprint
+                resolution
 
 
 
@@ -988,96 +1244,163 @@ viewHttpError model error =
             View.ErrorScreen.view (GetError.toString error)
 
 
-determineDraftConflict :
-    { local : Maybe Draft
-    , expected : Maybe Draft
-    , actual : RemoteData.RemoteData GetError (Maybe Draft)
+determineConflictResolution :
+    { id : id
+    , maybeLocal : Maybe a
+    , maybeExpected : Maybe a
+    , remoteActual : RemoteData.RemoteData GetError (Maybe a)
+    , eq : a -> a -> Bool
     }
-    -> ConflictResolution Draft
-determineDraftConflict { local, expected, actual } =
-    case actual of
-        RemoteData.NotAsked ->
-            DoNothing
+    -> ConflictResolution id a
+determineConflictResolution { id, maybeLocal, maybeExpected, remoteActual, eq } =
+    case RemoteData.toMaybe remoteActual of
+        Just maybeActual ->
+            case ( maybeLocal, maybeExpected, maybeActual ) of
+                ( Just local, Just expected, Just actual ) ->
+                    if eq local expected then
+                        if eq local actual then
+                            -- 1 1 1
+                            DoNothing
 
-        RemoteData.Loading ->
-            DoNothing
+                        else
+                            -- 1 1 2
+                            OverwriteLocal actual
 
-        RemoteData.Failure _ ->
-            DoNothing
+                    else if eq local actual then
+                        -- 1 2 1
+                        OverwriteLocal actual
 
-        RemoteData.Success Nothing ->
-            case local of
-                Just localDraft ->
-                    KeepLocal localDraft
+                    else if eq expected actual then
+                        -- 1 2 2
+                        OverwriteActual local
 
-                Nothing ->
+                    else
+                        -- 1 2 3
+                        ResolveManually
+                            { localOrExpected = Both local expected
+                            , maybeActual = maybeActual
+                            }
+
+                ( Just local, Just expected, Nothing ) ->
+                    if eq local expected then
+                        -- 1 1 0
+                        DiscardLocal id
+
+                    else
+                        -- 1 2 0
+                        ResolveManually
+                            { localOrExpected = Both local expected
+                            , maybeActual = maybeActual
+                            }
+
+                ( Just local, Nothing, Just actual ) ->
+                    if eq local actual then
+                        -- 1 0 1
+                        OverwriteLocal actual
+
+                    else
+                        -- 1 0 2
+                        ResolveManually
+                            { localOrExpected = First local
+                            , maybeActual = maybeActual
+                            }
+
+                ( Just local, Nothing, Nothing ) ->
+                    -- 1 0 0
+                    OverwriteActual local
+
+                ( Nothing, Just expected, Just actual ) ->
+                    if eq expected actual then
+                        -- 0 1 1
+                        DiscardActual id
+
+                    else
+                        -- 0 1 2
+                        ResolveManually
+                            { localOrExpected = Second expected
+                            , maybeActual = maybeActual
+                            }
+
+                ( Nothing, Just expected, Nothing ) ->
+                    -- 0 1 0
+                    DiscardLocal id
+
+                ( Nothing, Nothing, Just actual ) ->
+                    -- 0 0 1
+                    OverwriteLocal actual
+
+                ( Nothing, Nothing, Nothing ) ->
+                    -- 0 0 0
                     DoNothing
 
-        RemoteData.Success (Just actualDraft) ->
-            case local of
-                Just localDraft ->
-                    case expected of
-                        Just expectedDraft ->
-                            if Draft.eq localDraft expectedDraft then
-                                if Draft.eq localDraft actualDraft then
-                                    DoNothing
+        Nothing ->
+            DoNothing
 
-                                else
-                                    KeepActual actualDraft
 
-                            else if Draft.eq localDraft actualDraft then
-                                KeepActual actualDraft
+resolveConflict :
+    { overwriteLocal : a -> Model -> ( Model, Cmd msg )
+    , overwriteExpected : a -> Model -> ( Model, Cmd msg )
+    , overwriteActual : a -> Model -> ( Model, Cmd msg )
+    , discardLocal : id -> Model -> ( Model, Cmd msg )
+    , discardExpected : id -> Model -> ( Model, Cmd msg )
+    , discardActual : id -> Model -> ( Model, Cmd msg )
+    }
+    -> Model
+    -> ConflictResolution id a
+    -> ( Model, Cmd msg )
+resolveConflict { overwriteLocal, overwriteExpected, overwriteActual, discardLocal, discardExpected, discardActual } model conflictResolution =
+    case conflictResolution of
+        DoNothing ->
+            ( model, Cmd.none )
 
-                            else if Draft.eq expectedDraft actualDraft then
-                                KeepLocal localDraft
+        OverwriteLocal value ->
+            Extra.Cmd.fold
+                [ overwriteLocal value
+                , overwriteExpected value
+                ]
+                model
 
-                            else
-                                ResolveManually
-                                    { local = localDraft
-                                    , expected = Just expectedDraft
-                                    , actual = Just actualDraft
-                                    }
+        OverwriteActual value ->
+            overwriteActual value model
 
-                        _ ->
-                            if Draft.eq localDraft actualDraft then
-                                KeepActual actualDraft
+        DiscardLocal id ->
+            Extra.Cmd.fold
+                [ discardLocal id
+                , discardExpected id
+                ]
+                model
 
-                            else
-                                ResolveManually
-                                    { local = localDraft
-                                    , expected = Nothing
-                                    , actual = Just actualDraft
-                                    }
+        DiscardActual id ->
+            discardActual id model
+
+        ResolveManually _ ->
+            ( model, Cmd.none )
+
+        Error error ->
+            case error of
+                GetError.InvalidAccessToken _ ->
+                    ( withExpiredAccessToken model, GetError.consoleError error )
 
                 _ ->
-                    KeepActual actualDraft
+                    ( model, GetError.consoleError error )
 
 
 viewProgress : Model -> Element Msg
 viewProgress model =
     let
-        drafts =
-            model.localDrafts
-                |> Dict.toList
-                |> List.sortBy Tuple.first
-                |> List.map
-                    (\( draftId, localResult ) ->
-                        { local = localResult
-                        , expected = Dict.get draftId model.expectedDrafts
-                        , actual = Cache.get draftId model.actualDrafts
-                        }
-                    )
-
         draftsNeedingManualResolution =
             model.localDrafts
                 |> Dict.keys
+                |> List.sort
                 |> List.filterMap
                     (\key ->
                         case
-                            determineDraftConflict
-                                { local = Dict.get key model.localDrafts
-                                , expected = Dict.get key model.expectedDrafts
-                                , actual = Cache.get key model.actualDrafts
+                            determineConflictResolution
+                                { id = key
+                                , maybeLocal = Dict.get key model.localDrafts
+                                , maybeExpected = Dict.get key model.expectedDrafts
+                                , remoteActual = Cache.get key model.actualDrafts
+                                , eq = Draft.eq
                                 }
                         of
                             ResolveManually record ->
@@ -1123,6 +1446,55 @@ viewProgress model =
                 |> List.filter (not << isSaving)
                 |> List.length
 
+        blueprintsNeedingManualResolution =
+            OneOrBoth.fromDicts model.localBlueprints model.expectedBlueprints
+                |> List.sortBy (OneOrBoth.map .id >> OneOrBoth.any)
+                |> List.filterMap
+                    (\oneOrBoth ->
+                        let
+                            id =
+                                OneOrBoth.any (OneOrBoth.map .id oneOrBoth)
+                        in
+                        case
+                            determineConflictResolution
+                                { id = id
+                                , maybeLocal = OneOrBoth.first oneOrBoth
+                                , maybeExpected = OneOrBoth.second oneOrBoth
+                                , remoteActual = Cache.get id model.actualBlueprints
+                                , eq = (==)
+                                }
+                        of
+                            ResolveManually record ->
+                                Just record
+
+                            _ ->
+                                Nothing
+                    )
+
+        numberOfBlueprintsSaving =
+            model.savingBlueprints
+                |> Dict.values
+                |> List.filter isSaving
+                |> List.length
+
+        numberOfBlueprintsSaved =
+            model.savingBlueprints
+                |> Dict.values
+                |> List.filter (not << isSaving)
+                |> List.length
+
+        numberOfBlueprintsLoading =
+            model.actualBlueprints
+                |> Cache.values
+                |> List.filter RemoteData.isLoading
+                |> List.length
+
+        numberOfBlueprintsLoaded =
+            model.actualBlueprints
+                |> Cache.values
+                |> List.filter (not << RemoteData.isLoading)
+                |> List.length
+
         progressRow description current total =
             row [ width fill ]
                 [ el [ alignLeft ] (text description)
@@ -1140,49 +1512,108 @@ viewProgress model =
                 [ centerX, spacing 10 ]
                 [ progressRow "Loading drafts: " numberOfDraftsLoaded (numberOfDraftsLoading + numberOfDraftsLoaded)
                 , progressRow "Saving drafts: " numberOfDraftsSaved (numberOfDraftsSaving + numberOfDraftsSaved)
+                , progressRow "Loading blueprints: " numberOfBlueprintsLoaded (numberOfBlueprintsLoading + numberOfBlueprintsLoaded)
+                , progressRow "Saving blueprints: " numberOfBlueprintsSaved (numberOfBlueprintsSaving + numberOfBlueprintsSaved)
                 , progressRow "Saving solutions: " numberOfSolutionsSaved (numberOfSolutionsSaving + numberOfSolutionsSaved)
                 ]
             ]
     in
     case List.head draftsNeedingManualResolution of
-        Just record ->
-            viewResolveDraftConflict record
-
-        Nothing ->
-            viewLoading
-                { title = "Resolving unsaved data"
-                , elements = elements
+        Just { localOrExpected, maybeActual } ->
+            viewResolveConflict
+                { id = OneOrBoth.any (OneOrBoth.map .id localOrExpected)
+                , noun = "draft"
+                , maybeLocal = OneOrBoth.first localOrExpected
+                , maybeExpected = OneOrBoth.second localOrExpected
+                , maybeActual = maybeActual
+                , onOverwriteActual = ClickedDraftOverwriteActual
+                , onOverwriteLocal = ClickedDraftOverwriteLocal
+                , onDiscardLocal = ClickedDraftDiscardLocal
+                , onDiscardActual = ClickedDraftDiscardActual
                 }
 
-
-viewResolveDraftConflict : { local : Draft, expected : Maybe Draft, actual : Maybe Draft } -> Element Msg
-viewResolveDraftConflict { local, expected, actual } =
-    let
-        elements =
-            case actual of
-                Just justActual ->
-                    [ paragraph [ Font.center ]
-                        [ text "Your local changes on draft "
-                        , text local.id
-                        , text " have diverged from the server version. You need to choose which version you want to keep."
-                        ]
-                    , ViewComponents.textButton [] (Just (ClickedDraftKeepLocal local.id)) "Keep my local changes"
-                    , ViewComponents.textButton [] (Just (ClickedDraftKeepServer justActual.id)) "Keep the server changes"
-                    ]
+        Nothing ->
+            case List.head blueprintsNeedingManualResolution of
+                Just { localOrExpected, maybeActual } ->
+                    viewResolveConflict
+                        { id = OneOrBoth.any (OneOrBoth.map .id localOrExpected)
+                        , noun = "blueprint"
+                        , maybeLocal = OneOrBoth.first localOrExpected
+                        , maybeExpected = OneOrBoth.second localOrExpected
+                        , maybeActual = maybeActual
+                        , onOverwriteActual = ClickedBlueprintOverwriteActual
+                        , onOverwriteLocal = ClickedBlueprintOverwriteLocal
+                        , onDiscardLocal = ClickedBlueprintDiscardLocal
+                        , onDiscardActual = ClickedBlueprintDiscardActual
+                        }
 
                 Nothing ->
+                    viewLoading
+                        { title = "Resolving unsaved data"
+                        , elements = elements
+                        }
+
+
+viewResolveConflict :
+    { id : String
+    , noun : String
+    , maybeLocal : Maybe a
+    , maybeExpected : Maybe a
+    , maybeActual : Maybe a
+    , onOverwriteActual : a -> Msg
+    , onOverwriteLocal : a -> Msg
+    , onDiscardLocal : String -> Msg
+    , onDiscardActual : String -> Msg
+    }
+    -> Element Msg
+viewResolveConflict { id, noun, maybeLocal, maybeExpected, maybeActual, onOverwriteActual, onOverwriteLocal, onDiscardLocal, onDiscardActual } =
+    let
+        elements =
+            case ( maybeLocal, maybeExpected, maybeActual ) of
+                ( Just local, _, Just actual ) ->
                     [ paragraph [ Font.center ]
-                        [ text "Draft "
-                        , text local.id
+                        [ text "Your local changes on "
+                        , text noun
+                        , text " "
+                        , text id
+                        , text " have diverged from the server version. You need to choose which version you want to keep."
+                        ]
+                    , ViewComponents.textButton [] (Just (onOverwriteActual local)) "Keep my local changes"
+                    , ViewComponents.textButton [] (Just (onOverwriteLocal actual)) "Keep the server changes"
+                    ]
+
+                ( Just local, _, Nothing ) ->
+                    [ paragraph [ Font.center ]
+                        [ text (String.Extra.toSentenceCase noun)
+                        , text " "
+                        , text id
                         , text " have been deleted from the server but there is still a copy stored locally. "
                         , text "You need to choose whether you want to keep it or not."
                         ]
-                    , ViewComponents.textButton [] (Just (ClickedDraftKeepLocal local.id)) "Keep it"
-                    , ViewComponents.textButton [] (Just (ClickedDraftDeleteLocal local.id)) "Discard it"
+                    , ViewComponents.textButton [] (Just (onOverwriteActual local)) "Keep it"
+                    , ViewComponents.textButton [] (Just (onDiscardLocal id)) "Discard it"
+                    ]
+
+                ( Nothing, _, Just actual ) ->
+                    [ paragraph [ Font.center ]
+                        [ text (String.Extra.toSentenceCase noun)
+                        , text " "
+                        , text id
+                        , text " have been deleted has been deleted locally, but there is a new version on the server. "
+                        , text "You need to choose whether you want to keep the new server version or not."
+                        ]
+                    , ViewComponents.textButton [] (Just (onOverwriteLocal actual)) "Keep it"
+                    , ViewComponents.textButton [] (Just (onDiscardActual id)) "Discard it"
+                    ]
+
+                ( Nothing, _, Nothing ) ->
+                    [ paragraph [ Font.center ]
+                        [ text "This is weird, it doesn't seem to be a conflict at all. Please refresh the page and report this issue."
+                        ]
                     ]
     in
     Info.view
-        { title = "Conflict in draft " ++ local.id
+        { title = String.concat [ "Conflict in ", noun, " ", id ]
         , icon =
             { src = "assets/exception-orange.svg"
             , description = "Alert icon"

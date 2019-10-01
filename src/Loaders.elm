@@ -1,8 +1,11 @@
-module Loaders exposing (loadCampaignByCampaignId, loadCampaignsByCampaignIds, loadDraftsByLevelId, loadHighScoreByLevelId, loadLevelsByCampaignId, loadSolutionsByCampaignId, loadSolutionsByCampaignIds)
+module Loaders exposing (loadBlueprintByBlueprintId, loadBlueprints, loadCampaignByCampaignId, loadCampaignsByCampaignIds, loadDraftsByLevelId, loadHighScoreByLevelId, loadLevelsByCampaignId, loadSolutionsByCampaignId, loadSolutionsByCampaignIds)
 
 import Basics.Extra exposing (flip)
+import Data.Blueprint as Blueprint
+import Data.BlueprintBook as BlueprintBook
+import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
-import Data.CampaignId exposing (CampaignId)
+import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.Draft as Draft
 import Data.DraftBook as DraftBook
 import Data.DraftId exposing (DraftId)

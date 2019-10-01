@@ -1,4 +1,4 @@
-module Data.LevelId exposing (LevelId, decoder, encode, generator, urlParser)
+module Data.BlueprintId exposing (BlueprintId, decoder, encode, generator, urlParser)
 
 import Data.Id as Id exposing (Id)
 import Json.Decode as Decode
@@ -7,16 +7,16 @@ import Random
 import Url.Parser exposing (Parser)
 
 
-type alias LevelId =
+type alias BlueprintId =
     Id
 
 
-urlParser : Parser (LevelId -> a) a
+urlParser : Parser (BlueprintId -> a) a
 urlParser =
     Id.urlParser
 
 
-toString : LevelId -> String
+toString : BlueprintId -> String
 toString =
     Id.toString
 
@@ -25,7 +25,7 @@ toString =
 -- RANDOM
 
 
-generator : Random.Generator LevelId
+generator : Random.Generator BlueprintId
 generator =
     Id.generator
 
@@ -34,11 +34,11 @@ generator =
 -- JSON
 
 
-encode : LevelId -> Encode.Value
+encode : BlueprintId -> Encode.Value
 encode =
     Id.encode
 
 
-decoder : Decode.Decoder LevelId
+decoder : Decode.Decoder BlueprintId
 decoder =
     Id.decoder

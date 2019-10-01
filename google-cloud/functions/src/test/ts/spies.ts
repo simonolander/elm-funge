@@ -1,4 +1,5 @@
 import {Draft} from "../../main/ts/data/Draft";
+import {Blueprint} from "../../main/ts/data/Blueprint";
 import {Level} from "../../main/ts/data/Level";
 import * as Result from "../../main/ts/data/Result";
 import {Solution} from "../../main/ts/data/Solution";
@@ -62,4 +63,14 @@ export function getDrafts(value: Draft[] | ((params: {levelId?: string, authorId
 export function getDraftById(value?: Draft) {
     return jest.spyOn(firestore, "getDraftById")
         .mockResolvedValue(value);
+}
+
+export function getBlueprintById(value?: Blueprint) {
+    return jest.spyOn(firestore, "getBlueprintById")
+        .mockResolvedValue(value);
+}
+
+export function deleteBlueprint() {
+    return jest.spyOn(firestore, "deleteBlueprint")
+        .mockResolvedValue(undefined);
 }

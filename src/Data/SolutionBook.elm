@@ -19,6 +19,7 @@ import Data.SolutionId as SolutionId exposing (SolutionId)
 import Extra.Decode
 import Extra.Encode
 import Json.Decode as Decode
+import Json.Decode.Extra
 import Json.Encode as Encode
 import Ports.LocalStorage
 import Set exposing (Set)
@@ -73,7 +74,7 @@ decoder =
     Decode.field "levelId" LevelId.decoder
         |> Decode.andThen
             (\levelId ->
-                Decode.field "solutionIds" (Extra.Decode.set SolutionId.decoder)
+                Decode.field "solutionIds" (Json.Decode.Extra.set SolutionId.decoder)
                     |> Decode.andThen
                         (\solutionIds ->
                             Decode.succeed
@@ -118,8 +119,7 @@ localStorageResponse ( key, value ) =
         "levels" :: levelId :: "solutionBook" :: [] ->
             let
                 localStorageDecoder =
-                    SolutionId.decoder
-                        |> Extra.Decode.set
+                    Json.Decode.Extra.set SolutionId.decoder
                         |> Decode.map (flip withSolutionIds (empty levelId))
                         |> Decode.nullable
                         |> Decode.map (Maybe.withDefault (empty levelId))

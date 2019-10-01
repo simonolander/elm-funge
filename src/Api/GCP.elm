@@ -9,6 +9,8 @@ module Api.GCP exposing
     , withBody
     , withPath
     , withQueryParameters
+    , withStringListQueryParameter
+    , withStringQueryParameter
     , withTimeout
     , withTracker
     )
@@ -66,6 +68,16 @@ withPath path builder =
 withQueryParameters : List Url.Builder.QueryParameter -> RequestBuilder -> RequestBuilder
 withQueryParameters queryParameters builder =
     { builder | queryParameters = queryParameters }
+
+
+withStringQueryParameter : String -> String -> RequestBuilder -> RequestBuilder
+withStringQueryParameter key value builder =
+    { builder | queryParameters = Url.Builder.string key value :: builder.queryParameters }
+
+
+withStringListQueryParameter : String -> List String -> RequestBuilder -> RequestBuilder
+withStringListQueryParameter key value builder =
+    { builder | queryParameters = Url.Builder.string key (String.join "," value) :: builder.queryParameters }
 
 
 withAccessToken : AccessToken -> RequestBuilder -> RequestBuilder

@@ -9,8 +9,8 @@ import View.Layout
 import View.Scewn
 
 
-view : List (Element msg) -> Element msg -> Session -> Element msg
-view sidebarContent mainContent session =
+view : { sidebar : List (Element msg), main : Element msg, session : Session, modal : Maybe (Element msg) } -> Element msg
+view parameters =
     let
         sidebar =
             column
@@ -22,7 +22,7 @@ view sidebarContent mainContent session =
                 , Background.color (rgb 0.05 0.05 0.05)
                 , scrollbarY
                 ]
-                sidebarContent
+                parameters.sidebar
 
         main =
             el
@@ -31,10 +31,10 @@ view sidebarContent mainContent session =
                 , scrollbarY
                 , padding 20
                 ]
-                mainContent
+                parameters.main
 
         header =
-            Header.view session
+            Header.view parameters.session
     in
     View.Scewn.view
         { north = Just header
@@ -46,6 +46,6 @@ view sidebarContent mainContent session =
         }
 
 
-layout : List (Element msg) -> Element msg -> Session -> Html.Html msg
-layout a b c =
-    view a b c |> View.Layout.layout
+layout : { sidebar : List (Element msg), main : Element msg, session : Session, modal : Maybe (Element msg) } -> Html.Html msg
+layout parameters =
+    View.Layout.layout (view parameters)
