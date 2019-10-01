@@ -18,20 +18,17 @@ import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
 import Data.GetError as GetError exposing (GetError)
-import Data.HighScore as HighScore exposing (HighScore)
 import Data.History as History
-import Data.Level as Level exposing (Level)
+import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache
 import Data.Session as Session exposing (Session)
-import Data.Solution as Solution exposing (Solution)
-import Data.SolutionBook as SolutionBook
+import Data.SolutionBook
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Extra.Cmd
-import Extra.RemoteData
 import Html
 import Html.Attributes
 import Json.Decode as Decode
@@ -429,6 +426,16 @@ viewSidebar level model =
                 []
                 level.description
 
+        solutionsAreLoading =
+            Cache.get level.id model.session.solutionBooks
+                |> RemoteData.isLoading
+
+        levelSolved =
+            Cache.get level.id model.session.solutionBooks
+                |> RemoteData.toMaybe
+                |> Maybe.map (.solutionIds >> Set.isEmpty >> not)
+                |> Maybe.withDefault False
+
         solvedStatusView =
             let
                 loadingText =
@@ -462,7 +469,16 @@ viewSidebar level model =
                 ]
 
         highScoreView =
-            if Maybe.Extra.isJust (Session.getAccessToken model.session) then
+            if Maybe.Extra.isNothing (Session.getAccessToken model.session) then
+                View.Box.simpleNonInteractive "Sign in to enable high scores"
+
+            else if solutionsAreLoading then
+                View.Box.simpleNonInteractive "Loading solutions"
+
+            else if not levelSolved then
+                View.Box.simpleNonInteractive "High scores hidden"
+
+            else
                 let
                     highScore =
                         Cache.get level.id model.session.highScores
@@ -475,9 +491,6 @@ viewSidebar level model =
                             |> Maybe.Extra.values
                 in
                 View.HighScore.view solutions highScore
-
-            else
-                View.Box.simpleNonInteractive "Sign in to enable high scores"
 
         draftsView =
             viewDrafts level model.session
