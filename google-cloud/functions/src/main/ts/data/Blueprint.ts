@@ -6,7 +6,7 @@ export interface Blueprint {
     readonly id: string;
     readonly name: string;
     readonly description: string[];
-    readonly io: Suite.Suite;
+    readonly suites: Suite.Suite[];
     readonly initialBoard: Board.Board;
     readonly instructionTools: InstructionTool.InstructionTool[];
     readonly authorId: string;

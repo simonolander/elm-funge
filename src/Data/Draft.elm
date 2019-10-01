@@ -272,7 +272,7 @@ loadFromServer : (Result GetError (Maybe Draft) -> msg) -> AccessToken -> DraftI
 loadFromServer toMsg accessToken draftId =
     GCP.get
         |> GCP.withPath [ "drafts" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "draftId" draftId ]
+        |> GCP.withStringQueryParameter "draftId" draftId
         |> GCP.withAccessToken accessToken
         |> GCP.request (HttpError.expectMaybe decoder toMsg)
 
@@ -281,7 +281,7 @@ loadFromServerByLevelId : (Result GetError (List Draft) -> msg) -> AccessToken -
 loadFromServerByLevelId toMsg accessToken levelId =
     GCP.get
         |> GCP.withPath [ "drafts" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
+        |> GCP.withStringQueryParameter "levelId" levelId
         |> GCP.withAccessToken accessToken
         |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
 
@@ -295,10 +295,10 @@ saveToServer toMsg accessToken draft =
         |> GCP.request (SaveError.expect toMsg)
 
 
-deleteFromServer : (Maybe SaveError -> msg) -> AccessToken -> DraftId -> Cmd msg
+deleteFromServer : (DraftId -> Maybe SaveError -> msg) -> AccessToken -> DraftId -> Cmd msg
 deleteFromServer toMsg accessToken draftId =
     GCP.delete
         |> GCP.withPath [ "drafts" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "draftId" draftId ]
+        |> GCP.withStringQueryParameter "draftId" draftId
         |> GCP.withAccessToken accessToken
-        |> GCP.request (SaveError.expect toMsg)
+        |> GCP.request (SaveError.expect (toMsg draftId))

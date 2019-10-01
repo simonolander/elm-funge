@@ -249,9 +249,14 @@ update msg model =
                 Home.update message mdl
                     |> updateWith Home HomeMsg
 
-            ( BlueprintsMsg message, Blueprints mdl ) ->
+            ( BlueprintsMsg (Blueprints.InternalMsg message), Blueprints mdl ) ->
                 Blueprints.update message mdl
                     |> updateWith Blueprints BlueprintsMsg
+
+            ( BlueprintsMsg (Blueprints.SessionMsg message), _ ) ->
+                getSession model
+                    |> SessionUpdate.update message
+                    |> updateWith (flip withSession model) (BlueprintsMsg << Blueprints.SessionMsg)
 
             ( BlueprintMsg message, Blueprint mdl ) ->
                 Blueprint.update message mdl
@@ -589,7 +594,7 @@ getSession model =
             Draft.getSession mdl
 
         Blueprints mdl ->
-            Blueprints.getSession mdl
+            mdl.session
 
         Blueprint mdl ->
             Blueprint.getSession mdl

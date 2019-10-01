@@ -34,7 +34,7 @@ interface InvalidAccessToken {
     messages: string[];
 }
 
-interface Forbidden {
+export interface Forbidden {
     tag: "Forbidden";
     messages: string[];
 }

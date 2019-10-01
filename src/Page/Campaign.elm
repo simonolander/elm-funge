@@ -339,7 +339,12 @@ viewCampaign campaign model =
         mainContent =
             viewLevels campaign model
     in
-    View.SingleSidebar.view sidebar mainContent model.session
+    View.SingleSidebar.view
+        { sidebar = sidebar
+        , main = mainContent
+        , session = model.session
+        , modal = Nothing
+        }
 
 
 viewLevels : Campaign -> Model -> Element InternalMsg

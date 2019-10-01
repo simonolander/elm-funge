@@ -2,6 +2,7 @@ module Route exposing (Route(..), back, fromUrl, link, pushUrl, replaceUrl, toSt
 
 import Basics.Extra exposing (flip)
 import Browser.Navigation as Navigation
+import Data.BlueprintId as BlueprintId
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.DraftId as DraftId
 import Data.LevelId as LevelId
@@ -111,7 +112,7 @@ parser =
         , Parser.map EditDraft (s "drafts" </> DraftId.urlParser)
         , Parser.map ExecuteDraft (s "drafts" </> DraftId.urlParser </> s "execute")
         , Parser.map (Blueprints Nothing) (s "blueprints")
-        , Parser.map (Blueprints << Just) (s "blueprints" </> LevelId.urlParser)
+        , Parser.map (Blueprints << Just) (s "blueprints" </> BlueprintId.urlParser)
         , Parser.map Blueprint (s "blueprints" </> LevelId.urlParser </> s "edit")
         , Parser.map Credits (s "credits")
         ]

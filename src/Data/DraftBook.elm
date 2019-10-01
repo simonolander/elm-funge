@@ -6,6 +6,7 @@ import Data.LevelId as LevelId exposing (LevelId)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Extra.Decode
 import Json.Decode as Decode
+import Json.Decode.Extra
 import Json.Encode as Encode
 import Ports.LocalStorage
 import Set exposing (Set)
@@ -89,8 +90,7 @@ localStorageResponse ( key, value ) =
         "levels" :: levelId :: "draftBook" :: [] ->
             let
                 localStorageDecoder =
-                    DraftId.decoder
-                        |> Extra.Decode.set
+                    Json.Decode.Extra.set DraftId.decoder
                         |> Decode.map (flip withDraftIds (empty levelId))
                         |> Decode.nullable
                         |> Decode.map (Maybe.withDefault (empty levelId))

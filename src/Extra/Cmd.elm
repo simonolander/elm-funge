@@ -1,4 +1,4 @@
-module Extra.Cmd exposing (bind, fold, mapModel, noCmd, withCmd, withExtraCmd)
+module Extra.Cmd exposing (bind, fold, noCmd, withCmd, withExtraCmd)
 
 import Basics.Extra exposing (flip)
 
@@ -16,11 +16,6 @@ noCmd value =
 withExtraCmd : Cmd msg -> ( m, Cmd msg ) -> ( m, Cmd msg )
 withExtraCmd cmd2 ( m, cmd1 ) =
     ( m, Cmd.batch [ cmd1, cmd2 ] )
-
-
-mapModel : (m1 -> m2) -> ( m1, Cmd msg ) -> ( m2, Cmd msg )
-mapModel =
-    Tuple.mapFirst
 
 
 bind : (m -> ( m, Cmd msg )) -> ( m, Cmd msg ) -> ( m, Cmd msg )
