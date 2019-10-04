@@ -1,3 +1,4 @@
+![](https://github.com/simonolander/elm-funge/workflows/.github/workflows/build-server.yml/badge.svg)
 # Manick
 
 Try it out live [here](http://efng.simonolander.com).
