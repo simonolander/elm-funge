@@ -3,7 +3,7 @@ name: Build and test server
 on:
   push:
     paths:
-      - "google-cloud/functions/*"
+      - "google-cloud/functions/**"
 
 jobs:
   build:
