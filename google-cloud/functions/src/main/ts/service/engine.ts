@@ -78,7 +78,7 @@ export function isSolutionValid(level: Level, board: Board.Board, score: Score):
         .length;
     if (actualNumberOfInstructions !== score.numberOfInstructions) {
         return `Invalid score, expected number of instructions to be ${score.numberOfInstructions} but was ${actualNumberOfInstructions}`;
-    } 
+    }
 
     let step = 0;
     for (const suite of level.suites.map((value, index) => ({...value, index}))) {
