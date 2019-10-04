@@ -10,6 +10,11 @@ export const defaultTestSubject = "test-subject";
 export const defaultTestUserId = "test-user-id";
 export const notTestUserId = `not-${defaultTestUserId}`;
 
+export function consoleWarn() {
+    return jest.spyOn(console, "warn")
+        .mockImplementation(() => undefined);
+}
+
 export function verifyJwt(value: Result.Result<string, any> = Result.success(defaultTestSubject)) {
     return jest.spyOn(auth, "verifyJwt")
         .mockReturnValue(value);
@@ -43,11 +48,6 @@ export function saveSolution() {
 export function isSolutionValid(value: string | undefined) {
     return jest.spyOn(engine, "isSolutionValid")
         .mockReturnValue(value);
-}
-
-export function consoleWarn() {
-    return jest.spyOn(console, "warn")
-        .mockImplementation(() => undefined);
 }
 
 export function getDrafts(value: Draft[] | ((params: {levelId?: string, authorId?: string, draftId?: string}) => Draft[]) = []) {
