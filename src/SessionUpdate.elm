@@ -1,16 +1,12 @@
-module SessionUpdate exposing (SessionMsg(..), update)
+module SessionUpdate exposing (update)
 
 import Basics.Extra exposing (flip)
-import Data.Blueprint exposing (Blueprint)
-import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
 import Data.Campaign as Campaign
-import Data.CampaignId exposing (CampaignId)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftBook as DraftBook
 import Data.DraftId exposing (DraftId)
 import Data.GetError as GetError exposing (GetError)
-import Data.HighScore exposing (HighScore)
 import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache
@@ -30,29 +26,15 @@ import Ports.Console as Console
 import Random
 import RemoteData exposing (RemoteData(..))
 import Set
-
-
-type SessionMsg
-    = GeneratedSolution Solution
-    | GotDeleteDraftResponse DraftId (Maybe SaveError)
-    | GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
-    | GotLoadDraftsByLevelIdResponse LevelId (Result GetError (List Draft))
-    | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
-    | GotLoadLevelByLevelIdResponse LevelId (Result GetError Level)
-    | GotLoadLevelsByCampaignIdResponse CampaignId (Result GetError (List Level))
-    | GotLoadBlueprintResponse BlueprintId (Result GetError (Maybe Blueprint))
-    | GotLoadBlueprintsResponse (Result GetError (List Blueprint))
-    | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
-    | GotLoadSolutionsByLevelIdsResponse (List LevelId) (Result GetError (List Solution))
-    | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
-    | GotSaveDraftResponse Draft (Maybe SaveError)
-    | GotDeleteBlueprintResponse BlueprintId (Maybe SaveError)
-    | GotSaveSolutionResponse Solution (Maybe SubmitSolutionError)
+import Update.SessionMsg exposing (SessionMsg(..))
 
 
 update : SessionMsg -> Session -> ( Session, Cmd SessionMsg )
 update msg session =
     case msg of
+        GotLoadBlueprintsResponse result ->
+            Blueprint.gotLoadBlueprintsResponse result
+
         GeneratedSolution solution ->
             let
                 solutionCache =
@@ -327,14 +309,6 @@ update msg session =
 
                         SubmitSolutionError.Other _ ->
                             ( session, SubmitSolutionError.consoleError error )
-
-        GotLoadBlueprintsResponse result ->
-            case result of
-                Ok blueprints ->
-                    Debug.todo "ok"
-
-                Err error ->
-                    Debug.todo "error"
 
 
 gotActualDraft : DraftId -> Maybe Draft -> Session -> ( Session, Cmd msg )

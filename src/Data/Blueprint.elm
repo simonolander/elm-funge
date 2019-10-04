@@ -171,8 +171,8 @@ loadFromServerByBlueprintId toMsg accessToken blueprintId =
         |> GCP.request (GetError.expectMaybe decoder (toMsg blueprintId))
 
 
-saveToServer : (Blueprint -> Maybe SaveError -> msg) -> AccessToken -> Blueprint -> Cmd msg
-saveToServer toMsg accessToken blueprint =
+saveToServer : (Blueprint -> Maybe SaveError -> msg) -> Blueprint -> AccessToken -> Cmd msg
+saveToServer toMsg blueprint accessToken =
     GCP.put
         |> GCP.withPath path
         |> GCP.withAccessToken accessToken

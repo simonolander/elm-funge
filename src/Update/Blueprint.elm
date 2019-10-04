@@ -1,4 +1,4 @@
-module Update.Blueprint exposing (deleteBlueprint, loadBlueprint, loadBlueprints, saveBlueprint)
+module Update.Blueprint exposing (deleteBlueprint, gotSaveBlueprintResponse, loadBlueprint, loadBlueprints, saveBlueprint, gotLoadBlueprintResponse)
 
 import Basics.Extra exposing (flip)
 import Data.Blueprint as Blueprint exposing (Blueprint)
@@ -11,15 +11,16 @@ import Data.SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
 import Extra.Cmd exposing (fold, noCmd)
 import RemoteData exposing (RemoteData(..))
-import SessionUpdate exposing (SessionMsg(..))
 import Set
 import Update.General exposing (gotGetError, gotSaveError)
+import Update.SessionMsg exposing (SessionMsg(..))
 
 
 
 -- LOAD
 
 
+loadBlueprintFromLocalStorage : BlueprintId -> Session -> ( Session, Cmd msg )
 loadBlueprintFromLocalStorage blueprintId session =
     case Cache.get blueprintId session.blueprints.local of
         NotAsked ->
@@ -111,6 +112,17 @@ gotLoadBlueprintResponse blueprintId result session =
                 ]
                 sessionWithActualBlueprintResult
 
+gotLoadBlueprintsResponse : Result GetError (List Blueprint) -> Session -> (Session, Cmd SessionMsg)
+gotLoadBlueprintsResponse result session =
+    case result of
+        Ok blueprints ->
+            let
+
+
+
+        Err error ->
+
+
 
 
 -- SAVE
@@ -118,7 +130,44 @@ gotLoadBlueprintResponse blueprintId result session =
 
 saveBlueprint : Blueprint -> Session -> ( Session, Cmd SessionMsg )
 saveBlueprint blueprint session =
-    Debug.todo "save blueprint"
+    let
+        blueprints =
+            RemoteCache.withLocalValue blueprint.id (Just blueprint) session.blueprints
+
+        -- TODO Split blueprint book into local and actual
+        blueprintBook =
+            RemoteData.withDefault BlueprintBook.empty session.blueprintBook
+                |> Set.insert blueprint.id
+                |> RemoteData.Success
+
+        saveActualBlueprint =
+            Session.getAccessToken session
+                |> Maybe.map (Blueprint.saveToServer GotSaveBlueprintResponse blueprint)
+                |> Maybe.withDefault Cmd.none
+
+        saveLocalBlueprint =
+            Blueprint.saveToLocalStorage blueprint
+    in
+    ( { session | blueprints = blueprints, blueprintBook = blueprintBook }
+    , Cmd.batch
+        [ saveLocalBlueprint
+        , saveActualBlueprint
+        ]
+    )
+
+
+gotSaveBlueprintResponse : Blueprint -> Maybe SaveError -> Session -> ( Session, Cmd SessionMsg )
+gotSaveBlueprintResponse blueprint maybeError session =
+    case maybeError of
+        Just error ->
+            gotSaveError error session
+
+        Nothing ->
+            session.blueprints
+                |> RemoteCache.withActualValue blueprint.id (Just blueprint)
+                |> RemoteCache.withExpectedValue blueprint.id (Just blueprint)
+                |> flip Session.withBlueprintCache session
+                |> noCmd
 
 
 
