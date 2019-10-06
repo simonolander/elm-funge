@@ -5,32 +5,26 @@ module Data.RemoteCache exposing
     , withActualLoading
     , withActualResult
     , withActualValue
-    , withExpectedError
-    , withExpectedLoading
-    , withExpectedResult
     , withExpectedValue
-    , withLocalError
-    , withLocalLoading
-    , withLocalResult
     , withLocalValue
     )
 
 import Data.Cache as Cache exposing (Cache)
 import Data.GetError exposing (GetError)
-import Json.Decode as Decode
+import Dict exposing (Dict)
 
 
 type alias RemoteCache comparable value =
-    { local : Cache comparable Decode.Error value
-    , expected : Cache comparable Decode.Error value
+    { local : Dict comparable value
+    , expected : Dict comparable value
     , actual : Cache comparable GetError value
     }
 
 
 empty : RemoteCache comparable value
 empty =
-    { local = Cache.empty
-    , expected = Cache.empty
+    { local = Dict.empty
+    , expected = Dict.empty
     , actual = Cache.empty
     }
 
@@ -41,22 +35,7 @@ empty =
 
 withLocalValue : comparable -> value -> RemoteCache comparable value -> RemoteCache comparable value
 withLocalValue key value cache =
-    { cache | local = Cache.withValue key value cache.local }
-
-
-withLocalLoading : comparable -> RemoteCache comparable value -> RemoteCache comparable value
-withLocalLoading key cache =
-    { cache | local = Cache.loading key cache.local }
-
-
-withLocalError : comparable -> Decode.Error -> RemoteCache comparable value -> RemoteCache comparable value
-withLocalError key error cache =
-    { cache | local = Cache.withError key error cache.local }
-
-
-withLocalResult : comparable -> Result Decode.Error value -> RemoteCache comparable value -> RemoteCache comparable value
-withLocalResult key result cache =
-    { cache | local = Cache.withResult key result cache.local }
+    { cache | local = Dict.insert key value cache.local }
 
 
 
@@ -65,22 +44,7 @@ withLocalResult key result cache =
 
 withExpectedValue : comparable -> value -> RemoteCache comparable value -> RemoteCache comparable value
 withExpectedValue key value cache =
-    { cache | expected = Cache.withValue key value cache.expected }
-
-
-withExpectedLoading : comparable -> RemoteCache comparable value -> RemoteCache comparable value
-withExpectedLoading key cache =
-    { cache | expected = Cache.loading key cache.expected }
-
-
-withExpectedError : comparable -> Decode.Error -> RemoteCache comparable value -> RemoteCache comparable value
-withExpectedError key error cache =
-    { cache | expected = Cache.withError key error cache.expected }
-
-
-withExpectedResult : comparable -> Result Decode.Error value -> RemoteCache comparable value -> RemoteCache comparable value
-withExpectedResult key result cache =
-    { cache | expected = Cache.withResult key result cache.expected }
+    { cache | expected = Dict.insert key value cache.expected }
 
 
 

@@ -180,8 +180,8 @@ saveToServer toMsg blueprint accessToken =
         |> GCP.request (SaveError.expect (toMsg blueprint))
 
 
-deleteFromServer : (BlueprintId -> Maybe SaveError -> msg) -> AccessToken -> BlueprintId -> Cmd msg
-deleteFromServer toMsg accessToken blueprintId =
+deleteFromServer : (BlueprintId -> Maybe SaveError -> msg) -> BlueprintId -> AccessToken -> Cmd msg
+deleteFromServer toMsg blueprintId accessToken =
     GCP.delete
         |> GCP.withPath [ "blueprints" ]
         |> GCP.withStringQueryParameter "blueprintId" blueprintId
@@ -209,11 +209,6 @@ saveToLocalStorage blueprint =
         ( localStorageKey blueprint.id
         , encode blueprint
         )
-
-
-loadFromLocalStorage : BlueprintId -> Cmd msg
-loadFromLocalStorage blueprintId =
-    LocalStorage.storageGetItem (localStorageKey blueprintId)
 
 
 saveRemoteToLocalStorage : Blueprint -> Cmd msg

@@ -1,36 +1,23 @@
-module Update.Blueprint exposing (deleteBlueprint, gotSaveBlueprintResponse, loadBlueprint, loadBlueprints, saveBlueprint, gotLoadBlueprintResponse)
+module Update.Blueprint exposing (deleteBlueprint, gotLoadBlueprintResponse, gotSaveBlueprintResponse, loadBlueprint, loadBlueprints, saveBlueprint)
 
-import Basics.Extra exposing (flip)
+import Basics.Extra exposing (flip, uncurry)
 import Data.Blueprint as Blueprint exposing (Blueprint)
-import Data.BlueprintBook as BlueprintBook
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
 import Data.GetError exposing (GetError)
 import Data.RemoteCache as RemoteCache
 import Data.SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
+import Dict
 import Extra.Cmd exposing (fold, noCmd)
+import Extra.Tuple exposing (fanout)
 import RemoteData exposing (RemoteData(..))
-import Set
 import Update.General exposing (gotGetError, gotSaveError)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 
 
 -- LOAD
-
-
-loadBlueprintFromLocalStorage : BlueprintId -> Session -> ( Session, Cmd msg )
-loadBlueprintFromLocalStorage blueprintId session =
-    case Cache.get blueprintId session.blueprints.local of
-        NotAsked ->
-            ( RemoteCache.withLocalLoading blueprintId session.blueprints
-                |> flip Session.withBlueprintCache session
-            , Blueprint.loadFromLocalStorage blueprintId
-            )
-
-        _ ->
-            ( session, Cmd.none )
 
 
 loadBlueprint : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
@@ -48,28 +35,21 @@ loadBlueprint blueprintId session =
                     ( session, Cmd.none )
 
         Nothing ->
-            loadBlueprintFromLocalStorage blueprintId session
+            ( session, Cmd.none )
 
 
 loadBlueprints : Session -> ( Session, Cmd SessionMsg )
 loadBlueprints session =
-    case session.blueprintBook of
-        Success blueprintBook ->
-            Set.toList blueprintBook
-                |> List.map loadBlueprint
-                |> flip Extra.Cmd.fold session
-
+    case session.actualBlueprintsRequest of
         NotAsked ->
             case Session.getAccessToken session of
                 Just accessToken ->
-                    ( { session | blueprintBook = Loading }
+                    ( { session | actualBlueprintsRequest = Loading }
                     , Blueprint.loadAllFromServer GotLoadBlueprintsResponse accessToken
                     )
 
                 Nothing ->
-                    ( { session | blueprintBook = Loading }
-                    , BlueprintBook.loadFromLocalStorage
-                    )
+                    ( session, Cmd.none )
 
         _ ->
             ( session, Cmd.none )
@@ -77,51 +57,125 @@ loadBlueprints session =
 
 gotLoadBlueprintResponse : BlueprintId -> Result GetError (Maybe Blueprint) -> Session -> ( Session, Cmd SessionMsg )
 gotLoadBlueprintResponse blueprintId result session =
-    let
-        sessionWithActualBlueprintResult =
-            { session | blueprints = RemoteCache.withActualResult blueprintId result session.blueprints }
-    in
     case result of
         Ok maybeBlueprint ->
-            let
-                blueprints =
-                    sessionWithActualBlueprintResult.blueprints
-                        |> RemoteCache.withLocalValue blueprintId maybeBlueprint
-                        |> RemoteCache.withExpectedValue blueprintId maybeBlueprint
-
-                cmd =
-                    case maybeBlueprint of
-                        Just blueprint ->
-                            Cmd.batch
-                                [ Blueprint.saveToLocalStorage blueprint
-                                , Blueprint.saveRemoteToLocalStorage blueprint
-                                ]
-
-                        Nothing ->
-                            Cmd.batch
-                                [ Blueprint.removeFromLocalStorage blueprintId
-                                , Blueprint.removeRemoteFromLocalStorage blueprintId
-                                ]
-            in
-            ( { sessionWithActualBlueprintResult | blueprints = blueprints }, cmd )
+            gotActualBlueprint blueprintId maybeBlueprint session
 
         Err error ->
-            fold
-                [ loadBlueprintFromLocalStorage blueprintId
-                , gotGetError error
-                ]
-                sessionWithActualBlueprintResult
+            let
+                sessionWithActualBlueprintResult =
+                    { session | blueprints = RemoteCache.withActualResult blueprintId result session.blueprints }
+            in
+            gotGetError error sessionWithActualBlueprintResult
 
-gotLoadBlueprintsResponse : Result GetError (List Blueprint) -> Session -> (Session, Cmd SessionMsg)
+
+gotLoadBlueprintsResponse : Result GetError (List Blueprint) -> Session -> ( Session, Cmd SessionMsg )
 gotLoadBlueprintsResponse result session =
+    let
+        sessionWithBlueprintResponse =
+            { session | actualBlueprintsRequest = RemoteData.fromResult (Result.map (always ()) result) }
+    in
     case result of
         Ok blueprints ->
-            let
-
-
+            List.map (fanout .id Just) blueprints
+                |> List.map (uncurry gotActualBlueprint)
+                |> flip fold sessionWithBlueprintResponse
 
         Err error ->
+            gotGetError error sessionWithBlueprintResponse
 
+
+gotActualBlueprint : BlueprintId -> Maybe Blueprint -> Session -> ( Session, Cmd SessionMsg )
+gotActualBlueprint blueprintId maybeActualBlueprint oldSession =
+    let
+        sessionWithActualBlueprint =
+            { oldSession | blueprints = RemoteCache.withActualValue blueprintId maybeActualBlueprint oldSession.blueprints }
+
+        maybeLocalBlueprint =
+            Dict.get blueprintId sessionWithActualBlueprint.blueprints.local
+
+        maybeExpectedBlueprint =
+            Dict.get blueprintId sessionWithActualBlueprint.blueprints.expected
+
+        overwriteLocal maybeBlueprint session =
+            ( { session | blueprints = RemoteCache.withLocalValue blueprintId maybeBlueprint session.blueprints }
+            , case maybeBlueprint of
+                Just blueprint ->
+                    Blueprint.saveToLocalStorage blueprint
+
+                Nothing ->
+                    Blueprint.removeFromLocalStorage blueprintId
+            )
+
+        overwriteExpected maybeBlueprint session =
+            ( { session | blueprints = RemoteCache.withExpectedValue blueprintId maybeBlueprint session.blueprints }
+            , case maybeBlueprint of
+                Just blueprint ->
+                    Blueprint.saveRemoteToLocalStorage blueprint
+
+                Nothing ->
+                    Blueprint.removeRemoteFromLocalStorage blueprintId
+            )
+
+        functions =
+            case ( maybeLocalBlueprint, maybeExpectedBlueprint, maybeActualBlueprint ) of
+                ( Just (Just localBlueprint), Just (Just expectedBlueprint), Just actualBlueprint ) ->
+                    if localBlueprint == expectedBlueprint then
+                        [ overwriteLocal maybeActualBlueprint, overwriteExpected maybeActualBlueprint ]
+
+                    else if localBlueprint == actualBlueprint then
+                        [ overwriteExpected maybeActualBlueprint ]
+
+                    else if expectedBlueprint == actualBlueprint then
+                        []
+
+                    else
+                        Debug.todo "1 2 3"
+
+                ( Just (Just localBlueprint), Just (Just expectedBlueprint), Nothing ) ->
+                    if localBlueprint == expectedBlueprint then
+                        [ overwriteLocal Nothing, overwriteExpected Nothing ]
+
+                    else
+                        Debug.todo "1 2 0"
+
+                ( Just (Just localBlueprint), Just Nothing, Just actualBlueprint ) ->
+                    if localBlueprint == actualBlueprint then
+                        [ overwriteExpected maybeActualBlueprint ]
+
+                    else
+                        Debug.todo "1 0 2"
+
+                ( Just (Just localBlueprint), Nothing, Just actualBlueprint ) ->
+                    if localBlueprint == actualBlueprint then
+                        [ overwriteExpected maybeActualBlueprint ]
+
+                    else
+                        Debug.todo "1 ? 2"
+
+                ( Just (Just localBlueprint), Nothing, Nothing ) ->
+                    Debug.todo "1 ? 0"
+
+                ( Just Nothing, Just (Just expectedBlueprint), Just actualBlueprint ) ->
+                    if expectedBlueprint == actualBlueprint then
+                        Debug.todo "0 1 1"
+
+                    else
+                        Debug.todo "0 1 2"
+
+                ( Just Nothing, Just Nothing, Just actualBlueprint ) ->
+                    Debug.todo "0 0 1"
+
+                ( Just Nothing, _, Nothing ) ->
+                    [ overwriteLocal maybeActualBlueprint, overwriteExpected maybeActualBlueprint ]
+
+                ( Just Nothing, Nothing, _ ) ->
+                    [ overwriteLocal maybeActualBlueprint, overwriteExpected maybeActualBlueprint ]
+
+                ( Nothing, _, _ ) ->
+                    [ overwriteLocal maybeActualBlueprint, overwriteExpected maybeActualBlueprint ]
+    in
+    fold functions sessionWithActualBlueprint
 
 
 
@@ -134,12 +188,6 @@ saveBlueprint blueprint session =
         blueprints =
             RemoteCache.withLocalValue blueprint.id (Just blueprint) session.blueprints
 
-        -- TODO Split blueprint book into local and actual
-        blueprintBook =
-            RemoteData.withDefault BlueprintBook.empty session.blueprintBook
-                |> Set.insert blueprint.id
-                |> RemoteData.Success
-
         saveActualBlueprint =
             Session.getAccessToken session
                 |> Maybe.map (Blueprint.saveToServer GotSaveBlueprintResponse blueprint)
@@ -148,7 +196,7 @@ saveBlueprint blueprint session =
         saveLocalBlueprint =
             Blueprint.saveToLocalStorage blueprint
     in
-    ( { session | blueprints = blueprints, blueprintBook = blueprintBook }
+    ( { session | blueprints = blueprints }
     , Cmd.batch
         [ saveLocalBlueprint
         , saveActualBlueprint
@@ -175,39 +223,22 @@ gotSaveBlueprintResponse blueprint maybeError session =
 
 
 deleteBlueprint : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
-deleteBlueprint blueprintId =
+deleteBlueprint blueprintId session =
     let
-        removeBlueprintIdFromBlueprintBook session =
-            ( { session | blueprintBook = RemoteData.map (Set.remove blueprintId) session.blueprintBook }
-            , BlueprintBook.removeBlueprintIdFromLocalStorage blueprintId
-            )
+        removeLocalBlueprintCmd =
+            Blueprint.removeFromLocalStorage blueprintId
 
-        removeBlueprintFromLocalStorage session =
-            ( session
-            , Blueprint.removeFromLocalStorage blueprintId
-            )
-
-        removeLocalBlueprintFromSession session =
-            ( { session | blueprints = RemoteCache.withLocalValue blueprintId Nothing session.blueprints }
-            , Cmd.none
-            )
-
-        removeBlueprintFromServer session =
-            case Session.getAccessToken session of
-                Just accessToken ->
-                    ( { session | blueprints = RemoteCache.withActualLoading blueprintId session.blueprints }
-                    , Blueprint.deleteFromServer GotDeleteBlueprintResponse accessToken blueprintId
-                    )
-
-                Nothing ->
-                    ( session, Cmd.none )
+        removeActualBlueprintCmd =
+            Session.getAccessToken session
+                |> Maybe.map (Blueprint.deleteFromServer GotDeleteBlueprintResponse blueprintId)
+                |> Maybe.withDefault Cmd.none
     in
-    fold
-        [ removeBlueprintIdFromBlueprintBook
-        , removeBlueprintFromLocalStorage
-        , removeLocalBlueprintFromSession
-        , removeBlueprintFromServer
+    ( { session | blueprints = RemoteCache.withLocalValue blueprintId Nothing session.blueprints }
+    , Cmd.batch
+        [ removeLocalBlueprintCmd
+        , removeActualBlueprintCmd
         ]
+    )
 
 
 gotDeleteBlueprintResponse : BlueprintId -> Maybe SaveError -> Session -> ( Session, Cmd SessionMsg )

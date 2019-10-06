@@ -20,6 +20,7 @@ module Data.Session exposing
     , setLevelCache
     , setSolutionBookCache
     , solutionBookError
+    , withActualBlueprintsRequest
     , withBlueprintCache
     , withCampaign
     , withCampaignCache
@@ -46,7 +47,6 @@ module Data.Session exposing
 import Browser.Navigation exposing (Key)
 import Data.AccessToken exposing (AccessToken)
 import Data.Blueprint exposing (Blueprint)
-import Data.BlueprintBook exposing (BlueprintBook)
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache exposing (Cache)
 import Data.Campaign exposing (Campaign)
@@ -78,7 +78,7 @@ type alias Session =
     , solutions : RemoteCache SolutionId (Maybe Solution)
     , campaigns : Cache CampaignId GetError Campaign
     , blueprints : RemoteCache BlueprintId (Maybe Blueprint)
-    , blueprintBook : RemoteData GetError BlueprintBook
+    , actualBlueprintsRequest : RemoteData GetError ()
     , highScores : Cache LevelId GetError HighScore
     , solutionBooks : Cache LevelId GetError SolutionBook
     }
@@ -94,7 +94,7 @@ init key url =
     , solutions = RemoteCache.empty
     , campaigns = Cache.empty
     , blueprints = RemoteCache.empty
-    , blueprintBook = RemoteData.NotAsked
+    , actualBlueprintsRequest = RemoteData.NotAsked
     , highScores = Cache.empty
     , draftBooks = Cache.empty
     , solutionBooks = Cache.empty
@@ -172,9 +172,9 @@ withBlueprintCache cache session =
     { session | blueprints = cache }
 
 
-withBlueprintBook : RemoteData GetError BlueprintBook -> Session -> Session
-withBlueprintBook blueprintBook session =
-    { session | blueprintBook = blueprintBook }
+withActualBlueprintsRequest : RemoteData GetError () -> Session -> Session
+withActualBlueprintsRequest request session =
+    { session | actualBlueprintsRequest = request }
 
 
 

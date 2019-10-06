@@ -6,9 +6,10 @@ import Browser exposing (Document)
 import Data.Blueprint as Blueprint exposing (Blueprint)
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
-import Data.Campaign as Campaign exposing (Campaign)
+import Data.Campaign exposing (Campaign)
 import Data.GetError as GetError exposing (GetError(..))
 import Data.Session as Session exposing (Session, withSession)
+import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -20,12 +21,13 @@ import Ports.Console as Console
 import Random
 import RemoteData exposing (RemoteData(..))
 import Route
-import SessionUpdate exposing (SessionMsg(..))
 import String.Extra
 import Update.Blueprint
+import Update.SessionMsg exposing (SessionMsg)
 import View.Constant exposing (size)
 import View.ErrorScreen
 import View.Layout
+import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
 import ViewComponents
@@ -85,11 +87,6 @@ load =
         [ loadBlueprints ]
 
 
-setSession : Model -> Session -> Model
-setSession model session =
-    { model | session = session }
-
-
 
 -- UPDATE
 
@@ -119,8 +116,7 @@ update msg model =
 
         BlueprintNameChanged newName ->
             case
-                Maybe.map (flip Cache.get model.session.blueprints.local) model.selectedBlueprintId
-                    |> Maybe.andThen RemoteData.toMaybe
+                Maybe.map (flip Dict.get model.session.blueprints.local) model.selectedBlueprintId
                     |> Maybe.andThen Maybe.Extra.join
             of
                 Just blueprint ->
@@ -128,12 +124,11 @@ update msg model =
                         |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
-                    ( model, Console.errorString "tWy71t5l    Could not update blueprint name" )
+                    ( model, Console.errorString "tWy71t5l    Could not update blueprint name: blueprint not found" )
 
         BlueprintDescriptionChanged newDescription ->
             case
-                Maybe.map (flip Cache.get model.session.blueprints.local) model.selectedBlueprintId
-                    |> Maybe.andThen RemoteData.toMaybe
+                Maybe.map (flip Dict.get model.session.blueprints.local) model.selectedBlueprintId
                     |> Maybe.andThen Maybe.Extra.join
             of
                 Just blueprint ->
@@ -141,7 +136,7 @@ update msg model =
                         |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
 
                 Nothing ->
-                    ( model, Console.errorString "Pm6iHnXM    Could not update blueprint description" )
+                    ( model, Console.errorString "Pm6iHnXM    Could not update blueprint description: blueprint not found" )
 
         SelectedBlueprintId blueprintId ->
             ( { model | selectedBlueprintId = Just blueprintId }
@@ -152,9 +147,9 @@ update msg model =
             ( model, Random.generate (InternalMsg << BlueprintGenerated) Blueprint.generator )
 
         BlueprintGenerated blueprint ->
-            Update.Blueprint.saveBlueprint blueprint
+            Update.Blueprint.saveBlueprint blueprint model.session
                 |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
-                |> Tuple.mapFirst (withSelectedBlueprintId blueprint.id)
+                |> Tuple.mapFirst (\m -> { m | selectedBlueprintId = Just blueprint.id })
                 |> withExtraCmd (Route.replaceUrl model.session.key (Route.Blueprints (Just blueprint.id)))
 
 
@@ -178,18 +173,20 @@ view model =
             model.session
 
         content =
-            case Session.getCampaign campaignId session of
+            case model.session.actualBlueprintsRequest of
                 NotAsked ->
-                    View.ErrorScreen.layout "Not asked :/"
+                    viewBlueprints model
+                        |> View.Layout.layout
+                        |> Html.map InternalMsg
 
                 Loading ->
-                    View.LoadingScreen.layout ("Loading " ++ campaignId)
+                    View.LoadingScreen.layout "Loading blueprints"
 
                 Failure error ->
                     View.ErrorScreen.layout (GetError.toString error)
 
-                Success campaign ->
-                    viewCampaign campaign model
+                Success () ->
+                    viewBlueprints model
                         |> View.Layout.layout
                         |> Html.map InternalMsg
     in
@@ -198,66 +195,17 @@ view model =
     }
 
 
-viewCampaign : Campaign -> Model -> Element InternalMsg
-viewCampaign campaign model =
+viewBlueprints : Model -> Element InternalMsg
+viewBlueprints model =
     let
         session =
             model.session
 
         sidebarContent =
-            case
-                model.selectedBlueprintId
-                    |> Maybe.map (flip Session.getBlueprint session)
-                    |> Maybe.andThen RemoteData.toMaybe
-            of
-                Just blueprint ->
-                    let
-                        blueprintName =
-                            Input.text
-                                [ Background.color (rgb 0.1 0.1 0.1) ]
-                                { onChange = BlueprintNameChanged
-                                , text = blueprint.name
-                                , placeholder = Nothing
-                                , label =
-                                    Input.labelAbove
-                                        []
-                                        (text "Blueprint name")
-                                }
-
-                        blueprintDescription =
-                            Input.multiline
-                                [ Background.color (rgb 0.1 0.1 0.1)
-                                , height (minimum 200 shrink)
-                                ]
-                                { onChange = BlueprintDescriptionChanged
-                                , text = String.join "\n" blueprint.description
-                                , placeholder = Nothing
-                                , label =
-                                    Input.labelAbove
-                                        []
-                                        (text "Blueprint description")
-                                , spellcheck = True
-                                }
-
-                        openBlueprint =
-                            Route.link
-                                [ width fill ]
-                                (ViewComponents.textButton [] Nothing "Open")
-                                (Route.Blueprint blueprint.id)
-
-                        deleteBlueprint =
-                            ViewComponents.textButton
-                                []
-                                (Just (ClickedDeleteBlueprint blueprint.id))
-                                "Delete"
-                    in
-                    [ blueprintName
-                    , blueprintDescription
-                    , openBlueprint
-                    , deleteBlueprint
-                    ]
-
-                Nothing ->
+            Maybe.andThen (flip Dict.get model.session.blueprints.local) model.selectedBlueprintId
+                |> Maybe.andThen Maybe.Extra.join
+                |> Maybe.map viewSidebar
+                |> Maybe.withDefault
                     [ el [ centerX, size.font.sidebar.title ] (text "Blueprints")
                     , paragraph [ Font.center ] [ text "Here you can make your own blueprints. A blueprint is a blueprint that is not yet published. Once you publish a blueprint, you cannot change it." ]
                     ]
@@ -265,33 +213,26 @@ viewCampaign campaign model =
         mainContent =
             let
                 default =
-                    View.BlueprintButton.default
+                    View.LevelButton.default
 
                 plusButton =
                     ViewComponents.textButton [] (Just ClickedNewBlueprint) "Create new blueprint"
 
-                blueprintButton blueprintId =
-                    case
-                        Session.getBlueprint blueprintId session
-                            |> RemoteData.toMaybe
-                    of
-                        Just blueprint ->
-                            View.BlueprintButton.view
-                                { default
-                                    | onPress = Just (SelectedBlueprintId blueprintId)
-                                    , selected =
-                                        model.selectedBlueprintId
-                                            |> Maybe.map ((==) blueprintId)
-                                            |> Maybe.withDefault False
-                                }
-                                blueprint
-
-                        -- TODO Maybe different cases for loading, error and not asked?
-                        Nothing ->
-                            View.BlueprintButton.loading blueprintId
+                blueprintButton blueprint =
+                    View.LevelButton.view
+                        { default
+                            | onPress = Just (SelectedBlueprintId blueprint.id)
+                            , selected =
+                                model.selectedBlueprintId
+                                    |> Maybe.map ((==) blueprint.id)
+                                    |> Maybe.withDefault False
+                        }
+                        blueprint
 
                 blueprintButtons =
-                    List.map blueprintButton campaign.blueprintIds
+                    Dict.values session.blueprints.local
+                        |> Maybe.Extra.values
+                        |> List.map blueprintButton
             in
             column
                 [ width fill, spacing 30 ]
@@ -313,14 +254,62 @@ viewCampaign campaign model =
         }
 
 
+viewSidebar : Blueprint -> List (Element InternalMsg)
+viewSidebar blueprint =
+    let
+        blueprintName =
+            Input.text
+                [ Background.color (rgb 0.1 0.1 0.1) ]
+                { onChange = BlueprintNameChanged
+                , text = blueprint.name
+                , placeholder = Nothing
+                , label =
+                    Input.labelAbove
+                        []
+                        (text "Blueprint name")
+                }
+
+        blueprintDescription =
+            Input.multiline
+                [ Background.color (rgb 0.1 0.1 0.1)
+                , height (minimum 200 shrink)
+                ]
+                { onChange = BlueprintDescriptionChanged
+                , text = String.join "\n" blueprint.description
+                , placeholder = Nothing
+                , label =
+                    Input.labelAbove
+                        []
+                        (text "Blueprint description")
+                , spellcheck = True
+                }
+
+        openBlueprint =
+            Route.link
+                [ width fill ]
+                (ViewComponents.textButton [] Nothing "Open")
+                (Route.Blueprint blueprint.id)
+
+        deleteBlueprint =
+            ViewComponents.textButton
+                []
+                (Just (ClickedDeleteBlueprint blueprint.id))
+                "Delete"
+    in
+    [ blueprintName
+    , blueprintDescription
+    , openBlueprint
+    , deleteBlueprint
+    ]
+
+
 viewModal : Modal -> Model -> Element InternalMsg
 viewModal modal model =
     case modal of
         ConfirmDelete blueprintId ->
             let
                 blueprintName =
-                    Cache.get blueprintId model.session.blueprints.local
-                        |> RemoteData.toMaybe
+                    Dict.get blueprintId model.session.blueprints.local
                         |> Maybe.Extra.join
                         |> Maybe.map .name
                         |> Maybe.map String.trim
