@@ -1,29 +1,25 @@
 name: build server
 
 on:
-  push:
-    paths:
-      - "google-cloud/functions/**"
+  push
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
-      matrix:
-        node-version: [8.x, 10.x, 12.x]
+      node-version: 12.x
 
     steps:
     - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js ${{ node-version }}
       uses: actions/setup-node@v1
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: ${{ node-version }}
     - name: npm install, build, and test
       run: |
-        cd google-cloud/functions
-        npm install
-        npm run build
+        npm install create-elm-app -g
+        elm-app build
+        elm-app test
       env:
         CI: true
