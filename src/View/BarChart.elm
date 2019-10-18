@@ -10,7 +10,8 @@ import Extra.Maybe
 import Html
 import List.Extra
 import Scale exposing (BandScale, ContinuousScale)
-import TypedSvg exposing (g, polygon, rect, style, svg, text_)
+import String.Extra
+import TypedSvg exposing (g, polygon, rect, style, svg, text_, title)
 import TypedSvg.Attributes exposing (class, color, points, textAnchor, transform, viewBox)
 import TypedSvg.Attributes.InPx exposing (height, width, x, y)
 import TypedSvg.Core exposing (Svg, text)
@@ -187,7 +188,25 @@ column range scale ( xValue, ( yValue, marked ) ) =
             , width <| Scale.bandwidth scale
             , height <| h - Scale.convert (yScale range) (toFloat yValue) - paddingBottom - paddingTop
             ]
-            []
+            [ title []
+                [ String.concat
+                    [ String.Extra.pluralize "person" "people" yValue
+                    , if marked then
+                        ", including you,"
+
+                      else
+                        ""
+                    , if yValue == 1 then
+                        " has "
+
+                      else
+                        " have "
+                    , String.fromInt xValue
+                    , " as their best score"
+                    ]
+                    |> text
+                ]
+            ]
         , text_
             [ x <| Scale.convert (Scale.toRenderable dateFormat scale) xValue
             , y <| Scale.convert (yScale range) (toFloat yValue) - 8
