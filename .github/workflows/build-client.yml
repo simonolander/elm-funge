@@ -18,10 +18,10 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Install create-elm-app
-        npm install create-elm-app -g
+        run: npm install create-elm-app -g
     - name: Build client
-        elm-app build
+        run: elm-app build
     - name: Run client tests
-        elm-app test
+        run: elm-app test
       env:
         CI: true
