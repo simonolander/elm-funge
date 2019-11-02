@@ -1,12 +1,12 @@
-module Page.Home exposing (Model, Msg, init, load, subscriptions, update, view)
+module Page.Home.View exposing (view)
 
 import ApplicationName exposing (applicationName)
 import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
-import Extra.Cmd exposing (noCmd)
-import Route exposing (Route)
+import Page.Home.Model exposing (Model)
+import Route
 import Version exposing (version)
 import View.Box as Box
 import View.Constant exposing (size)
@@ -16,56 +16,8 @@ import View.Scewn
 import ViewComponents
 
 
-
--- MODEL
-
-
-type alias Model =
-    { session : Session
-    }
-
-
-init : Session -> ( Model, Cmd Msg )
-init session =
-    ( { session = session
-      }
-    , Cmd.none
-    )
-
-
-load : Model -> ( Model, Cmd Msg )
-load =
-    noCmd
-
-
-
--- UPDATE
-
-
-type alias Msg =
-    ()
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-
--- VIEW
-
-
-view : Model -> Document msg
-view model =
+view : Session -> Model -> Document msg
+view session _ =
     let
         titleView =
             text applicationName
@@ -82,7 +34,7 @@ view model =
                 route
 
         header =
-            View.Header.view model.session
+            View.Header.view session
 
         main =
             column
@@ -131,6 +83,6 @@ view model =
                 |> View.Layout.layout
                 |> List.singleton
     in
-    { title = String.concat [ "Home", " - ", applicationName ]
+    { title = "Home"
     , body = body
     }

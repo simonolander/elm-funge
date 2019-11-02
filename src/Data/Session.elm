@@ -8,6 +8,7 @@ module Data.Session exposing
     , getDraftBook
     , getHighScore
     , getLevel
+    , getLevelsByCampaignId
     , getSolutionBook
     , highScoreError
     , highScoreLoading
@@ -20,6 +21,10 @@ module Data.Session exposing
     , setLevelCache
     , setSolutionBookCache
     , solutionBookError
+    , updateBlueprints
+    , updateCampaignRequests
+    , updateDrafts
+    , updateSavingDraftRequests
     , withActualBlueprintsRequest
     , withBlueprintCache
     , withCampaign
@@ -60,22 +65,37 @@ import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache exposing (RemoteCache)
 import Data.RequestResult exposing (RequestResult)
+import Data.SaveError exposing (SaveError)
+import Data.SaveRequest exposing (SaveRequest)
 import Data.Solution exposing (Solution)
 import Data.SolutionBook as SolutionBook exposing (SolutionBook)
 import Data.SolutionId exposing (SolutionId)
+import Data.Updater exposing (Updater)
 import Data.User as User exposing (User)
+import Data.UserInfo exposing (UserInfo)
+import Dict exposing (Dict)
+import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
 import Url exposing (Url)
+
+
+type alias Drafts =
+    RemoteCache DraftId (Maybe Draft)
 
 
 type alias Session =
     { key : Key
     , url : Url
     , user : User
+    , userInfo : Maybe UserInfo
+    , expectedUserInfo : Maybe UserInfo
+    , actualUserInfo : RemoteData GetError UserInfo
     , levels : Cache LevelId GetError Level
     , draftBooks : Cache LevelId GetError DraftBook
-    , drafts : RemoteCache DraftId (Maybe Draft)
+    , drafts : Drafts
+    , savingDraftRequests : Dict DraftId (SaveRequest SaveError (Maybe Draft))
     , solutions : RemoteCache SolutionId (Maybe Solution)
+    , campaignRequests : Cache CampaignId GetError ()
     , campaigns : Cache CampaignId GetError Campaign
     , blueprints : RemoteCache BlueprintId (Maybe Blueprint)
     , actualBlueprintsRequest : RemoteData GetError ()
@@ -89,9 +109,14 @@ init key url =
     { key = key
     , url = url
     , user = User.guest
+    , userInfo = Nothing
+    , expectedUserInfo = Nothing
+    , actualUserInfo = Nothing
     , levels = Cache.empty
     , drafts = RemoteCache.empty
+    , savingDraftRequests = Dict.empty
     , solutions = RemoteCache.empty
+    , campaignRequests = Cache.empty
     , campaigns = Cache.empty
     , blueprints = RemoteCache.empty
     , actualBlueprintsRequest = RemoteData.NotAsked
@@ -106,7 +131,7 @@ withSession session model =
     { model | session = session }
 
 
-withUser : User -> Session -> Session
+withUser : User -> Updater Session
 withUser user session =
     { session
         | user = user
@@ -118,7 +143,7 @@ getAccessToken =
     .user >> User.getToken
 
 
-withoutAccessToken : Session -> Session
+withoutAccessToken : Updater Session
 withoutAccessToken session =
     let
         user =
@@ -127,54 +152,95 @@ withoutAccessToken session =
     { session | user = { user | accessToken = Nothing } }
 
 
-withUrl : Url -> Session -> Session
+withUrl : Url -> Updater Session
 withUrl url session =
     { session | url = url }
 
 
-withLevelCache : Cache LevelId GetError Level -> Session -> Session
+withLevelCache : Cache LevelId GetError Level -> Updater Session
 withLevelCache cache session =
     { session | levels = cache }
 
 
-withDraftCache : RemoteCache DraftId (Maybe Draft) -> Session -> Session
+withDraftCache : Drafts -> Updater Session
 withDraftCache cache session =
     { session | drafts = cache }
 
 
-withSolutionCache : RemoteCache SolutionId (Maybe Solution) -> Session -> Session
+updateDrafts : Updater Drafts -> Updater Session
+updateDrafts updater session =
+    { session | drafts = updater session.drafts }
+
+
+updateBlueprints : Updater (RemoteCache BlueprintId (Maybe Blueprint)) -> Updater Session
+updateBlueprints updater session =
+    { session | blueprints = updater session.blueprints }
+
+
+withSolutionCache : RemoteCache SolutionId (Maybe Solution) -> Updater Session
 withSolutionCache cache session =
     { session | solutions = cache }
 
 
-withCampaignCache : Cache CampaignId GetError Campaign -> Session -> Session
+withCampaignCache : Cache CampaignId GetError Campaign -> Updater Session
 withCampaignCache cache session =
     { session | campaigns = cache }
 
 
-withHighScoreCache : Cache LevelId GetError HighScore -> Session -> Session
+withHighScoreCache : Cache LevelId GetError HighScore -> Updater Session
 withHighScoreCache cache session =
     { session | highScores = cache }
 
 
-withDraftBookCache : Cache LevelId GetError DraftBook -> Session -> Session
+withDraftBookCache : Cache LevelId GetError DraftBook -> Updater Session
 withDraftBookCache cache session =
     { session | draftBooks = cache }
 
 
-withSolutionBookCache : Cache LevelId GetError SolutionBook -> Session -> Session
+withSolutionBookCache : Cache LevelId GetError SolutionBook -> Updater Session
 withSolutionBookCache cache session =
     { session | solutionBooks = cache }
 
 
-withBlueprintCache : RemoteCache BlueprintId (Maybe Blueprint) -> Session -> Session
+withBlueprintCache : RemoteCache BlueprintId (Maybe Blueprint) -> Updater Session
 withBlueprintCache cache session =
     { session | blueprints = cache }
 
 
-withActualBlueprintsRequest : RemoteData GetError () -> Session -> Session
+withActualBlueprintsRequest : RemoteData GetError () -> Updater Session
 withActualBlueprintsRequest request session =
     { session | actualBlueprintsRequest = request }
+
+
+updateCampaignRequests : (Cache CampaignId GetError () -> Cache CampaignId GetError ()) -> Updater Session
+updateCampaignRequests updater session =
+    { session | campaignRequests = updater session.campaignRequests }
+
+
+updateSavingDraftRequests : Updater (Dict DraftId (SaveRequest SaveError (Maybe Draft))) -> Updater Session
+updateSavingDraftRequests updater session =
+    { session | savingDraftRequests = updater session.savingDraftRequests }
+
+
+
+-- GETTERS
+
+
+getLevelsByCampaignId : CampaignId -> Session -> RemoteData GetError (List Level)
+getLevelsByCampaignId campaignId session =
+    case Cache.get campaignId session.campaignRequests of
+        NotAsked ->
+            NotAsked
+
+        Loading ->
+            Loading
+
+        _ ->
+            Cache.values session.levels
+                |> List.filterMap RemoteData.toMaybe
+                |> List.filterMap Maybe.Extra.join
+                |> List.filter (.campaignId >> (==) campaignId)
+                |> RemoteData.succeed
 
 
 
@@ -191,33 +257,33 @@ getLevel levelId session =
     Cache.get levelId session.levels
 
 
-withLevel : Level -> Session -> Session
+withLevel : Level -> Updater Session
 withLevel level session =
     session.levels
         |> Cache.withValue level.id level
         |> setLevelCache session
 
 
-withLevels : List Level -> Session -> Session
+withLevels : List Level -> Updater Session
 withLevels levels session =
     List.foldl withLevel session levels
 
 
-withoutLevel : LevelId -> Session -> Session
+withoutLevel : LevelId -> Updater Session
 withoutLevel levelId session =
     session.levels
         |> Cache.remove levelId
         |> setLevelCache session
 
 
-levelLoading : LevelId -> Session -> Session
+levelLoading : LevelId -> Updater Session
 levelLoading levelId session =
     session.levels
         |> Cache.loading levelId
         |> setLevelCache session
 
 
-levelError : LevelId -> GetError -> Session -> Session
+levelError : LevelId -> GetError -> Updater Session
 levelError levelId error session =
     session.levels
         |> Cache.withError levelId error
@@ -238,26 +304,26 @@ getCampaign campaignId session =
     Cache.get campaignId session.campaigns
 
 
-withCampaigns : List Campaign -> Session -> Session
+withCampaigns : List Campaign -> Updater Session
 withCampaigns campaigns session =
     List.foldl withCampaign session campaigns
 
 
-withCampaign : Campaign -> Session -> Session
+withCampaign : Campaign -> Updater Session
 withCampaign campaign session =
     session.campaigns
         |> Cache.withValue campaign.id campaign
         |> setCampaignCache session
 
 
-campaignLoading : CampaignId -> Session -> Session
+campaignLoading : CampaignId -> Updater Session
 campaignLoading campaignId session =
     session.campaigns
         |> Cache.loading campaignId
         |> setCampaignCache session
 
 
-campaignError : CampaignId -> GetError -> Session -> Session
+campaignError : CampaignId -> GetError -> Updater Session
 campaignError campaignId error session =
     session.campaigns
         |> Cache.withError campaignId error
@@ -278,14 +344,14 @@ getHighScore levelId session =
     Cache.get levelId session.highScores
 
 
-withHighScore : HighScore -> Session -> Session
+withHighScore : HighScore -> Updater Session
 withHighScore highScore session =
     session.highScores
         |> Cache.withValue highScore.levelId highScore
         |> setHighScoreCache session
 
 
-withHighScoreResult : RequestResult LevelId GetError HighScore -> Session -> Session
+withHighScoreResult : RequestResult LevelId GetError HighScore -> Updater Session
 withHighScoreResult { request, result } session =
     { session
         | highScores =
@@ -293,14 +359,14 @@ withHighScoreResult { request, result } session =
     }
 
 
-highScoreLoading : LevelId -> Session -> Session
+highScoreLoading : LevelId -> Updater Session
 highScoreLoading levelId session =
     session.highScores
         |> Cache.loading levelId
         |> setHighScoreCache session
 
 
-highScoreError : LevelId -> GetError -> Session -> Session
+highScoreError : LevelId -> GetError -> Updater Session
 highScoreError levelId error session =
     session.highScores
         |> Cache.withError levelId error
@@ -321,7 +387,7 @@ getDraftBook levelId session =
     Cache.get levelId session.draftBooks
 
 
-withDraftBook : DraftBook -> Session -> Session
+withDraftBook : DraftBook -> Updater Session
 withDraftBook draftBook session =
     session.draftBooks
         |> Cache.withDefault draftBook.levelId draftBook
@@ -329,7 +395,7 @@ withDraftBook draftBook session =
         |> setDraftBookCache session
 
 
-draftBookError : LevelId -> GetError -> Session -> Session
+draftBookError : LevelId -> GetError -> Updater Session
 draftBookError levelId error session =
     session.draftBooks
         |> Cache.withError levelId error
@@ -350,7 +416,7 @@ getSolutionBook levelId session =
     Cache.get levelId session.solutionBooks
 
 
-withSolutionBook : SolutionBook -> Session -> Session
+withSolutionBook : SolutionBook -> Updater Session
 withSolutionBook solutionBook session =
     session.solutionBooks
         |> Cache.withDefault solutionBook.levelId solutionBook
@@ -358,7 +424,7 @@ withSolutionBook solutionBook session =
         |> setSolutionBookCache session
 
 
-solutionBookError : LevelId -> GetError -> Session -> Session
+solutionBookError : LevelId -> GetError -> Updater Session
 solutionBookError levelId error session =
     session.solutionBooks
         |> Cache.withError levelId error

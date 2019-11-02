@@ -71,5 +71,5 @@ view model =
             layout [] none
     in
     { body = [ content ]
-    , title = String.concat [ "Template", " - ", applicationName ]
+    , title = "Template"
     }

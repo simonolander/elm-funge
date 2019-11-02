@@ -37,7 +37,8 @@ import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.SaveError as SaveError exposing (SaveError)
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Ports.LocalStorage
+import Json.Encode.Extra
+import Ports.LocalStorage as LocalStorage
 import Random
 import Url.Builder
 
@@ -159,7 +160,7 @@ decoder =
 -- LOCAL STORAGE
 
 
-localStorageKey : DraftId -> Ports.LocalStorage.Key
+localStorageKey : DraftId -> LocalStorage.Key
 localStorageKey draftId =
     String.join "."
         [ "drafts"
@@ -167,19 +168,12 @@ localStorageKey draftId =
         ]
 
 
-saveToLocalStorage : Draft -> Cmd msg
-saveToLocalStorage draft =
-    let
-        key =
-            localStorageKey draft.id
-
-        value =
-            encode draft
-    in
-    Cmd.batch
-        [ Ports.LocalStorage.storageSetItem ( key, value )
-        , DraftBook.saveToLocalStorage draft.id draft.levelId
-        ]
+saveToLocalStorage : DraftId -> Maybe Draft -> Cmd msg
+saveToLocalStorage draftId maybeDraft =
+    LocalStorage.storageSetItem
+        ( localStorageKey draftId
+        , Json.Encode.Extra.maybe encode maybeDraft
+        )
 
 
 loadFromLocalStorage : DraftId -> Cmd msg
@@ -188,12 +182,7 @@ loadFromLocalStorage draftId =
         key =
             localStorageKey draftId
     in
-    Ports.LocalStorage.storageGetItem key
-
-
-removeFromLocalStorage : DraftId -> Cmd msg
-removeFromLocalStorage draftId =
-    Ports.LocalStorage.storageRemoveItem (localStorageKey draftId)
+    LocalStorage.storageGetItem key
 
 
 localStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId Decode.Error (Maybe Draft))
@@ -209,7 +198,7 @@ localStorageResponse ( key, value ) =
             Nothing
 
 
-remoteKey : DraftId -> Ports.LocalStorage.Key
+remoteKey : DraftId -> LocalStorage.Key
 remoteKey draftId =
     String.join "."
         [ localStorageKey draftId
@@ -217,30 +206,12 @@ remoteKey draftId =
         ]
 
 
-saveRemoteToLocalStorage : Draft -> Cmd msg
-saveRemoteToLocalStorage draft =
-    let
-        key =
-            remoteKey draft.id
-
-        value =
-            encode draft
-    in
-    Ports.LocalStorage.storageSetItem ( key, value )
-
-
-loadRemoteFromLocalStorage : DraftId -> Cmd msg
-loadRemoteFromLocalStorage draftId =
-    let
-        key =
-            remoteKey draftId
-    in
-    Ports.LocalStorage.storageGetItem key
-
-
-removeRemoteFromLocalStorage : DraftId -> Cmd msg
-removeRemoteFromLocalStorage draftId =
-    Ports.LocalStorage.storageRemoveItem (remoteKey draftId)
+saveRemoteToLocalStorage : DraftId -> Maybe Draft -> Cmd msg
+saveRemoteToLocalStorage draftId maybeDraft =
+    LocalStorage.storageSetItem
+        ( remoteKey draftId
+        , Json.Encode.Extra.maybe encode maybeDraft
+        )
 
 
 localRemoteStorageResponse : ( String, Encode.Value ) -> Maybe (RequestResult DraftId Decode.Error (Maybe Draft))
@@ -256,6 +227,16 @@ localRemoteStorageResponse ( key, value ) =
             Nothing
 
 
+removeRemoteFromLocalStorage : DraftId -> Cmd msg
+removeRemoteFromLocalStorage draftId =
+    LocalStorage.storageRemoveItem (remoteKey draftId)
+
+
+removeFromLocalStorage : DraftId -> Cmd msg
+removeFromLocalStorage draftId =
+    LocalStorage.storageRemoveItem (localStorageKey draftId)
+
+
 
 -- REST
 
@@ -268,13 +249,13 @@ loadAllFromServer toMsg accessToken =
         |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
 
 
-loadFromServer : (Result GetError (Maybe Draft) -> msg) -> AccessToken -> DraftId -> Cmd msg
-loadFromServer toMsg accessToken draftId =
+loadFromServer : (DraftId -> Result GetError (Maybe Draft) -> msg) -> DraftId -> AccessToken -> Cmd msg
+loadFromServer toMsg draftId accessToken =
     GCP.get
         |> GCP.withPath [ "drafts" ]
         |> GCP.withStringQueryParameter "draftId" draftId
         |> GCP.withAccessToken accessToken
-        |> GCP.request (HttpError.expectMaybe decoder toMsg)
+        |> GCP.request (HttpError.expectMaybe decoder (toMsg draftId))
 
 
 loadFromServerByLevelId : (Result GetError (List Draft) -> msg) -> AccessToken -> LevelId -> Cmd msg

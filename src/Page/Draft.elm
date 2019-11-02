@@ -508,7 +508,7 @@ view model =
                 |> Html.map InternalMsg
                 |> List.singleton
     in
-    { title = String.concat [ "Draft", " - ", applicationName ]
+    { title = "Draft"
     , body = body
     }
 

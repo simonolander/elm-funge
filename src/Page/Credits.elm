@@ -187,7 +187,7 @@ view model =
                     }
     in
     { body = [ content ]
-    , title = String.concat [ "Credits", " - ", applicationName ]
+    , title = "Credits"
     }
 
 

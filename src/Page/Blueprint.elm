@@ -1,4 +1,4 @@
-module Page.Blueprint exposing (Model, Msg, getSession, init, load, subscriptions, update, view)
+module Page.Blueprint exposing (Model, Msg, init, load, subscriptions, update, view)
 
 import ApplicationName exposing (applicationName)
 import Array exposing (Array)
@@ -6,6 +6,7 @@ import Basics.Extra exposing (flip)
 import Browser exposing (Document)
 import Data.Board as Board
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)
+import Data.Cache as Cache
 import Data.CampaignId as CampaignId
 import Data.GetError as GetError
 import Data.Instruction exposing (Instruction(..))
@@ -15,6 +16,7 @@ import Data.Level as Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
 import Data.Suite as Suite
+import Dict
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -40,9 +42,8 @@ import ViewComponents
 
 
 type alias Model =
-    { session : Session
-    , levelId : LevelId
-    , loadedLevelId : Maybe LevelId
+    { blueprintId : LevelId
+    , loadedBlueprintId : Maybe LevelId
     , width : String
     , height : String
     , input : String
@@ -54,13 +55,12 @@ type alias Model =
     }
 
 
-init : LevelId -> Session -> ( Model, Cmd Msg )
-init levelId session =
+init : LevelId -> ( Model, Cmd Msg )
+init levelId =
     let
         model =
-            { session = session
-            , levelId = levelId
-            , loadedLevelId = Nothing
+            { blueprintId = levelId
+            , loadedBlueprintId = Nothing
             , width = ""
             , height = ""
             , input = ""
@@ -74,100 +74,60 @@ init levelId session =
     ( model, Cmd.none )
 
 
-load : Model -> ( Model, Cmd Msg )
-load =
+load : Session -> Model -> ( Session, Model, Cmd Msg )
+load session =
     let
-        loadLevel model =
-            case Session.getLevel model.levelId model.session of
-                NotAsked ->
-                    ( model.session
-                        |> Session.levelLoading model.levelId
-                        |> setSession model
-                    , Level.loadFromLocalStorage model.levelId
-                    )
+        initializeInputsFromBlueprint model =
+            let maybeBlueprint =
+                     Cache.get model.blueprintId session.blueprints.working
+                        |> RemoteData.toMaybe
+                        |> Maybe.Extra.join
+            in
+            case  maybeBlueprint of
+                Just blueprint ->
+                    let
+                        isNewBlueprint = Maybe.map ((==) blueprint.id) model.loadedBlueprintId
+                                                                     |> Maybe.withDefault True
 
-                Success level ->
-                    if
-                        model.loadedLevelId
-                            |> Maybe.map ((==) level.id)
-                            |> Maybe.withDefault False
-                    then
-                        noCmd model
+                        newModel =
+                            if isNewBlueprint then
+                            { model
+                                                                                | blueprintId = blueprint.id
+                                                                                , loadedBlueprintId = Just blueprint.id
+                                                                                , width = String.fromInt (Board.width blueprint.initialBoard)
+                                                                                , height = String.fromInt (Board.height blueprint.initialBoard)
+                                                                                , input =
+                                                                                    blueprint.suites
+                                                                                        |> List.head
+                                                                                        |> Maybe.withDefault Suite.empty
+                                                                                        |> .input
+                                                                                        |> List.map Int16.toString
+                                                                                        |> String.join ","
+                                                                                , output =
+                                                                                    blueprint.suites
+                                                                                        |> List.head
+                                                                                        |> Maybe.withDefault Suite.empty
+                                                                                        |> .output
+                                                                                        |> List.map Int16.toString
+                                                                                        |> String.join ","
+                                                                                , enabledInstructionTools =
+                                                                                    InstructionTool.all
+                                                                                        |> List.filter ((/=) (JustInstruction NoOp))
+                                                                                        |> List.map (\tool -> ( tool, Extra.Array.member tool blueprint.instructionTools ))
+                                                                                        |> Array.fromList
+                                                                              }
+                            else model
 
-                    else
-                        ( { model
-                            | levelId = level.id
-                            , loadedLevelId = Just level.id
-                            , width = String.fromInt (Board.width level.initialBoard)
-                            , height = String.fromInt (Board.height level.initialBoard)
-                            , input =
-                                level.suites
-                                    |> List.head
-                                    |> Maybe.withDefault Suite.empty
-                                    |> .input
-                                    |> List.map Int16.toString
-                                    |> String.join ","
-                            , output =
-                                level.suites
-                                    |> List.head
-                                    |> Maybe.withDefault Suite.empty
-                                    |> .output
-                                    |> List.map Int16.toString
-                                    |> String.join ","
-                            , enabledInstructionTools =
-                                InstructionTool.all
-                                    |> List.filter ((/=) (JustInstruction NoOp))
-                                    |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
-                                    |> Array.fromList
-                          }
-                        , Cmd.none
-                        )
+                    in (session, newModel, Cmd.none)
 
-                _ ->
-                    noCmd model
+                Nothing -> (session, model, Cmd.none)
+
+        loadBlueprint =
+
     in
     Extra.Cmd.fold
         [ loadLevel ]
 
-
-initWithLevel : Level -> Model -> ( Model, Cmd Msg )
-initWithLevel level model =
-    ( { model
-        | levelId = level.id
-        , width = String.fromInt (Board.width level.initialBoard)
-        , height = String.fromInt (Board.height level.initialBoard)
-        , input =
-            level.suites
-                |> List.head
-                |> Maybe.withDefault Suite.empty
-                |> .input
-                |> List.map Int16.toString
-                |> String.join ","
-        , output =
-            level.suites
-                |> List.head
-                |> Maybe.withDefault Suite.empty
-                |> .output
-                |> List.map Int16.toString
-                |> String.join ","
-        , enabledInstructionTools =
-            InstructionTool.all
-                |> List.filter ((/=) (JustInstruction NoOp))
-                |> List.map (\tool -> ( tool, Extra.Array.member tool level.instructionTools ))
-                |> Array.fromList
-      }
-    , Cmd.none
-    )
-
-
-getSession : Model -> Session
-getSession { session } =
-    session
-
-
-setSession : Model -> Session -> Model
-setSession model session =
-    { model | session = session }
 
 
 
@@ -185,10 +145,10 @@ type Msg
     | InitialInstructionPlaced BoardInstruction
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> Session -> Model -> ( Model, Cmd Msg )
+update msg session model =
     case
-        Session.getLevel model.levelId model.session
+        Session.getLevel model.blueprintId session
             |> RemoteData.toMaybe
     of
         Just level ->
@@ -214,7 +174,7 @@ update msg model =
                                             |> flip Level.withInitialBoard level
 
                                     session =
-                                        Session.withLevel newLevel model.session
+                                        Session.withLevel newLevel session
 
                                     cmd =
                                         Level.saveToLocalStorage newLevel
@@ -245,7 +205,7 @@ update msg model =
                                             |> flip Level.withInitialBoard level
 
                                     session =
-                                        Session.withLevel newLevel model.session
+                                        Session.withLevel newLevel session
 
                                     cmd =
                                         Level.saveToLocalStorage newLevel
@@ -277,7 +237,7 @@ update msg model =
                             Level.withSuites [ suite ] level
 
                         newSession =
-                            Session.withLevel newLevel model.session
+                            Session.withLevel newLevel session
 
                         cmd =
                             Level.saveToLocalStorage newLevel
@@ -306,7 +266,7 @@ update msg model =
                             Level.withSuites [ suite ] level
 
                         newSession =
-                            Session.withLevel newLevel model.session
+                            Session.withLevel newLevel session
 
                         cmd =
                             Level.saveToLocalStorage newLevel
@@ -335,7 +295,7 @@ update msg model =
                                 |> flip Level.withInstructionTools level
 
                         newSession =
-                            Session.withLevel newLevel model.session
+                            Session.withLevel newLevel session
 
                         cmd =
                             Level.saveToLocalStorage newLevel
@@ -356,7 +316,7 @@ update msg model =
 
                         newModel =
                             newLevel
-                                |> flip Session.withLevel model.session
+                                |> flip Session.withLevel session
                                 |> setSession model
 
                         cmd =
@@ -385,12 +345,12 @@ view : Model -> Document Msg
 view model =
     let
         content =
-            case Session.getLevel model.levelId model.session of
+            case Session.getLevel model.blueprintId session of
                 NotAsked ->
                     View.ErrorScreen.view "Not asked :/"
 
                 Loading ->
-                    View.LoadingScreen.view ("Loading level " ++ model.levelId)
+                    View.LoadingScreen.view ("Loading level " ++ model.blueprintId)
 
                 Failure error ->
                     View.ErrorScreen.view (GetError.toString error)
@@ -404,7 +364,7 @@ view model =
                 |> List.singleton
     in
     { body = body
-    , title = String.concat [ "Blueprint", " - ", applicationName ]
+    , title = "Blueprint"
     }
 
 
@@ -412,7 +372,7 @@ viewBlueprint : Level -> Model -> Element Msg
 viewBlueprint level model =
     let
         header =
-            View.Header.view model.session
+            View.Header.view session
 
         west =
             let

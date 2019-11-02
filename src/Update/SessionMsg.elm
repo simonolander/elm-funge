@@ -21,7 +21,7 @@ type SessionMsg
     | GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
     | GotLoadDraftsByLevelIdResponse LevelId (Result GetError (List Draft))
     | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
-    | GotLoadLevelByLevelIdResponse LevelId (Result GetError Level)
+    | GotLoadLevelByLevelIdResponse LevelId (Result GetError (Maybe Level))
     | GotLoadLevelsByCampaignIdResponse CampaignId (Result GetError (List Level))
     | GotLoadBlueprintResponse BlueprintId (Result GetError (Maybe Blueprint))
     | GotLoadBlueprintsResponse (Result GetError (List Blueprint))

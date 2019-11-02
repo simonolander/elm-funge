@@ -1,4 +1,4 @@
-module Page.Campaigns exposing (Model, Msg(..), init, load, subscriptions, update, view)
+module Page.Campaigns.View exposing (view, viewCampaign, viewCampaigns)
 
 import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
@@ -7,16 +7,12 @@ import Data.Cache as Cache
 import Data.CampaignId as CampaignId exposing (CampaignId)
 import Data.GetError as GetError
 import Data.Session exposing (Session)
-import Data.SolutionBook
 import Element exposing (..)
-import Extra.Cmd
-import Html
 import List.Extra
-import Loaders
+import Page.Campaigns.Model exposing (Model)
+import Page.Campaigns.Msg exposing (Msg)
 import RemoteData exposing (RemoteData(..))
 import Route
-import SessionUpdate exposing (SessionMsg(..))
-import Set
 import String.Extra
 import View.Card as Card
 import View.Constant exposing (icons, size)
@@ -24,101 +20,33 @@ import View.Header
 import View.Scewn as Scewn
 
 
-
--- MODEL
-
-
-type alias Model =
-    { session : Session
-    }
-
-
-withSession : Session -> Model -> Model
-withSession session model =
-    { model | session = session }
-
-
-type Msg
-    = InternalMsg InternalMsg
-    | SessionMsg SessionMsg
-
-
-type alias InternalMsg =
-    ()
-
-
-init : Session -> ( Model, Cmd Msg )
-init session =
-    ( { session = session }, Cmd.none )
-
-
-load : Model -> ( Model, Cmd Msg )
-load =
-    let
-        loadCampaigns model =
-            Loaders.loadCampaignsByCampaignIds CampaignId.all model.session
-                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
-
-        loadSolutions model =
-            Loaders.loadSolutionsByCampaignIds CampaignId.all model.session
-                |> Tuple.mapBoth (flip withSession model) (Cmd.map SessionMsg)
-    in
-    Extra.Cmd.fold
-        [ loadCampaigns
-        , loadSolutions
-        ]
-
-
-
--- UPDATE
-
-
-update : InternalMsg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-
--- VIEW
-
-
-view : Model -> Document Msg
-view model =
+view : ( Session, Model ) -> Document Msg
+view ( session, _ ) =
     let
         content =
             Scewn.layout
                 { south = Nothing
-                , center = Just <| viewCampaigns model
+                , center = Just <| viewCampaigns session
                 , east = Nothing
                 , west = Nothing
-                , north = Just <| View.Header.view model.session
+                , north = Just <| View.Header.view session
                 , modal = Nothing
                 }
     in
-    { body =
-        List.map (Html.map InternalMsg) [ content ]
-    , title = String.concat [ "Campaigns", " - ", applicationName ]
+    { body = [ content ]
+    , title = "Campaigns"
     }
 
 
-viewCampaigns : Model -> Element InternalMsg
-viewCampaigns model =
+viewCampaigns : Session -> Element Msg
+viewCampaigns session =
     let
         title =
             el [ size.font.page.title, centerX, padding 20 ] (text "Campaigns")
 
         campaigns =
             CampaignId.all
-                |> List.map (viewCampaign model)
+                |> List.map (viewCampaign session)
 
         elements =
             List.concat
@@ -135,15 +63,15 @@ viewCampaigns model =
         elements
 
 
-viewCampaign : Model -> CampaignId -> Element InternalMsg
-viewCampaign model campaignId =
+viewCampaign : Session -> CampaignId -> Element Msg
+viewCampaign session campaignId =
     let
         title =
             String.Extra.toSentenceCase campaignId
                 |> text
                 |> el [ size.font.card.title, centerX ]
     in
-    case Cache.get campaignId model.session.campaigns of
+    case Cache.get campaignId session.campaignRequests of
         NotAsked ->
             Card.link
                 { url = Route.toString (Route.Campaign campaignId Nothing)
@@ -183,20 +111,25 @@ viewCampaign model campaignId =
                 , selected = False
                 }
 
-        Success campaign ->
+        Success () ->
             let
+                campaignLevels =
+                    Cache.values session.levels
+                        |> List.filterMap RemoteData.toMaybe
+                        |> List.filter (.campaignId >> (==) campaignId)
+
                 numberOfLevels =
-                    List.length campaign.levelIds
+                    List.length campaignLevels
 
                 solutionBooks =
-                    List.map (flip Cache.get model.session.solutionBooks) campaign.levelIds
+                    List.map (flip Cache.get session.solutionBooks) campaign.levelIds
 
                 numberOfLoadingLevels =
                     List.Extra.count RemoteData.isLoading solutionBooks
 
                 numberOfSolvedLevels =
                     List.filterMap RemoteData.toMaybe solutionBooks
-                        |> List.Extra.count (.solutionIds >> Set.isEmpty >> not)
+                        |> List.Extra.count (.solutionIds >> Set.isEmptzy >> not)
 
                 content =
                     if numberOfLoadingLevels > 0 then

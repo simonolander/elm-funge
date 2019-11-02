@@ -1,4 +1,4 @@
-module Data.RequestResult exposing (RequestResult, badBody, constructor, extractMaybe, split, toTuple)
+module Data.RequestResult exposing (RequestResult, badBody, constructor, split, toTuple)
 
 import Data.GetError exposing (GetError(..))
 import Json.Decode
@@ -25,19 +25,6 @@ badBody =
 toTuple : RequestResult request error data -> ( request, Result error data )
 toTuple { request, result } =
     ( request, result )
-
-
-extractMaybe : RequestResult request error (Maybe data) -> Maybe (RequestResult request error data)
-extractMaybe { request, result } =
-    case result of
-        Ok (Just value) ->
-            Just { request = request, result = Ok value }
-
-        Ok Nothing ->
-            Nothing
-
-        Err error ->
-            Just { request = request, result = Err error }
 
 
 split : List (RequestResult request error data) -> ( List ( request, data ), List ( request, error ) )

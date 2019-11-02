@@ -3,7 +3,7 @@ module Update.General exposing (gotGetError, gotSaveError)
 import Data.GetError as GetError exposing (GetError)
 import Data.SaveError as SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
-import SessionUpdate exposing (SessionMsg)
+import Update.SessionMsg exposing (SessionMsg)
 
 
 gotSaveError : SaveError -> Session -> ( Session, Cmd SessionMsg )

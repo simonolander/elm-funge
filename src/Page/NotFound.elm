@@ -78,5 +78,5 @@ view model =
                 }
     in
     { body = [ content ]
-    , title = String.concat [ "Not Found", " - ", applicationName ]
+    , title = "Not Found"
     }

@@ -15,7 +15,6 @@ import Browser exposing (Document)
 import Browser.Navigation
 import Data.AccessToken as AccessToken exposing (AccessToken)
 import Data.Blueprint as Blueprint exposing (Blueprint)
-import Data.BlueprintBook as BlueprintBook
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache exposing (Cache)
 import Data.Draft as Draft exposing (Draft)
@@ -24,7 +23,6 @@ import Data.DraftId exposing (DraftId)
 import Data.GetError as GetError exposing (GetError)
 import Data.LevelId exposing (LevelId)
 import Data.OneOrBoth as OneOrBoth exposing (OneOrBoth(..))
-import Data.RemoteCache exposing (RemoteCache)
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.SaveError as SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
@@ -39,7 +37,6 @@ import Element exposing (..)
 import Element.Font as Font
 import Extra.Cmd exposing (noCmd, withCmd)
 import Extra.List exposing (flist)
-import Extra.Result
 import Json.Decode as Decode
 import Json.Encode as Encode
 import List.Extra
@@ -91,23 +88,22 @@ type AccessTokenState
 
 
 type alias Model =
-    { session : Session
-    , route : Route
+    { route : Route
     , accessTokenState : AccessTokenState
     , expectedUserInfo : Maybe UserInfo
     , actualUserInfo : RemoteData.RemoteData GetError UserInfo
     , localDraftBooks : Dict LevelId DraftBook
-    , localDrafts : Dict DraftId Draft
-    , expectedDrafts : Dict DraftId Draft
+    , localDrafts : Dict DraftId (Maybe Draft)
+    , expectedDrafts : Dict DraftId (Maybe Draft)
     , actualDrafts : Cache DraftId GetError (Maybe Draft)
     , savingDrafts : Dict DraftId (Saving SaveError)
     , localSolutionBooks : Dict LevelId SolutionBook
-    , localSolutions : Dict SolutionId Solution
-    , expectedSolutions : Dict SolutionId Solution
+    , localSolutions : Dict SolutionId (Maybe Solution)
+    , expectedSolutions : Dict SolutionId (Maybe Solution)
     , actualSolutions : Cache SolutionId GetError (Maybe Solution)
     , savingSolutions : Dict SolutionId (Saving SubmitSolutionError)
-    , localBlueprints : Dict BlueprintId Blueprint
-    , expectedBlueprints : Dict BlueprintId Blueprint
+    , localBlueprints : Dict BlueprintId (Maybe Blueprint)
+    , expectedBlueprints : Dict BlueprintId (Maybe Blueprint)
     , actualBlueprints : Cache BlueprintId GetError (Maybe Blueprint)
     , savingBlueprints : Dict BlueprintId (Saving SaveError)
     }
@@ -137,156 +133,6 @@ type Msg
     | ClickedSignInToOtherAccount
 
 
-init :
-    { navigationKey : Browser.Navigation.Key
-    , localStorageEntries : List ( String, Encode.Value )
-    , url : Url.Url
-    }
-    -> ( Model, Cmd Msg )
-init { navigationKey, localStorageEntries, url } =
-    let
-        ( route, accessToken, accessTokenCmd ) =
-            case Auth0.loginResponseFromUrl url of
-                Just loginResponse ->
-                    ( loginResponse.route
-                    , Just loginResponse.accessToken
-                    , Cmd.none
-                    )
-
-                Nothing ->
-                    let
-                        accessTokenResult =
-                            localStorageEntries
-                                |> List.filterMap AccessToken.localStorageResponse
-                                |> List.head
-                                |> Maybe.map .result
-                    in
-                    ( Route.fromUrl url
-                        |> Maybe.withDefault Route.Home
-                    , accessTokenResult
-                        |> Maybe.andThen Result.toMaybe
-                        |> Maybe.Extra.join
-                    , case accessTokenResult of
-                        Just (Err error) ->
-                            Console.errorString (Decode.errorToString error)
-
-                        _ ->
-                            Cmd.none
-                    )
-
-        expectedUserInfoResult =
-            localStorageEntries
-                |> List.filterMap UserInfo.localStorageResponse
-                |> List.head
-                |> Maybe.andThen RequestResult.extractMaybe
-                |> Maybe.map .result
-
-        ( localDrafts, localDraftErrors ) =
-            localStorageEntries
-                |> List.filterMap Draft.localStorageResponse
-                |> List.filterMap RequestResult.extractMaybe
-                |> RequestResult.split
-
-        ( expectedDrafts, expectedDraftErrors ) =
-            localStorageEntries
-                |> List.filterMap Draft.localRemoteStorageResponse
-                |> List.filterMap RequestResult.extractMaybe
-                |> RequestResult.split
-
-        ( localDraftBooks, localDraftBookErrors ) =
-            localStorageEntries
-                |> List.filterMap DraftBook.localStorageResponse
-                |> RequestResult.split
-
-        ( localSolutions, localSolutionErrors ) =
-            localStorageEntries
-                |> List.filterMap Solution.localStorageResponse
-                |> List.filterMap RequestResult.extractMaybe
-                |> RequestResult.split
-
-        ( expectedSolutions, expectedSolutionErrors ) =
-            localStorageEntries
-                |> List.filterMap Solution.localRemoteStorageResponse
-                |> List.filterMap RequestResult.extractMaybe
-                |> RequestResult.split
-
-        ( localSolutionBooks, localSolutionBookErrors ) =
-            localStorageEntries
-                |> List.filterMap SolutionBook.localStorageResponse
-                |> RequestResult.split
-
-        ( localBlueprints, localBlueprintErrors ) =
-            localStorageEntries
-                |> List.filterMap Blueprint.localStorageResponse
-                |> List.filterMap RequestResult.extractMaybe
-                |> RequestResult.split
-
-        ( expectedBlueprints, expectedBlueprintErrors ) =
-            localStorageEntries
-                |> List.filterMap Blueprint.localRemoteStorageResponse
-                |> List.filterMap RequestResult.extractMaybe
-                |> RequestResult.split
-
-        model : Model
-        model =
-            { session =
-                Session.init navigationKey url
-
-            --                    |> Levels.withTestLevels
-            , route = route
-            , accessTokenState =
-                accessToken
-                    |> Maybe.map Verifying
-                    |> Maybe.withDefault Missing
-            , expectedUserInfo = Maybe.andThen Result.toMaybe expectedUserInfoResult
-            , actualUserInfo = RemoteData.NotAsked
-            , localDraftBooks = Dict.fromList localDraftBooks
-            , localDrafts = Dict.fromList localDrafts
-            , expectedDrafts = Dict.fromList expectedDrafts
-            , actualDrafts = Cache.empty
-            , savingDrafts = Dict.empty
-            , localSolutionBooks = Dict.fromList localSolutionBooks
-            , localSolutions = Dict.fromList localSolutions
-            , expectedSolutions = Dict.fromList expectedSolutions
-            , actualSolutions = Cache.empty
-            , savingSolutions = Dict.empty
-            , localBlueprints = Dict.fromList localBlueprints
-            , expectedBlueprints = Dict.fromList expectedBlueprints
-            , actualBlueprints = Cache.empty
-            , savingBlueprints = Dict.empty
-            }
-
-        cmd : Cmd Msg
-        cmd =
-            Cmd.batch
-                [ accessTokenCmd
-                , expectedUserInfoResult
-                    |> Maybe.andThen Extra.Result.getError
-                    |> Maybe.map Decode.errorToString
-                    |> Maybe.map Console.errorString
-                    |> Maybe.withDefault Cmd.none
-                , Cmd.batch
-                    (List.map
-                        (List.map Tuple.second
-                            >> List.map Decode.errorToString
-                            >> List.map Console.errorString
-                            >> Cmd.batch
-                        )
-                        [ localDraftErrors
-                        , expectedDraftErrors
-                        , localDraftBookErrors
-                        , localSolutionErrors
-                        , expectedSolutionErrors
-                        , localSolutionBookErrors
-                        , localBlueprintErrors
-                        , expectedBlueprintErrors
-                        ]
-                    )
-                ]
-    in
-    ( model, cmd )
-
-
 load : Model -> ( Model, Cmd Msg )
 load =
     let
@@ -309,24 +155,11 @@ load =
                 Verified { accessToken } ->
                     let
                         loadingDraftIds =
-                            model.localDrafts
-                                |> Dict.values
-                                |> List.filterMap
-                                    (\localDraft ->
-                                        if RemoteData.isNotAsked (Cache.get localDraft.id model.actualDrafts) then
-                                            if
-                                                Dict.get localDraft.id model.expectedDrafts
-                                                    |> Maybe.Extra.filter (Draft.eq localDraft)
-                                                    |> Maybe.Extra.isJust
-                                            then
-                                                Nothing
-
-                                            else
-                                                Just localDraft.id
-
-                                        else
-                                            Nothing
-                                    )
+                            OneOrBoth.fromDicts model.localDrafts model.expectedDrafts
+                                |> List.filterMap OneOrBoth.join
+                                |> List.filter (OneOrBoth.areSame Draft.eq >> not)
+                                |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
+                                |> List.filter (flip Cache.get model.actualDrafts >> RemoteData.isNotAsked)
                     in
                     ( loadingDraftIds
                         |> List.foldl Cache.loading model.actualDrafts
@@ -347,14 +180,13 @@ load =
                 Verified { accessToken } ->
                     let
                         unpublishedSolutions =
-                            model.localSolutions
-                                |> Dict.values
+                            Dict.values model.localSolutions
+                                |> Maybe.Extra.values
                                 |> List.filter (.id >> flip Dict.member model.expectedSolutions >> not)
                                 |> List.filter (.id >> flip Dict.member model.savingSolutions >> not)
 
                         savingSolutions =
-                            unpublishedSolutions
-                                |> List.foldl (\solution -> Dict.insert solution.id Saving) model.savingSolutions
+                            List.foldl (\solution -> Dict.insert solution.id Saving) model.savingSolutions unpublishedSolutions
                     in
                     ( { model | savingSolutions = savingSolutions }
                     , unpublishedSolutions
@@ -427,6 +259,7 @@ load =
                     let
                         hasDraftConflicts =
                             OneOrBoth.fromDicts model.localDrafts model.expectedDrafts
+                                |> List.filterMap OneOrBoth.join
                                 |> List.all (OneOrBoth.areSame Draft.eq)
                                 |> not
 
@@ -472,26 +305,14 @@ load =
                                 User.authorizedUser accessToken userInfo
 
                             draftCache =
-                                { local =
-                                    model.localDrafts
-                                        |> Dict.map (always Just)
-                                        |> Cache.fromValueDict
-                                , expected =
-                                    model.expectedDrafts
-                                        |> Dict.map (always Just)
-                                        |> Cache.fromValueDict
+                                { local = model.localDrafts
+                                , expected = model.expectedDrafts
                                 , actual = model.actualDrafts
                                 }
 
                             blueprintCache =
-                                { local =
-                                    model.localBlueprints
-                                        |> Dict.map (always Just)
-                                        |> Cache.fromValueDict
-                                , expected =
-                                    model.expectedBlueprints
-                                        |> Dict.map (always Just)
-                                        |> Cache.fromValueDict
+                                { local = model.localBlueprints
+                                , expected = model.expectedBlueprints
                                 , actual = model.actualBlueprints
                                 }
 
@@ -501,18 +322,16 @@ load =
                                     |> Session.withDraftCache draftCache
                                     |> Session.withBlueprintCache blueprintCache
 
+                            saveOrDelete save delete ( id, maybeValue ) =
+                                Maybe.withDefault (delete id) (Maybe.map save maybeValue)
+
                             saveDraftsLocallyCmd =
                                 Cmd.batch
-                                    [ Dict.values model.localDrafts
-                                        |> List.map Draft.saveToLocalStorage
+                                    [ Dict.toList model.localDrafts
+                                        |> List.map (saveOrDelete Draft.saveToLocalStorage Draft.removeFromLocalStorage)
                                         |> Cmd.batch
-                                    , Dict.values model.expectedDrafts
-                                        |> List.map Draft.saveRemoteToLocalStorage
-                                        |> Cmd.batch
-                                    , Cache.toList model.actualDrafts
-                                        |> List.filterMap (\( key, data ) -> Maybe.map (Tuple.pair key) (RemoteData.toMaybe data))
-                                        |> List.filter (Tuple.second >> Maybe.Extra.isNothing)
-                                        |> List.map (Tuple.first >> flist [ Draft.removeFromLocalStorage, Draft.removeRemoteFromLocalStorage ] >> Cmd.batch)
+                                    , Dict.toList model.expectedDrafts
+                                        |> List.map (saveOrDelete Draft.saveRemoteToLocalStorage Draft.removeRemoteFromLocalStorage)
                                         |> Cmd.batch
                                     ]
 
@@ -602,7 +421,7 @@ update msg model =
         GeneratedSolution solution ->
             let
                 localSolutions =
-                    Dict.insert solution.id solution model.localSolutions
+                    Dict.insert solution.id (Just solution) model.localSolutions
 
                 localSolutionBooks =
                     Dict.update
@@ -1176,7 +995,7 @@ view model =
                     viewProgress model
                         |> View.Layout.layout
     in
-    { title = String.concat [ "Synchronizing", " - ", applicationName ]
+    { title = "Synchronizing"
     , body = [ element ]
     }
 
@@ -1246,8 +1065,8 @@ viewHttpError model error =
 
 determineConflictResolution :
     { id : id
-    , maybeLocal : Maybe a
-    , maybeExpected : Maybe a
+    , maybeLocal : Maybe (Maybe a)
+    , maybeExpected : Maybe (Maybe a)
     , remoteActual : RemoteData.RemoteData GetError (Maybe a)
     , eq : a -> a -> Bool
     }

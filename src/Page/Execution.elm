@@ -1016,7 +1016,7 @@ view model =
                 content
                 |> List.singleton
     in
-    { title = String.concat [ "Execution", " - ", applicationName ]
+    { title = "Execution"
     , body = body
     }
 

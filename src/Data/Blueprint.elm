@@ -30,6 +30,7 @@ import Data.SaveError as SaveError exposing (SaveError)
 import Data.Suite exposing (Suite)
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Json.Encode.Extra
 import Ports.LocalStorage as LocalStorage
 import Random
 
@@ -203,19 +204,19 @@ remoteKey blueprintId =
     String.join "." [ localStorageKey blueprintId, "remote" ]
 
 
-saveToLocalStorage : Blueprint -> Cmd msg
-saveToLocalStorage blueprint =
+saveToLocalStorage : BlueprintId -> Maybe Blueprint -> Cmd msg
+saveToLocalStorage blueprintId maybeBlueprint =
     LocalStorage.storageSetItem
-        ( localStorageKey blueprint.id
-        , encode blueprint
+        ( localStorageKey blueprintId
+        , Json.Encode.Extra.maybe encode maybeBlueprint
         )
 
 
-saveRemoteToLocalStorage : Blueprint -> Cmd msg
-saveRemoteToLocalStorage blueprint =
+saveRemoteToLocalStorage : BlueprintId -> Maybe Blueprint -> Cmd msg
+saveRemoteToLocalStorage blueprintId maybeBlueprint =
     LocalStorage.storageSetItem
-        ( remoteKey blueprint.id
-        , encode blueprint
+        ( remoteKey blueprintId
+        , Json.Encode.Extra.maybe encode maybeBlueprint
         )
 
 

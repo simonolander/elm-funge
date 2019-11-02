@@ -300,9 +300,9 @@ loadFromServer toMsg levelId =
         |> GCP.request (HttpError.expect decoder toMsg)
 
 
-loadFromServerByCampaignId : (Result GetError (List Level) -> msg) -> CampaignId -> Cmd msg
+loadFromServerByCampaignId : (CampaignId -> Result GetError (List Level) -> msg) -> CampaignId -> Cmd msg
 loadFromServerByCampaignId toMsg campaignId =
     GCP.get
         |> GCP.withPath [ "levels" ]
         |> GCP.withQueryParameters [ Url.Builder.string "campaignId" campaignId ]
-        |> GCP.request (HttpError.expect (Decode.list decoder) toMsg)
+        |> GCP.request (HttpError.expect (Decode.list decoder) (toMsg campaignId))

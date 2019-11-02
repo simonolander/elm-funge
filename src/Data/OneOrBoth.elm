@@ -1,8 +1,9 @@
-module Data.OneOrBoth exposing (OneOrBoth(..), any, areSame, both, first, fromDicts, map, second)
+module Data.OneOrBoth exposing (OneOrBoth(..), any, areSame, both, first, fromDicts, join, map, second, toTuple)
 
 import Basics.Extra exposing (uncurry)
 import Dict
 import List.Extra
+import Maybe.Extra
 
 
 type OneOrBoth a
@@ -97,6 +98,35 @@ both oneOrBoth =
             Just ( a, b )
 
 
+toTuple : OneOrBoth a -> ( Maybe a, Maybe a )
+toTuple oneOrBoth =
+    case oneOrBoth of
+        First a ->
+            ( Just a, Nothing )
+
+        Second b ->
+            ( Nothing, Just b )
+
+        Both a b ->
+            ( Just a, Just b )
+
+
 areSame : (a -> a -> Bool) -> OneOrBoth a -> Bool
 areSame eq =
     both >> Maybe.map (uncurry eq) >> Maybe.withDefault False
+
+
+join : OneOrBoth (Maybe a) -> Maybe (OneOrBoth a)
+join oneOrBoth =
+    case Tuple.mapBoth Maybe.Extra.join Maybe.Extra.join (toTuple oneOrBoth) of
+        ( Nothing, Nothing ) ->
+            Nothing
+
+        ( Nothing, Just b ) ->
+            Just (Second b)
+
+        ( Just a, Nothing ) ->
+            Just (First a)
+
+        ( Just a, Just b ) ->
+            Just (Both a b)
