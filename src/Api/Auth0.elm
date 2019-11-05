@@ -72,7 +72,7 @@ type alias State =
 type alias LoginResponse =
     { accessToken : AccessToken
     , expiresIn : Int
-    , route : Route
+    , url : Url
     }
 
 
@@ -129,18 +129,13 @@ loginResponseFromUrl url =
                 |> Maybe.andThen Url.percentDecode
                 |> Maybe.andThen (Json.Decode.decodeString stateDecoder >> Result.toMaybe)
                 |> Maybe.withDefault { route = "" }
-
-        route =
-            { url | fragment = Just state.route }
-                |> Route.fromUrl
-                |> Maybe.withDefault Route.Home
     in
     case ( maybeAccessToken, maybeExpiresIn ) of
         ( Just accessToken, Just expiresIn ) ->
             Just
                 { accessToken = accessToken
                 , expiresIn = expiresIn
-                , route = route
+                , url = { url | fragment = Just state.route }
                 }
 
         _ ->

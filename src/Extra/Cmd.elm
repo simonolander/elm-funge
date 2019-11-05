@@ -4,8 +4,8 @@ import Basics.Extra exposing (flip)
 
 
 withCmd : Cmd msg -> m -> ( m, Cmd msg )
-withCmd cmd value =
-    ( value, cmd )
+withCmd =
+    flip Tuple.pair
 
 
 noCmd : m -> ( m, Cmd msg )

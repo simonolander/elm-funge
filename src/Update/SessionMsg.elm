@@ -13,6 +13,7 @@ import Data.SaveError exposing (SaveError)
 import Data.Solution exposing (Solution)
 import Data.SolutionId exposing (SolutionId)
 import Data.SubmitSolutionError exposing (SubmitSolutionError)
+import Data.UserInfo exposing (UserInfo)
 
 
 type SessionMsg
@@ -28,6 +29,7 @@ type SessionMsg
     | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
     | GotLoadSolutionsByLevelIdsResponse (List LevelId) (Result GetError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
+    | GotLoadUserInfoResponse (Result GetError UserInfo)
     | GotSaveDraftResponse Draft (Maybe SaveError)
     | GotDeleteBlueprintResponse BlueprintId (Maybe SaveError)
     | GotSaveBlueprintResponse Blueprint (Maybe SaveError)

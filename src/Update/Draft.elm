@@ -6,10 +6,12 @@ module Update.Draft exposing
     , gotLoadDraftsByLevelIdResponse
     , gotSaveDraftResponse
     , loadDraft
+    , loadDraftsByDraftIds
     , loadDraftsByLevelId
     , saveDraft
     )
 
+import Basics.Extra exposing (flip)
 import Data.Cache as Cache
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
@@ -18,8 +20,10 @@ import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache exposing (RemoteCache)
 import Data.SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
+import Data.VerifiedAccessToken as VerifiedAccessToken
 import Debug exposing (todo)
 import Dict
+import Extra.Cmd exposing (fold)
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
 import Update.General exposing (gotGetError)
@@ -32,18 +36,24 @@ import Update.SessionMsg exposing (SessionMsg(..))
 
 loadDraft : DraftId -> Session -> ( Session, Cmd SessionMsg )
 loadDraft draftId session =
-    if Cache.isNotAsked draftId session.drafts.actual then
-        case session.user.accessToken of
-            Just accessToken ->
+    case VerifiedAccessToken.getValid session.accessToken of
+        Just accessToken ->
+            if Cache.isNotAsked draftId session.drafts.actual then
                 ( Session.updateDrafts (RemoteCache.withActualLoading draftId) session
                 , Draft.loadFromServer GotLoadDraftByDraftIdResponse draftId accessToken
                 )
 
-            Nothing ->
+            else
                 ( session, Cmd.none )
 
-    else
-        ( session, Cmd.none )
+        Nothing ->
+            ( session, Cmd.none )
+
+
+loadDraftsByDraftIds : List DraftId -> Session -> ( Session, Cmd SessionMsg )
+loadDraftsByDraftIds draftIds session =
+    List.map loadDraft draftIds
+        |> flip fold session
 
 
 gotLoadDraftResponse : DraftId -> Result GetError (Maybe Draft) -> Session -> ( Session, Cmd SessionMsg )

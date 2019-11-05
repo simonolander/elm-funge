@@ -7,6 +7,7 @@ import Update.HighScore exposing (gotLoadHighScoreByLevelIdResponse)
 import Update.Level exposing (gotLoadLevelResponse, gotLoadLevelsByCampaignIdResponse)
 import Update.SessionMsg exposing (SessionMsg(..))
 import Update.Solution exposing (gotLoadSolutionResponse, gotLoadSolutionsByLevelIdResponse, gotLoadSolutionsByLevelIdsResponse, gotSaveSolutionResponse, saveSolution)
+import Update.UserInfo exposing (gotLoadUserInfoResponse)
 
 
 update : SessionMsg -> Session -> ( Session, Cmd SessionMsg )
@@ -59,3 +60,6 @@ update msg =
 
         GotSaveSolutionResponse solution maybeError ->
             gotSaveSolutionResponse solution maybeError
+
+        GotLoadUserInfoResponse result ->
+            gotLoadUserInfoResponse result

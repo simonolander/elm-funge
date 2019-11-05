@@ -7,6 +7,7 @@ module Update.Solution exposing
     , loadSolutionsByCampaignIdsResponse
     , loadSolutionsByLevelIdResponse
     , loadSolutionsByLevelIdsResponse
+    , loadSolutionsBySolutionIds
     , saveSolution
     )
 
@@ -18,6 +19,7 @@ import Data.Solution exposing (Solution)
 import Data.SolutionId exposing (SolutionId)
 import Data.SubmitSolutionError exposing (SubmitSolutionError)
 import Debug exposing (todo)
+import Extra.Cmd exposing (fold)
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -28,6 +30,11 @@ import Update.SessionMsg exposing (SessionMsg)
 loadSolution : SolutionId -> Session -> ( Session, Cmd SessionMsg )
 loadSolution solutionId session =
     todo ""
+
+
+loadSolutionsBySolutionIds : List SolutionId -> Session -> ( Session, Cmd SessionMsg )
+loadSolutionsBySolutionIds solutionIds =
+    fold (List.map loadSolution solutionIds)
 
 
 loadSolutionsByLevelIdResponse : LevelId -> Session -> ( Session, Cmd SessionMsg )

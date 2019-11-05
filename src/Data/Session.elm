@@ -1,78 +1,59 @@
 module Data.Session exposing
-    ( Session
-    , campaignError
-    , campaignLoading
-    , draftBookError
-    , getAccessToken
-    , getCampaign
+    ( Drafts
+    , Session
     , getDraftBook
-    , getHighScore
     , getLevel
     , getLevelsByCampaignId
     , getSolutionBook
-    , highScoreError
-    , highScoreLoading
     , init
-    , levelError
-    , levelLoading
     , setCampaignCache
-    , setDraftBookCache
-    , setHighScoreCache
     , setLevelCache
-    , setSolutionBookCache
-    , solutionBookError
+    , updateAccessToken
     , updateBlueprints
     , updateCampaignRequests
     , updateDrafts
     , updateSavingDraftRequests
+    , updateSolutions
+    , withAccessToken
     , withActualBlueprintsRequest
     , withBlueprintCache
     , withCampaign
     , withCampaignCache
     , withCampaigns
-    , withDraftBook
     , withDraftBookCache
     , withDraftCache
-    , withHighScore
+    , withExpectedUserInfo
     , withHighScoreCache
-    , withHighScoreResult
     , withLevel
     , withLevelCache
     , withLevels
-    , withSession
-    , withSolutionBook
     , withSolutionBookCache
     , withSolutionCache
     , withUrl
-    , withUser
-    , withoutAccessToken
-    , withoutLevel
     )
 
 import Browser.Navigation exposing (Key)
-import Data.AccessToken exposing (AccessToken)
 import Data.Blueprint exposing (Blueprint)
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache exposing (Cache)
 import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft exposing (Draft)
-import Data.DraftBook as DraftBook exposing (DraftBook)
+import Data.DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
 import Data.GetError exposing (GetError)
 import Data.HighScore exposing (HighScore)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache exposing (RemoteCache)
-import Data.RequestResult exposing (RequestResult)
 import Data.SaveError exposing (SaveError)
 import Data.SaveRequest exposing (SaveRequest)
 import Data.Solution exposing (Solution)
-import Data.SolutionBook as SolutionBook exposing (SolutionBook)
+import Data.SolutionBook exposing (SolutionBook)
 import Data.SolutionId exposing (SolutionId)
 import Data.Updater exposing (Updater)
-import Data.User as User exposing (User)
 import Data.UserInfo exposing (UserInfo)
+import Data.VerifiedAccessToken exposing (VerifiedAccessToken(..))
 import Dict exposing (Dict)
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
@@ -86,7 +67,7 @@ type alias Drafts =
 type alias Session =
     { key : Key
     , url : Url
-    , user : User
+    , accessToken : VerifiedAccessToken
     , userInfo : Maybe UserInfo
     , expectedUserInfo : Maybe UserInfo
     , actualUserInfo : RemoteData GetError UserInfo
@@ -108,10 +89,10 @@ init : Key -> Url -> Session
 init key url =
     { key = key
     , url = url
-    , user = User.guest
+    , accessToken = None
     , userInfo = Nothing
     , expectedUserInfo = Nothing
-    , actualUserInfo = Nothing
+    , actualUserInfo = NotAsked
     , levels = Cache.empty
     , drafts = RemoteCache.empty
     , savingDraftRequests = Dict.empty
@@ -126,35 +107,24 @@ init key url =
     }
 
 
-withSession : a -> { b | session : a } -> { b | session : a }
-withSession session model =
-    { model | session = session }
-
-
-withUser : User -> Updater Session
-withUser user session =
-    { session
-        | user = user
-    }
-
-
-getAccessToken : Session -> Maybe AccessToken
-getAccessToken =
-    .user >> User.getToken
-
-
-withoutAccessToken : Updater Session
-withoutAccessToken session =
-    let
-        user =
-            session.user
-    in
-    { session | user = { user | accessToken = Nothing } }
-
-
 withUrl : Url -> Updater Session
 withUrl url session =
     { session | url = url }
+
+
+withExpectedUserInfo : Maybe UserInfo -> Updater Session
+withExpectedUserInfo userInfo session =
+    { session | expectedUserInfo = userInfo }
+
+
+withAccessToken : VerifiedAccessToken -> Updater Session
+withAccessToken accessToken session =
+    { session | accessToken = accessToken }
+
+
+updateAccessToken : Updater VerifiedAccessToken -> Updater Session
+updateAccessToken function session =
+    { session | accessToken = function session.accessToken }
 
 
 withLevelCache : Cache LevelId GetError Level -> Updater Session
@@ -175,6 +145,11 @@ updateDrafts updater session =
 updateBlueprints : Updater (RemoteCache BlueprintId (Maybe Blueprint)) -> Updater Session
 updateBlueprints updater session =
     { session | blueprints = updater session.blueprints }
+
+
+updateSolutions : Updater (RemoteCache SolutionId (Maybe Solution)) -> Updater Session
+updateSolutions updater session =
+    { session | solutions = updater session.solutions }
 
 
 withSolutionCache : RemoteCache SolutionId (Maybe Solution) -> Updater Session
@@ -269,27 +244,6 @@ withLevels levels session =
     List.foldl withLevel session levels
 
 
-withoutLevel : LevelId -> Updater Session
-withoutLevel levelId session =
-    session.levels
-        |> Cache.remove levelId
-        |> setLevelCache session
-
-
-levelLoading : LevelId -> Updater Session
-levelLoading levelId session =
-    session.levels
-        |> Cache.loading levelId
-        |> setLevelCache session
-
-
-levelError : LevelId -> GetError -> Updater Session
-levelError levelId error session =
-    session.levels
-        |> Cache.withError levelId error
-        |> setLevelCache session
-
-
 
 -- CAMPAIGN CACHE
 
@@ -297,11 +251,6 @@ levelError levelId error session =
 setCampaignCache : Session -> Cache CampaignId GetError Campaign -> Session
 setCampaignCache session cache =
     { session | campaigns = cache }
-
-
-getCampaign : CampaignId -> Session -> RemoteData GetError Campaign
-getCampaign campaignId session =
-    Cache.get campaignId session.campaigns
 
 
 withCampaigns : List Campaign -> Updater Session
@@ -316,70 +265,8 @@ withCampaign campaign session =
         |> setCampaignCache session
 
 
-campaignLoading : CampaignId -> Updater Session
-campaignLoading campaignId session =
-    session.campaigns
-        |> Cache.loading campaignId
-        |> setCampaignCache session
-
-
-campaignError : CampaignId -> GetError -> Updater Session
-campaignError campaignId error session =
-    session.campaigns
-        |> Cache.withError campaignId error
-        |> setCampaignCache session
-
-
-
--- HIGH SCORE CACHE
-
-
-setHighScoreCache : Session -> Cache LevelId GetError HighScore -> Session
-setHighScoreCache session cache =
-    { session | highScores = cache }
-
-
-getHighScore : LevelId -> Session -> RemoteData GetError HighScore
-getHighScore levelId session =
-    Cache.get levelId session.highScores
-
-
-withHighScore : HighScore -> Updater Session
-withHighScore highScore session =
-    session.highScores
-        |> Cache.withValue highScore.levelId highScore
-        |> setHighScoreCache session
-
-
-withHighScoreResult : RequestResult LevelId GetError HighScore -> Updater Session
-withHighScoreResult { request, result } session =
-    { session
-        | highScores =
-            Cache.fromResult request result session.highScores
-    }
-
-
-highScoreLoading : LevelId -> Updater Session
-highScoreLoading levelId session =
-    session.highScores
-        |> Cache.loading levelId
-        |> setHighScoreCache session
-
-
-highScoreError : LevelId -> GetError -> Updater Session
-highScoreError levelId error session =
-    session.highScores
-        |> Cache.withError levelId error
-        |> setHighScoreCache session
-
-
 
 -- DRAFT BOOK CACHE
-
-
-setDraftBookCache : Session -> Cache LevelId GetError DraftBook -> Session
-setDraftBookCache session cache =
-    { session | draftBooks = cache }
 
 
 getDraftBook : LevelId -> Session -> RemoteData GetError DraftBook
@@ -387,45 +274,10 @@ getDraftBook levelId session =
     Cache.get levelId session.draftBooks
 
 
-withDraftBook : DraftBook -> Updater Session
-withDraftBook draftBook session =
-    session.draftBooks
-        |> Cache.withDefault draftBook.levelId draftBook
-        |> Cache.map draftBook.levelId (DraftBook.withDraftIds draftBook.draftIds)
-        |> setDraftBookCache session
-
-
-draftBookError : LevelId -> GetError -> Updater Session
-draftBookError levelId error session =
-    session.draftBooks
-        |> Cache.withError levelId error
-        |> setDraftBookCache session
-
-
 
 -- SOLUTION BOOK CACHE
-
-
-setSolutionBookCache : Session -> Cache LevelId GetError SolutionBook -> Session
-setSolutionBookCache session cache =
-    { session | solutionBooks = cache }
 
 
 getSolutionBook : LevelId -> Session -> RemoteData GetError SolutionBook
 getSolutionBook levelId session =
     Cache.get levelId session.solutionBooks
-
-
-withSolutionBook : SolutionBook -> Updater Session
-withSolutionBook solutionBook session =
-    session.solutionBooks
-        |> Cache.withDefault solutionBook.levelId solutionBook
-        |> Cache.map solutionBook.levelId (SolutionBook.withSolutionIds solutionBook.solutionIds)
-        |> setSolutionBookCache session
-
-
-solutionBookError : LevelId -> GetError -> Updater Session
-solutionBookError levelId error session =
-    session.solutionBooks
-        |> Cache.withError levelId error
-        |> setSolutionBookCache session

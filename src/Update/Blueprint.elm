@@ -6,6 +6,7 @@ module Update.Blueprint exposing
     , gotSaveBlueprintResponse
     , loadBlueprint
     , loadBlueprints
+    , loadBlueprintsByBlueprintIds
     , saveBlueprint
     )
 
@@ -17,6 +18,7 @@ import Data.GetError exposing (GetError)
 import Data.RemoteCache as RemoteCache
 import Data.SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
+import Data.VerifiedAccessToken as VerifiedAccessToken
 import Dict
 import Extra.Cmd exposing (fold, noCmd)
 import Extra.Tuple exposing (fanout)
@@ -31,7 +33,7 @@ import Update.SessionMsg exposing (SessionMsg(..))
 
 loadBlueprint : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
 loadBlueprint blueprintId session =
-    case Session.getAccessToken session of
+    case VerifiedAccessToken.getValid session.accessToken of
         Just accessToken ->
             case Cache.get blueprintId session.blueprints.actual of
                 NotAsked ->
@@ -51,7 +53,7 @@ loadBlueprints : Session -> ( Session, Cmd SessionMsg )
 loadBlueprints session =
     case session.actualBlueprintsRequest of
         NotAsked ->
-            case Session.getAccessToken session of
+            case VerifiedAccessToken.getValid session.accessToken of
                 Just accessToken ->
                     ( { session | actualBlueprintsRequest = Loading }
                     , Blueprint.loadAllFromServer GotLoadBlueprintsResponse accessToken
@@ -62,6 +64,11 @@ loadBlueprints session =
 
         _ ->
             ( session, Cmd.none )
+
+
+loadBlueprintsByBlueprintIds : List BlueprintId -> Session -> ( Session, Cmd SessionMsg )
+loadBlueprintsByBlueprintIds blueprintIds =
+    fold (List.map loadBlueprint blueprintIds)
 
 
 gotLoadBlueprintResponse : BlueprintId -> Result GetError (Maybe Blueprint) -> Session -> ( Session, Cmd SessionMsg )

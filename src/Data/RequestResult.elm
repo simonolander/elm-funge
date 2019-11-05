@@ -1,8 +1,5 @@
 module Data.RequestResult exposing (RequestResult, badBody, constructor, split, toTuple)
 
-import Data.GetError exposing (GetError(..))
-import Json.Decode
-
 
 type alias RequestResult request error data =
     { request : request
@@ -15,11 +12,6 @@ constructor request result =
     { request = request
     , result = result
     }
-
-
-badBody : Json.Decode.Error -> GetError
-badBody =
-    Json.Decode.errorToString >> Other
 
 
 toTuple : RequestResult request error data -> ( request, Result error data )
