@@ -2,6 +2,7 @@ module View.Constant exposing (color, icons, size)
 
 import Element exposing (rgb)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 
 
@@ -10,6 +11,7 @@ color =
         { black = Background.color (rgb 0 0 0)
         , selected = Background.color (rgb 0.25 0.25 0.25)
         , hovering = Background.color (rgb 0.5 0.5 0.5)
+        , subtle = Background.color (rgb 0.05 0.05 0.05)
         }
     , font =
         { default = Font.color (rgb 1 1 1)
@@ -18,6 +20,8 @@ color =
         , link = Font.color (rgb 0.5 0.5 1)
         , linkHover = Font.color (rgb 0.75 0.75 1)
         }
+    , border =
+        { default = Border.color (rgb 1 1 1) }
     }
 
 
@@ -36,6 +40,12 @@ icons =
     , circle =
         { green = "assets/misc/circle-green.svg"
         , red = "assets/misc/circle-red.svg"
+        }
+    , alert =
+        { orange =
+            { src = "assets/exception-orange.svg"
+            , description = "Alert icon"
+            }
         }
     , spinner = "assets/spinner.svg"
     , pause = "assets/execution-control-images/pause.svg"

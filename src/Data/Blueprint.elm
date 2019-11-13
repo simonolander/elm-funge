@@ -5,7 +5,6 @@ module Data.Blueprint exposing
     , encode
     , generator
     , loadAllFromServer
-    , loadFromLocalStorage
     , loadFromServerByBlueprintId
     , loadFromServerByBlueprintIds
     , localRemoteStorageResponse
@@ -15,6 +14,13 @@ module Data.Blueprint exposing
     , saveRemoteToLocalStorage
     , saveToLocalStorage
     , saveToServer
+    , updateInitialBoard
+    , updateSuites
+    , withDescription
+    , withInitialBoard
+    , withInstructionTools
+    , withName
+    , withSuites
     )
 
 import Api.GCP as GCP
@@ -28,6 +34,7 @@ import Data.InstructionTool exposing (InstructionTool(..))
 import Data.RequestResult as RequestResult exposing (RequestResult)
 import Data.SaveError as SaveError exposing (SaveError)
 import Data.Suite exposing (Suite)
+import Data.Updater exposing (Updater)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Json.Encode.Extra
@@ -38,11 +45,58 @@ import Random
 type alias Blueprint =
     { id : BlueprintId
     , name : String
+
+    -- TODO This should probably just be a string
     , description : List String
+
+    -- TODO This should be some kind of non-empty string
     , suites : List Suite
     , initialBoard : Board
     , instructionTools : Array InstructionTool
     }
+
+
+
+-- SETTERS
+
+
+withName : String -> Updater Blueprint
+withName name blueprint =
+    { blueprint | name = name }
+
+
+withDescription : List String -> Updater Blueprint
+withDescription description blueprint =
+    { blueprint | description = description }
+
+
+withSuites : List Suite -> Updater Blueprint
+withSuites suites blueprint =
+    { blueprint | suites = suites }
+
+
+withInitialBoard : Board -> Updater Blueprint
+withInitialBoard initialBoard blueprint =
+    { blueprint | initialBoard = initialBoard }
+
+
+withInstructionTools : Array InstructionTool -> Updater Blueprint
+withInstructionTools instructionTools blueprint =
+    { blueprint | instructionTools = instructionTools }
+
+
+
+-- UPDATERS
+
+
+updateInitialBoard : Updater Board -> Updater Blueprint
+updateInitialBoard updater blueprint =
+    { blueprint | initialBoard = updater blueprint.initialBoard }
+
+
+updateSuites : Updater (List Suite) -> Updater Blueprint
+updateSuites updater blueprint =
+    { blueprint | suites = updater blueprint.suites }
 
 
 
@@ -83,7 +137,7 @@ encode blueprint =
         , ( "name", Encode.string blueprint.name )
         , ( "description", Encode.list Encode.string blueprint.description )
         , ( "suites", Encode.list Data.Suite.encode blueprint.suites )
-        , ( "initialBoard", Data.Board.encode blueprint.initialBoard )
+        , ( "initialBoard", Board.encode blueprint.initialBoard )
         , ( "instructionTools", Encode.array Data.InstructionTool.encode blueprint.instructionTools )
         ]
 
@@ -104,7 +158,7 @@ decoder =
                                                 Decode.field "suites" (Decode.list Data.Suite.decoder)
                                                     |> Decode.andThen
                                                         (\suites ->
-                                                            Decode.field "initialBoard" Data.Board.decoder
+                                                            Decode.field "initialBoard" Board.decoder
                                                                 |> Decode.andThen
                                                                     (\initialBoard ->
                                                                         Decode.field "instructionTools" (Decode.array Data.InstructionTool.decoder)

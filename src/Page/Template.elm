@@ -37,7 +37,7 @@ load =
         loadNothing model =
             ( model, Cmd.none )
     in
-    Extra.Cmd.fold
+    CmdUpdater.batch
         [ loadNothing
         ]
 

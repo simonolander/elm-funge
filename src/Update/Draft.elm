@@ -1,11 +1,12 @@
 module Update.Draft exposing
     ( deleteDraft
-    , getDraftById
+    , getDraftByDraftId
+    , getDraftsByLevelId
     , gotDeleteDraftResponse
     , gotLoadDraftResponse
     , gotLoadDraftsByLevelIdResponse
     , gotSaveDraftResponse
-    , loadDraft
+    , loadDraftByDraftId
     , loadDraftsByDraftIds
     , loadDraftsByLevelId
     , saveDraft
@@ -13,20 +14,22 @@ module Update.Draft exposing
 
 import Basics.Extra exposing (flip)
 import Data.Cache as Cache
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.Draft as Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
 import Data.GetError exposing (GetError)
 import Data.LevelId exposing (LevelId)
 import Data.RemoteCache as RemoteCache exposing (RemoteCache)
 import Data.SaveError exposing (SaveError)
+import Data.SaveRequest exposing (SaveRequest(..))
 import Data.Session as Session exposing (Session)
 import Data.VerifiedAccessToken as VerifiedAccessToken
 import Debug exposing (todo)
 import Dict
-import Extra.Cmd exposing (fold)
+import Extra.Tuple exposing (fanout)
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
-import Update.General exposing (gotGetError)
+import Update.General exposing (gotGetError, gotSaveError)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 
@@ -34,8 +37,8 @@ import Update.SessionMsg exposing (SessionMsg(..))
 -- LOAD DRAFT BY DRAFT ID
 
 
-loadDraft : DraftId -> Session -> ( Session, Cmd SessionMsg )
-loadDraft draftId session =
+loadDraftByDraftId : DraftId -> CmdUpdater Session SessionMsg
+loadDraftByDraftId draftId session =
     case VerifiedAccessToken.getValid session.accessToken of
         Just accessToken ->
             if Cache.isNotAsked draftId session.drafts.actual then
@@ -50,13 +53,13 @@ loadDraft draftId session =
             ( session, Cmd.none )
 
 
-loadDraftsByDraftIds : List DraftId -> Session -> ( Session, Cmd SessionMsg )
+loadDraftsByDraftIds : List DraftId -> CmdUpdater Session SessionMsg
 loadDraftsByDraftIds draftIds session =
-    List.map loadDraft draftIds
-        |> flip fold session
+    List.map loadDraftByDraftId draftIds
+        |> flip CmdUpdater.batch session
 
 
-gotLoadDraftResponse : DraftId -> Result GetError (Maybe Draft) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadDraftResponse : DraftId -> Result GetError (Maybe Draft) -> CmdUpdater Session SessionMsg
 gotLoadDraftResponse draftId result session =
     case result of
         Ok maybeDraft ->
@@ -67,8 +70,8 @@ gotLoadDraftResponse draftId result session =
                 |> gotGetError error
 
 
-getDraftById : DraftId -> Session -> RemoteData GetError (Maybe Draft)
-getDraftById draftId session =
+getDraftByDraftId : DraftId -> Session -> RemoteData GetError (Maybe Draft)
+getDraftByDraftId draftId session =
     case Cache.get draftId session.drafts.actual of
         NotAsked ->
             NotAsked
@@ -87,12 +90,17 @@ getDraftById draftId session =
                 |> RemoteData.succeed
 
 
-loadDraftsByLevelId : LevelId -> Session -> ( Session, Cmd SessionMsg )
+getDraftsByLevelId : LevelId -> Session -> RemoteData GetError (List Draft)
+getDraftsByLevelId levelId session =
+    todo ""
+
+
+loadDraftsByLevelId : LevelId -> CmdUpdater Session SessionMsg
 loadDraftsByLevelId levelId session =
     todo ""
 
 
-gotLoadDraftsByLevelIdResponse : LevelId -> Result GetError (List Draft) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadDraftsByLevelIdResponse : LevelId -> Result GetError (List Draft) -> CmdUpdater Session SessionMsg
 gotLoadDraftsByLevelIdResponse levelId result session =
     todo ""
 
@@ -101,12 +109,12 @@ gotLoadDraftsByLevelIdResponse levelId result session =
 -- SAVE
 
 
-saveDraft : Draft -> Session -> ( Session, Cmd SessionMsg )
+saveDraft : Draft -> CmdUpdater Session SessionMsg
 saveDraft draft session =
     todo ""
 
 
-gotSaveDraftResponse : Draft -> Maybe SaveError -> Session -> ( Session, Cmd SessionMsg )
+gotSaveDraftResponse : Draft -> Maybe SaveError -> CmdUpdater Session SessionMsg
 gotSaveDraftResponse draft maybeError session =
     todo ""
 
@@ -115,21 +123,45 @@ gotSaveDraftResponse draft maybeError session =
 -- DELETE
 
 
-deleteDraft : DraftId -> Session -> ( Session, Cmd SessionMsg )
+deleteDraft : DraftId -> CmdUpdater Session SessionMsg
 deleteDraft draftId session =
-    todo ""
+    let
+        deleteRemote s =
+            case VerifiedAccessToken.getValid s.accessToken of
+                Just accessToken ->
+                    ( Session.updateSavingDraftRequests (Dict.insert draftId (Saving Nothing)) s
+                    , Draft.deleteFromServer GotDeleteDraftResponse draftId accessToken
+                    )
+
+                Nothing ->
+                    ( s, Cmd.none )
+    in
+    Session.updateDrafts (RemoteCache.withLocalValue draftId Nothing) session
+        |> deleteRemote
+        |> CmdUpdater.add (Draft.saveToLocalStorage draftId Nothing)
 
 
-gotDeleteDraftResponse : DraftId -> Maybe SaveError -> Session -> ( Session, Cmd SessionMsg )
-gotDeleteDraftResponse draftId maybeError session =
-    todo ""
+gotDeleteDraftResponse : DraftId -> Maybe SaveError -> CmdUpdater Session SessionMsg
+gotDeleteDraftResponse draftId maybeError oldSession =
+    let
+        session =
+            Session.updateSavingDraftRequests (Dict.remove draftId) oldSession
+    in
+    case maybeError of
+        Just error ->
+            gotSaveError error session
+
+        Nothing ->
+            Session.updateDrafts (RemoteCache.withExpectedValue draftId Nothing) session
+                |> Session.updateDrafts (RemoteCache.withActualValue draftId Nothing)
+                |> flip Tuple.pair (Draft.saveRemoteToLocalStorage draftId Nothing)
 
 
 
 -- PRIVATE
 
 
-gotDraft : DraftId -> Maybe Draft -> Session -> ( Session, Cmd SessionMsg )
+gotDraft : DraftId -> Maybe Draft -> CmdUpdater Session SessionMsg
 gotDraft draftId maybeDraft session =
     let
         overwriteLocalDraft s =

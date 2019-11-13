@@ -1,7 +1,9 @@
 module Update.Level exposing
-    ( gotLoadLevelResponse
+    ( getLevelByLevelId
+    , getLevelsByCampaignId
+    , gotLoadLevelResponse
     , gotLoadLevelsByCampaignIdResponse
-    , loadLevel
+    , loadLevelByLevelId
     , loadLevelsByCampaignId
     , loadLevelsByCampaignIds
     )
@@ -14,8 +16,8 @@ import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
 import Debug exposing (todo)
-import Extra.Cmd exposing (fold)
 import Extra.Tuple exposing (fanout)
+import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
 import Update.General exposing (gotGetError)
 import Update.SessionMsg exposing (SessionMsg(..))
@@ -25,9 +27,34 @@ import Update.SessionMsg exposing (SessionMsg(..))
 -- LOAD
 
 
-loadLevel : LevelId -> Session -> ( Session, Cmd SessionMsg )
-loadLevel levelId session =
+loadLevelByLevelId : LevelId -> Session -> ( Session, Cmd SessionMsg )
+loadLevelByLevelId levelId session =
     todo ""
+
+
+getLevelByLevelId : LevelId -> Session -> RemoteData GetError (Maybe Level)
+getLevelByLevelId levelId session =
+    todo ""
+
+
+getLevelsByCampaignId : CampaignId -> Session -> RemoteData GetError (List Level)
+getLevelsByCampaignId campaignId session =
+    case Cache.get campaignId session.campaignRequests of
+        NotAsked ->
+            NotAsked
+
+        Loading ->
+            Loading
+
+        Failure error ->
+            todo ""
+
+        Success _ ->
+            Cache.values session.levels
+                |> List.filterMap RemoteData.toMaybe
+                |> List.filterMap Maybe.Extra.join
+                |> List.filter (.campaignId >> (==) campaignId)
+                |> RemoteData.succeed
 
 
 loadLevelsByCampaignId : CampaignId -> Session -> ( Session, Cmd SessionMsg )

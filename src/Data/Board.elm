@@ -1,4 +1,18 @@
-module Data.Board exposing (Board, count, decoder, empty, encode, get, height, instructions, set, width, withBoardInstruction, withHeight, withWidth)
+module Data.Board exposing
+    ( Board
+    , count
+    , decoder
+    , empty
+    , encode
+    , get
+    , height
+    , instructions
+    , set
+    , width
+    , withBoardInstruction
+    , withHeight
+    , withWidth
+    )
 
 import Array exposing (Array)
 import Data.BoardInstruction as BoardInstruction exposing (BoardInstruction)

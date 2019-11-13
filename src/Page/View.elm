@@ -1,9 +1,15 @@
 module Page.View exposing (view)
 
 import Data.Session exposing (Session)
-import Debug exposing (todo)
 import Html exposing (Html)
+import Page.Blueprint.View
 import Page.Blueprints.View
+import Page.Campaign.View
+import Page.Campaigns.View
+import Page.Credits.View
+import Page.Draft.View
+import Page.Execution.View
+import Page.Home.View
 import Page.Model exposing (PageModel(..))
 import Page.PageMsg exposing (PageMsg(..))
 
@@ -13,31 +19,25 @@ view session pageModel =
     Tuple.mapSecond (Html.map InternalMsg) <|
         case pageModel of
             Home model ->
-                todo ""
+                Page.Home.View.view session model
 
             Campaign model ->
-                todo ""
+                Page.Campaign.View.view session model
 
             Campaigns model ->
-                todo ""
+                Page.Campaigns.View.view session model
 
             Credits model ->
-                todo ""
+                Page.Credits.View.view session model
 
             Execution model ->
-                todo ""
+                Page.Execution.View.view session model
 
             Draft model ->
-                todo ""
+                Page.Draft.View.view session model
 
             Blueprint model ->
-                todo ""
+                Page.Blueprint.View.view session model
 
             Blueprints model ->
                 Page.Blueprints.View.view session model
-
-            Initialize model ->
-                todo ""
-
-            NotFound model ->
-                todo ""

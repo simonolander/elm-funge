@@ -20,8 +20,8 @@ import View.Header
 import View.Scewn as Scewn
 
 
-view : ( Session, Model ) -> Document Msg
-view ( session, _ ) =
+view : Session -> Model -> ( String, Msg )
+view session _ =
     let
         content =
             Scewn.layout
@@ -33,9 +33,7 @@ view ( session, _ ) =
                 , modal = Nothing
                 }
     in
-    { body = [ content ]
-    , title = "Campaigns"
-    }
+    ( "Campaigns", content )
 
 
 viewCampaigns : Session -> Element Msg

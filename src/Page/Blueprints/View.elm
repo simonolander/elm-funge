@@ -1,6 +1,5 @@
 module Page.Blueprints.View exposing (view, viewBlueprints, viewModal, viewSidebar)
 
-import ApplicationName exposing (applicationName)
 import Basics.Extra exposing (flip)
 import Data.Blueprint exposing (Blueprint)
 import Data.GetError as GetError

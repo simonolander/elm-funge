@@ -2,8 +2,8 @@ module Page.Campaigns.Update exposing (init)
 
 import Basics.Extra exposing (flip)
 import Data.CampaignId as CampaignId
+import Data.CmdUpdater as CmdUpdater
 import Data.Session exposing (Session)
-import Extra.Cmd exposing (fold)
 import Page.Campaigns.Model exposing (Model)
 import Page.Campaigns.Msg exposing (Msg)
 import Page.Mapping
@@ -26,7 +26,7 @@ load =
         loadSolutions =
             Page.Mapping.sessionLoad (loadSolutionsByCampaignIdsResponse CampaignId.all)
     in
-    fold
+    CmdUpdater.batch
         [ loadCampaigns
         , loadSolutions
         ]

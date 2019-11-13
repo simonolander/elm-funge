@@ -3,7 +3,6 @@ module Data.Session exposing
     , Session
     , getDraftBook
     , getLevel
-    , getLevelsByCampaignId
     , getSolutionBook
     , init
     , setCampaignCache
@@ -12,6 +11,7 @@ module Data.Session exposing
     , updateBlueprints
     , updateCampaignRequests
     , updateDrafts
+    , updateLevels
     , updateSavingDraftRequests
     , updateSolutions
     , withAccessToken
@@ -72,7 +72,6 @@ type alias Session =
     , expectedUserInfo : Maybe UserInfo
     , actualUserInfo : RemoteData GetError UserInfo
     , levels : Cache LevelId GetError Level
-    , draftBooks : Cache LevelId GetError DraftBook
     , drafts : Drafts
     , savingDraftRequests : Dict DraftId (SaveRequest SaveError (Maybe Draft))
     , solutions : RemoteCache SolutionId (Maybe Solution)
@@ -102,7 +101,6 @@ init key url =
     , blueprints = RemoteCache.empty
     , actualBlueprintsRequest = RemoteData.NotAsked
     , highScores = Cache.empty
-    , draftBooks = Cache.empty
     , solutionBooks = Cache.empty
     }
 
@@ -167,11 +165,6 @@ withHighScoreCache cache session =
     { session | highScores = cache }
 
 
-withDraftBookCache : Cache LevelId GetError DraftBook -> Updater Session
-withDraftBookCache cache session =
-    { session | draftBooks = cache }
-
-
 withSolutionBookCache : Cache LevelId GetError SolutionBook -> Updater Session
 withSolutionBookCache cache session =
     { session | solutionBooks = cache }
@@ -197,25 +190,9 @@ updateSavingDraftRequests updater session =
     { session | savingDraftRequests = updater session.savingDraftRequests }
 
 
-
--- GETTERS
-
-
-getLevelsByCampaignId : CampaignId -> Session -> RemoteData GetError (List Level)
-getLevelsByCampaignId campaignId session =
-    case Cache.get campaignId session.campaignRequests of
-        NotAsked ->
-            NotAsked
-
-        Loading ->
-            Loading
-
-        _ ->
-            Cache.values session.levels
-                |> List.filterMap RemoteData.toMaybe
-                |> List.filterMap Maybe.Extra.join
-                |> List.filter (.campaignId >> (==) campaignId)
-                |> RemoteData.succeed
+updateLevels : Updater (Cache LevelId GetError Level) -> Updater Session
+updateLevels updater session =
+    { session | levels = updater session.levels }
 
 
 
@@ -263,15 +240,6 @@ withCampaign campaign session =
     session.campaigns
         |> Cache.withValue campaign.id campaign
         |> setCampaignCache session
-
-
-
--- DRAFT BOOK CACHE
-
-
-getDraftBook : LevelId -> Session -> RemoteData GetError DraftBook
-getDraftBook levelId session =
-    Cache.get levelId session.draftBooks
 
 
 

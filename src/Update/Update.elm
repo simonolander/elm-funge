@@ -1,5 +1,6 @@
 module Update.Update exposing (update)
 
+import Data.CmdUpdater as CmdUpdater
 import Data.Session exposing (Session)
 import Update.Blueprint exposing (gotDeleteBlueprintResponse, gotLoadBlueprintResponse, gotLoadBlueprintsResponse, gotSaveBlueprintResponse)
 import Update.Draft exposing (gotDeleteDraftResponse, gotLoadDraftResponse, gotLoadDraftsByLevelIdResponse, gotSaveDraftResponse)
@@ -14,6 +15,11 @@ update : SessionMsg -> Session -> ( Session, Cmd SessionMsg )
 update msg =
     case msg of
         GeneratedSolution solution ->
+            --TODO Also save solution to high scores
+            --Cache.update
+            --    solution.levelId
+            --    (RemoteData.withDefault (HighScore.empty solution.levelId) >> HighScore.withScore solution.score >> RemoteData.Success)
+            --    session.highScores
             saveSolution solution
 
         GotDeleteDraftResponse draftId maybeError ->

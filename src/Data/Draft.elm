@@ -276,8 +276,8 @@ saveToServer toMsg accessToken draft =
         |> GCP.request (SaveError.expect toMsg)
 
 
-deleteFromServer : (DraftId -> Maybe SaveError -> msg) -> AccessToken -> DraftId -> Cmd msg
-deleteFromServer toMsg accessToken draftId =
+deleteFromServer : (DraftId -> Maybe SaveError -> msg) -> DraftId -> AccessToken -> Cmd msg
+deleteFromServer toMsg draftId accessToken =
     GCP.delete
         |> GCP.withPath [ "drafts" ]
         |> GCP.withStringQueryParameter "draftId" draftId

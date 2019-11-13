@@ -1,4 +1,4 @@
-module Data.CmdUpdater exposing (CmdUpdater, add, andThen, batch, id)
+module Data.CmdUpdater exposing (CmdUpdater, add, andThen, batch, id, mapBoth, mapCmd, withModel, withSession)
 
 import Basics.Extra exposing (flip)
 import Data.Updater exposing (Updater)
@@ -27,3 +27,23 @@ batch : List (CmdUpdater a msg) -> CmdUpdater a msg
 batch updaters a =
     List.map andThen updaters
         |> List.foldl (flip (|>)) (id a)
+
+
+mapCmd : (msg1 -> msg2) -> ( a, Cmd msg1 ) -> ( a, Cmd msg2 )
+mapCmd =
+    Cmd.map >> Tuple.mapSecond
+
+
+mapBoth : (a -> b) -> (msg1 -> msg2) -> ( a, Cmd msg1 ) -> ( b, Cmd msg2 )
+mapBoth f1 =
+    Cmd.map >> Tuple.mapBoth f1
+
+
+withModel : b -> ( a, c ) -> ( ( a, b ), c )
+withModel =
+    flip Tuple.pair >> Tuple.mapFirst
+
+
+withSession : a -> ( b, c ) -> ( ( a, b ), c )
+withSession =
+    Tuple.pair >> Tuple.mapFirst

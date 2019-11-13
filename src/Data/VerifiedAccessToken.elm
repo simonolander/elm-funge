@@ -1,8 +1,11 @@
 module Data.VerifiedAccessToken exposing
     ( VerifiedAccessToken(..)
     , getAny
+    , getInvalid
     , getValid
     , invalidate
+    , isMissing
+    , isUnverified
     , map
     , validate
     )
@@ -16,6 +19,34 @@ type VerifiedAccessToken
     | Unverified AccessToken
     | Invalid AccessToken
     | Valid AccessToken
+
+
+isUnverified : VerifiedAccessToken -> Bool
+isUnverified verifiedAccessToken =
+    case verifiedAccessToken of
+        None ->
+            False
+
+        Unverified _ ->
+            True
+
+        Invalid _ ->
+            False
+
+        Valid _ ->
+            False
+
+
+{-| TODO Rename to Missing instead of None
+-}
+isMissing : VerifiedAccessToken -> Bool
+isMissing verifiedAccessToken =
+    case verifiedAccessToken of
+        None ->
+            True
+
+        _ ->
+            False
 
 
 getValid : VerifiedAccessToken -> Maybe AccessToken
@@ -48,6 +79,16 @@ getAny verifiedAccessToken =
 
         Valid accessToken ->
             Just accessToken
+
+
+getInvalid : VerifiedAccessToken -> Maybe AccessToken
+getInvalid verifiedAccessToken =
+    case verifiedAccessToken of
+        Invalid accessToken ->
+            Just accessToken
+
+        _ ->
+            Nothing
 
 
 map : (AccessToken -> a) -> VerifiedAccessToken -> Maybe a

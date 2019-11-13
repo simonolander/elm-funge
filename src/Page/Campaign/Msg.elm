@@ -6,7 +6,7 @@ import Data.LevelId exposing (LevelId)
 
 
 type Msg
-    = SelectLevel LevelId
+    = ClickedLevel LevelId
     | ClickedOpenDraft DraftId
     | ClickedGenerateDraft
     | GeneratedDraft Draft

@@ -1,10 +1,11 @@
 module Update.Blueprint exposing
     ( deleteBlueprint
+    , getBlueprintByBlueprintId
     , gotDeleteBlueprintResponse
     , gotLoadBlueprintResponse
     , gotLoadBlueprintsResponse
     , gotSaveBlueprintResponse
-    , loadBlueprint
+    , loadBlueprintByBlueprintId
     , loadBlueprints
     , loadBlueprintsByBlueprintIds
     , saveBlueprint
@@ -14,13 +15,14 @@ import Basics.Extra exposing (flip, uncurry)
 import Data.Blueprint as Blueprint exposing (Blueprint)
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
+import Data.CmdUpdater as CmdUpdater
 import Data.GetError exposing (GetError)
 import Data.RemoteCache as RemoteCache
 import Data.SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
 import Data.VerifiedAccessToken as VerifiedAccessToken
+import Debug exposing (todo)
 import Dict
-import Extra.Cmd exposing (fold, noCmd)
 import Extra.Tuple exposing (fanout)
 import RemoteData exposing (RemoteData(..))
 import Update.General exposing (gotGetError, gotSaveError)
@@ -31,8 +33,8 @@ import Update.SessionMsg exposing (SessionMsg(..))
 -- LOAD
 
 
-loadBlueprint : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
-loadBlueprint blueprintId session =
+loadBlueprintByBlueprintId : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
+loadBlueprintByBlueprintId blueprintId session =
     case VerifiedAccessToken.getValid session.accessToken of
         Just accessToken ->
             case Cache.get blueprintId session.blueprints.actual of
@@ -47,6 +49,11 @@ loadBlueprint blueprintId session =
 
         Nothing ->
             ( session, Cmd.none )
+
+
+getBlueprintByBlueprintId : BlueprintId -> Session -> RemoteData GetError (Maybe Blueprint)
+getBlueprintByBlueprintId blueprintId session =
+    todo ""
 
 
 loadBlueprints : Session -> ( Session, Cmd SessionMsg )
@@ -68,7 +75,7 @@ loadBlueprints session =
 
 loadBlueprintsByBlueprintIds : List BlueprintId -> Session -> ( Session, Cmd SessionMsg )
 loadBlueprintsByBlueprintIds blueprintIds =
-    fold (List.map loadBlueprint blueprintIds)
+    CmdUpdater.batch (List.map loadBlueprintByBlueprintId blueprintIds)
 
 
 gotLoadBlueprintResponse : BlueprintId -> Result GetError (Maybe Blueprint) -> Session -> ( Session, Cmd SessionMsg )
@@ -95,7 +102,7 @@ gotLoadBlueprintsResponse result session =
         Ok blueprints ->
             List.map (fanout .id Just) blueprints
                 |> List.map (uncurry gotActualBlueprint)
-                |> flip fold sessionWithBlueprintResponse
+                |> flip CmdUpdater.batch sessionWithBlueprintResponse
 
         Err error ->
             gotGetError error sessionWithBlueprintResponse

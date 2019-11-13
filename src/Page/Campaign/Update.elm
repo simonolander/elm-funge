@@ -3,10 +3,10 @@ module Page.Campaign.Update exposing (init)
 import Basics.Extra exposing (flip)
 import Data.Cache as Cache
 import Data.CampaignId exposing (CampaignId)
+import Data.CmdUpdater as CmdUpdater
 import Data.Draft as Draft
 import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
-import Extra.Cmd exposing (fold, withExtraCmd)
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
 import Page.Mapping exposing (useModel)
@@ -55,7 +55,7 @@ load =
                 Nothing ->
                     flip Tuple.pair Cmd.none
     in
-    fold
+    CmdUpdater.batch
         [ useModel loadLevels
         , useModel loadSolutions
         , useModel loadDraftsBySelectedLevelId
@@ -70,7 +70,7 @@ update msg tuple =
             tuple
     in
     case msg of
-        SelectLevel selectedLevelId ->
+        ClickedLevel selectedLevelId ->
             ( ( session, { model | selectedLevelId = Just selectedLevelId } )
             , Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
             )
@@ -93,4 +93,4 @@ update msg tuple =
 
         GeneratedDraft draft ->
             Page.Mapping.sessionLoad (saveDraft draft) tuple
-                |> withExtraCmd (Route.pushUrl session.key (Route.EditDraft draft.id))
+                |> CmdUpdater.add (Route.pushUrl session.key (Route.EditDraft draft.id))

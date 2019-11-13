@@ -4,6 +4,7 @@ import Basics.Extra exposing (flip)
 import Data.Blueprint as Blueprint
 import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache
+import Data.CmdUpdater as CmdUpdater
 import Data.Session exposing (Session)
 import Extra.Cmd exposing (withExtraCmd)
 import Maybe.Extra
@@ -35,7 +36,7 @@ load =
         loadBlueprints =
             Page.Mapping.sessionLoad Update.Blueprint.loadBlueprints
     in
-    Extra.Cmd.fold
+    CmdUpdater.batch
         [ loadBlueprints ]
 
 
@@ -104,7 +105,7 @@ update msg tuple =
         BlueprintGenerated blueprint ->
             Page.Mapping.sessionLoad (Update.Blueprint.saveBlueprint blueprint) tuple
                 |> Tuple.mapFirst (Tuple.mapSecond (\m -> { m | selectedBlueprintId = Just blueprint.id }))
-                |> withExtraCmd (Route.replaceUrl session.key (Route.Blueprints (Just blueprint.id)))
+                |> CmdUpdater.add (Route.replaceUrl session.key (Route.Blueprints (Just blueprint.id)))
 
 
 subscriptions : Model -> Sub Msg

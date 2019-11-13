@@ -1,73 +1,21 @@
-module Page.Credits exposing (Model, Msg, init, load, subscriptions, update, view)
+module Page.Credits.View exposing (section, taskAndAuthor, view)
 
-import ApplicationName exposing (applicationName)
-import Basics.Extra exposing (flip, uncurry)
-import Browser exposing (Document)
 import Color
 import Data.Session exposing (Session)
 import Element exposing (..)
-import Element.Background as Background
-import Element.Font as Font exposing (Font)
+import Element.Font as Font
+import Html exposing (Html)
 import Html.Attributes
-import Json.Encode as Encode
+import Page.Credits.Model exposing (Model)
+import Page.Credits.Msg exposing (Msg)
 import View.Constant exposing (color, size)
 import View.Header
 import View.Layout
 import View.Scewn
 
 
-
--- MODEL
-
-
-type alias Model =
-    { session : Session
-    }
-
-
-type alias Msg =
-    ()
-
-
-init : Session -> ( Model, Cmd Msg )
-init session =
-    ( { session = session }, Cmd.none )
-
-
-load : Model -> ( Model, Cmd Msg )
-load =
-    flip Tuple.pair Cmd.none
-
-
-
--- UPDATE
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
-
-
-localStorageResponseUpdate : ( String, Encode.Value ) -> Model -> ( Model, Cmd Msg )
-localStorageResponseUpdate ( key, value ) model =
-    ( model, Cmd.none )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-
--- VIEW
-
-
-view : Model -> Document Msg
-view model =
+view : Session -> Model -> ( String, Html Msg )
+view session () =
     let
         body =
             column
@@ -92,8 +40,8 @@ view model =
                 , section "Source"
                     (link
                         [ centerX
-                        , mouseOver [ Font.color color.font.linkHover ]
-                        , Font.color color.font.link
+                        , mouseOver [ color.font.linkHover ]
+                        , color.font.link
                         ]
                         { label = text "https://github.com/simonolander/elm-funge"
                         , url = "https://github.com/simonolander/elm-funge"
@@ -146,16 +94,16 @@ view model =
                     ([ ( "Zachtronics"
                        , [ text "For making "
                          , link
-                            [ Font.color color.font.link
-                            , mouseOver [ Font.color color.font.linkHover ]
+                            [ color.font.link
+                            , mouseOver [ color.font.linkHover ]
                             ]
                             { label = text "TIS-100"
                             , url = "http://www.zachtronics.com/tis-100/"
                             }
                          , text " and "
                          , link
-                            [ Font.color color.font.link
-                            , mouseOver [ Font.color color.font.linkHover ]
+                            [ color.font.link
+                            , mouseOver [ color.font.linkHover ]
                             ]
                             { label = text "Shenzhen I/O"
                             , url = "http://www.zachtronics.com/shenzhen-io/"
@@ -178,7 +126,7 @@ view model =
         content =
             View.Layout.layout <|
                 View.Scewn.view
-                    { north = Just <| View.Header.view model.session
+                    { north = Just <| View.Header.view session
                     , center = Just body
                     , south = Nothing
                     , east = Nothing
@@ -186,9 +134,7 @@ view model =
                     , modal = Nothing
                     }
     in
-    { body = [ content ]
-    , title = "Credits"
-    }
+    ( "Credits", content )
 
 
 section : String -> Element msg -> Element msg
@@ -214,14 +160,14 @@ taskAndAuthor tasks =
             row [ width fill, htmlAttribute (Html.Attributes.class "dotted") ]
                 [ el
                     [ alignLeft
-                    , Background.color (rgb 0 0 0)
+                    , color.background.black
                     , paddingEach { left = 0, top = 0, right = 11, bottom = 0 }
                     ]
                     (text task)
                 , el
-                    [ mouseOver [ Font.color color.font.subtle ]
+                    [ mouseOver [ color.font.subtle ]
                     , alignRight
-                    , Background.color (rgb 0 0 0)
+                    , color.background.black
                     , paddingEach { left = 11, top = 0, right = 0, bottom = 0 }
                     ]
                     (text author)
@@ -245,7 +191,7 @@ taskAndAuthor tasks =
                                     >> el
                                         [ width fill
                                         , Font.alignRight
-                                        , mouseOver [ Font.color color.font.subtle ]
+                                        , mouseOver [ color.font.subtle ]
                                         ]
                                 )
                             |> (::) (top task author)

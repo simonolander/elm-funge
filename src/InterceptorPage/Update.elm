@@ -1,9 +1,10 @@
 module InterceptorPage.Update exposing (update)
 
 import Data.Session exposing (Session)
+import InterceptorPage.AccessTokenExpired.Update as AccessTokenExpired
 import InterceptorPage.Conflict.Update as Conflict
-import InterceptorPage.Initialize.Update as Initialize
 import InterceptorPage.Msg exposing (Msg(..))
+import InterceptorPage.UnexpectedUserInfo.Update as UnexpectedUserInfo
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -13,5 +14,8 @@ update interceptionMsg session =
         ConflictMsg msg ->
             Conflict.update msg session
 
-        InitializeMsg msg ->
-            Initialize.update msg session
+        UnexpectedUserInfoMsg msg ->
+            UnexpectedUserInfo.update msg session
+
+        AccessTokenExpiredMsg msg ->
+            AccessTokenExpired.update msg session

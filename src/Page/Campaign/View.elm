@@ -1,26 +1,41 @@
 module Page.Campaign.View exposing (view)
 
-import ApplicationName exposing (applicationName)
-import Browser exposing (Document)
+import Basics.Extra exposing (flip)
+import Data.Draft as Draft
 import Data.GetError as GetError
+import Data.History as History
 import Data.Level exposing (Level)
 import Data.Session as Session exposing (Session)
+import Data.VerifiedAccessToken as VerifiedAccessToken
 import Element exposing (..)
+import Element.Border as Border
 import Element.Font as Font
+import Html exposing (Html)
+import Html.Attributes
+import Maybe.Extra
 import Page.Campaign.Model exposing (Model)
-import Page.Campaign.Msg exposing (Msg)
+import Page.Campaign.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
+import Route
 import String.Extra
+import Update.Draft exposing (getDraftsByLevelId)
+import Update.HighScore exposing (getHighScoreByLevelId)
+import Update.Level exposing (getLevelsByCampaignId)
+import Update.Solution exposing (getSolutionsByLevelId)
+import View.Box
 import View.Constant exposing (color, size)
 import View.ErrorScreen
+import View.HighScore
 import View.LoadingScreen
+import View.SingleSidebar
+import ViewComponents
 
 
-view : Session -> Model -> Document Msg
+view : Session -> Model -> ( String, Html Msg )
 view session model =
     let
         content =
-            case Session.getLevelsByCampaignId model.campaignId session of
+            case getLevelsByCampaignId model.campaignId session of
                 NotAsked ->
                     View.LoadingScreen.view "Not asked for campaign"
 
@@ -31,22 +46,20 @@ view session model =
                     View.ErrorScreen.view (GetError.toString error)
 
                 Success levels ->
-                    viewCampaign levels model
+                    viewCampaign levels session model
     in
-    { title = "Campaign"
-    , body =
-        content
-            |> layout
-                [ color.background.black
-                , width fill
-                , height fill
-                , Font.family
-                    [ Font.monospace
-                    ]
-                , color.font.default
+    ( "Campaign"
+    , content
+        |> layout
+            [ color.background.black
+            , width fill
+            , height fill
+            , Font.family
+                [ Font.monospace
                 ]
-            |> List.singleton
-    }
+            , color.font.default
+            ]
+    )
 
 
 viewCampaign : List Level -> Session -> Model -> Element Msg
@@ -114,7 +127,7 @@ viewCampaign levels session model =
                         ]
 
         mainContent =
-            viewLevels campaign model
+            viewLevels levels model
     in
     View.SingleSidebar.view
         { sidebar = sidebar
@@ -124,8 +137,8 @@ viewCampaign levels session model =
         }
 
 
-viewLevels : Campaign -> Model -> Element Msg
-viewLevels campaign model =
+viewLevels : List Level -> Model -> Element Msg
+viewLevels levels model =
     let
         viewLevel level =
             let
@@ -197,8 +210,8 @@ viewLevels campaign model =
         |> el []
 
 
-viewSidebar : Level -> Model -> List (Element Msg)
-viewSidebar level model =
+viewSidebar : Session -> Model -> Level -> List (Element Msg)
+viewSidebar session model level =
     let
         levelNameView =
             ViewComponents.viewTitle []
@@ -209,40 +222,28 @@ viewSidebar level model =
                 []
                 level.description
 
-        solutionsAreLoading =
-            Cache.get level.id session.solutionBooks
-                |> RemoteData.isLoading
-
-        levelSolved =
-            Cache.get level.id session.solutionBooks
-                |> RemoteData.toMaybe
-                |> Maybe.map (.solutionIds >> Set.isEmpty >> not)
-                |> Maybe.withDefault False
+        solutionsRemoteData =
+            getSolutionsByLevelId level.id session
 
         solvedStatusView =
             let
-                loadingText =
-                    "Loading solutions..."
-
-                solvedText =
-                    "Solved"
-
-                notSolvedText =
-                    "Not solved"
-
                 solvedStatus =
-                    case
-                        Session.getSolutionBook level.id session
-                    of
-                        Success solutionBook ->
-                            if Set.isEmpty solutionBook.solutionIds then
-                                notSolvedText
+                    case solutionsRemoteData of
+                        NotAsked ->
+                            "Solutions not asked"
+
+                        Loading ->
+                            "Loading solutions..."
+
+                        Failure _ ->
+                            "Error when loading solutions"
+
+                        Success solutions ->
+                            if List.isEmpty solutions then
+                                "Not solved"
 
                             else
-                                solvedText
-
-                        _ ->
-                            loadingText
+                                "Solved"
             in
             paragraph
                 [ width fill
@@ -252,28 +253,27 @@ viewSidebar level model =
                 ]
 
         highScoreView =
-            if Maybe.Extra.isNothing (Session.getAccessToken session) then
+            if VerifiedAccessToken.isMissing session.accessToken then
                 View.Box.simpleNonInteractive "Sign in to enable high scores"
 
-            else if solutionsAreLoading then
-                View.Box.simpleNonInteractive "Loading solutions"
-
-            else if not levelSolved then
-                View.Box.simpleNonInteractive "High scores hidden"
-
             else
-                let
-                    highScore =
-                        Cache.get level.id session.highScores
+                case solutionsRemoteData of
+                    NotAsked ->
+                        View.Box.simpleNonInteractive "Solutions not asked"
 
-                    solutions =
-                        Cache.get level.id session.solutionBooks
-                            |> RemoteData.map (.solutionIds >> Set.toList)
-                            |> RemoteData.withDefault []
-                            |> List.filterMap (flip Cache.get session.solutions.local >> RemoteData.toMaybe)
-                            |> Maybe.Extra.values
-                in
-                View.HighScore.view solutions highScore
+                    Loading ->
+                        View.Box.simpleNonInteractive "Loading solutions"
+
+                    Failure error ->
+                        View.Box.simpleError (GetError.toString error)
+
+                    Success solutions ->
+                        if List.isEmpty solutions then
+                            View.Box.simpleNonInteractive "High scores hidden"
+
+                        else
+                            getHighScoreByLevelId level.id session
+                                |> View.HighScore.view solutions
 
         draftsView =
             viewDrafts level session
@@ -288,7 +288,7 @@ viewSidebar level model =
 
 viewDrafts : Level -> Session -> Element Msg
 viewDrafts level session =
-    case Session.getDraftBook level.id session of
+    case getDraftsByLevelId level.id session of
         NotAsked ->
             View.Box.simpleLoading "Not asked"
 
@@ -298,7 +298,7 @@ viewDrafts level session =
         Failure error ->
             View.Box.simpleError (GetError.toString error)
 
-        Success draftBook ->
+        Success drafts ->
             let
                 newDraftButton =
                     ViewComponents.textButton
@@ -306,100 +306,79 @@ viewDrafts level session =
                         (Just ClickedGenerateDraft)
                         "New draft"
 
-                viewDraft index draftId =
-                    case Cache.get draftId session.drafts.local of
-                        NotAsked ->
-                            View.Box.simpleLoading "Not asked"
+                viewDraft index draft =
+                    let
+                        maybeSolution =
+                            getSolutionsByLevelId level.id session
+                                |> RemoteData.toMaybe
+                                |> Maybe.withDefault []
+                                |> List.filter (.board >> (==) (History.current draft.boardHistory))
+                                |> List.head
 
-                        Loading ->
-                            View.Box.simpleLoading ("Loading draft " ++ String.fromInt (index + 1))
+                        attrs =
+                            [ width fill
+                            , padding 10
+                            , spacing 15
+                            , Border.width 3
+                            , color.border.default
+                            , centerX
+                            , mouseOver
+                                [ color.background.hovering
+                                ]
+                            , htmlAttribute
+                                (Html.Attributes.class
+                                    (if Maybe.Extra.isJust maybeSolution then
+                                        "solved"
 
-                        Failure error ->
-                            View.Box.simpleError (Decode.errorToString error)
+                                     else
+                                        ""
+                                    )
+                                )
+                            ]
 
-                        Success Nothing ->
-                            View.Box.simpleError "Not found"
+                        draftName =
+                            "Draft " ++ String.fromInt (index + 1)
 
-                        Success (Just draft) ->
-                            let
-                                maybeSolution =
-                                    session.solutionBooks
-                                        |> Cache.get level.id
-                                        |> RemoteData.map .solutionIds
-                                        |> RemoteData.map Set.toList
-                                        |> RemoteData.withDefault []
-                                        |> List.map (flip Cache.get session.solutions.local)
-                                        |> List.filterMap RemoteData.toMaybe
-                                        |> Maybe.Extra.values
-                                        |> List.filter (.board >> (==) (History.current draft.boardHistory))
-                                        |> List.head
-
-                                attrs =
-                                    [ width fill
-                                    , padding 10
-                                    , spacing 15
-                                    , Border.width 3
-                                    , Border.color (rgb 1 1 1)
-                                    , centerX
-                                    , mouseOver
-                                        [ Background.color (rgb 0.5 0.5 0.5)
-                                        ]
-                                    , htmlAttribute
-                                        (Html.Attributes.class
-                                            (if Maybe.Extra.isJust maybeSolution then
-                                                "solved"
-
-                                             else
-                                                ""
-                                            )
-                                        )
-                                    ]
-
-                                draftName =
-                                    "Draft " ++ String.fromInt (index + 1)
-
-                                label =
-                                    [ draftName
-                                        |> text
-                                        |> el [ centerX, Font.size 24 ]
-                                    , el
-                                        [ centerX
-                                        , Font.color (rgb 0.2 0.2 0.2)
-                                        ]
-                                        (text draft.id)
-                                    , row
-                                        [ width fill
-                                        , spaceEvenly
-                                        ]
-                                        [ text "Instructions: "
-                                        , Draft.getInstructionCount level.initialBoard draft
-                                            |> String.fromInt
-                                            |> text
-                                        ]
-                                    , maybeSolution
-                                        |> Maybe.map
-                                            (\solution ->
-                                                row
-                                                    [ width fill
-                                                    , spaceEvenly
-                                                    ]
-                                                    [ text "Steps: "
-                                                    , text <| String.fromInt solution.score.numberOfSteps
-                                                    ]
-                                            )
-                                        |> Maybe.withDefault none
-                                    ]
-                                        |> column
-                                            attrs
-                            in
-                            Route.link
-                                [ width fill ]
-                                label
-                                (Route.EditDraft draft.id)
+                        label =
+                            [ draftName
+                                |> text
+                                |> el [ centerX, Font.size 24 ]
+                            , el
+                                [ centerX
+                                , Font.color (rgb 0.2 0.2 0.2)
+                                ]
+                                (text draft.id)
+                            , row
+                                [ width fill
+                                , spaceEvenly
+                                ]
+                                [ text "Instructions: "
+                                , Draft.getInstructionCount level.initialBoard draft
+                                    |> String.fromInt
+                                    |> text
+                                ]
+                            , maybeSolution
+                                |> Maybe.map
+                                    (\solution ->
+                                        row
+                                            [ width fill
+                                            , spaceEvenly
+                                            ]
+                                            [ text "Steps: "
+                                            , text <| String.fromInt solution.score.numberOfSteps
+                                            ]
+                                    )
+                                |> Maybe.withDefault none
+                            ]
+                                |> column
+                                    attrs
+                    in
+                    Route.link
+                        [ width fill ]
+                        label
+                        (Route.EditDraft draft.id)
             in
-            draftBook.draftIds
-                |> Set.toList
-                |> List.indexedMap viewDraft
+            List.indexedMap viewDraft drafts
                 |> (::) newDraftButton
                 |> column
                     [ width fill

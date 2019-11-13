@@ -1,5 +1,6 @@
 module Update.SessionMsg exposing (SessionMsg(..))
 
+import Data.AccessToken exposing (AccessToken)
 import Data.Blueprint exposing (Blueprint)
 import Data.BlueprintId exposing (BlueprintId)
 import Data.CampaignId exposing (CampaignId)
@@ -29,7 +30,7 @@ type SessionMsg
     | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
     | GotLoadSolutionsByLevelIdsResponse (List LevelId) (Result GetError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
-    | GotLoadUserInfoResponse (Result GetError UserInfo)
+    | GotLoadUserInfoResponse AccessToken (Result GetError UserInfo)
     | GotSaveDraftResponse Draft (Maybe SaveError)
     | GotDeleteBlueprintResponse BlueprintId (Maybe SaveError)
     | GotSaveBlueprintResponse Blueprint (Maybe SaveError)

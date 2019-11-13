@@ -104,12 +104,14 @@ decoder =
 -- REST
 
 
-loadFromServer : AccessToken -> (Result GetError UserInfo -> msg) -> Cmd msg
+{-| We return the access token in this request because one of the purposes of this request is to verify the access token.
+-}
+loadFromServer : AccessToken -> (AccessToken -> Result GetError UserInfo -> msg) -> Cmd msg
 loadFromServer accessToken toMsg =
     GCP.get
         |> GCP.withPath [ "userInfo" ]
         |> GCP.withAccessToken accessToken
-        |> GCP.request (HttpError.expect decoder toMsg)
+        |> GCP.request (HttpError.expect decoder (toMsg accessToken))
 
 
 

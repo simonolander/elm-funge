@@ -1,5 +1,6 @@
 module Update.HighScore exposing
-    ( gotLoadHighScoreByLevelIdResponse
+    ( getHighScoreByLevelId
+    , gotLoadHighScoreByLevelIdResponse
     , loadHighScoreByLevelId
     )
 
@@ -8,6 +9,7 @@ import Data.HighScore exposing (HighScore)
 import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
 import Debug exposing (todo)
+import RemoteData exposing (RemoteData)
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -22,6 +24,15 @@ loadHighScoreByLevelId levelId session =
 
 gotLoadHighScoreByLevelIdResponse : LevelId -> Result GetError HighScore -> Session -> ( Session, Cmd SessionMsg )
 gotLoadHighScoreByLevelIdResponse levelId result session =
+    todo ""
+
+
+
+-- GETTER
+
+
+getHighScoreByLevelId : LevelId -> Session -> RemoteData GetError HighScore
+getHighScoreByLevelId levelId session =
     todo ""
 
 

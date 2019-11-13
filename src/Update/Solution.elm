@@ -1,5 +1,6 @@
 module Update.Solution exposing
-    ( gotLoadSolutionResponse
+    ( getSolutionsByLevelId
+    , gotLoadSolutionResponse
     , gotLoadSolutionsByLevelIdResponse
     , gotLoadSolutionsByLevelIdsResponse
     , gotSaveSolutionResponse
@@ -12,6 +13,7 @@ module Update.Solution exposing
     )
 
 import Data.CampaignId exposing (CampaignId)
+import Data.CmdUpdater as CmdUpdater
 import Data.GetError exposing (GetError)
 import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
@@ -19,7 +21,7 @@ import Data.Solution exposing (Solution)
 import Data.SolutionId exposing (SolutionId)
 import Data.SubmitSolutionError exposing (SubmitSolutionError)
 import Debug exposing (todo)
-import Extra.Cmd exposing (fold)
+import RemoteData exposing (RemoteData)
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -34,7 +36,7 @@ loadSolution solutionId session =
 
 loadSolutionsBySolutionIds : List SolutionId -> Session -> ( Session, Cmd SessionMsg )
 loadSolutionsBySolutionIds solutionIds =
-    fold (List.map loadSolution solutionIds)
+    CmdUpdater.batch (List.map loadSolution solutionIds)
 
 
 loadSolutionsByLevelIdResponse : LevelId -> Session -> ( Session, Cmd SessionMsg )
@@ -69,6 +71,15 @@ gotLoadSolutionsByLevelIdResponse levelId result session =
 
 gotLoadSolutionsByLevelIdsResponse : List LevelId -> Result GetError (List Solution) -> Session -> ( Session, Cmd SessionMsg )
 gotLoadSolutionsByLevelIdsResponse levelIds result session =
+    todo ""
+
+
+
+-- GETTERS
+
+
+getSolutionsByLevelId : LevelId -> Session -> RemoteData GetError (List Solution)
+getSolutionsByLevelId levelId session =
     todo ""
 
 

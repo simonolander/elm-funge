@@ -1,11 +1,12 @@
 module Page.Home.View exposing (view)
 
 import ApplicationName exposing (applicationName)
-import Browser exposing (Document)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
+import Html exposing (Html)
 import Page.Home.Model exposing (Model)
+import Page.Home.Msg exposing (Msg)
 import Route
 import Version exposing (version)
 import View.Box as Box
@@ -16,7 +17,7 @@ import View.Scewn
 import ViewComponents
 
 
-view : Session -> Model -> Document msg
+view : Session -> Model -> ( String, Html Msg )
 view session _ =
     let
         titleView =
@@ -71,18 +72,15 @@ view session _ =
                     }
                 ]
 
-        body =
-            View.Scewn.view
-                { north = Just header
-                , center = Just main
-                , west = Nothing
-                , east = Nothing
-                , south = Just footer
-                , modal = Nothing
-                }
-                |> View.Layout.layout
-                |> List.singleton
+        content =
+            View.Layout.layout <|
+                View.Scewn.view
+                    { north = Just header
+                    , center = Just main
+                    , west = Nothing
+                    , east = Nothing
+                    , south = Just footer
+                    , modal = Nothing
+                    }
     in
-    { title = "Home"
-    , body = body
-    }
+    ( "Home", content )

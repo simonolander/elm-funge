@@ -128,9 +128,6 @@ type Msg
     | ClickedBlueprintOverwriteLocal Blueprint
     | ClickedBlueprintDiscardLocal BlueprintId
     | ClickedBlueprintDiscardActual BlueprintId
-    | ClickedImportLocalData
-    | ClickedDeleteLocalData
-    | ClickedSignInToOtherAccount
 
 
 load : Model -> ( Model, Cmd Msg )
@@ -363,7 +360,7 @@ load =
                     else
                         ( model, Cmd.none )
     in
-    Extra.Cmd.fold
+    CmdUpdater.batch
         [ loadUserData
         , loadDrafts
         , loadBlueprints
@@ -735,13 +732,6 @@ update msg model =
                             modelWithSavedResponse
                                 |> withCmd (SubmitSolutionError.consoleError error)
 
-        ClickedContinueOffline ->
-            ( { model
-                | accessTokenState = Missing
-              }
-            , Cmd.none
-            )
-
         ClickedDraftOverwriteActual draft ->
             case model.accessTokenState of
                 Verified { accessToken } ->
@@ -813,64 +803,6 @@ update msg model =
 
                 _ ->
                     ( model, Console.errorString "5mn2a7llho75d04s    Can't discard blueprint, access token expired during initialization" )
-
-        ClickedImportLocalData ->
-            case ( model.accessTokenState, RemoteData.toMaybe model.actualUserInfo ) of
-                ( Verifying accessToken, Just actualUserInfo ) ->
-                    ( { model
-                        | accessTokenState = Verified { accessToken = accessToken, userInfo = actualUserInfo }
-                      }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        ClickedDeleteLocalData ->
-            case ( model.accessTokenState, RemoteData.toMaybe model.actualUserInfo ) of
-                ( Verifying accessToken, Just actualUserInfo ) ->
-                    ( { model
-                        | accessTokenState =
-                            Verified
-                                { accessToken = accessToken
-                                , userInfo = actualUserInfo
-                                }
-                        , localDrafts = Dict.empty
-                        , expectedDrafts = Dict.empty
-                        , localBlueprints = Dict.empty
-                        , expectedBlueprints = Dict.empty
-                      }
-                    , Cmd.batch
-                        [ Cmd.batch
-                            [ Dict.keys model.localDrafts
-                                |> List.map Draft.removeFromLocalStorage
-                                |> Cmd.batch
-                            , Dict.keys model.expectedDrafts
-                                |> List.map Draft.removeRemoteFromLocalStorage
-                                |> Cmd.batch
-                            , Dict.keys model.localDraftBooks
-                                |> List.map DraftBook.removeFromLocalStorage
-                                |> Cmd.batch
-                            ]
-                        , Cmd.batch
-                            [ Dict.keys model.localBlueprints
-                                |> List.map Blueprint.removeFromLocalStorage
-                                |> Cmd.batch
-                            , Dict.keys model.expectedBlueprints
-                                |> List.map Blueprint.removeRemoteFromLocalStorage
-                                |> Cmd.batch
-                            , BlueprintBook.removeFromLocalStorage
-                            ]
-                        ]
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        ClickedSignInToOtherAccount ->
-            ( model
-            , Browser.Navigation.load (Auth0.reLogin (Route.toUrl model.route))
-            )
 
         GotLoadBlueprintResponse blueprintId result ->
             let
@@ -998,47 +930,6 @@ view model =
     { title = "Synchronizing"
     , body = [ element ]
     }
-
-
-viewExpiredAccessToken : Model -> String -> Element Msg
-viewExpiredAccessToken model message =
-    column
-        [ centerX
-        , centerY
-        , spacing 20
-        ]
-        [ image
-            [ width (px 36)
-            , centerX
-            ]
-            { src = "assets/instruction-images/exception.svg"
-            , description = "Loading animation"
-            }
-        , paragraph
-            [ width shrink
-            , centerX
-            , centerY
-            , Font.center
-            , Font.size 28
-            , Font.color color.font.error
-            ]
-            [ text "Your credentials are either expired or invalid. "
-            , text message
-            ]
-        , link
-            [ width (px 300)
-            , centerX
-            ]
-            { label = ViewComponents.textButton [] Nothing "Sign in"
-            , url = Auth0.login (Route.toUrl model.route)
-            }
-        , ViewComponents.textButton
-            [ width (px 300)
-            , centerX
-            ]
-            (Just ClickedContinueOffline)
-            "Continue offline"
-        ]
 
 
 viewHttpError : Model -> GetError -> Element Msg
@@ -1173,7 +1064,7 @@ resolveConflict { overwriteLocal, overwriteExpected, overwriteActual, discardLoc
             ( model, Cmd.none )
 
         OverwriteLocal value ->
-            Extra.Cmd.fold
+            CmdUpdater.batch
                 [ overwriteLocal value
                 , overwriteExpected value
                 ]
@@ -1183,7 +1074,7 @@ resolveConflict { overwriteLocal, overwriteExpected, overwriteActual, discardLoc
             overwriteActual value model
 
         DiscardLocal id ->
-            Extra.Cmd.fold
+            CmdUpdater.batch
                 [ discardLocal id
                 , discardExpected id
                 ]
