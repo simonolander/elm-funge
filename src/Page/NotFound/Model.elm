@@ -1,4 +1,4 @@
-module Page.Credits.Model exposing (Model, init)
+module Page.NotFound.Model exposing (Model, init)
 
 
 type alias Model =

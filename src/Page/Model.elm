@@ -1,21 +1,23 @@
-module Page.Model exposing (PageModel(..))
+module Page.Model exposing (Model(..))
 
-import Page.Blueprint.Model as Blueprint
-import Page.Blueprints.Model as Blueprints
-import Page.Campaign.Model as Campaign
-import Page.Campaigns.Model as Campaigns
-import Page.Credits.Model as Credits
-import Page.Draft.Model as Draft
-import Page.Execution.Model as Execution
-import Page.Home.Model as Home
+import Page.Blueprint.Model
+import Page.Blueprints.Model
+import Page.Campaign.Model
+import Page.Campaigns.Model
+import Page.Credits.Model
+import Page.Draft.Model
+import Page.Execution.Model
+import Page.Home.Model
+import Page.NotFound.Model
 
 
-type PageModel
-    = Home Home.Model
-    | Campaign Campaign.Model
-    | Campaigns Campaigns.Model
-    | Credits Credits.Model
-    | Execution Execution.Model
-    | Draft Draft.Model
-    | Blueprint Blueprint.Model
-    | Blueprints Blueprints.Model
+type Model
+    = BlueprintModel Page.Blueprint.Model.Model
+    | BlueprintsModel Page.Blueprints.Model.Model
+    | CampaignModel Page.Campaign.Model.Model
+    | CampaignsModel Page.Campaigns.Model.Model
+    | CreditsModel Page.Credits.Model.Model
+    | DraftModel Page.Draft.Model.Model
+    | ExecutionModel Page.Execution.Model.Model
+    | HomeModel Page.Home.Model.Model
+    | NotFoundModel Page.NotFound.Model.Model

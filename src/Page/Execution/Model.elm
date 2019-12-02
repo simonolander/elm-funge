@@ -1,4 +1,4 @@
-module Page.Execution.Model exposing (Execution, ExecutionState(..), ExecutionStep, ExecutionSuite, Model)
+module Page.Execution.Model exposing (Execution, ExecutionState(..), ExecutionStep, ExecutionSuite, Model, init)
 
 import Data.Board exposing (Board)
 import Data.DraftId exposing (DraftId)
@@ -8,7 +8,6 @@ import Data.InstructionPointer exposing (InstructionPointer)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Output exposing (Output)
-import Data.Session exposing (Session)
 import Data.Stack exposing (Stack)
 
 

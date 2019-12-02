@@ -1,42 +1,56 @@
 module Page.Load exposing (load)
 
+import Data.CmdUpdater as CmdUpdate exposing (CmdUpdater, mapModel)
 import Data.Session exposing (Session)
-import Debug exposing (todo)
+import Page.Blueprint.Update
+import Page.Blueprints.Update
+import Page.Campaign.Update
+import Page.Campaigns.Update
+import Page.Credits.Update
+import Page.Draft.Update
+import Page.Execution.Update
 import Page.Home.Update
-import Page.Model exposing (PageModel(..))
-import Page.PageMsg exposing (PageMsg)
+import Page.Model exposing (Model(..))
+import Page.Msg exposing (Msg(..))
+import Page.NotFound.Update
 
 
-load : Session -> PageModel -> ( ( Session, PageModel ), Cmd PageMsg )
-load session pageModel =
-    case pageModel of
-        Home model ->
-            Page.Home.Update.load ( session, model )
-                |> Tuple.mapFirst (Tuple.mapSecond Home)
+load : CmdUpdater ( Session, Model ) Msg
+load ( session, pageModel ) =
+    CmdUpdate.mapCmd SessionMsg <|
+        case pageModel of
+            BlueprintModel model ->
+                Page.Blueprint.Update.load ( session, model )
+                    |> mapModel BlueprintModel
 
-        Campaign model ->
-            todo ""
+            BlueprintsModel model ->
+                Page.Blueprints.Update.load ( session, model )
+                    |> mapModel BlueprintsModel
 
-        Campaigns model ->
-            todo ""
+            CampaignModel model ->
+                Page.Campaign.Update.load ( session, model )
+                    |> mapModel CampaignModel
 
-        Credits model ->
-            todo ""
+            CampaignsModel model ->
+                Page.Campaigns.Update.load ( session, model )
+                    |> mapModel CampaignsModel
 
-        Execution model ->
-            todo ""
+            CreditsModel model ->
+                Page.Credits.Update.load ( session, model )
+                    |> mapModel CreditsModel
 
-        Draft model ->
-            todo ""
+            DraftModel model ->
+                Page.Draft.Update.load ( session, model )
+                    |> mapModel DraftModel
 
-        Blueprint model ->
-            todo ""
+            ExecutionModel model ->
+                Page.Execution.Update.load ( session, model )
+                    |> mapModel ExecutionModel
 
-        Blueprints model ->
-            todo ""
+            HomeModel model ->
+                Page.Home.Update.load ( session, model )
+                    |> mapModel HomeModel
 
-        Initialize model ->
-            todo ""
-
-        NotFound model ->
-            todo ""
+            NotFoundModel model ->
+                Page.NotFound.Update.load ( session, model )
+                    |> mapModel NotFoundModel

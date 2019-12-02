@@ -24,7 +24,7 @@ view errorMessage =
         , padding 40
         , htmlAttribute (Attribute.class "pre")
         , scrollbars
-        , Font.color color.font.error
+        , color.font.error
         , Font.size 30
         ]
         [ text errorMessage ]

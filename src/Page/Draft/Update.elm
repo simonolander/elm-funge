@@ -3,7 +3,7 @@ module Page.Draft.Update exposing (init, load, update)
 import Basics.Extra exposing (flip)
 import Data.Board as Board
 import Data.Cache as Cache
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.Draft as Draft
 import Data.DraftId exposing (DraftId)
 import Data.History as History
@@ -14,37 +14,19 @@ import Json.Encode as Encode
 import Maybe.Extra
 import Page.Draft.Model exposing (Model, State(..))
 import Page.Draft.Msg exposing (Msg(..))
-import Page.PageMsg as PageMsg exposing (InternalMsg(..), PageMsg)
 import RemoteData
 import Route
 import Update.Draft exposing (deleteDraft, getDraftByDraftId, loadDraftByDraftId, saveDraft)
 import Update.Level exposing (getLevelByLevelId, loadLevelByLevelId)
+import Update.SessionMsg exposing (SessionMsg)
 
 
-fromMsg : Msg -> PageMsg
-fromMsg =
-    PageMsg.Draft >> PageMsg.InternalMsg
-
-
-init : DraftId -> Model
-init draftId =
-    let
-        model =
-            { draftId = draftId
-            , state = Editing
-            , error = Nothing
-            , selectedInstructionToolIndex = Nothing
-            }
-    in
-    model
-
-
-load : ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+load : CmdUpdater ( Session, Model ) SessionMsg
 load =
     let
         loadDraft ( session, model ) =
             loadDraftByDraftId model.draftId session
-                |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                |> CmdUpdater.withModel model
 
         loadLevel ( session, model ) =
             getDraftByDraftId model.draftId session
@@ -53,7 +35,7 @@ load =
                 |> Maybe.map .levelId
                 |> Maybe.map (flip loadLevelByLevelId session)
                 |> Maybe.withDefault ( session, Cmd.none )
-                |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                |> CmdUpdater.withModel model
     in
     CmdUpdater.batch
         [ loadDraft
@@ -61,7 +43,7 @@ load =
         ]
 
 
-update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+update : Msg -> CmdUpdater ( Session, Model ) SessionMsg
 update msg tuple =
     let
         ( session, model ) =
@@ -90,7 +72,6 @@ update msg tuple =
                     }
                         |> Tuple.pair session
                         |> CmdUpdater.id
-                        |> CmdUpdater.mapCmd fromMsg
 
                 Deleting ->
                     ( ( session, model ), Cmd.none )
@@ -104,7 +85,7 @@ update msg tuple =
                     case Decode.decodeString Board.decoder importData of
                         Ok board ->
                             saveDraft (Draft.pushBoard board draft) session
-                                |> CmdUpdater.mapBoth (flip Tuple.pair { model | state = Editing }) PageMsg.SessionMsg
+                                |> CmdUpdater.withModel { model | state = Editing }
 
                         Err error ->
                             ( ( session
@@ -152,7 +133,7 @@ update msg tuple =
             case maybeDraft of
                 Just draft ->
                     saveDraft (Draft.undo draft) session
-                        |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                        |> CmdUpdater.withModel model
 
                 Nothing ->
                     ( tuple, Cmd.none )
@@ -161,7 +142,7 @@ update msg tuple =
             case maybeDraft of
                 Just draft ->
                     saveDraft (Draft.redo draft) session
-                        |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                        |> CmdUpdater.withModel model
 
                 Nothing ->
                     ( tuple, Cmd.none )
@@ -170,7 +151,7 @@ update msg tuple =
             case ( maybeDraft, maybeLevel ) of
                 ( Just draft, Just level ) ->
                     saveDraft (Draft.pushBoard level.initialBoard draft) session
-                        |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                        |> CmdUpdater.withModel model
 
                 _ ->
                     ( tuple, Cmd.none )
@@ -209,7 +190,7 @@ update msg tuple =
                             Draft.pushBoard board oldDraft
                     in
                     saveDraft draft session
-                        |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                        |> CmdUpdater.withModel model
 
                 Nothing ->
                     ( tuple, Cmd.none )
@@ -240,7 +221,7 @@ update msg tuple =
                                 |> Route.replaceUrl session.key
                     in
                     deleteDraft draft.id session
-                        |> CmdUpdater.mapBoth (flip Tuple.pair model) PageMsg.SessionMsg
+                        |> CmdUpdater.withModel model
                         |> CmdUpdater.add changeRouteCmd
 
                 Nothing ->

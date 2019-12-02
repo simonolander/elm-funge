@@ -10,34 +10,38 @@ import Page.Credits.View
 import Page.Draft.View
 import Page.Execution.View
 import Page.Home.View
-import Page.Model exposing (PageModel(..))
-import Page.PageMsg exposing (PageMsg(..))
+import Page.Model exposing (Model(..))
+import Page.Msg exposing (PageMsg)
+import Page.NotFound.View
 
 
-view : Session -> PageModel -> ( String, Html PageMsg )
+view : Session -> Model -> ( String, Html PageMsg )
 view session pageModel =
-    Tuple.mapSecond (Html.map InternalMsg) <|
+    Tuple.mapSecond (Html.map PageMsg) <|
         case pageModel of
-            Home model ->
+            HomeModel model ->
                 Page.Home.View.view session model
 
-            Campaign model ->
+            CampaignModel model ->
                 Page.Campaign.View.view session model
 
-            Campaigns model ->
+            CampaignsModel model ->
                 Page.Campaigns.View.view session model
 
-            Credits model ->
+            CreditsModel model ->
                 Page.Credits.View.view session model
 
-            Execution model ->
+            ExecutionModel model ->
                 Page.Execution.View.view session model
 
-            Draft model ->
+            DraftModel model ->
                 Page.Draft.View.view session model
 
-            Blueprint model ->
+            BlueprintModel model ->
                 Page.Blueprint.View.view session model
 
-            Blueprints model ->
+            BlueprintsModel model ->
                 Page.Blueprints.View.view session model
+
+            NotFoundModel model ->
+                Page.NotFound.View.view session model

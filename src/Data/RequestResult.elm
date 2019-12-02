@@ -1,4 +1,4 @@
-module Data.RequestResult exposing (RequestResult, badBody, constructor, split, toTuple)
+module Data.RequestResult exposing (RequestResult, constructor, split, toTuple)
 
 
 type alias RequestResult request error data =

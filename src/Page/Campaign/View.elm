@@ -1,17 +1,17 @@
 module Page.Campaign.View exposing (view)
 
-import Basics.Extra exposing (flip)
 import Data.Draft as Draft
 import Data.GetError as GetError
 import Data.History as History
 import Data.Level exposing (Level)
-import Data.Session as Session exposing (Session)
+import Data.Session exposing (Session)
 import Data.VerifiedAccessToken as VerifiedAccessToken
 import Element exposing (..)
 import Element.Border as Border
 import Element.Font as Font
 import Html exposing (Html)
 import Html.Attributes
+import List.Extra
 import Maybe.Extra
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
@@ -21,11 +21,12 @@ import String.Extra
 import Update.Draft exposing (getDraftsByLevelId)
 import Update.HighScore exposing (getHighScoreByLevelId)
 import Update.Level exposing (getLevelsByCampaignId)
-import Update.Solution exposing (getSolutionsByLevelId)
+import Update.Solution exposing (getSolutionsByLevelId, getSolutionsByLevelIds)
 import View.Box
 import View.Constant exposing (color, size)
 import View.ErrorScreen
 import View.HighScore
+import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
 import ViewComponents
@@ -78,56 +79,46 @@ viewCampaign levels session model =
                 elements
             ]
 
-        numberOfLevels =
-            List.length levels
-
-        solutionBookRemoteData =
-            List.map (flip Cache.get session.solutionBooks) campaign.levelIds
-
-        numberOfSolvedLevels =
-            List.filterMap RemoteData.toMaybe solutionBookRemoteData
-                |> List.Extra.count (not << Set.isEmpty << .solutionIds)
-
-        allSolutionsLoaded =
-            List.map RemoteData.toMaybe solutionBookRemoteData
-                |> List.all Maybe.Extra.isJust
-
         sidebar =
             case
-                model.selectedLevelId
-                    |> Maybe.Extra.filter (flip List.member campaign.levelIds)
-                    |> Maybe.map (flip Session.getLevel session)
+                List.filter (.id >> Just >> (==) model.selectedLevelId) levels
+                    |> List.head
             of
-                Just (Success level) ->
-                    viewSidebar level model
-
-                Just NotAsked ->
-                    viewTemporarySidebar [ text "Not asked :/" ]
-
-                Just Loading ->
-                    viewTemporarySidebar [ text "Loading level..." ]
-
-                Just (Failure error) ->
-                    viewTemporarySidebar [ text (GetError.toString error) ]
+                Just level ->
+                    viewSidebar session model level
 
                 Nothing ->
-                    viewTemporarySidebar
-                        [ String.concat
-                            [ if allSolutionsLoaded then
-                                ""
+                    viewTemporarySidebar <|
+                        case getSolutionsByLevelIds (List.map .id levels) session of
+                            NotAsked ->
+                                [ text "Solutions not asked" ]
 
-                              else
-                                "at least "
-                            , String.fromInt numberOfSolvedLevels
-                            , "/"
-                            , String.fromInt numberOfLevels
-                            , " solved"
-                            ]
-                            |> text
-                        ]
+                            Loading ->
+                                [ text "Loading solutions..." ]
+
+                            Failure error ->
+                                [ text "Error loading solutions"
+                                , text (GetError.toString error)
+                                ]
+
+                            Success solutions ->
+                                let
+                                    numberOfSolvedLevels =
+                                        List.map .levelId solutions
+                                            |> List.Extra.unique
+                                            |> List.length
+                                in
+                                [ String.concat
+                                    [ String.fromInt numberOfSolvedLevels
+                                    , "/"
+                                    , List.length levels |> String.fromInt
+                                    , " solved"
+                                    ]
+                                    |> text
+                                ]
 
         mainContent =
-            viewLevels levels model
+            viewLevels model levels
     in
     View.SingleSidebar.view
         { sidebar = sidebar
@@ -137,8 +128,8 @@ viewCampaign levels session model =
         }
 
 
-viewLevels : List Level -> Model -> Element Msg
-viewLevels levels model =
+viewLevels : Session -> Model -> List Level -> Element Msg
+viewLevels session model levels =
     let
         viewLevel level =
             let
@@ -148,15 +139,13 @@ viewLevels levels model =
                         |> Maybe.withDefault False
 
                 solved =
-                    level.id
-                        |> flip Session.getSolutionBook session
-                        |> RemoteData.map .solutionIds
-                        |> RemoteData.map Set.isEmpty
-                        |> RemoteData.withDefault True
-                        |> not
+                    getSolutionsByLevelId level.id session
+                        |> RemoteData.toMaybe
+                        |> Maybe.map (List.isEmpty >> not)
+                        |> Maybe.withDefault False
 
                 onPress =
-                    Just (SelectLevel level.id)
+                    Just (ClickedLevel level.id)
 
                 default =
                     View.LevelButton.default
@@ -200,10 +189,8 @@ viewLevels levels model =
                 _ ->
                     EQ
     in
-    campaign.levelIds
-        |> List.map (flip Session.getLevel session)
-        |> List.sortWith sort
-        |> List.map viewLevelWebData
+    List.sortBy .index levels
+        |> List.map viewLevel
         |> wrappedRow
             [ spacing 20
             ]

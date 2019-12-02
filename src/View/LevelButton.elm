@@ -33,7 +33,7 @@ loading levelId =
     column
         [ padding 20
         , Border.width 3
-        , Border.color color.font.subtle
+        , color.font.subtle
         , width (px 256)
         , spaceEvenly
         , height (px 181)

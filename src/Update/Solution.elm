@@ -1,5 +1,6 @@
 module Update.Solution exposing
     ( getSolutionsByLevelId
+    , getSolutionsByLevelIds
     , gotLoadSolutionResponse
     , gotLoadSolutionsByLevelIdResponse
     , gotLoadSolutionsByLevelIdsResponse
@@ -13,7 +14,7 @@ module Update.Solution exposing
     )
 
 import Data.CampaignId exposing (CampaignId)
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.GetError exposing (GetError)
 import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
@@ -29,47 +30,47 @@ import Update.SessionMsg exposing (SessionMsg)
 -- LOAD
 
 
-loadSolution : SolutionId -> Session -> ( Session, Cmd SessionMsg )
+loadSolution : SolutionId -> CmdUpdater Session SessionMsg
 loadSolution solutionId session =
     todo ""
 
 
-loadSolutionsBySolutionIds : List SolutionId -> Session -> ( Session, Cmd SessionMsg )
+loadSolutionsBySolutionIds : List SolutionId -> CmdUpdater Session SessionMsg
 loadSolutionsBySolutionIds solutionIds =
     CmdUpdater.batch (List.map loadSolution solutionIds)
 
 
-loadSolutionsByLevelIdResponse : LevelId -> Session -> ( Session, Cmd SessionMsg )
+loadSolutionsByLevelIdResponse : LevelId -> CmdUpdater Session SessionMsg
 loadSolutionsByLevelIdResponse levelId session =
     todo ""
 
 
-loadSolutionsByLevelIdsResponse : List LevelId -> Session -> ( Session, Cmd SessionMsg )
+loadSolutionsByLevelIdsResponse : List LevelId -> CmdUpdater Session SessionMsg
 loadSolutionsByLevelIdsResponse levelIds session =
     todo ""
 
 
-loadSolutionsByCampaignId : CampaignId -> Session -> ( Session, Cmd SessionMsg )
+loadSolutionsByCampaignId : CampaignId -> CmdUpdater Session SessionMsg
 loadSolutionsByCampaignId campaignId session =
     todo ""
 
 
-loadSolutionsByCampaignIdsResponse : List CampaignId -> Session -> ( Session, Cmd SessionMsg )
+loadSolutionsByCampaignIdsResponse : List CampaignId -> CmdUpdater Session SessionMsg
 loadSolutionsByCampaignIdsResponse campaignIds session =
     todo ""
 
 
-gotLoadSolutionResponse : SolutionId -> Result GetError (Maybe Solution) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadSolutionResponse : SolutionId -> Result GetError (Maybe Solution) -> CmdUpdater Session SessionMsg
 gotLoadSolutionResponse solutionId result session =
     todo ""
 
 
-gotLoadSolutionsByLevelIdResponse : LevelId -> Result GetError (List Solution) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadSolutionsByLevelIdResponse : LevelId -> Result GetError (List Solution) -> CmdUpdater Session SessionMsg
 gotLoadSolutionsByLevelIdResponse levelId result session =
     todo ""
 
 
-gotLoadSolutionsByLevelIdsResponse : List LevelId -> Result GetError (List Solution) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadSolutionsByLevelIdsResponse : List LevelId -> Result GetError (List Solution) -> CmdUpdater Session SessionMsg
 gotLoadSolutionsByLevelIdsResponse levelIds result session =
     todo ""
 
@@ -83,16 +84,21 @@ getSolutionsByLevelId levelId session =
     todo ""
 
 
+getSolutionsByLevelIds : List LevelId -> Session -> RemoteData GetError (List Solution)
+getSolutionsByLevelIds levelIds session =
+    todo ""
+
+
 
 -- SAVE
 
 
-saveSolution : Solution -> Session -> ( Session, Cmd SessionMsg )
+saveSolution : Solution -> CmdUpdater Session SessionMsg
 saveSolution solution session =
     todo ""
 
 
-gotSaveSolutionResponse : Solution -> Maybe SubmitSolutionError -> Session -> ( Session, Cmd SessionMsg )
+gotSaveSolutionResponse : Solution -> Maybe SubmitSolutionError -> CmdUpdater Session SessionMsg
 gotSaveSolutionResponse solution maybeError session =
     todo ""
 
@@ -101,6 +107,6 @@ gotSaveSolutionResponse solution maybeError session =
 -- PRIVATE
 
 
-gotSolution : SolutionId -> Maybe Solution -> Session -> ( Session, Cmd SessionMsg )
+gotSolution : SolutionId -> Maybe Solution -> CmdUpdater Session SessionMsg
 gotSolution solutionId maybeSolution session =
     todo ""

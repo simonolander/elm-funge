@@ -26,7 +26,6 @@ import Data.Session as Session exposing (Session)
 import Data.VerifiedAccessToken as VerifiedAccessToken
 import Debug exposing (todo)
 import Dict
-import Extra.Tuple exposing (fanout)
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
 import Update.General exposing (gotGetError, gotSaveError)

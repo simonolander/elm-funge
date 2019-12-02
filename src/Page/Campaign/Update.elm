@@ -1,96 +1,100 @@
-module Page.Campaign.Update exposing (init)
+module Page.Campaign.Update exposing (init, load, update)
 
 import Basics.Extra exposing (flip)
 import Data.Cache as Cache
 import Data.CampaignId exposing (CampaignId)
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, withModel)
 import Data.Draft as Draft
 import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
-import Page.Mapping exposing (useModel)
-import Page.PageMsg exposing (PageMsg)
+import Page.Msg
 import Random
 import RemoteData exposing (RemoteData(..))
 import Route
 import Update.Draft exposing (loadDraftsByLevelId, saveDraft)
 import Update.HighScore exposing (loadHighScoreByLevelId)
 import Update.Level exposing (loadLevelsByCampaignId)
+import Update.SessionMsg exposing (SessionMsg)
 
 
-init : CampaignId -> Maybe LevelId -> ( Model, Cmd Msg )
-init campaignId selectedLevelId =
-    let
-        model =
-            { campaignId = campaignId
-            , selectedLevelId = selectedLevelId
-            }
-    in
-    ( model, Cmd.none )
-
-
-load : ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+load : CmdUpdater ( Session, Model ) SessionMsg
 load =
     let
-        loadLevels model =
-            loadLevelsByCampaignId model.campaignId
+        loadLevels ( session, model ) =
+            loadLevelsByCampaignId model.campaignId session
+                |> withModel model
 
-        loadSolutions model =
-            loadSolutions model.campaignId
+        loadSolutions ( session, model ) =
+            loadSolutions model.campaignId session
+                |> withModel model
 
-        loadDraftsBySelectedLevelId model =
+        loadDraftsBySelectedLevelId ( session, model ) =
             case model.selectedLevelId of
                 Just levelId ->
-                    loadDraftsByLevelId levelId
+                    loadDraftsByLevelId levelId session
+                        |> withModel model
 
                 Nothing ->
-                    flip Tuple.pair Cmd.none
+                    ( ( session, model ), Cmd.none )
 
-        loadSelectedLevelHighScore model =
+        loadSelectedLevelHighScore ( session, model ) =
             case model.selectedLevelId of
                 Just levelId ->
-                    loadHighScoreByLevelId levelId
+                    loadHighScoreByLevelId levelId session
+                        |> withModel model
 
                 Nothing ->
-                    flip Tuple.pair Cmd.none
+                    ( ( session, model ), Cmd.none )
     in
     CmdUpdater.batch
-        [ useModel loadLevels
-        , useModel loadSolutions
-        , useModel loadDraftsBySelectedLevelId
-        , useModel loadSelectedLevelHighScore
+        [ loadLevels
+        , loadSolutions
+        , loadDraftsBySelectedLevelId
+        , loadSelectedLevelHighScore
         ]
 
 
-update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd Page.Msg.Msg )
 update msg tuple =
     let
         ( session, model ) =
             tuple
+
+        fromMsg =
+            CmdUpdater.mapCmd (Page.Msg.CampaignMsg >> Page.Msg.PageMsg)
+
+        fromSessionMsg =
+            CmdUpdater.mapCmd Page.Msg.SessionMsg
     in
     case msg of
         ClickedLevel selectedLevelId ->
-            ( ( session, { model | selectedLevelId = Just selectedLevelId } )
-            , Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
-            )
+            fromMsg <|
+                ( ( session, { model | selectedLevelId = Just selectedLevelId } )
+                , Route.replaceUrl session.key (Route.Campaign model.campaignId (Just selectedLevelId))
+                )
 
         ClickedOpenDraft draftId ->
-            ( tuple
-            , Route.pushUrl session.key (Route.EditDraft draftId)
-            )
+            fromMsg <|
+                ( tuple
+                , Route.pushUrl session.key (Route.EditDraft draftId)
+                )
 
         ClickedGenerateDraft ->
-            case
-                Maybe.map (flip Cache.get session.levels) model.selectedLevelId
-                    |> Maybe.andThen RemoteData.toMaybe
-            of
-                Just level ->
-                    ( tuple, Random.generate GeneratedDraft (Draft.generator level) )
+            fromMsg <|
+                case
+                    Maybe.map (flip Cache.get session.levels) model.selectedLevelId
+                        |> Maybe.andThen RemoteData.toMaybe
+                of
+                    Just level ->
+                        ( tuple, Random.generate GeneratedDraft (Draft.generator level) )
 
-                Nothing ->
-                    ( tuple, Cmd.none )
+                    Nothing ->
+                        ( tuple, Cmd.none )
 
         GeneratedDraft draft ->
-            Page.Mapping.sessionLoad (saveDraft draft) tuple
-                |> CmdUpdater.add (Route.pushUrl session.key (Route.EditDraft draft.id))
+            fromSessionMsg <|
+                saveDraft draft session
+                    |> withModel model
+                    |> CmdUpdater.add (Route.pushUrl session.key (Route.EditDraft draft.id))

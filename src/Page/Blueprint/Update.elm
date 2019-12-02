@@ -5,12 +5,12 @@ import Array.Extra
 import Basics.Extra exposing (flip)
 import Data.Blueprint as Blueprint
 import Data.Board as Board
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, withModel)
 import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Int16 as Int16
 import Data.Level as Level
-import Data.Session exposing (Session)
+import Data.Session as Session exposing (Session, updateBlueprints)
 import Data.Suite as Suite
 import Extra.Array
 import List.Extra
@@ -18,16 +18,16 @@ import Maybe.Extra
 import Page.Blueprint.Model exposing (Model)
 import Page.Blueprint.Msg exposing (Msg(..))
 import RemoteData
-import Update.Blueprint exposing (getBlueprintByBlueprintId, loadBlueprintByBlueprintId, saveBlueprint)
+import Resource.Blueprint.Update exposing (getBlueprintByBlueprintId, loadBlueprintByBlueprintId, saveBlueprint)
 import Update.SessionMsg exposing (SessionMsg)
 
 
-load : ( Session, Model ) -> ( ( Session, Model ), Cmd SessionMsg )
+load : CmdUpdater ( Session, Model ) SessionMsg
 load =
     let
         loadBlueprint ( session, model ) =
             loadBlueprintByBlueprintId model.blueprintId session
-                |> CmdUpdater.withModel model
+                |> withModel model
 
         initializeInputsFromBlueprint ( session, model ) =
             let
@@ -89,7 +89,7 @@ load =
         ]
 
 
-update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd SessionMsg )
+update : Msg -> CmdUpdater ( Session, Model ) SessionMsg
 update msg ( session, model ) =
     case
         getBlueprintByBlueprintId model.blueprintId session
@@ -177,7 +177,7 @@ update msg ( session, model ) =
                 InitialInstructionPlaced boardInstruction ->
                     Blueprint.updateInitialBoard (Board.withBoardInstruction boardInstruction) blueprint
                         |> flip saveBlueprint session
-                        |> CmdUpdater.withModel model
+                        |> withModel model
 
         Nothing ->
             ( ( session, model ), Cmd.none )

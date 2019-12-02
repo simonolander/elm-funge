@@ -76,7 +76,7 @@ viewBlueprints session model =
                 blueprintButton blueprint =
                     View.LevelButton.view
                         { default
-                            | onPress = Just (SelectedBlueprintId blueprint.id)
+                            | onPress = Just (ClickedBlueprint blueprint.id)
                             , selected =
                                 model.selectedBlueprintId
                                     |> Maybe.map ((==) blueprint.id)

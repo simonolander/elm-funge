@@ -1,62 +1,59 @@
-module Page.Blueprints.Update exposing (init, load, subscriptions, update)
+module Page.Blueprints.Update exposing (load, update)
 
 import Basics.Extra exposing (flip)
 import Data.Blueprint as Blueprint
-import Data.BlueprintId exposing (BlueprintId)
-import Data.Cache as Cache
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, withModel)
 import Data.Session exposing (Session)
-import Extra.Cmd exposing (withExtraCmd)
 import Maybe.Extra
 import Page.Blueprints.Model exposing (Modal(..), Model)
 import Page.Blueprints.Msg exposing (Msg(..))
-import Page.Mapping
-import Page.PageMsg as PageMsg exposing (InternalMsg, PageMsg)
+import Page.Msg exposing (PageMsg(..))
 import Ports.Console as Console
 import Random
 import RemoteData
+import Resource.Blueprint.Update exposing (deleteBlueprint, getBlueprintByBlueprintId, loadAllBlueprintsForUser, saveBlueprint)
 import Route
-import Update.Blueprint
+import Update.SessionMsg exposing (SessionMsg(..))
 
 
-init : Maybe BlueprintId -> ( Model, Cmd PageMsg )
-init selectedBlueprintId =
-    let
-        model =
-            { selectedBlueprintId = selectedBlueprintId
-            , modal = Nothing
-            }
-    in
-    ( model, Cmd.none )
-
-
-load : ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+load : CmdUpdater ( Session, Model ) SessionMsg
 load =
     let
-        loadBlueprints =
-            Page.Mapping.sessionLoad Update.Blueprint.loadBlueprints
+        loadBlueprints ( session, model ) =
+            loadAllBlueprintsForUser session
+                |> withModel model
     in
     CmdUpdater.batch
         [ loadBlueprints ]
 
 
-update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd Page.Msg.Msg )
 update msg tuple =
     let
         ( session, model ) =
             tuple
+
+        fromMsg =
+            CmdUpdater.mapCmd (BlueprintsMsg >> Page.Msg.PageMsg)
+
+        fromSessionMsg =
+            CmdUpdater.mapCmd Page.Msg.SessionMsg
     in
     case msg of
         ClickedConfirmDeleteBlueprint ->
             case model.modal of
                 Just (ConfirmDelete blueprintId) ->
-                    Page.Mapping.sessionLoad (Update.Blueprint.deleteBlueprint blueprintId) tuple
+                    deleteBlueprint blueprintId session
+                        |> withModel model
+                        |> fromSessionMsg
 
                 Nothing ->
                     ( tuple, Cmd.none )
 
         ClickedDeleteBlueprint blueprintId ->
-            ( ( session, { model | modal = Just (ConfirmDelete blueprintId) } ), Cmd.none )
+            ( ( session, { model | modal = Just (ConfirmDelete blueprintId) } )
+            , Cmd.none
+            )
 
         ClickedCancelDeleteBlueprint ->
             case model.modal of
@@ -68,46 +65,43 @@ update msg tuple =
 
         BlueprintNameChanged newName ->
             case
-                Maybe.map (flip Cache.get session.blueprints.working) model.selectedBlueprintId
+                Maybe.map (flip getBlueprintByBlueprintId session) model.selectedBlueprintId
                     |> Maybe.andThen (RemoteData.toMaybe >> Maybe.Extra.join)
             of
                 Just blueprint ->
-                    Page.Mapping.sessionLoad (Update.Blueprint.saveBlueprint { blueprint | name = newName }) tuple
+                    saveBlueprint { blueprint | name = newName } session
+                        |> withModel model
+                        |> fromSessionMsg
 
                 Nothing ->
                     ( tuple, Console.errorString "tWy71t5l    Could not update blueprint name: blueprint not found" )
 
         BlueprintDescriptionChanged newDescription ->
             case
-                Maybe.map (flip Cache.get session.blueprints.working) model.selectedBlueprintId
+                Maybe.map (flip getBlueprintByBlueprintId session) model.selectedBlueprintId
                     |> Maybe.andThen (RemoteData.toMaybe >> Maybe.Extra.join)
             of
                 Just blueprint ->
-                    Page.Mapping.sessionLoad
-                        (Update.Blueprint.saveBlueprint { blueprint | description = String.lines newDescription })
-                        tuple
+                    saveBlueprint { blueprint | description = String.lines newDescription } session
+                        |> withModel model
+                        |> fromSessionMsg
 
                 Nothing ->
                     ( tuple, Console.errorString "Pm6iHnXM    Could not update blueprint description: blueprint not found" )
 
-        SelectedBlueprintId blueprintId ->
+        ClickedBlueprint blueprintId ->
             ( ( session, { model | selectedBlueprintId = Just blueprintId } )
             , Route.replaceUrl session.key (Route.Blueprints (Just blueprintId))
             )
 
         ClickedNewBlueprint ->
-            ( tuple
-            , Random.generate
-                (PageMsg.InternalMsg << PageMsg.Blueprints << BlueprintGenerated)
-                Blueprint.generator
-            )
+            fromMsg
+                ( tuple
+                , Random.generate GeneratedBlueprint Blueprint.generator
+                )
 
-        BlueprintGenerated blueprint ->
-            Page.Mapping.sessionLoad (Update.Blueprint.saveBlueprint blueprint) tuple
-                |> Tuple.mapFirst (Tuple.mapSecond (\m -> { m | selectedBlueprintId = Just blueprint.id }))
+        GeneratedBlueprint blueprint ->
+            saveBlueprint blueprint session
                 |> CmdUpdater.add (Route.replaceUrl session.key (Route.Blueprints (Just blueprint.id)))
-
-
-subscriptions : Model -> Sub Msg
-subscriptions =
-    always Sub.none
+                |> withModel { model | selectedBlueprintId = Just blueprint.id }
+                |> fromSessionMsg

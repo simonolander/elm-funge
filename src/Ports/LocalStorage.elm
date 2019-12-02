@@ -1,5 +1,6 @@
-port module Ports.LocalStorage exposing (Key, NewValue, OldValue, Value, storageClear, storageGetAndThen, storageGetItem, storageGetItemResponse, storageOnKeyAdded, storageOnKeyChanged, storageOnKeyRemoved, storagePushToSet, storageRemoveFromSet, storageRemoveItem, storageSetItem)
+port module Ports.LocalStorage exposing (Key, NewValue, OldValue, Value, decodeLocalStorageEntry, storageClear, storageGetAndThen, storageGetItem, storageGetItemResponse, storageOnKeyAdded, storageOnKeyChanged, storageOnKeyRemoved, storagePushToSet, storageRemoveFromSet, storageRemoveItem, storageSetItem)
 
+import Json.Decode exposing (Decoder, Error, decodeValue)
 import Json.Encode as Encode
 import Maybe.Extra
 
@@ -65,3 +66,16 @@ port storageRemoveFromSet : ( Key, Value ) -> Cmd msg
 
 
 port storageGetAndThen : ( Key, List Key, List (Maybe String) ) -> Cmd msg
+
+
+decodeLocalStorageEntry : (Key -> Maybe a) -> Decoder b -> ( Key, Value ) -> Maybe (Result ( Key, Error ) ( a, b ))
+decodeLocalStorageEntry idFunction decoder ( key, value ) =
+    case idFunction key of
+        Just id ->
+            decodeValue decoder value
+                |> Result.map (Tuple.pair id)
+                |> Result.mapError (Tuple.pair key)
+                |> Just
+
+        Nothing ->
+            Nothing

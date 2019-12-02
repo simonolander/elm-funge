@@ -11,6 +11,7 @@ module Update.Level exposing
 import Basics.Extra exposing (flip, uncurry)
 import Data.Cache as Cache
 import Data.CampaignId exposing (CampaignId)
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.GetError exposing (GetError)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
@@ -27,7 +28,7 @@ import Update.SessionMsg exposing (SessionMsg(..))
 -- LOAD
 
 
-loadLevelByLevelId : LevelId -> Session -> ( Session, Cmd SessionMsg )
+loadLevelByLevelId : LevelId -> CmdUpdater Session SessionMsg
 loadLevelByLevelId levelId session =
     todo ""
 
@@ -57,7 +58,7 @@ getLevelsByCampaignId campaignId session =
                 |> RemoteData.succeed
 
 
-loadLevelsByCampaignId : CampaignId -> Session -> ( Session, Cmd SessionMsg )
+loadLevelsByCampaignId : CampaignId -> CmdUpdater Session SessionMsg
 loadLevelsByCampaignId campaignId session =
     case Cache.get campaignId session.campaignRequests of
         NotAsked ->
@@ -69,18 +70,18 @@ loadLevelsByCampaignId campaignId session =
             ( session, Cmd.none )
 
 
-loadLevelsByCampaignIds : List CampaignId -> Session -> ( Session, Cmd SessionMsg )
+loadLevelsByCampaignIds : List CampaignId -> CmdUpdater Session SessionMsg
 loadLevelsByCampaignIds campaignIds session =
     List.map loadLevelsByCampaignId campaignIds
-        |> flip fold session
+        |> flip CmdUpdater.batch session
 
 
-gotLoadLevelResponse : LevelId -> Result GetError (Maybe Level) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadLevelResponse : LevelId -> Result GetError (Maybe Level) -> CmdUpdater Session SessionMsg
 gotLoadLevelResponse levelId result session =
     todo ""
 
 
-gotLoadLevelsByCampaignIdResponse : CampaignId -> Result GetError (List Level) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadLevelsByCampaignIdResponse : CampaignId -> Result GetError (List Level) -> CmdUpdater Session SessionMsg
 gotLoadLevelsByCampaignIdResponse campaignId result oldSession =
     let
         newSession =
@@ -91,7 +92,7 @@ gotLoadLevelsByCampaignIdResponse campaignId result oldSession =
     case result of
         Ok levels ->
             List.map (fanout .id Just >> uncurry gotLevel) levels
-                |> flip fold newSession
+                |> flip CmdUpdater.batch newSession
 
         Err error ->
             gotGetError error newSession
@@ -101,6 +102,6 @@ gotLoadLevelsByCampaignIdResponse campaignId result oldSession =
 -- PRIVATE
 
 
-gotLevel : LevelId -> Maybe Level -> Session -> ( Session, Cmd SessionMsg )
+gotLevel : LevelId -> Maybe Level -> CmdUpdater Session SessionMsg
 gotLevel levelId maybeLevel session =
     todo ""

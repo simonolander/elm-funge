@@ -5,10 +5,10 @@ import Data.BlueprintId exposing (BlueprintId)
 
 
 type Msg
-    = BlueprintGenerated Blueprint
-    | SelectedBlueprintId BlueprintId
+    = GeneratedBlueprint Blueprint
     | BlueprintNameChanged String
     | BlueprintDescriptionChanged String
+    | ClickedBlueprint BlueprintId
     | ClickedNewBlueprint
     | ClickedDeleteBlueprint BlueprintId
     | ClickedConfirmDeleteBlueprint

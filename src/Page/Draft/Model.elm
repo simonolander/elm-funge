@@ -1,4 +1,4 @@
-module Page.Draft.Model exposing (Model, State(..))
+module Page.Draft.Model exposing (Model, State(..), init)
 
 import Data.DraftId exposing (DraftId)
 
@@ -17,4 +17,13 @@ type alias Model =
     , state : State
     , error : Maybe String
     , selectedInstructionToolIndex : Maybe Int
+    }
+
+
+init : DraftId -> Model
+init draftId =
+    { draftId = draftId
+    , state = Editing
+    , error = Nothing
+    , selectedInstructionToolIndex = Nothing
     }

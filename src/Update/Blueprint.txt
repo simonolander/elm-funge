@@ -11,29 +11,10 @@ module Update.Blueprint exposing
     , saveBlueprint
     )
 
-import Basics.Extra exposing (flip, uncurry)
-import Data.Blueprint as Blueprint exposing (Blueprint)
-import Data.BlueprintId exposing (BlueprintId)
-import Data.Cache as Cache
-import Data.CmdUpdater as CmdUpdater
-import Data.GetError exposing (GetError)
-import Data.RemoteCache as RemoteCache
-import Data.SaveError exposing (SaveError)
-import Data.Session as Session exposing (Session)
-import Data.VerifiedAccessToken as VerifiedAccessToken
-import Debug exposing (todo)
-import Dict
-import Extra.Tuple exposing (fanout)
-import RemoteData exposing (RemoteData(..))
-import Update.General exposing (gotGetError, gotSaveError)
-import Update.SessionMsg exposing (SessionMsg(..))
-
-
-
 -- LOAD
 
 
-loadBlueprintByBlueprintId : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
+loadBlueprintByBlueprintId : BlueprintId -> CmdUpdater Session SessionMsg
 loadBlueprintByBlueprintId blueprintId session =
     case VerifiedAccessToken.getValid session.accessToken of
         Just accessToken ->
@@ -56,7 +37,7 @@ getBlueprintByBlueprintId blueprintId session =
     todo ""
 
 
-loadBlueprints : Session -> ( Session, Cmd SessionMsg )
+loadBlueprints : CmdUpdater Session SessionMsg
 loadBlueprints session =
     case session.actualBlueprintsRequest of
         NotAsked ->
@@ -73,12 +54,12 @@ loadBlueprints session =
             ( session, Cmd.none )
 
 
-loadBlueprintsByBlueprintIds : List BlueprintId -> Session -> ( Session, Cmd SessionMsg )
+loadBlueprintsByBlueprintIds : List BlueprintId -> CmdUpdater Session SessionMsg
 loadBlueprintsByBlueprintIds blueprintIds =
     CmdUpdater.batch (List.map loadBlueprintByBlueprintId blueprintIds)
 
 
-gotLoadBlueprintResponse : BlueprintId -> Result GetError (Maybe Blueprint) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadBlueprintResponse : BlueprintId -> Result GetError (Maybe Blueprint) -> CmdUpdater Session SessionMsg
 gotLoadBlueprintResponse blueprintId result session =
     case result of
         Ok maybeBlueprint ->
@@ -92,7 +73,7 @@ gotLoadBlueprintResponse blueprintId result session =
             gotGetError error sessionWithActualBlueprintResult
 
 
-gotLoadBlueprintsResponse : Result GetError (List Blueprint) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadBlueprintsResponse : Result GetError (List Blueprint) -> CmdUpdater Session SessionMsg
 gotLoadBlueprintsResponse result session =
     let
         sessionWithBlueprintResponse =
@@ -108,7 +89,7 @@ gotLoadBlueprintsResponse result session =
             gotGetError error sessionWithBlueprintResponse
 
 
-gotActualBlueprint : BlueprintId -> Maybe Blueprint -> Session -> ( Session, Cmd SessionMsg )
+gotActualBlueprint : BlueprintId -> Maybe Blueprint -> CmdUpdater Session SessionMsg
 gotActualBlueprint blueprintId maybeActualBlueprint oldSession =
     let
         sessionWithActualBlueprint =
@@ -205,7 +186,7 @@ gotActualBlueprint blueprintId maybeActualBlueprint oldSession =
 -- SAVE
 
 
-saveBlueprint : Blueprint -> Session -> ( Session, Cmd SessionMsg )
+saveBlueprint : Blueprint -> CmdUpdater Session SessionMsg
 saveBlueprint blueprint session =
     let
         blueprints =
@@ -227,7 +208,7 @@ saveBlueprint blueprint session =
     )
 
 
-gotSaveBlueprintResponse : Blueprint -> Maybe SaveError -> Session -> ( Session, Cmd SessionMsg )
+gotSaveBlueprintResponse : Blueprint -> Maybe SaveError -> CmdUpdater Session SessionMsg
 gotSaveBlueprintResponse blueprint maybeError session =
     case maybeError of
         Just error ->
@@ -238,21 +219,24 @@ gotSaveBlueprintResponse blueprint maybeError session =
                 |> RemoteCache.withActualValue blueprint.id (Just blueprint)
                 |> RemoteCache.withExpectedValue blueprint.id (Just blueprint)
                 |> flip Session.withBlueprintCache session
-                |> noCmd
+                |> id
 
 
 
 -- DELETE
 
 
-deleteBlueprint : BlueprintId -> Session -> ( Session, Cmd SessionMsg )
-deleteBlueprint blueprintId session =
+deleteBlueprint : BlueprintId -> CmdUpdater Session SessionMsg
+deleteBlueprint blueprintId =
     let
+        deleteLocally session =
+            Session.withBlu
+
         removeLocalBlueprintCmd =
             Blueprint.removeFromLocalStorage blueprintId
 
         removeActualBlueprintCmd =
-            Session.getAccessToken session
+            VerifiedAccessToken.getValid session.accessToken
                 |> Maybe.map (Blueprint.deleteFromServer GotDeleteBlueprintResponse blueprintId)
                 |> Maybe.withDefault Cmd.none
     in
@@ -264,7 +248,7 @@ deleteBlueprint blueprintId session =
     )
 
 
-gotDeleteBlueprintResponse : BlueprintId -> Maybe SaveError -> Session -> ( Session, Cmd SessionMsg )
+gotDeleteBlueprintResponse : BlueprintId -> Maybe SaveError -> CmdUpdater Session SessionMsg
 gotDeleteBlueprintResponse blueprintId maybeError session =
     case maybeError of
         Just error ->
@@ -276,4 +260,4 @@ gotDeleteBlueprintResponse blueprintId maybeError session =
                 |> RemoteCache.withExpectedValue blueprintId Nothing
                 |> RemoteCache.withActualValue blueprintId Nothing
                 |> flip Session.withBlueprintCache session
-                |> noCmd
+                |> id

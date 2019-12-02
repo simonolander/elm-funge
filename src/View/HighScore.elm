@@ -88,7 +88,7 @@ failure error =
             DetailedHttpError.toString error
     in
     paragraph
-        [ Font.color color.font.error
+        [ color.font.error
         , Font.center
         ]
         [ text errorMessage ]

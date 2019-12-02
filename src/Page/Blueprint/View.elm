@@ -16,8 +16,8 @@ import InstructionToolView
 import Page.Blueprint.Model exposing (Model)
 import Page.Blueprint.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
+import Resource.Blueprint.Update exposing (getBlueprintByBlueprintId)
 import Route
-import Update.Blueprint exposing (getBlueprintByBlueprintId)
 import View.Board
 import View.Constant exposing (color)
 import View.ErrorScreen

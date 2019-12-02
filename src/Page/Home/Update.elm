@@ -1,31 +1,18 @@
-module Page.Home.Update exposing (init, load, subscriptions, update)
+module Page.Home.Update exposing (load, update)
 
 import Basics.Extra exposing (flip)
+import Data.CmdUpdater exposing (CmdUpdater)
 import Data.Session exposing (Session)
 import Page.Home.Model exposing (Model)
 import Page.Home.Msg exposing (Msg)
-import Page.PageMsg exposing (PageMsg)
+import Update.SessionMsg exposing (SessionMsg)
 
 
-init : ( Model, Cmd PageMsg )
-init =
-    ( (), Cmd.none )
-
-
-load : ( Session, Model ) -> ( ( Session, Model ), Cmd PageMsg )
+load : CmdUpdater ( Session, Model ) SessionMsg
 load =
     flip Tuple.pair Cmd.none
 
 
-update : Msg -> Model -> ( Model, Cmd PageMsg )
+update : Msg -> CmdUpdater ( Session, Model ) SessionMsg
 update =
     always (flip Tuple.pair Cmd.none)
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub PageMsg
-subscriptions =
-    always Sub.none

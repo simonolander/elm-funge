@@ -11,7 +11,7 @@ module Page.Execution.Update exposing
 
 import Basics.Extra exposing (flip)
 import Data.Board as Board exposing (Board)
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.Direction exposing (Direction(..))
 import Data.Draft exposing (Draft)
 import Data.History as History
@@ -35,7 +35,7 @@ import Update.Level exposing (getLevelByLevelId, loadLevelByLevelId)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 
-load : ( Session, Model ) -> ( ( Session, Model ), Cmd SessionMsg )
+load : CmdUpdater ( Session, Model ) SessionMsg
 load =
     let
         loadDraft ( session, model ) =
@@ -177,7 +177,7 @@ getScore execution =
 -- UPDATE
 
 
-update : Msg -> ( Session, Model ) -> ( ( Session, Model ), Cmd Msg )
+update : Msg -> CmdUpdater ( Session, Model ) SessionMsg
 update msg ( session, model ) =
     CmdUpdater.withSession session <|
         case
@@ -236,7 +236,7 @@ update msg ( session, model ) =
                 ( model, Cmd.none )
 
 
-stepModel : Execution -> Session -> Model -> ( Model, Cmd Msg )
+stepModel : Execution -> Session -> CmdUpdater Model Msg
 stepModel oldExecution session model =
     let
         ( execution, state ) =

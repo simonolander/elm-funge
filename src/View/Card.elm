@@ -21,15 +21,13 @@ link parameters =
             , width fill
             , class
             , mouseOver
-                [ Background.color color.background.hovering
+                [ color.background.hovering
                 ]
-            , Background.color
-                (if parameters.selected then
-                    color.background.selected
+            , if parameters.selected then
+                color.background.selected
 
-                 else
-                    color.background.black
-                )
+              else
+                color.background.black
             ]
 
         label =

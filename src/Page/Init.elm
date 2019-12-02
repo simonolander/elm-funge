@@ -1,42 +1,54 @@
 module Page.Init exposing (init)
 
-import Data.Session exposing (Session)
-import Debug exposing (todo)
-import Page.Model exposing (PageModel)
-import Page.PageMsg exposing (PageMsg)
-import Route
+import Page.Blueprint.Model
+import Page.Blueprints.Model
+import Page.Campaign.Model
+import Page.Campaigns.Model
+import Page.Credits.Model
+import Page.Draft.Model
+import Page.Execution.Model
+import Page.Home.Model
+import Page.Model exposing (Model(..))
+import Page.NotFound.Model
+import Route exposing (Route)
 import Url exposing (Url)
 
 
-init : Url -> Session -> ( ( Session, PageModel ), Cmd PageMsg )
-init url session =
+init : Url -> Model
+init url =
     case Route.fromUrl url of
-        Nothing ->
-            todo ""
-
         Just Route.Home ->
-            todo ""
+            Page.Home.Model.init
+                |> HomeModel
 
         Just (Route.Campaign campaignId maybeLevelId) ->
-            todo ""
+            Page.Campaign.Model.init campaignId maybeLevelId
+                |> CampaignModel
 
         Just Route.Campaigns ->
-            todo ""
+            Page.Campaigns.Model.init
+                |> CampaignsModel
 
         Just (Route.EditDraft draftId) ->
-            todo ""
+            Page.Draft.Model.init draftId
+                |> DraftModel
 
         Just (Route.ExecuteDraft draftId) ->
-            todo ""
+            Page.Execution.Model.init draftId
+                |> ExecutionModel
 
         Just (Route.Blueprints maybeLevelId) ->
-            todo ""
+            Page.Blueprints.Model.init maybeLevelId
+                |> BlueprintsModel
 
         Just (Route.Blueprint levelId) ->
-            todo ""
+            Page.Blueprint.Model.init levelId
+                |> BlueprintModel
 
         Just Route.Credits ->
-            todo ""
+            Page.Credits.Model.init
+                |> CreditsModel
 
-        Just Route.NotFound ->
-            todo ""
+        Nothing ->
+            Page.NotFound.Model.init
+                |> NotFoundModel

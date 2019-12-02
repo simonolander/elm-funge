@@ -1,4 +1,4 @@
-module Data.CmdUpdater exposing (CmdUpdater, add, andThen, batch, id, mapBoth, mapCmd, withModel, withSession)
+module Data.CmdUpdater exposing (CmdUpdater, add, andThen, batch, id, mapBoth, mapCmd, mapModel, mapSession, withCmd, withModel, withSession)
 
 import Basics.Extra exposing (flip)
 import Data.Updater exposing (Updater)
@@ -29,6 +29,16 @@ batch updaters a =
         |> List.foldl (flip (|>)) (id a)
 
 
+mapSession : (a -> x) -> ( ( a, b ), c ) -> ( ( x, b ), c )
+mapSession =
+    Tuple.mapFirst >> Tuple.mapFirst
+
+
+mapModel : (b -> y) -> ( ( a, b ), c ) -> ( ( a, y ), c )
+mapModel =
+    Tuple.mapSecond >> Tuple.mapFirst
+
+
 mapCmd : (msg1 -> msg2) -> ( a, Cmd msg1 ) -> ( a, Cmd msg2 )
 mapCmd =
     Cmd.map >> Tuple.mapSecond
@@ -47,3 +57,8 @@ withModel =
 withSession : a -> ( b, c ) -> ( ( a, b ), c )
 withSession =
     Tuple.pair >> Tuple.mapFirst
+
+
+withCmd : b -> a -> ( a, b )
+withCmd =
+    flip Tuple.pair

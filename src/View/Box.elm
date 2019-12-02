@@ -41,7 +41,7 @@ interactive element =
 simpleLoading : String -> Element msg
 simpleLoading message =
     paragraph
-        [ Font.color color.font.subtle
+        [ color.font.subtle
         , Font.center
         ]
         [ image
@@ -59,7 +59,7 @@ simpleLoading message =
 simpleNonInteractive : String -> Element msg
 simpleNonInteractive message =
     paragraph
-        [ Font.color color.font.subtle
+        [ color.font.subtle
         , Font.center
         ]
         [ text message
@@ -70,7 +70,7 @@ simpleNonInteractive message =
 simpleError : String -> Element msg
 simpleError message =
     paragraph
-        [ Font.color color.font.error
+        [ color.font.error
         , Font.center
         ]
         [ text message ]

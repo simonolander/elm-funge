@@ -1,5 +1,6 @@
 module InterceptorPage.Update exposing (update)
 
+import Data.CmdUpdater exposing (CmdUpdater)
 import Data.Session exposing (Session)
 import InterceptorPage.AccessTokenExpired.Update as AccessTokenExpired
 import InterceptorPage.Conflict.Update as Conflict
@@ -8,7 +9,7 @@ import InterceptorPage.UnexpectedUserInfo.Update as UnexpectedUserInfo
 import Update.SessionMsg exposing (SessionMsg)
 
 
-update : Msg -> Session -> ( Session, Cmd SessionMsg )
+update : Msg -> CmdUpdater Session SessionMsg
 update interceptionMsg session =
     case interceptionMsg of
         ConflictMsg msg ->

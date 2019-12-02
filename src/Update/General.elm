@@ -1,13 +1,13 @@
 module Update.General exposing (gotGetError, gotSaveError)
 
+import Data.CmdUpdater exposing (CmdUpdater)
 import Data.GetError as GetError exposing (GetError)
 import Data.SaveError as SaveError exposing (SaveError)
 import Data.Session as Session exposing (Session)
 import Data.VerifiedAccessToken as VerifiedAccessToken
-import Update.SessionMsg exposing (SessionMsg)
 
 
-gotSaveError : SaveError -> Session -> ( Session, Cmd SessionMsg )
+gotSaveError : SaveError -> CmdUpdater Session msg
 gotSaveError saveError session =
     case saveError of
         SaveError.InvalidAccessToken _ ->
@@ -19,7 +19,7 @@ gotSaveError saveError session =
             ( session, SaveError.consoleError saveError )
 
 
-gotGetError : GetError -> Session -> ( Session, Cmd SessionMsg )
+gotGetError : GetError -> CmdUpdater Session msg
 gotGetError saveError session =
     case saveError of
         GetError.InvalidAccessToken _ ->

@@ -1,7 +1,7 @@
 module Update.UserInfo exposing (gotLoadUserInfoResponse, loadUserInfo)
 
 import Data.AccessToken as AccessToken exposing (AccessToken)
-import Data.CmdUpdater as CmdUpdater
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.GetError exposing (GetError)
 import Data.Session exposing (Session)
 import Data.UserInfo as UserInfo exposing (UserInfo)
@@ -12,7 +12,7 @@ import Update.General exposing (gotGetError)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 
-loadUserInfo : Session -> ( Session, Cmd SessionMsg )
+loadUserInfo : CmdUpdater Session SessionMsg
 loadUserInfo session =
     let
         load accessToken =
@@ -32,7 +32,7 @@ loadUserInfo session =
 {-| We got UserInfo response. If it was successful, it means that we have a valid access token in the session.
 If the user info is the same as the last one, everything is fine, but otherwise we need to validate the data before continuing.
 -}
-gotLoadUserInfoResponse : AccessToken -> Result GetError UserInfo -> Session -> ( Session, Cmd SessionMsg )
+gotLoadUserInfoResponse : AccessToken -> Result GetError UserInfo -> CmdUpdater Session SessionMsg
 gotLoadUserInfoResponse accessToken result session =
     let
         sessionWithUserInfo =

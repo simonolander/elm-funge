@@ -1,7 +1,6 @@
 module Data.Session exposing
     ( Drafts
     , Session
-    , getDraftBook
     , getLevel
     , getSolutionBook
     , init
@@ -15,12 +14,9 @@ module Data.Session exposing
     , updateSavingDraftRequests
     , updateSolutions
     , withAccessToken
-    , withActualBlueprintsRequest
-    , withBlueprintCache
     , withCampaign
     , withCampaignCache
     , withCampaigns
-    , withDraftBookCache
     , withDraftCache
     , withExpectedUserInfo
     , withHighScoreCache
@@ -33,13 +29,10 @@ module Data.Session exposing
     )
 
 import Browser.Navigation exposing (Key)
-import Data.Blueprint exposing (Blueprint)
-import Data.BlueprintId exposing (BlueprintId)
 import Data.Cache as Cache exposing (Cache)
 import Data.Campaign exposing (Campaign)
 import Data.CampaignId exposing (CampaignId)
 import Data.Draft exposing (Draft)
-import Data.DraftBook exposing (DraftBook)
 import Data.DraftId exposing (DraftId)
 import Data.GetError exposing (GetError)
 import Data.HighScore exposing (HighScore)
@@ -55,8 +48,10 @@ import Data.Updater exposing (Updater)
 import Data.UserInfo exposing (UserInfo)
 import Data.VerifiedAccessToken exposing (VerifiedAccessToken(..))
 import Dict exposing (Dict)
-import Maybe.Extra
+import Json.Encode
 import RemoteData exposing (RemoteData(..))
+import Resource.Blueprint.BlueprintResource exposing (BlueprintResource)
+import Resource.Blueprint.Update as BlueprintResource
 import Url exposing (Url)
 
 
@@ -77,15 +72,18 @@ type alias Session =
     , solutions : RemoteCache SolutionId (Maybe Solution)
     , campaignRequests : Cache CampaignId GetError ()
     , campaigns : Cache CampaignId GetError Campaign
-    , blueprints : RemoteCache BlueprintId (Maybe Blueprint)
-    , actualBlueprintsRequest : RemoteData GetError ()
+    , blueprints : BlueprintResource
     , highScores : Cache LevelId GetError HighScore
     , solutionBooks : Cache LevelId GetError SolutionBook
     }
 
 
-init : Key -> Url -> Session
-init key url =
+init : Key -> Url -> List ( String, Json.Encode.Value ) -> Session
+init key url localStorageEntries =
+    let
+        ( blueprintResource, blueprintErrors ) =
+            BlueprintResource.init localStorageEntries
+    in
     { key = key
     , url = url
     , accessToken = None
@@ -98,8 +96,7 @@ init key url =
     , solutions = RemoteCache.empty
     , campaignRequests = Cache.empty
     , campaigns = Cache.empty
-    , blueprints = RemoteCache.empty
-    , actualBlueprintsRequest = RemoteData.NotAsked
+    , blueprints = blueprintResource
     , highScores = Cache.empty
     , solutionBooks = Cache.empty
     }
@@ -140,7 +137,7 @@ updateDrafts updater session =
     { session | drafts = updater session.drafts }
 
 
-updateBlueprints : Updater (RemoteCache BlueprintId (Maybe Blueprint)) -> Updater Session
+updateBlueprints : Updater BlueprintResource -> Updater Session
 updateBlueprints updater session =
     { session | blueprints = updater session.blueprints }
 
@@ -168,16 +165,6 @@ withHighScoreCache cache session =
 withSolutionBookCache : Cache LevelId GetError SolutionBook -> Updater Session
 withSolutionBookCache cache session =
     { session | solutionBooks = cache }
-
-
-withBlueprintCache : RemoteCache BlueprintId (Maybe Blueprint) -> Updater Session
-withBlueprintCache cache session =
-    { session | blueprints = cache }
-
-
-withActualBlueprintsRequest : RemoteData GetError () -> Updater Session
-withActualBlueprintsRequest request session =
-    { session | actualBlueprintsRequest = request }
 
 
 updateCampaignRequests : (Cache CampaignId GetError () -> Cache CampaignId GetError ()) -> Updater Session

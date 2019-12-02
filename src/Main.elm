@@ -7,7 +7,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AccessToken as AccessToken
 import Data.Blueprint as Blueprint
-import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, id, mapCmd, withModel, withSession)
 import Data.Draft as Draft
 import Data.OneOrBoth as OneOrBoth
 import Data.RemoteCache as RemoteCache exposing (RemoteCache)
@@ -26,14 +26,14 @@ import Json.Encode as Encode
 import Maybe.Extra
 import Page.Init
 import Page.Load
-import Page.Model exposing (PageModel)
-import Page.PageMsg as PageMsg exposing (PageMsg)
-import Page.Subscription
+import Page.Model as Page
+import Page.Msg
+import Page.Subscriptions
 import Page.Update
 import Page.View
 import Ports.Console as Console
 import Ports.LocalStorage
-import Update.Blueprint exposing (loadBlueprintsByBlueprintIds)
+import Resource.Blueprint.Update exposing (loadBlueprintsByBlueprintIds)
 import Update.Draft exposing (loadDraftsByDraftIds)
 import Update.SessionMsg exposing (SessionMsg)
 import Update.Solution exposing (loadSolutionsBySolutionIds)
@@ -54,17 +54,11 @@ type alias Flags =
     }
 
 
-type alias Model =
-    { session : Session
-    , pageModel : PageModel
-    }
-
-
 type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | LocalStorageResponse ( String, Encode.Value )
-    | PageMsg PageMsg
+    | PageMsg Page.Msg.Msg
     | InterceptorPageMsg InterceptorPage.Msg.Msg
 
 
@@ -72,7 +66,7 @@ type Msg
 -- MAIN
 
 
-main : Program Flags Model Msg
+main : Program Flags ( Session, Page.Model ) Msg
 main =
     Browser.application
         { view = view
@@ -88,41 +82,50 @@ main =
 -- INIT
 
 
-initLoad : CmdUpdater Model Msg
-initLoad model =
+initLoad : ( Session, Page.Model ) -> ( ( Session, Page.Model ), Cmd Msg )
+initLoad =
     let
-        loadDrafts session =
+        verifyAccessToken ( session, model ) =
+            loadUserInfo session
+                |> withModel model
+                |> fromSessionMsg
+
+        loadDrafts ( session, model ) =
             OneOrBoth.fromDicts session.drafts.local session.drafts.expected
                 |> List.filterMap OneOrBoth.join
                 |> List.filter (OneOrBoth.areSame Draft.eq >> not)
                 |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
                 |> flip loadDraftsByDraftIds session
+                |> withModel model
+                |> fromSessionMsg
 
-        loadBlueprints session =
+        loadBlueprints ( session, model ) =
             OneOrBoth.fromDicts session.blueprints.local session.blueprints.expected
                 |> List.filterMap OneOrBoth.join
                 |> List.filter (OneOrBoth.areSame (==) >> not)
                 |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
                 |> flip loadBlueprintsByBlueprintIds session
+                |> withModel model
+                |> fromSessionMsg
 
-        loadSolutions session =
+        loadSolutions ( session, model ) =
             OneOrBoth.fromDicts session.solutions.local session.solutions.expected
                 |> List.filterMap OneOrBoth.join
                 |> List.filter (OneOrBoth.areSame (==) >> not)
                 |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
                 |> flip loadSolutionsBySolutionIds session
+                |> withModel model
+                |> fromSessionMsg
     in
     CmdUpdater.batch
-        [ loadUserInfo
+        [ verifyAccessToken
         , loadDrafts
         , loadBlueprints
         , loadSolutions
         ]
-        model.session
-        |> Tuple.mapBoth (setSession model) (Cmd.map fromSessionMsg)
 
 
-init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
+init : Flags -> Url.Url -> Navigation.Key -> ( ( Session, Page.Model ), Cmd Msg )
 init flags browserUrl navigationKey =
     let
         ( localStorageAccessToken, accessTokenErrors ) =
@@ -178,28 +181,12 @@ init flags browserUrl navigationKey =
                 |> Tuple.mapFirst (List.map (uncurry RemoteCache.withExpectedValue))
                 |> Tuple.mapFirst (Updater.batch >> Session.updateSolutions)
 
-        ( localBlueprintsUpdater, localBlueprintErrors ) =
-            flags.localStorageEntries
-                |> List.filterMap Blueprint.localStorageResponse
-                |> RequestResult.split
-                |> Tuple.mapFirst (List.map (uncurry RemoteCache.withLocalValue))
-                |> Tuple.mapFirst (Updater.batch >> Session.updateBlueprints)
-
-        ( expectedBlueprintsUpdater, expectedBlueprintErrors ) =
-            flags.localStorageEntries
-                |> List.filterMap Blueprint.localRemoteStorageResponse
-                |> RequestResult.split
-                |> Tuple.mapFirst (List.map (uncurry RemoteCache.withExpectedValue))
-                |> Tuple.mapFirst (Updater.batch >> Session.updateBlueprints)
-
         initialSession =
-            Session.init navigationKey url
+            Session.init navigationKey url flags.localStorageEntries
                 |> localDraftsUpdater
                 |> expectedDraftsUpdater
                 |> localSolutionsUpdater
                 |> expectedSolutionsUpdater
-                |> localBlueprintsUpdater
-                |> expectedBlueprintsUpdater
                 |> Session.withExpectedUserInfo maybeExpectedUserInfo
                 |> Session.withAccessToken accessToken
 
@@ -215,14 +202,13 @@ init flags browserUrl navigationKey =
                 , expectedDraftErrors
                 , localSolutionErrors
                 , expectedSolutionErrors
-                , localBlueprintErrors
-                , expectedBlueprintErrors
                 , accessTokenErrors
                 ]
                 |> Cmd.batch
     in
-    Page.Init.init url initialSession
-        |> Tuple.mapBoth (uncurry Model) (Cmd.map PageMsg)
+    Page.Init.init url
+        |> id
+        |> withSession initialSession
         |> CmdUpdater.add localStorageErrorCmd
         |> CmdUpdater.andThen initLoad
         |> CmdUpdater.andThen load
@@ -232,16 +218,16 @@ init flags browserUrl navigationKey =
 -- VIEW
 
 
-view : Model -> Document Msg
-view model =
+view : ( Session, Page.Model ) -> Document Msg
+view ( session, pageModel ) =
     let
         ( title, html ) =
-            case InterceptorPage.View.view model.session of
+            case InterceptorPage.View.view session of
                 Just tuple ->
                     Tuple.mapSecond (Html.map InterceptorPageMsg) tuple
 
                 Nothing ->
-                    Page.View.view model.session model.pageModel
+                    Page.View.view session pageModel
                         |> Tuple.mapSecond PageMsg
     in
     { title = String.concat [ title, " - ", applicationName ]
@@ -253,28 +239,25 @@ view model =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> CmdUpdater ( Session, Page.Model ) Msg
+update msg ( session, pageModel ) =
     CmdUpdater.andThen load <|
         case msg of
             ChangedUrl url ->
-                let
-                    session =
-                        Session.withUrl url model.session
-                in
-                Page.Init.init url session
-                    |> Tuple.mapBoth (setSessionAndPageModel model) (Cmd.map PageMsg)
+                Page.Init.init url
+                    |> id
+                    |> withSession (Session.withUrl url session)
 
             ClickedLink urlRequest ->
                 case urlRequest of
                     Browser.Internal url ->
                         case url.fragment of
                             Nothing ->
-                                ( model, Cmd.none )
+                                ( ( session, pageModel ), Cmd.none )
 
                             Just _ ->
-                                ( model
-                                , Navigation.pushUrl model.session.key (Url.toString url)
+                                ( ( session, pageModel )
+                                , Navigation.pushUrl session.key (Url.toString url)
                                 )
 
                     Browser.External href ->
@@ -290,37 +273,39 @@ update msg model =
                                     |> Maybe.Extra.values
                                     |> Cmd.batch
                         in
-                        ( model
+                        ( ( session, pageModel )
                         , cmd
                         )
 
             LocalStorageResponse ( key, _ ) ->
-                ( model, Console.infoString ("3h5rn4nu8d3nksmk    " ++ key) )
+                ( ( session, pageModel ), Console.infoString ("3h5rn4nu8d3nksmk    " ++ key) )
 
             PageMsg pageMsg ->
                 case pageMsg of
-                    PageMsg.SessionMsg sessionMsg ->
-                        Update.update sessionMsg model.session
-                            |> Tuple.mapBoth (setSession model) (Cmd.map (PageMsg.SessionMsg >> PageMsg))
+                    Page.Msg.SessionMsg sessionMsg ->
+                        Update.update sessionMsg session
+                            |> withModel pageModel
+                            |> fromSessionMsg
 
-                    PageMsg.InternalMsg internalMsg ->
-                        Page.Update.update internalMsg ( model.session, model.pageModel )
-                            |> Tuple.mapBoth (setSessionAndPageModel model) (Cmd.map PageMsg)
+                    Page.Msg.PageMsg internalMsg ->
+                        Page.Update.update internalMsg ( session, pageModel )
+                            |> mapCmd PageMsg
 
             InterceptorPageMsg interceptorPageMsg ->
-                InterceptorPage.Update.update interceptorPageMsg model.session
-                    |> Tuple.mapBoth (setSession model) (Cmd.map (PageMsg.SessionMsg >> PageMsg))
+                InterceptorPage.Update.update interceptorPageMsg session
+                    |> withModel pageModel
+                    |> fromSessionMsg
 
 
 
 -- SUBSCRIPTIONS
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions : ( Session, Page.Model ) -> Sub Msg
+subscriptions ( _, pageModel ) =
     let
         pageSubscriptions =
-            Page.Subscription.subscriptions model.pageModel
+            Page.Subscriptions.subscriptions pageModel
                 |> Sub.map PageMsg
 
         localStorageSubscriptions =
@@ -336,27 +321,11 @@ subscriptions model =
 -- SESSION
 
 
-fromSessionMsg : SessionMsg -> Msg
+fromSessionMsg : ( a, Cmd SessionMsg ) -> ( a, Cmd Msg )
 fromSessionMsg =
-    PageMsg.SessionMsg >> PageMsg
+    mapCmd (Page.Msg.SessionMsg >> PageMsg)
 
 
-updateSession : Updater Session -> Updater Model
-updateSession updater model =
-    { model | session = updater model.session }
-
-
-setSession : Model -> Session -> Model
-setSession model session =
-    { model | session = session }
-
-
-setSessionAndPageModel : Model -> ( Session, PageModel ) -> Model
-setSessionAndPageModel model ( session, pageModel ) =
-    { model | session = session, pageModel = pageModel }
-
-
-load : Model -> ( Model, Cmd Msg )
-load model =
-    Page.Load.load model.session model.pageModel
-        |> Tuple.mapBoth (setSessionAndPageModel model) (Cmd.map PageMsg)
+load : CmdUpdater ( Session, Page.Model ) Msg
+load =
+    Page.Load.load >> mapCmd PageMsg

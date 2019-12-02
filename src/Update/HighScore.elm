@@ -4,6 +4,7 @@ module Update.HighScore exposing
     , loadHighScoreByLevelId
     )
 
+import Data.CmdUpdater exposing (CmdUpdater)
 import Data.GetError exposing (GetError)
 import Data.HighScore exposing (HighScore)
 import Data.LevelId exposing (LevelId)
@@ -17,12 +18,12 @@ import Update.SessionMsg exposing (SessionMsg)
 -- LOAD
 
 
-loadHighScoreByLevelId : LevelId -> Session -> ( Session, Cmd SessionMsg )
+loadHighScoreByLevelId : LevelId -> CmdUpdater Session SessionMsg
 loadHighScoreByLevelId levelId session =
     todo ""
 
 
-gotLoadHighScoreByLevelIdResponse : LevelId -> Result GetError HighScore -> Session -> ( Session, Cmd SessionMsg )
+gotLoadHighScoreByLevelIdResponse : LevelId -> Result GetError HighScore -> CmdUpdater Session SessionMsg
 gotLoadHighScoreByLevelIdResponse levelId result session =
     todo ""
 
@@ -40,6 +41,6 @@ getHighScoreByLevelId levelId session =
 -- PRIVATE
 
 
-gotHighScore : LevelId -> Maybe HighScore -> Session -> ( Session, Cmd SessionMsg )
+gotHighScore : LevelId -> Maybe HighScore -> CmdUpdater Session SessionMsg
 gotHighScore levelId maybeHighScore session =
     todo ""
