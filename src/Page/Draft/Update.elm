@@ -5,7 +5,6 @@ import Data.Board as Board
 import Data.Cache as Cache
 import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.Draft as Draft
-import Data.DraftId exposing (DraftId)
 import Data.History as History
 import Data.Level as Level
 import Data.Session as Session exposing (Session)
@@ -15,10 +14,10 @@ import Maybe.Extra
 import Page.Draft.Model exposing (Model, State(..))
 import Page.Draft.Msg exposing (Msg(..))
 import RemoteData
+import Resource.Draft.Update exposing (deleteDraftByDraftId, getDraftByDraftId, loadDraftByDraftId, saveDraft)
 import Route
-import Update.Draft exposing (deleteDraft, getDraftByDraftId, loadDraftByDraftId, saveDraft)
-import Update.Level exposing (getLevelByLevelId, loadLevelByLevelId)
 import Update.SessionMsg exposing (SessionMsg)
+import Update.Update exposing (getLevelByLevelId, loadLevelByLevelId)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg
@@ -220,7 +219,7 @@ update msg tuple =
                                 |> Maybe.withDefault Route.Home
                                 |> Route.replaceUrl session.key
                     in
-                    deleteDraft draft.id session
+                    deleteDraftByDraftId draft.id session
                         |> CmdUpdater.withModel model
                         |> CmdUpdater.add changeRouteCmd
 

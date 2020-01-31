@@ -16,12 +16,12 @@ import Maybe.Extra
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
+import Resource.Draft.Update exposing (getDraftsByLevelId)
 import Route
 import String.Extra
-import Update.Draft exposing (getDraftsByLevelId)
 import Update.HighScore exposing (getHighScoreByLevelId)
-import Update.Level exposing (getLevelsByCampaignId)
 import Update.Solution exposing (getSolutionsByLevelId, getSolutionsByLevelIds)
+import Update.Update exposing (getLevelsByCampaignId)
 import View.Box
 import View.Constant exposing (color, size)
 import View.ErrorScreen
@@ -118,7 +118,7 @@ viewCampaign levels session model =
                                 ]
 
         mainContent =
-            viewLevels model levels
+            viewLevels session model levels
     in
     View.SingleSidebar.view
         { sidebar = sidebar

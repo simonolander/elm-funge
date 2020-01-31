@@ -1,16 +1,13 @@
 module Update.Update exposing (update)
 
 import Basics.Extra exposing (flip)
-import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, andThen)
-import Data.GetError as GetError exposing (GetError)
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.Session as Session exposing (Session)
-import Data.VerifiedAccessToken as VerifiedAccessToken
-import Ports.Console as Console
-import Update.Draft exposing (gotDeleteDraftResponse, gotLoadDraftResponse, gotLoadDraftsByLevelIdResponse, gotSaveDraftResponse)
+import Resource.Draft.Update exposing (gotDeleteDraftByIdResponse, gotLoadDraftByIdResponse, gotLoadDraftsByLevelIdResponse, gotSaveDraftResponse)
 import Update.HighScore exposing (gotLoadHighScoreByLevelIdResponse)
-import Update.Level exposing (gotLoadLevelResponse, gotLoadLevelsByCampaignIdResponse)
 import Update.SessionMsg exposing (SessionMsg(..))
 import Update.Solution exposing (gotLoadSolutionResponse, gotLoadSolutionsByLevelIdResponse, gotLoadSolutionsByLevelIdsResponse, gotSaveSolutionResponse, saveSolution)
+import Update.Update exposing (gotLoadLevelResponse, gotLoadLevelsByCampaignIdResponse)
 import Update.UserInfo exposing (gotLoadUserInfoResponse)
 
 
@@ -27,10 +24,10 @@ update msg session =
                 saveSolution solution
 
             GotDeleteDraftResponse draftId maybeError ->
-                gotDeleteDraftResponse draftId maybeError
+                gotDeleteDraftByIdResponse draftId maybeError
 
             GotLoadDraftByDraftIdResponse draftId result ->
-                gotLoadDraftResponse draftId result
+                gotLoadDraftByIdResponse draftId result
 
             GotLoadDraftsByLevelIdResponse levelId result ->
                 gotLoadDraftsByLevelIdResponse levelId result
@@ -74,15 +71,3 @@ update msg session =
 
             GotLoadUserInfoResponse accessToken result ->
                 gotLoadUserInfoResponse accessToken result
-
-
-gotGetResult : Result GetError a -> CmdUpdater Session SessionMsg
-gotGetResult result session =
-    case result of
-        Err (GetError.InvalidAccessToken error) ->
-            ( Session.updateAccessToken VerifiedAccessToken.invalidate session
-            , Console.errorString error
-            )
-
-        _ ->
-            ( session, Cmd.none )

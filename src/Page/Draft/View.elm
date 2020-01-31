@@ -19,9 +19,9 @@ import Html exposing (Html)
 import Page.Draft.Model exposing (Model, State(..))
 import Page.Draft.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
+import Resource.Draft.Update exposing (getDraftByDraftId)
 import Route
-import Update.Draft exposing (getDraftByDraftId)
-import Update.Level exposing (getLevelByLevelId)
+import Update.Update exposing (getLevelByLevelId)
 import View.Board
 import View.ErrorScreen
 import View.Header

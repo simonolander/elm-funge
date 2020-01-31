@@ -4,7 +4,7 @@ import Api.Auth0 as Auth0
 import Browser.Navigation
 import Data.AccessToken as AccessToken
 import Data.Blueprint as Blueprint
-import Data.CmdUpdater exposing (CmdUpdater)
+import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.Draft as Draft
 import Data.Session as Session exposing (Session)
 import Data.Solution as Solution
@@ -13,6 +13,7 @@ import Data.VerifiedAccessToken exposing (VerifiedAccessToken(..))
 import Dict
 import InterceptorPage.UnexpectedUserInfo.Msg exposing (Msg(..))
 import RemoteData
+import Resource.Blueprint.Update
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -22,32 +23,29 @@ update msg session =
         ClickedDeleteLocalData ->
             case ( session.accessToken, RemoteData.toMaybe session.actualUserInfo ) of
                 ( Unverified accessToken, Just actualUserInfo ) ->
-                    ( Session.init session.key session.url
+                    session
                         |> Session.withAccessToken (Valid accessToken)
                         |> Session.withExpectedUserInfo (Just actualUserInfo)
-                    , Cmd.batch
-                        [ Dict.keys session.drafts.local
-                            |> List.map Draft.removeFromLocalStorage
-                            |> Cmd.batch
-                        , Dict.keys session.drafts.expected
-                            |> List.map Draft.removeRemoteFromLocalStorage
-                            |> Cmd.batch
-                        , Dict.keys session.blueprints.local
-                            |> List.map Blueprint.removeFromLocalStorage
-                            |> Cmd.batch
-                        , Dict.keys session.blueprints.expected
-                            |> List.map Blueprint.removeRemoteFromLocalStorage
-                            |> Cmd.batch
-                        , Dict.keys session.solutions.local
-                            |> List.map Solution.removeFromLocalStorage
-                            |> Cmd.batch
-                        , Dict.keys session.solutions.expected
-                            |> List.map Solution.removeRemoteFromLocalStorage
-                            |> Cmd.batch
-                        , AccessToken.saveToLocalStorage accessToken
-                        , UserInfo.saveToLocalStorage actualUserInfo
-                        ]
-                    )
+                        |> CmdUpdater.batch
+                            [ Resource.Blueprint.Update.clear ]
+                        |> CmdUpdater.add
+                            (Cmd.batch
+                                [ Dict.keys session.drafts.local
+                                    |> List.map Draft.removeFromLocalStorage
+                                    |> Cmd.batch
+                                , Dict.keys session.drafts.expected
+                                    |> List.map Draft.removeRemoteFromLocalStorage
+                                    |> Cmd.batch
+                                , Dict.keys session.solutions.local
+                                    |> List.map Solution.removeFromLocalStorage
+                                    |> Cmd.batch
+                                , Dict.keys session.solutions.expected
+                                    |> List.map Solution.removeRemoteFromLocalStorage
+                                    |> Cmd.batch
+                                , AccessToken.saveToLocalStorage accessToken
+                                , UserInfo.saveToLocalStorage actualUserInfo
+                                ]
+                            )
 
                 _ ->
                     ( session, Cmd.none )

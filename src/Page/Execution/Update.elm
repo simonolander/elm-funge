@@ -30,9 +30,9 @@ import Page.Execution.Model exposing (Execution, ExecutionState(..), ExecutionSt
 import Page.Execution.Msg exposing (Msg(..))
 import Random
 import RemoteData
-import Update.Draft exposing (getDraftByDraftId, loadDraftByDraftId)
-import Update.Level exposing (getLevelByLevelId, loadLevelByLevelId)
+import Resource.Draft.Update exposing (getDraftByDraftId, loadDraftByDraftId)
 import Update.SessionMsg exposing (SessionMsg(..))
+import Update.Update exposing (getLevelByLevelId, loadLevelByLevelId)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg
@@ -43,7 +43,8 @@ load =
                 |> CmdUpdater.withModel model
 
         loadLevel ( session, model ) =
-            getDraftByDraftId model.draftId
+            getDraftByDraftId model.draftId session
+                |> RemoteData.toMaybe
                 |> Maybe.Extra.join
                 |> Maybe.map .levelId
                 |> Maybe.map (flip loadLevelByLevelId session)
@@ -58,7 +59,8 @@ load =
                         |> Maybe.Extra.join
 
                 maybeLevel =
-                    getDraftByDraftId model.draftId
+                    getDraftByDraftId model.draftId session
+                        |> RemoteData.toMaybe
                         |> Maybe.Extra.join
                         |> Maybe.map .levelId
                         |> Maybe.map (flip getLevelByLevelId session)

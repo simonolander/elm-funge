@@ -50,13 +50,14 @@ import Data.VerifiedAccessToken exposing (VerifiedAccessToken(..))
 import Dict exposing (Dict)
 import Json.Encode
 import RemoteData exposing (RemoteData(..))
-import Resource.Blueprint.BlueprintResource exposing (BlueprintResource)
-import Resource.Blueprint.Update as BlueprintResource
+import Resource.Blueprint.BlueprintResource as BlueprintResource exposing (BlueprintResource)
+import Resource.Draft.DraftResource as DraftResource exposing (DraftResource)
+import Resource.Level.LevelResource as LevelResource exposing (LevelResource)
 import Url exposing (Url)
 
 
 type alias Drafts =
-    RemoteCache DraftId (Maybe Draft)
+    DraftResource
 
 
 type alias Session =
@@ -66,7 +67,7 @@ type alias Session =
     , userInfo : Maybe UserInfo
     , expectedUserInfo : Maybe UserInfo
     , actualUserInfo : RemoteData GetError UserInfo
-    , levels : Cache LevelId GetError Level
+    , levels : LevelResource
     , drafts : Drafts
     , savingDraftRequests : Dict DraftId (SaveRequest SaveError (Maybe Draft))
     , solutions : RemoteCache SolutionId (Maybe Solution)
@@ -90,8 +91,8 @@ init key url localStorageEntries =
     , userInfo = Nothing
     , expectedUserInfo = Nothing
     , actualUserInfo = NotAsked
-    , levels = Cache.empty
-    , drafts = RemoteCache.empty
+    , levels = LevelResource.empty -- TODO init
+    , drafts = DraftResource.empty
     , savingDraftRequests = Dict.empty
     , solutions = RemoteCache.empty
     , campaignRequests = Cache.empty

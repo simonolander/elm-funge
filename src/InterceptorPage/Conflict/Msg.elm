@@ -1,15 +1,12 @@
-module InterceptorPage.Conflict.Msg exposing (Msg(..), ObjectType(..))
+module InterceptorPage.Conflict.Msg exposing (Msg(..))
+
+import Resource.ResourceType exposing (ResourceType)
 
 
 type alias Id =
     String
 
 
-type ObjectType
-    = Draft
-    | Blueprint
-
-
 type Msg
-    = ClickedKeepLocal Id ObjectType
-    | ClickedKeepServer Id ObjectType
+    = ClickedKeepLocal Id ResourceType
+    | ClickedKeepServer Id ResourceType

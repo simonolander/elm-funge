@@ -1,22 +1,20 @@
-module Page.Campaign.Update exposing (init, load, update)
+module Page.Campaign.Update exposing (load, update)
 
 import Basics.Extra exposing (flip)
 import Data.Cache as Cache
-import Data.CampaignId exposing (CampaignId)
 import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, withModel)
 import Data.Draft as Draft
-import Data.LevelId exposing (LevelId)
 import Data.Session exposing (Session)
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
 import Page.Msg
 import Random
 import RemoteData exposing (RemoteData(..))
+import Resource.Draft.Update exposing (loadDraftsByLevelId, saveDraft)
 import Route
-import Update.Draft exposing (loadDraftsByLevelId, saveDraft)
 import Update.HighScore exposing (loadHighScoreByLevelId)
-import Update.Level exposing (loadLevelsByCampaignId)
 import Update.SessionMsg exposing (SessionMsg)
+import Update.Update exposing (loadLevelsByCampaignId)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg

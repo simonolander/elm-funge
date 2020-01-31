@@ -3,14 +3,14 @@ module InterceptorPage.Conflict.View exposing (view)
 import Data.Blueprint as Blueprint
 import Data.Draft as Draft
 import Data.OneOrBoth as OneOrBoth exposing (OneOrBoth(..))
-import Data.RemoteCache as RemoteCache
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
 import Html exposing (Html)
 import InterceptorPage.Conflict.Msg exposing (Msg(..), ObjectType(..))
 import Json.Encode
-import Maybe.Extra
+import Resource.ModifiableResource as Resource
+import Resource.ResourceUpdater exposing (getConflictResolution)
 import String.Extra
 import View.Info as Info
 import View.Layout exposing (layout)
@@ -27,58 +27,6 @@ type alias Conflict =
 view : Session -> Maybe ( String, Html Msg )
 view session =
     let
-        getOneOrBoth eq { maybeLocal, maybeExpected, maybeActual } =
-            case maybeLocal of
-                Just (Just local) ->
-                    case maybeActual of
-                        Just actual ->
-                            if eq local actual then
-                                Nothing
-
-                            else if
-                                Maybe.Extra.join maybeExpected
-                                    |> Maybe.Extra.filter (\expected -> eq local expected || eq expected actual)
-                                    |> Maybe.withDefault False
-                            then
-                                Nothing
-
-                            else
-                                Just (Both local actual)
-
-                        Nothing ->
-                            case maybeExpected of
-                                Just (Just expected) ->
-                                    if eq local expected then
-                                        Nothing
-
-                                    else
-                                        Just (First local)
-
-                                Just Nothing ->
-                                    Nothing
-
-                                Nothing ->
-                                    Just (First local)
-
-                Just Nothing ->
-                    case maybeActual of
-                        Just actual ->
-                            if
-                                Maybe.Extra.join maybeExpected
-                                    |> Maybe.Extra.filter (eq actual)
-                                    |> Maybe.withDefault False
-                            then
-                                Nothing
-
-                            else
-                                Just (Second actual)
-
-                        Nothing ->
-                            Nothing
-
-                Nothing ->
-                    Nothing
-
         toConflict objectType encode oneOrBoth =
             { id = OneOrBoth.map .id oneOrBoth |> OneOrBoth.any
             , oneOrBoth = OneOrBoth.map encode oneOrBoth
@@ -86,14 +34,14 @@ view session =
             }
 
         draftConflicts =
-            RemoteCache.loadedTriplets session.drafts
-                |> List.filterMap (getOneOrBoth Draft.eq)
+            Resource.loadedTriplets session.drafts
+                |> List.filterMap (getConflictResolution (==) >> toConflict)
                 |> List.map (toConflict Draft Draft.encode)
                 |> List.sortBy .id
 
         blueprintConflicts =
-            RemoteCache.loadedTriplets session.blueprints
-                |> List.filterMap (getOneOrBoth (==))
+            Resource.loadedTriplets session.blueprints
+                |> List.filterMap (getConflictResolution (==) >> toConflict)
                 |> List.map (toConflict Blueprint Blueprint.encode)
                 |> List.sortBy .id
 

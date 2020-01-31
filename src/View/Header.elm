@@ -5,40 +5,56 @@ import Basics.Extra exposing (flip)
 import Data.Cache as Cache
 import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
-import Data.User as User
 import Data.UserInfo as UserInfo
+import Data.VerifiedAccessToken as VerifiedAccessToken
 import Element exposing (..)
 import Element.Background as Background
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
+import Resource.Draft.Update exposing (getDraftByDraftId)
 import Route exposing (Route)
 
 
 view : Session -> Element msg
 view session =
     let
-        online =
-            session.user
-                |> User.getToken
-                |> Maybe.Extra.isJust
-
         loginButton =
-            link
-                [ alignRight
-                , padding 20
-                , mouseOver
-                    [ Background.color (rgb 0.5 0.5 0.5) ]
-                ]
-                (if online then
-                    { url = Api.Auth0.logout
-                    , label = text "Sign out"
-                    }
+            let
+                commonAttrs =
+                    [ alignRight
+                    , padding 20
+                    ]
 
-                 else
-                    { url = Api.Auth0.login (Just session.url)
-                    , label = text "Sign in"
-                    }
-                )
+                linkAttrs =
+                    commonAttrs
+                        ++ [ mouseOver
+                                [ Background.color (rgb 0.5 0.5 0.5) ]
+                           ]
+            in
+            case session.accessToken of
+                VerifiedAccessToken.None ->
+                    link
+                        linkAttrs
+                        { url = Api.Auth0.login (Just session.url)
+                        , label = text "Sign in"
+                        }
+
+                VerifiedAccessToken.Unverified _ ->
+                    el commonAttrs (text "Verifying session")
+
+                VerifiedAccessToken.Invalid _ ->
+                    link
+                        linkAttrs
+                        { url = Api.Auth0.login (Just session.url)
+                        , label = text "Re-sign in"
+                        }
+
+                VerifiedAccessToken.Valid _ ->
+                    link
+                        linkAttrs
+                        { url = Api.Auth0.login (Just session.url)
+                        , label = text "Sign in"
+                        }
 
         backButton =
             case parentRoute session of
@@ -56,16 +72,21 @@ view session =
                     none
 
         userInfo =
-            session.user
-                |> User.getUserInfo
+            session.userInfo
                 |> Maybe.map UserInfo.getUserName
                 |> Maybe.map
-                    (\userName ->
-                        if online then
-                            userName
+                    (case session.accessToken of
+                        VerifiedAccessToken.Valid _ ->
+                            identity
 
-                        else
-                            userName ++ " (offline)"
+                        VerifiedAccessToken.Invalid _ ->
+                            flip (++) " (expired)"
+
+                        VerifiedAccessToken.None ->
+                            flip (++) " (offline)"
+
+                        VerifiedAccessToken.Unverified _ ->
+                            identity
                     )
                 |> Maybe.withDefault "Guest"
                 |> text
@@ -98,8 +119,7 @@ parentRoute session =
 
         Just (Route.EditDraft draftId) ->
             case
-                session.drafts.local
-                    |> Cache.get draftId
+                getDraftByDraftId draftId session
                     |> RemoteData.toMaybe
                     |> Maybe.Extra.join
                     |> Maybe.map .levelId
@@ -122,9 +142,6 @@ parentRoute session =
             Just (Route.Campaign CampaignId.blueprints (Just levelId))
 
         Just Route.Credits ->
-            Just Route.Home
-
-        Just Route.NotFound ->
             Just Route.Home
 
         Nothing ->

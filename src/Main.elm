@@ -6,7 +6,7 @@ import Basics.Extra exposing (flip, uncurry)
 import Browser exposing (Document)
 import Browser.Navigation as Navigation
 import Data.AccessToken as AccessToken
-import Data.Blueprint as Blueprint
+import Data.Blueprint
 import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, id, mapCmd, withModel, withSession)
 import Data.Draft as Draft
 import Data.OneOrBoth as OneOrBoth
@@ -34,7 +34,7 @@ import Page.View
 import Ports.Console as Console
 import Ports.LocalStorage
 import Resource.Blueprint.Update exposing (loadBlueprintsByBlueprintIds)
-import Update.Draft exposing (loadDraftsByDraftIds)
+import Resource.Draft.Update exposing (loadDraftsByDraftIds)
 import Update.SessionMsg exposing (SessionMsg)
 import Update.Solution exposing (loadSolutionsBySolutionIds)
 import Update.Update as Update

@@ -8,7 +8,7 @@ import Data.UserInfo as UserInfo exposing (UserInfo)
 import Data.VerifiedAccessToken as VerifiedAccessToken exposing (VerifiedAccessToken(..))
 import Dict
 import RemoteData exposing (RemoteData(..))
-import Update.General exposing (gotGetError)
+import Resource.Misc exposing (gotGetError)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 

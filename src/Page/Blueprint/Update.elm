@@ -10,7 +10,7 @@ import Data.Instruction exposing (Instruction(..))
 import Data.InstructionTool as InstructionTool exposing (InstructionTool(..))
 import Data.Int16 as Int16
 import Data.Level as Level
-import Data.Session as Session exposing (Session, updateBlueprints)
+import Data.Session exposing (Session)
 import Data.Suite as Suite
 import Extra.Array
 import List.Extra
@@ -40,48 +40,48 @@ load =
                         |> RemoteData.toMaybe
                         |> Maybe.Extra.join
             in
-            case ( isNewBlueprint, maybeBlueprint ) of
-                ( True, Just blueprint ) ->
-                    let
-                        isNewBlueprint =
-                            Maybe.map ((==) blueprint.id) model.loadedBlueprintId
-                                |> Maybe.withDefault True
+            if isNewBlueprint then
+                case maybeBlueprint of
+                    Just blueprint ->
+                        let
+                            newModel =
+                                if isNewBlueprint then
+                                    { model
+                                        | blueprintId = blueprint.id
+                                        , loadedBlueprintId = Just blueprint.id
+                                        , width = String.fromInt (Board.width blueprint.initialBoard)
+                                        , height = String.fromInt (Board.height blueprint.initialBoard)
+                                        , input =
+                                            blueprint.suites
+                                                |> List.head
+                                                |> Maybe.withDefault Suite.empty
+                                                |> .input
+                                                |> List.map Int16.toString
+                                                |> String.join ","
+                                        , output =
+                                            blueprint.suites
+                                                |> List.head
+                                                |> Maybe.withDefault Suite.empty
+                                                |> .output
+                                                |> List.map Int16.toString
+                                                |> String.join ","
+                                        , enabledInstructionTools =
+                                            InstructionTool.all
+                                                |> List.filter ((/=) (JustInstruction NoOp))
+                                                |> List.map (\tool -> ( tool, Extra.Array.member tool blueprint.instructionTools ))
+                                                |> Array.fromList
+                                    }
 
-                        newModel =
-                            if isNewBlueprint then
-                                { model
-                                    | blueprintId = blueprint.id
-                                    , loadedBlueprintId = Just blueprint.id
-                                    , width = String.fromInt (Board.width blueprint.initialBoard)
-                                    , height = String.fromInt (Board.height blueprint.initialBoard)
-                                    , input =
-                                        blueprint.suites
-                                            |> List.head
-                                            |> Maybe.withDefault Suite.empty
-                                            |> .input
-                                            |> List.map Int16.toString
-                                            |> String.join ","
-                                    , output =
-                                        blueprint.suites
-                                            |> List.head
-                                            |> Maybe.withDefault Suite.empty
-                                            |> .output
-                                            |> List.map Int16.toString
-                                            |> String.join ","
-                                    , enabledInstructionTools =
-                                        InstructionTool.all
-                                            |> List.filter ((/=) (JustInstruction NoOp))
-                                            |> List.map (\tool -> ( tool, Extra.Array.member tool blueprint.instructionTools ))
-                                            |> Array.fromList
-                                }
+                                else
+                                    model
+                        in
+                        ( ( session, newModel ), Cmd.none )
 
-                            else
-                                model
-                    in
-                    ( ( session, newModel ), Cmd.none )
+                    Nothing ->
+                        ( ( session, model ), Cmd.none )
 
-                _ ->
-                    ( ( session, model ), Cmd.none )
+            else
+                ( ( session, model ), Cmd.none )
     in
     CmdUpdater.batch
         [ loadBlueprint

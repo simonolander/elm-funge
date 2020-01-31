@@ -18,9 +18,9 @@ import Page.Execution.Model exposing (Execution, ExecutionState(..), Model)
 import Page.Execution.Msg exposing (Msg(..))
 import Page.Execution.Update exposing (canStepExecution, getNumberOfStepsForSuite, getScore, isExecutionSolved, isSuiteFailed, isSuiteSolved)
 import RemoteData exposing (RemoteData(..))
+import Resource.Draft.Update exposing (getDraftByDraftId)
 import Route
-import Update.Draft exposing (getDraftByDraftId)
-import Update.Level exposing (getLevelByLevelId)
+import Update.Update exposing (getLevelByLevelId)
 import View.Box
 import View.Constant exposing (color, icons)
 import View.ErrorScreen

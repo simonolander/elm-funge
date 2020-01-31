@@ -1,4 +1,4 @@
-module Update.Level exposing
+module Update.LevelService exposing
     ( getLevelByLevelId
     , getLevelsByCampaignId
     , gotLoadLevelResponse
@@ -13,14 +13,16 @@ import Data.Cache as Cache
 import Data.CampaignId exposing (CampaignId)
 import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
 import Data.GetError exposing (GetError)
-import Data.Level exposing (Level)
+import Data.Level exposing (Level, decoder)
 import Data.LevelId exposing (LevelId)
 import Data.Session as Session exposing (Session)
 import Debug exposing (todo)
 import Extra.Tuple exposing (fanout)
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
-import Update.General exposing (gotGetError)
+import Resource.LoadResourceService exposing (LoadResourceInterface, gotLoadResponse, loadPublic)
+import Resource.RemoteDataDict as ResourceDict exposing (insertValue)
+import Resource.ResourceType as ResourceType
 import Update.SessionMsg exposing (SessionMsg(..))
 
 
@@ -28,14 +30,45 @@ import Update.SessionMsg exposing (SessionMsg(..))
 -- LOAD
 
 
+loadInterface : LoadResourceInterface LevelId Level LevelId {}
+loadInterface =
+    let
+        updateSession updater session =
+            let
+                levels =
+                    session.levels
+            in
+            { session | levels = { levels | cache = updater levels.cache } }
+
+        mergeLevel id maybeLevel session =
+            insertValue id maybeLevel
+                |> flip updateSession session
+                |> CmdUpdater.id
+    in
+    { updateSession = updateSession
+    , getResourceDict = .levels >> .cache
+    , resourceType = ResourceType.Level
+    , decoder = decoder
+    , responseMsg = GotLoadLevelByLevelIdResponse
+    , toKey = identity
+    , toString = identity
+    , mergeResource = mergeLevel
+    }
+
+
 loadLevelByLevelId : LevelId -> CmdUpdater Session SessionMsg
 loadLevelByLevelId levelId session =
-    todo ""
+    loadPublic loadInterface levelId session
+
+
+gotLoadLevelByLevelIdResponse : LevelId -> Result GetError (Maybe Level) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadLevelByLevelIdResponse =
+    gotLoadResponse loadInterface
 
 
 getLevelByLevelId : LevelId -> Session -> RemoteData GetError (Maybe Level)
 getLevelByLevelId levelId session =
-    todo ""
+    ResourceDict.get levelId session.levels.cache
 
 
 getLevelsByCampaignId : CampaignId -> Session -> RemoteData GetError (List Level)
@@ -77,8 +110,8 @@ loadLevelsByCampaignIds campaignIds session =
 
 
 gotLoadLevelResponse : LevelId -> Result GetError (Maybe Level) -> CmdUpdater Session SessionMsg
-gotLoadLevelResponse levelId result session =
-    todo ""
+gotLoadLevelResponse =
+    gotLoadResponse loadInterface
 
 
 gotLoadLevelsByCampaignIdResponse : CampaignId -> Result GetError (List Level) -> CmdUpdater Session SessionMsg
@@ -96,12 +129,3 @@ gotLoadLevelsByCampaignIdResponse campaignId result oldSession =
 
         Err error ->
             gotGetError error newSession
-
-
-
--- PRIVATE
-
-
-gotLevel : LevelId -> Maybe Level -> CmdUpdater Session SessionMsg
-gotLevel levelId maybeLevel session =
-    todo ""

@@ -10,7 +10,6 @@ module Data.Draft exposing
     , loadFromLocalStorage
     , loadFromServer
     , loadFromServerByLevelId
-    , loadRemoteFromLocalStorage
     , localRemoteStorageResponse
     , localStorageResponse
     , pushBoard
@@ -26,7 +25,6 @@ module Data.Draft exposing
 import Api.GCP as GCP
 import Data.AccessToken exposing (AccessToken)
 import Data.Board as Board exposing (Board)
-import Data.DraftBook as DraftBook
 import Data.DraftId as DraftId exposing (DraftId)
 import Data.GetError as HttpError exposing (GetError)
 import Data.History as History exposing (History)
@@ -40,7 +38,6 @@ import Json.Encode as Encode
 import Json.Encode.Extra
 import Ports.LocalStorage as LocalStorage
 import Random
-import Url.Builder
 
 
 type alias Draft =
