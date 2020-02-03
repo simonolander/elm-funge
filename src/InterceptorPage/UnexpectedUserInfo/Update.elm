@@ -13,7 +13,7 @@ import Data.VerifiedAccessToken exposing (VerifiedAccessToken(..))
 import Dict
 import InterceptorPage.UnexpectedUserInfo.Msg exposing (Msg(..))
 import RemoteData
-import Resource.Blueprint.Update
+import Service.Blueprint.BlueprintService
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -27,7 +27,7 @@ update msg session =
                         |> Session.withAccessToken (Valid accessToken)
                         |> Session.withExpectedUserInfo (Just actualUserInfo)
                         |> CmdUpdater.batch
-                            [ Resource.Blueprint.Update.clear ]
+                            [ Resource.Blueprint.BlueprintService.clear ]
                         |> CmdUpdater.add
                             (Cmd.batch
                                 [ Dict.keys session.drafts.local

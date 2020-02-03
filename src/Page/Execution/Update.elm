@@ -30,9 +30,9 @@ import Page.Execution.Model exposing (Execution, ExecutionState(..), ExecutionSt
 import Page.Execution.Msg exposing (Msg(..))
 import Random
 import RemoteData
-import Resource.Draft.Update exposing (getDraftByDraftId, loadDraftByDraftId)
+import Service.Draft.DraftService exposing (getDraftByDraftId, loadDraftByDraftId)
+import Service.Level.LevelService exposing (getLevelByLevelId, loadLevelByLevelId)
 import Update.SessionMsg exposing (SessionMsg(..))
-import Update.Update exposing (getLevelByLevelId, loadLevelByLevelId)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg

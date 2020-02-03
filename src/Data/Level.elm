@@ -5,8 +5,6 @@ module Data.Level exposing
     , encode
     , generator
     , loadFromLocalStorage
-    , loadFromServer
-    , loadFromServerByCampaignId
     , localStorageKey
     , localStorageResponse
     , removeFromLocalStorage
@@ -286,23 +284,3 @@ decoder =
                                 ++ String.fromInt version
                             )
             )
-
-
-
--- REST
-
-
-loadFromServer : (Result GetError Level -> msg) -> LevelId -> Cmd msg
-loadFromServer toMsg levelId =
-    GCP.get
-        |> GCP.withPath [ "levels" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "levelId" levelId ]
-        |> GCP.request (HttpError.expect decoder toMsg)
-
-
-loadFromServerByCampaignId : (CampaignId -> Result GetError (List Level) -> msg) -> CampaignId -> Cmd msg
-loadFromServerByCampaignId toMsg campaignId =
-    GCP.get
-        |> GCP.withPath [ "levels" ]
-        |> GCP.withQueryParameters [ Url.Builder.string "campaignId" campaignId ]
-        |> GCP.request (HttpError.expect (Decode.list decoder) (toMsg campaignId))

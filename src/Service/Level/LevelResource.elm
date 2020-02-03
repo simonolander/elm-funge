@@ -1,24 +1,22 @@
-module Resource.Level.LevelResource exposing
+module Service.Level.LevelResource exposing
     ( LevelResource
     , empty
     , updateLevelsByCampaignIdRequests
     )
 
 import Data.CampaignId exposing (CampaignId)
-import Data.GetError exposing (GetError)
 import Data.Level exposing (Level)
 import Data.LevelId exposing (LevelId)
 import Data.Updater exposing (Updater)
 import Dict exposing (Dict)
-import RemoteData exposing (RemoteData)
-import Resource.ModifiableResource exposing (ModifiableRemoteResource)
+import Service.RemoteRequestDict exposing (RemoteRequestDict)
 import Service.RemoteResource exposing (RemoteResource)
 
 
 type alias LevelResource =
     RemoteResource LevelId
         Level
-        { levelsByCampaignIdRequests : Dict LevelId (RemoteData GetError ())
+        { levelsByCampaignIdRequests : RemoteRequestDict CampaignId
         }
 
 
@@ -29,6 +27,6 @@ empty =
     }
 
 
-updateLevelsByCampaignIdRequests : Updater (Dict CampaignId (RemoteData GetError ())) -> Updater ModifiableRemoteResource
+updateLevelsByCampaignIdRequests : Updater (RemoteRequestDict CampaignId) -> Updater LevelResource
 updateLevelsByCampaignIdRequests updater resource =
     { resource | levelsByCampaignIdRequests = updater resource.levelsByCampaignIdRequests }

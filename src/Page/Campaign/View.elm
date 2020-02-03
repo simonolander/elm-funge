@@ -9,19 +9,18 @@ import Data.VerifiedAccessToken as VerifiedAccessToken
 import Element exposing (..)
 import Element.Border as Border
 import Element.Font as Font
-import Html exposing (Html)
 import Html.Attributes
 import List.Extra
 import Maybe.Extra
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
-import Resource.Draft.Update exposing (getDraftsByLevelId)
 import Route
+import Service.Draft.DraftService exposing (getDraftsByLevelId)
+import Service.Level.LevelService exposing (getLevelsByCampaignId)
 import String.Extra
 import Update.HighScore exposing (getHighScoreByLevelId)
 import Update.Solution exposing (getSolutionsByLevelId, getSolutionsByLevelIds)
-import Update.Update exposing (getLevelsByCampaignId)
 import View.Box
 import View.Constant exposing (color, size)
 import View.ErrorScreen
@@ -32,7 +31,7 @@ import View.SingleSidebar
 import ViewComponents
 
 
-view : Session -> Model -> ( String, Html Msg )
+view : Session -> Model -> ( String, Element Msg )
 view session model =
     let
         content =
@@ -51,15 +50,6 @@ view session model =
     in
     ( "Campaign"
     , content
-        |> layout
-            [ color.background.black
-            , width fill
-            , height fill
-            , Font.family
-                [ Font.monospace
-                ]
-            , color.font.default
-            ]
     )
 
 

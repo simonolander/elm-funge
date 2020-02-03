@@ -9,52 +9,51 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (Html)
 import Maybe.Extra
 import Page.Blueprints.Model exposing (Modal(..), Model)
 import Page.Blueprints.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
 import Route
+import Service.Blueprint.BlueprintService exposing (getAllBlueprintsForUser, getBlueprintByBlueprintId)
 import String.Extra
 import View.Constant exposing (size)
 import View.ErrorScreen
-import View.Layout
 import View.LevelButton
 import View.LoadingScreen
 import View.SingleSidebar
 import ViewComponents
 
 
-view : Session -> Model -> ( String, Html Msg )
+view : Session -> Model -> ( String, Element Msg )
 view session model =
     let
         content =
-            case session.actualBlueprintsRequest of
+            case getAllBlueprintsForUser session of
                 NotAsked ->
-                    viewBlueprints session model
-                        |> View.Layout.layout
+                    View.LoadingScreen.view "Figuring out how to get blueprints"
 
                 Loading ->
-                    View.LoadingScreen.layout "Loading blueprints"
+                    View.LoadingScreen.view "Loading blueprints"
 
                 Failure error ->
-                    View.ErrorScreen.layout (GetError.toString error)
+                    View.ErrorScreen.view (GetError.toString error)
 
-                Success () ->
-                    viewBlueprints session model
-                        |> View.Layout.layout
+                Success blueprints ->
+                    viewBlueprints blueprints session model
     in
     ( "Blueprints"
     , content
     )
 
 
-viewBlueprints : Session -> Model -> Element Msg
-viewBlueprints session model =
+viewBlueprints : List Blueprint -> Session -> Model -> Element Msg
+viewBlueprints blueprints session model =
     let
         sidebarContent =
-            Maybe.andThen (flip Dict.get session.blueprints.local) model.selectedBlueprintId
-                |> Maybe.andThen Maybe.Extra.join
+            model.selectedBlueprintId
+                |> Maybe.map (flip getBlueprintByBlueprintId session)
+                |> Maybe.andThen RemoteData.toMaybe
+                |> Maybe.Extra.join
                 |> Maybe.map viewSidebar
                 |> Maybe.withDefault
                     [ el [ centerX, size.font.sidebar.title ] (text "Blueprints")
@@ -73,6 +72,7 @@ viewBlueprints session model =
                 plusButton =
                     ViewComponents.textButton [] (Just ClickedNewBlueprint) "Create new blueprint"
 
+                blueprintButton : Blueprint -> Element Msg
                 blueprintButton blueprint =
                     View.LevelButton.view
                         { default
@@ -85,9 +85,7 @@ viewBlueprints session model =
                         blueprint
 
                 blueprintButtons =
-                    Dict.values session.blueprints.local
-                        |> Maybe.Extra.values
-                        |> List.map blueprintButton
+                    List.map blueprintButton blueprints
             in
             column
                 [ width fill, spacing 30 ]

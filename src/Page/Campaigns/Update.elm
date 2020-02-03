@@ -6,9 +6,8 @@ import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, withModel)
 import Data.Session exposing (Session)
 import Page.Campaigns.Model exposing (Model)
 import Page.Campaigns.Msg exposing (Msg)
+import Service.Level.LevelService exposing (loadLevelsByCampaignIds)
 import Update.SessionMsg exposing (SessionMsg)
-import Update.Solution exposing (loadSolutionsByCampaignIdsResponse)
-import Update.Update exposing (loadLevelsByCampaignIds)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg

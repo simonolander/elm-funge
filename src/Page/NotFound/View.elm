@@ -1,6 +1,7 @@
 module Page.NotFound.View exposing (view)
 
 import Data.Session exposing (Session)
+import Element exposing (Element)
 import Page.Msg exposing (Msg)
 import Page.NotFound.Model exposing (Model)
 import Url
@@ -9,11 +10,11 @@ import View.NotFound
 import View.Scewn
 
 
-view : Session -> Model -> ( String, Msg )
+view : Session -> Model -> ( String, Element Msg )
 view session model =
     let
         content =
-            View.Scewn.layout
+            View.Scewn.view
                 { south = Nothing
                 , center =
                     Just <|

@@ -1,8 +1,9 @@
-module Resource.LocalStorageService exposing
+module Service.LocalStorageService exposing
     ( LocalStorageInterface
     , expectedLocalStorageResponse
     , fromCurrentLocalStorageKey
     , fromExpectedLocalStorageKey
+    , getResourcesFromLocalStorageEntries
     , localStorageResponse
     , toCurrentLocalStorageKey
     , toExpectedLocalStorageKey
@@ -18,14 +19,14 @@ import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Json.Encode.Extra
 import Ports.LocalStorage exposing (storageSetItem)
-import Resource.ResourceType exposing (ResourceType, toLocalStoragePrefix)
+import Service.ResourceType exposing (ResourceType, toLocalStoragePrefix)
 
 
 type alias LocalStorageInterface id res a =
     { a
         | resourceType : ResourceType
-        , idToString : id -> String
-        , idFromString : String -> id
+        , toString : id -> String
+        , fromString : String -> id
         , encode : res -> Encode.Value
         , decoder : Decoder res
         , setCurrentValue : id -> Maybe res -> Updater Session
@@ -39,7 +40,7 @@ type alias LocalStorageInterface id res a =
 
 toCurrentLocalStorageKey : LocalStorageInterface id res a -> id -> String
 toCurrentLocalStorageKey interface id =
-    String.join "." [ toLocalStoragePrefix interface.resourceType, interface.idToString id ]
+    String.join "." [ toLocalStoragePrefix interface.resourceType, interface.toString id ]
 
 
 fromCurrentLocalStorageKey : LocalStorageInterface id res a -> String -> Maybe id
@@ -47,7 +48,7 @@ fromCurrentLocalStorageKey interface localStorageKey =
     case String.split "." localStorageKey of
         prefix :: id :: [] ->
             if prefix == toLocalStoragePrefix interface.resourceType then
-                Just (interface.idFromString id)
+                Just (interface.fromString id)
 
             else
                 Nothing
@@ -63,7 +64,7 @@ fromExpectedLocalStorageKey interface localStorageKey =
     case String.split "." localStorageKey of
         prefix :: id :: "remote" :: [] ->
             if prefix == toLocalStoragePrefix interface.resourceType then
-                Just (interface.idFromString id)
+                Just (interface.fromString id)
 
             else
                 Nothing
@@ -95,6 +96,27 @@ writeResourceToExpectedLocalStorage interface id maybeResource session =
 
 
 -- READ FROM LOCAL STORAGE
+
+
+getResourcesFromLocalStorageEntries : LocalStorageInterface id res a -> List ( String, Encode.Value ) -> { current : List ( id, Maybe res ), expected : List ( id, Maybe res ), errors : List ( String, Decode.Error ) }
+getResourcesFromLocalStorageEntries i localStorageEntries =
+    let
+        ( currentErrors, currentResources ) =
+            List.filterMap (localStorageResponse i) localStorageEntries
+                |> Either.partition
+
+        ( expectedErrors, expectedResources ) =
+            List.filterMap (expectedLocalStorageResponse i) localStorageEntries
+                |> Either.partition
+    in
+    { current = currentResources
+    , expected = expectedResources
+    , errors =
+        List.concat
+            [ currentErrors
+            , expectedErrors
+            ]
+    }
 
 
 localStorageResponse : LocalStorageInterface id res a -> ( String, Encode.Value ) -> Maybe (Either ( String, Decode.Error ) ( id, Maybe res ))

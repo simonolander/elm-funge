@@ -2,7 +2,6 @@ module View.Header exposing (view)
 
 import Api.Auth0
 import Basics.Extra exposing (flip)
-import Data.Cache as Cache
 import Data.CampaignId as CampaignId
 import Data.Session exposing (Session)
 import Data.UserInfo as UserInfo
@@ -11,8 +10,9 @@ import Element exposing (..)
 import Element.Background as Background
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
-import Resource.Draft.Update exposing (getDraftByDraftId)
 import Route exposing (Route)
+import Service.Draft.DraftService exposing (getDraftByDraftId)
+import Service.Level.LevelService exposing (getLevelByLevelId)
 
 
 view : Session -> Element msg
@@ -123,8 +123,9 @@ parentRoute session =
                     |> RemoteData.toMaybe
                     |> Maybe.Extra.join
                     |> Maybe.map .levelId
-                    |> Maybe.map (flip Cache.get session.levels)
+                    |> Maybe.map (flip getLevelByLevelId session)
                     |> Maybe.andThen RemoteData.toMaybe
+                    |> Maybe.Extra.join
             of
                 Just level ->
                     Just (Route.Campaign level.campaignId (Just level.id))

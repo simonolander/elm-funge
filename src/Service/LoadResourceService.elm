@@ -1,10 +1,11 @@
-module Resource.LoadResourceService exposing
+module Service.LoadResourceService exposing
     ( LoadResourceInterface
-    , gotLoadResponse
-    , loadPrivate
-    , loadPublic
-    , reloadPrivate
-    , reloadPublic
+    , gotGetError
+    , gotLoadResourceByIdResponse
+    , loadPrivateResourceById
+    , loadPublicResourceById
+    , reloadPrivateResourceById
+    , reloadPublicResourceById
     )
 
 import Api.GCP as GCP
@@ -16,16 +17,18 @@ import Data.Updater exposing (Updater)
 import Data.VerifiedAccessToken as VerifiedAccessToken
 import Json.Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..))
-import Resource.RemoteDataDict exposing (RemoteDataDict, get, insertResult, loading, missingAccessToken)
-import Resource.ResourceType exposing (ResourceType, toIdParameterName, toPath)
+import Service.RemoteDataDict exposing (RemoteDataDict, get, insertResult, loading, missingAccessToken)
+import Service.RemoteResource exposing (RemoteResource, updateActual)
+import Service.ResourceType exposing (ResourceType, toIdParameterName, toPath)
 import Tuple exposing (pair)
 import Update.SessionMsg exposing (SessionMsg)
 
 
 type alias LoadResourceInterface id res comparable a =
     { a
-        | updateSession : Updater (RemoteDataDict comparable res) -> Updater Session
-        , getResourceDict : Session -> RemoteDataDict comparable res
+        | getRemoteResource : Session -> RemoteResource comparable res a
+        , setRemoteResource : RemoteResource comparable res a -> Updater Session
+        , updateRemoteResource : Updater (RemoteResource comparable res a) -> Updater Session
         , resourceType : ResourceType
         , decoder : Decoder res
         , responseMsg : id -> Result GetError (Maybe res) -> SessionMsg
@@ -35,27 +38,34 @@ type alias LoadResourceInterface id res comparable a =
     }
 
 
-
--- STATIC
-
-
-loadPublic : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
-loadPublic =
-    loadIfNotAsked reloadPublic
+updateRemoteResource : LoadResourceInterface id res comparable a -> Updater (RemoteResource comparable res a) -> Updater Session
+updateRemoteResource i updater session =
+    i.getRemoteResource session
+        |> updater
+        |> flip i.setRemoteResource session
 
 
-reloadPublic : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
-reloadPublic i id session =
+
+-- BY ID
+
+
+loadPublicResourceById : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
+loadPublicResourceById =
+    loadIfNotAsked reloadPublicResourceById
+
+
+reloadPublicResourceById : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
+reloadPublicResourceById i id session =
     reloadWithOptionalAccessToken i id session Nothing
 
 
-loadPrivate : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
-loadPrivate =
-    loadIfNotAsked reloadPrivate
+loadPrivateResourceById : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
+loadPrivateResourceById =
+    loadIfNotAsked reloadPrivateResourceById
 
 
-reloadPrivate : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
-reloadPrivate i id session =
+reloadPrivateResourceById : LoadResourceInterface id res comparable a -> id -> Session -> ( Session, Cmd SessionMsg )
+reloadPrivateResourceById i id session =
     case VerifiedAccessToken.getValid session.accessToken of
         Just accessToken ->
             reloadWithOptionalAccessToken i id session (Just accessToken)
@@ -63,7 +73,8 @@ reloadPrivate i id session =
         Nothing ->
             i.toKey id
                 |> missingAccessToken
-                |> flip i.updateSession session
+                |> updateActual
+                |> flip (updateRemoteResource i) session
                 |> flip pair Cmd.none
 
 
@@ -71,13 +82,14 @@ reloadPrivate i id session =
 -- RESPONSE
 
 
-gotLoadResponse : LoadResourceInterface id res comparable a -> id -> Result GetError (Maybe res) -> CmdUpdater Session SessionMsg
-gotLoadResponse i id result oldSession =
+gotLoadResourceByIdResponse : LoadResourceInterface id res comparable a -> id -> Result GetError (Maybe res) -> CmdUpdater Session SessionMsg
+gotLoadResourceByIdResponse i id result oldSession =
     let
         session =
             i.toKey id
                 |> flip insertResult result
-                |> flip i.updateSession oldSession
+                |> updateActual
+                |> flip (updateRemoteResource i) oldSession
     in
     case result of
         Ok maybeResource ->

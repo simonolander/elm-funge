@@ -17,7 +17,7 @@ import Data.Solution as Solution
 import Data.Updater as Updater exposing (Updater)
 import Data.UserInfo as UserInfo
 import Data.VerifiedAccessToken exposing (VerifiedAccessToken(..))
-import Html
+import Element
 import InterceptorPage.Msg
 import InterceptorPage.Update
 import InterceptorPage.View
@@ -33,13 +33,14 @@ import Page.Update
 import Page.View
 import Ports.Console as Console
 import Ports.LocalStorage
-import Resource.Blueprint.Update exposing (loadBlueprintsByBlueprintIds)
-import Resource.Draft.Update exposing (loadDraftsByDraftIds)
+import Service.Blueprint.BlueprintService as BlueprintService exposing (loadBlueprintsByBlueprintIds)
+import Service.Draft.DraftService as DraftService exposing (loadDraftsByDraftIds)
+import Service.Solution.SolutionService exposing (loadSolutionsBySolutionIds)
 import Update.SessionMsg exposing (SessionMsg)
-import Update.Solution exposing (loadSolutionsBySolutionIds)
 import Update.Update as Update
 import Update.UserInfo exposing (loadUserInfo)
 import Url exposing (Url)
+import View.Layout
 
 
 
@@ -83,46 +84,28 @@ main =
 
 
 initLoad : ( Session, Page.Model ) -> ( ( Session, Page.Model ), Cmd Msg )
-initLoad =
+initLoad ( oldSession, model ) =
     let
-        verifyAccessToken ( session, model ) =
+        verifyAccessToken session =
             loadUserInfo session
-                |> withModel model
-                |> fromSessionMsg
 
-        loadDrafts ( session, model ) =
-            OneOrBoth.fromDicts session.drafts.local session.drafts.expected
-                |> List.filterMap OneOrBoth.join
-                |> List.filter (OneOrBoth.areSame Draft.eq >> not)
-                |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
-                |> flip loadDraftsByDraftIds session
-                |> withModel model
-                |> fromSessionMsg
-
-        loadBlueprints ( session, model ) =
-            OneOrBoth.fromDicts session.blueprints.local session.blueprints.expected
-                |> List.filterMap OneOrBoth.join
-                |> List.filter (OneOrBoth.areSame (==) >> not)
-                |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
-                |> flip loadBlueprintsByBlueprintIds session
-                |> withModel model
-                |> fromSessionMsg
-
-        loadSolutions ( session, model ) =
+        loadSolutions : CmdUpdater Session SessionMsg
+        loadSolutions session =
             OneOrBoth.fromDicts session.solutions.local session.solutions.expected
                 |> List.filterMap OneOrBoth.join
                 |> List.filter (OneOrBoth.areSame (==) >> not)
                 |> List.map (OneOrBoth.map .id >> OneOrBoth.any)
                 |> flip loadSolutionsBySolutionIds session
-                |> withModel model
-                |> fromSessionMsg
     in
     CmdUpdater.batch
         [ verifyAccessToken
-        , loadDrafts
-        , loadBlueprints
+        , DraftService.loadChanged
+        , BlueprintService.loadChanged
         , loadSolutions
         ]
+        oldSession
+        |> withModel model
+        |> fromSessionMsg
 
 
 init : Flags -> Url.Url -> Navigation.Key -> ( ( Session, Page.Model ), Cmd Msg )
@@ -182,7 +165,7 @@ init flags browserUrl navigationKey =
                 |> Tuple.mapFirst (Updater.batch >> Session.updateSolutions)
 
         initialSession =
-            Session.init navigationKey url flags.localStorageEntries
+            Session.empty navigationKey url flags.localStorageEntries
                 |> localDraftsUpdater
                 |> expectedDraftsUpdater
                 |> localSolutionsUpdater
@@ -222,13 +205,14 @@ view : ( Session, Page.Model ) -> Document Msg
 view ( session, pageModel ) =
     let
         ( title, html ) =
-            case InterceptorPage.View.view session of
-                Just tuple ->
-                    Tuple.mapSecond (Html.map InterceptorPageMsg) tuple
+            Tuple.mapSecond View.Layout.layout <|
+                case InterceptorPage.View.view session of
+                    Just tuple ->
+                        Tuple.mapSecond (Element.map InterceptorPageMsg) tuple
 
-                Nothing ->
-                    Page.View.view session pageModel
-                        |> Tuple.mapSecond PageMsg
+                    Nothing ->
+                        Page.View.view session pageModel
+                            |> Tuple.mapSecond PageMsg
     in
     { title = String.concat [ title, " - ", applicationName ]
     , body = [ html ]

@@ -1,131 +1,151 @@
-module Update.LevelService exposing
-    ( getLevelByLevelId
+module Service.Level.LevelService exposing
+    ( createFromLocalStorageEntries
+    , getLevelByLevelId
     , getLevelsByCampaignId
-    , gotLoadLevelResponse
+    , gotLoadLevelByLevelIdResponse
     , gotLoadLevelsByCampaignIdResponse
     , loadLevelByLevelId
     , loadLevelsByCampaignId
     , loadLevelsByCampaignIds
+    , reloadLevelsByCampaignId
     )
 
+import Api.GCP as GCP
 import Basics.Extra exposing (flip, uncurry)
-import Data.Cache as Cache
 import Data.CampaignId exposing (CampaignId)
 import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater)
-import Data.GetError exposing (GetError)
-import Data.Level exposing (Level, decoder)
+import Data.GetError as GetError exposing (GetError)
+import Data.Level as Level exposing (Level, decoder)
 import Data.LevelId exposing (LevelId)
-import Data.Session as Session exposing (Session)
-import Debug exposing (todo)
+import Data.Session exposing (Session)
+import Dict
 import Extra.Tuple exposing (fanout)
+import Json.Decode as Decode
+import Json.Encode as Encode
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
-import Resource.LoadResourceService exposing (LoadResourceInterface, gotLoadResponse, loadPublic)
-import Resource.RemoteDataDict as ResourceDict exposing (insertValue)
-import Resource.ResourceType as ResourceType
+import Service.InterfaceHelper exposing (createRemoteResourceInterface)
+import Service.Level.LevelResource exposing (LevelResource, empty, updateLevelsByCampaignIdRequests)
+import Service.LoadResourceService exposing (LoadResourceInterface, gotGetError, gotLoadResourceByIdResponse, loadPublicResourceById)
+import Service.LocalStorageService exposing (getResourcesFromLocalStorageEntries)
+import Service.RemoteDataDict as RemoteDataDict
+import Service.RemoteRequestDict as RemoteRequestDict
+import Service.RemoteResource as RemoteResource
+import Service.ResourceType as ResourceType exposing (toIdParameterName, toPath)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 
+interface =
+    createRemoteResourceInterface
+        { getRemoteResource = .levels
+        , setRemoteResource = \r s -> { s | levels = r }
+        , encode = Level.encode
+        , decoder = Level.decoder
+        , resourceType = ResourceType.Level
+        , toString = identity
+        , toKey = identity
+        , fromString = identity
+        , responseMsg = GotLoadLevelByLevelIdResponse
+        }
 
--- LOAD
 
-
-loadInterface : LoadResourceInterface LevelId Level LevelId {}
-loadInterface =
+createFromLocalStorageEntries : List ( String, Encode.Value ) -> ( LevelResource, List ( String, Decode.Error ) )
+createFromLocalStorageEntries localStorageEntries =
     let
-        updateSession updater session =
-            let
-                levels =
-                    session.levels
-            in
-            { session | levels = { levels | cache = updater levels.cache } }
-
-        mergeLevel id maybeLevel session =
-            insertValue id maybeLevel
-                |> flip updateSession session
-                |> CmdUpdater.id
+        { current, expected, errors } =
+            getResourcesFromLocalStorageEntries interface localStorageEntries
     in
-    { updateSession = updateSession
-    , getResourceDict = .levels >> .cache
-    , resourceType = ResourceType.Level
-    , decoder = decoder
-    , responseMsg = GotLoadLevelByLevelIdResponse
-    , toKey = identity
-    , toString = identity
-    , mergeResource = mergeLevel
-    }
+    ( { empty
+        | actual = RemoteDataDict.fromList current
+      }
+    , errors
+    )
 
 
-loadLevelByLevelId : LevelId -> CmdUpdater Session SessionMsg
-loadLevelByLevelId levelId session =
-    loadPublic loadInterface levelId session
 
-
-gotLoadLevelByLevelIdResponse : LevelId -> Result GetError (Maybe Level) -> Session -> ( Session, Cmd SessionMsg )
-gotLoadLevelByLevelIdResponse =
-    gotLoadResponse loadInterface
+-- LOAD BY LEVEL ID
 
 
 getLevelByLevelId : LevelId -> Session -> RemoteData GetError (Maybe Level)
 getLevelByLevelId levelId session =
-    ResourceDict.get levelId session.levels.cache
+    RemoteResource.getResourceById levelId session.levels
+
+
+loadLevelByLevelId : LevelId -> CmdUpdater Session SessionMsg
+loadLevelByLevelId levelId session =
+    loadPublicResourceById interface levelId session
+
+
+gotLoadLevelByLevelIdResponse : LevelId -> Result GetError (Maybe Level) -> Session -> ( Session, Cmd SessionMsg )
+gotLoadLevelByLevelIdResponse =
+    gotLoadResourceByIdResponse interface
+
+
+
+-- LOAD BY CAMPAIGN ID
 
 
 getLevelsByCampaignId : CampaignId -> Session -> RemoteData GetError (List Level)
 getLevelsByCampaignId campaignId session =
-    case Cache.get campaignId session.campaignRequests of
-        NotAsked ->
-            NotAsked
-
-        Loading ->
-            Loading
-
-        Failure error ->
-            todo ""
-
-        Success _ ->
-            Cache.values session.levels
+    interface.getRemoteResource session
+        |> .levelsByCampaignIdRequests
+        |> RemoteRequestDict.get campaignId
+        |> RemoteData.map
+            (interface.getRemoteResource session
+                |> .actual
+                |> Dict.values
                 |> List.filterMap RemoteData.toMaybe
-                |> List.filterMap Maybe.Extra.join
+                |> Maybe.Extra.values
                 |> List.filter (.campaignId >> (==) campaignId)
-                |> RemoteData.succeed
+                |> always
+            )
 
 
 loadLevelsByCampaignId : CampaignId -> CmdUpdater Session SessionMsg
 loadLevelsByCampaignId campaignId session =
-    case Cache.get campaignId session.campaignRequests of
-        NotAsked ->
-            ( Session.updateCampaignRequests (Cache.loading campaignId) session
-            , Data.Level.loadFromServerByCampaignId GotLoadLevelsByCampaignIdResponse campaignId
-            )
+    if
+        interface.getRemoteResource session
+            |> .levelsByCampaignIdRequests
+            |> RemoteRequestDict.get campaignId
+            |> RemoteData.isNotAsked
+    then
+        reloadLevelsByCampaignId campaignId session
 
-        _ ->
-            ( session, Cmd.none )
+    else
+        ( session, Cmd.none )
+
+
+reloadLevelsByCampaignId : CampaignId -> CmdUpdater Session SessionMsg
+reloadLevelsByCampaignId campaignId session =
+    ( RemoteRequestDict.loading campaignId
+        |> updateLevelsByCampaignIdRequests
+        |> flip interface.updateRemoteResource session
+    , GCP.get
+        |> GCP.withPath (toPath interface.resourceType)
+        |> GCP.withStringQueryParameter (toIdParameterName ResourceType.Campaign) campaignId
+        |> GCP.request (GetError.expect (Decode.list decoder) (GotLoadLevelsByCampaignIdResponse campaignId))
+    )
+
+
+gotLoadLevelsByCampaignIdResponse : CampaignId -> Result GetError (List Level) -> CmdUpdater Session SessionMsg
+gotLoadLevelsByCampaignIdResponse campaignId result oldSession =
+    let
+        session =
+            RemoteRequestDict.insertResult campaignId result
+                |> updateLevelsByCampaignIdRequests
+                |> flip interface.updateRemoteResource oldSession
+    in
+    case result of
+        Ok levels ->
+            List.map (fanout .id (Just >> Ok)) levels
+                |> List.map (uncurry gotLoadLevelByLevelIdResponse)
+                |> flip CmdUpdater.batch session
+
+        Err error ->
+            gotGetError error session
 
 
 loadLevelsByCampaignIds : List CampaignId -> CmdUpdater Session SessionMsg
 loadLevelsByCampaignIds campaignIds session =
     List.map loadLevelsByCampaignId campaignIds
         |> flip CmdUpdater.batch session
-
-
-gotLoadLevelResponse : LevelId -> Result GetError (Maybe Level) -> CmdUpdater Session SessionMsg
-gotLoadLevelResponse =
-    gotLoadResponse loadInterface
-
-
-gotLoadLevelsByCampaignIdResponse : CampaignId -> Result GetError (List Level) -> CmdUpdater Session SessionMsg
-gotLoadLevelsByCampaignIdResponse campaignId result oldSession =
-    let
-        newSession =
-            Result.map (always ()) result
-                |> Cache.withResult campaignId
-                |> flip Session.updateCampaignRequests oldSession
-    in
-    case result of
-        Ok levels ->
-            List.map (fanout .id Just >> uncurry gotLevel) levels
-                |> flip CmdUpdater.batch newSession
-
-        Err error ->
-            gotGetError error newSession

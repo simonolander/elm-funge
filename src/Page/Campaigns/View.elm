@@ -20,11 +20,11 @@ import View.Header
 import View.Scewn as Scewn
 
 
-view : Session -> Model -> ( String, Msg )
+view : Session -> Model -> ( String, Element Msg )
 view session _ =
     let
         content =
-            Scewn.layout
+            Scewn.view
                 { south = Nothing
                 , center = Just <| viewCampaigns session
                 , east = Nothing

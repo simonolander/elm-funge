@@ -15,13 +15,12 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (Html)
 import Page.Draft.Model exposing (Model, State(..))
 import Page.Draft.Msg exposing (Msg(..))
 import RemoteData exposing (RemoteData(..))
-import Resource.Draft.Update exposing (getDraftByDraftId)
 import Route
-import Update.Update exposing (getLevelByLevelId)
+import Service.Draft.DraftService exposing (getDraftByDraftId)
+import Service.Level.LevelService exposing (getLevelByLevelId)
 import View.Board
 import View.ErrorScreen
 import View.Header
@@ -40,7 +39,7 @@ type alias LoadedModel =
     }
 
 
-view : Session -> Model -> ( String, Html Msg )
+view : Session -> Model -> ( String, Element Msg )
 view session model =
     let
         content =

@@ -11,8 +11,8 @@ import Page.Msg exposing (PageMsg(..))
 import Ports.Console as Console
 import Random
 import RemoteData
-import Resource.Blueprint.Update exposing (deleteBlueprint, getBlueprintByBlueprintId, loadAllBlueprintsForUser, saveBlueprint)
 import Route
+import Service.Blueprint.BlueprintService exposing (deleteBlueprint, getBlueprintByBlueprintId, loadAllBlueprintsForUser, saveBlueprint)
 import Update.SessionMsg exposing (SessionMsg(..))
 
 

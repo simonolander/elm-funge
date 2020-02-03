@@ -4,7 +4,6 @@ import ApplicationName exposing (applicationName)
 import Data.Session exposing (Session)
 import Element exposing (..)
 import Element.Font as Font
-import Html exposing (Html)
 import Page.Home.Model exposing (Model)
 import Page.Home.Msg exposing (Msg)
 import Route
@@ -12,12 +11,11 @@ import Version exposing (version)
 import View.Box as Box
 import View.Constant exposing (size)
 import View.Header
-import View.Layout
 import View.Scewn
 import ViewComponents
 
 
-view : Session -> Model -> ( String, Html Msg )
+view : Session -> Model -> ( String, Element Msg )
 view session _ =
     let
         titleView =
@@ -73,14 +71,13 @@ view session _ =
                 ]
 
         content =
-            View.Layout.layout <|
-                View.Scewn.view
-                    { north = Just header
-                    , center = Just main
-                    , west = Nothing
-                    , east = Nothing
-                    , south = Just footer
-                    , modal = Nothing
-                    }
+            View.Scewn.view
+                { north = Just header
+                , center = Just main
+                , west = Nothing
+                , east = Nothing
+                , south = Just footer
+                , modal = Nothing
+                }
     in
     ( "Home", content )

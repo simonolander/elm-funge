@@ -1,9 +1,10 @@
-module Resource.ConflictResolutionService exposing
+module Service.ConflictResolutionService exposing
     ( Resolution(..)
+    , getAllManualConflicts
     , getConflictResolution
     , resolveConflict
-    , resolveManuallyKeepLocal
-    , resolveManuallyKeepServer
+    , resolveManuallyKeepLocalResource
+    , resolveManuallyKeepServerResource
     , toConflict
     )
 
@@ -15,22 +16,24 @@ import Dict
 import Maybe.Extra
 import Ports.Console as Console
 import RemoteData
-import Resource.LocalStorageService exposing (LocalStorageInterface, writeResourceToCurrentLocalStorage, writeResourceToExpectedLocalStorage)
-import Resource.ModifiableResource exposing (ModifiableRemoteResource)
+import Service.LocalStorageService exposing (LocalStorageInterface, writeResourceToCurrentLocalStorage, writeResourceToExpectedLocalStorage)
+import Service.ModifiableRemoteResource as ModifiableRemoteResource exposing (ModifiableRemoteResource)
 import Service.ModifyResourceService exposing (writeResourceToServer)
+import Service.RemoteDataDict as RemoteDataDict
 import Update.SessionMsg exposing (SessionMsg)
 
 
 type alias DetermineConflictInterface id res comparable a b =
-    { a
-        | getResource : Session -> ModifiableRemoteResource comparable res b
+    { b
+        | getRemoteResource : Session -> ModifiableRemoteResource comparable res a
         , toKey : id -> comparable
+        , fromKey : comparable -> id
         , equals : res -> res -> Bool
     }
 
 
-type alias ResolveConflictInterface id res comparable a =
-    DetermineConflictInterface id res comparable a (LocalStorageInterface id res {})
+type alias ResolveConflictInterface id res comparable a b =
+    DetermineConflictInterface id res comparable a (LocalStorageInterface id res b)
 
 
 
@@ -52,21 +55,43 @@ toConflict resolution =
             Just oneOrBoth
 
 
+getAllManualConflicts : DetermineConflictInterface id res comparable a b -> Session -> List (OneOrBoth res)
+getAllManualConflicts i session =
+    let
+        getConflict id =
+            case
+                i.getRemoteResource session
+                    |> .actual
+                    |> RemoteDataDict.get id
+                    |> RemoteData.toMaybe
+            of
+                Just actual ->
+                    getConflictResolution i (i.fromKey id) actual session
+                        |> toConflict
+
+                Nothing ->
+                    Nothing
+    in
+    i.getRemoteResource session
+        |> ModifiableRemoteResource.getAllIds
+        |> List.filterMap getConflict
+
+
 getConflictResolution : DetermineConflictInterface id res comparable a b -> id -> Maybe res -> Session -> Resolution res
-getConflictResolution interface id maybeActual session =
+getConflictResolution i id maybeActual session =
     let
         maybeLocal =
-            interface.getResource session
+            i.getRemoteResource session
                 |> .local
-                |> Dict.get (interface.toKey id)
+                |> Dict.get (i.toKey id)
 
         maybeExpected =
-            interface.getResource session
+            i.getRemoteResource session
                 |> .expected
-                |> Dict.get (interface.toKey id)
+                |> Dict.get (i.toKey id)
 
         equals =
-            interface.equals
+            i.equals
     in
     case ( maybeLocal, maybeExpected, maybeActual ) of
         ( Just (Just local), Just (Just expected), Just actual ) ->
@@ -147,24 +172,24 @@ getConflictResolution interface id maybeActual session =
             Merge actual True True False
 
 
-resolveConflict : ResolveConflictInterface id res comparable a -> id -> Maybe res -> CmdUpdater Session SessionMsg
-resolveConflict interface id maybeActual session =
+resolveConflict : ResolveConflictInterface id res comparable a b -> id -> Maybe res -> CmdUpdater Session SessionMsg
+resolveConflict i id maybeActual session =
     flip CmdUpdater.batch session <|
-        case getConflictResolution interface id maybeActual session of
+        case getConflictResolution i id maybeActual session of
             Merge data shouldWriteLocal shouldWriteExpected shouldWriteActual ->
                 Maybe.Extra.values
                     [ if shouldWriteLocal then
-                        Just (writeResourceToCurrentLocalStorage interface id data)
+                        Just (writeResourceToCurrentLocalStorage i id data)
 
                       else
                         Nothing
                     , if shouldWriteExpected then
-                        Just (writeResourceToExpectedLocalStorage interface id data)
+                        Just (writeResourceToExpectedLocalStorage i id data)
 
                       else
                         Nothing
                     , if shouldWriteActual then
-                        Just (writeResourceToServer interface id data)
+                        Just (writeResourceToServer i id data)
 
                       else
                         Nothing
@@ -174,15 +199,15 @@ resolveConflict interface id maybeActual session =
                 []
 
 
-resolveManuallyKeepLocal : ResolveConflictInterface id res comparable a -> comparableId -> CmdUpdater Session SessionMsg
-resolveManuallyKeepLocal interface id session =
+resolveManuallyKeepLocalResource : ResolveConflictInterface id res comparable a b -> id -> CmdUpdater Session SessionMsg
+resolveManuallyKeepLocalResource i id session =
     case
-        interface.getResource session
+        i.getRemoteResource session
             |> .local
-            |> Dict.get id
+            |> Dict.get (i.toKey id)
     of
         Just maybeResource ->
-            writeResourceToServer interface id maybeResource session
+            writeResourceToServer i id maybeResource session
 
         Nothing ->
             ( session
@@ -190,18 +215,18 @@ resolveManuallyKeepLocal interface id session =
             )
 
 
-resolveManuallyKeepServer : ResolveConflictInterface id res comparable a -> comparableId -> CmdUpdater Session SessionMsg
-resolveManuallyKeepServer interface id session =
+resolveManuallyKeepServerResource : ResolveConflictInterface id res comparable a b -> id -> CmdUpdater Session SessionMsg
+resolveManuallyKeepServerResource i id session =
     case
-        interface.getResource session
+        i.getRemoteResource session
             |> .actual
-            |> Dict.get id
+            |> Dict.get (i.toKey id)
             |> Maybe.andThen RemoteData.toMaybe
     of
         Just maybeResource ->
             CmdUpdater.batch
-                [ writeResourceToCurrentLocalStorage interface id maybeResource
-                , writeResourceToExpectedLocalStorage interface id maybeResource
+                [ writeResourceToCurrentLocalStorage i id maybeResource
+                , writeResourceToExpectedLocalStorage i id maybeResource
                 ]
                 session
 

@@ -1,4 +1,4 @@
-module Page.Draft.Update exposing (init, load, update)
+module Page.Draft.Update exposing (load, update)
 
 import Basics.Extra exposing (flip)
 import Data.Board as Board
@@ -14,10 +14,10 @@ import Maybe.Extra
 import Page.Draft.Model exposing (Model, State(..))
 import Page.Draft.Msg exposing (Msg(..))
 import RemoteData
-import Resource.Draft.Update exposing (deleteDraftByDraftId, getDraftByDraftId, loadDraftByDraftId, saveDraft)
 import Route
+import Service.Draft.DraftService exposing (deleteDraftByDraftId, getDraftByDraftId, loadDraftByDraftId, saveDraft)
+import Service.Level.LevelService exposing (getLevelByLevelId, loadLevelByLevelId)
 import Update.SessionMsg exposing (SessionMsg)
-import Update.Update exposing (getLevelByLevelId, loadLevelByLevelId)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg

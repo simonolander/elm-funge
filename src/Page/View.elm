@@ -1,6 +1,7 @@
 module Page.View exposing (view)
 
 import Data.Session exposing (Session)
+import Element exposing (Element)
 import Html exposing (Html)
 import Page.Blueprint.View
 import Page.Blueprints.View
@@ -15,7 +16,7 @@ import Page.Msg exposing (PageMsg)
 import Page.NotFound.View
 
 
-view : Session -> Model -> ( String, Html PageMsg )
+view : Session -> Model -> ( String, Element PageMsg )
 view session pageModel =
     Tuple.mapSecond (Html.map PageMsg) <|
         case pageModel of

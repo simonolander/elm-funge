@@ -1,7 +1,7 @@
 module Service.ModifyResourceService exposing
     ( ModifyResourceInterface
-    , deleteResource
-    , gotDeleteResourceResponse
+    , deleteResourceById
+    , gotDeleteResourceByIdResponse
     , gotSaveResourceResponse
     , saveResource
     , writeResourceToServer
@@ -13,8 +13,8 @@ import Data.SaveError as SaveError exposing (SaveError)
 import Data.Session exposing (Session, updateAccessToken)
 import Data.VerifiedAccessToken as VerifiedAccessToken
 import Json.Encode as Encode
-import Resource.LocalStorageService exposing (LocalStorageInterface, writeResourceToCurrentLocalStorage, writeResourceToExpectedLocalStorage)
-import Resource.ResourceType exposing (ResourceType, toIdParameterName, toPath)
+import Service.LocalStorageService exposing (LocalStorageInterface, writeResourceToCurrentLocalStorage, writeResourceToExpectedLocalStorage)
+import Service.ResourceType exposing (ResourceType, toIdParameterName, toPath)
 import Update.SessionMsg exposing (SessionMsg)
 
 
@@ -26,7 +26,7 @@ type alias ModifyResourceInterface id res a =
             , encode : res -> Encode.Value
             , gotSaveResponseMessage : res -> Maybe SaveError -> SessionMsg
             , gotDeleteResponseMessage : id -> Maybe SaveError -> SessionMsg
-            , idToString : id -> String
+            , toString : id -> String
         }
 
 
@@ -49,7 +49,7 @@ writeResourceToServer i id maybeResource session =
                     ( i.setCurrentValue id maybeResource session
                     , GCP.delete
                         |> GCP.withPath (toPath i.resourceType)
-                        |> GCP.withStringQueryParameter (toIdParameterName i.resourceType) (i.idToString id)
+                        |> GCP.withStringQueryParameter (toIdParameterName i.resourceType) (i.toString id)
                         |> GCP.withAccessToken accessToken
                         |> GCP.request (SaveError.expect (i.gotDeleteResponseMessage id))
                     )
@@ -90,8 +90,8 @@ gotSaveResourceResponse i resource maybeError =
 -- DELETE
 
 
-deleteResource : ModifyResourceInterface id res a -> id -> CmdUpdater Session SessionMsg
-deleteResource i id session =
+deleteResourceById : ModifyResourceInterface id res a -> id -> CmdUpdater Session SessionMsg
+deleteResourceById i id session =
     CmdUpdater.batch
         [ writeResourceToServer i id Nothing
         , writeResourceToCurrentLocalStorage i id Nothing
@@ -99,8 +99,8 @@ deleteResource i id session =
         session
 
 
-gotDeleteResourceResponse : ModifyResourceInterface id res a -> res -> Maybe SaveError -> CmdUpdater Session SessionMsg
-gotDeleteResourceResponse i resource maybeError =
+gotDeleteResourceByIdResponse : ModifyResourceInterface id res a -> id -> Maybe SaveError -> CmdUpdater Session SessionMsg
+gotDeleteResourceByIdResponse i id maybeError =
     CmdUpdater.batch <|
         case maybeError of
             -- TODO Update saving
@@ -109,8 +109,8 @@ gotDeleteResourceResponse i resource maybeError =
                 ]
 
             Nothing ->
-                [ i.setActualValue resource.id Nothing
-                , writeResourceToExpectedLocalStorage i resource.id Nothing
+                [ i.setActualValue id Nothing
+                , writeResourceToExpectedLocalStorage i id Nothing
                 ]
 
 

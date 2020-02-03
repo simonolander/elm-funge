@@ -1,4 +1,4 @@
-module Resource.Draft.DraftResource exposing
+module Service.Draft.DraftResource exposing
     ( DraftResource
     , empty
     , updateDraftsByLevelIdRequests
@@ -6,16 +6,15 @@ module Resource.Draft.DraftResource exposing
 
 import Data.Draft exposing (Draft)
 import Data.DraftId exposing (DraftId)
-import Data.GetError exposing (GetError)
 import Data.LevelId exposing (LevelId)
 import Data.Updater exposing (Updater)
 import Dict exposing (Dict)
-import RemoteData exposing (RemoteData(..))
-import Resource.ModifiableResource exposing (ModifiableRemoteResource)
+import Service.ModifiableRemoteResource exposing (ModifiableRemoteResource)
+import Service.RemoteRequestDict exposing (RemoteRequestDict)
 
 
 type alias DraftResource =
-    ModifiableRemoteResource DraftId Draft { draftsByLevelIdRequests : Dict LevelId (RemoteData GetError ()) }
+    ModifiableRemoteResource DraftId Draft { draftsByLevelIdRequests : RemoteRequestDict LevelId }
 
 
 empty : DraftResource
@@ -28,6 +27,6 @@ empty =
     }
 
 
-updateDraftsByLevelIdRequests : Updater (Dict LevelId (RemoteData GetError ())) -> Updater DraftResource
+updateDraftsByLevelIdRequests : Updater (RemoteRequestDict LevelId) -> Updater DraftResource
 updateDraftsByLevelIdRequests updater resource =
     { resource | draftsByLevelIdRequests = updater resource.draftsByLevelIdRequests }

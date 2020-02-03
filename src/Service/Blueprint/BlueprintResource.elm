@@ -1,4 +1,4 @@
-module Resource.Blueprint.BlueprintResource exposing
+module Service.Blueprint.BlueprintResource exposing
     ( BlueprintResource
     , empty
     , updateLoadAllBlueprintsRemoteData
@@ -12,7 +12,7 @@ import Data.Updater exposing (Updater)
 import Dict
 import Maybe.Extra
 import RemoteData exposing (RemoteData(..))
-import Resource.ModifiableResource exposing (ModifiableRemoteResource)
+import Service.ModifiableRemoteResource exposing (ModifiableRemoteResource)
 
 
 type alias BlueprintResource =

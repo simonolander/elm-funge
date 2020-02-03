@@ -1,20 +1,23 @@
-module Resource.ResourceType exposing
+module Service.ResourceType exposing
     ( ResourceType(..)
     , pluralize
     , toIdParameterName
     , toLocalStoragePrefix
+    , toLower
     , toPath
     , toString
     )
 
 import Basics.Extra exposing (flip)
-import String exposing (toLower)
+import String exposing (append, toLower)
 
 
 type ResourceType
     = Draft
     | Blueprint
     | Level
+    | Campaign
+    | Solution
 
 
 toString : ResourceType -> String
@@ -29,10 +32,21 @@ toString resourceType =
         Level ->
             "Level"
 
+        Campaign ->
+            "Campaign"
+
+        Solution ->
+            "Solution"
+
+
+toLower : ResourceType -> String
+toLower =
+    toString >> String.toLower
+
 
 pluralize : ResourceType -> String
 pluralize =
-    toString >> toLower >> flip append "s"
+    toLower >> flip append "s"
 
 
 toPath : ResourceType -> List String
@@ -42,7 +56,7 @@ toPath =
 
 toIdParameterName : ResourceType -> String
 toIdParameterName =
-    toString >> toLower >> flip append "Id"
+    toLower >> flip append "Id"
 
 
 toLocalStoragePrefix : ResourceType -> String.String

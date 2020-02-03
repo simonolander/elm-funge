@@ -1,5 +1,6 @@
-module Resource.RemoteDataDict exposing
+module Service.RemoteDataDict exposing
     ( RemoteDataDict
+    , fromList
     , get
     , insertResult
     , insertValue
@@ -41,3 +42,9 @@ insertResult id result dict =
 insertValue : comparableId -> Maybe res -> Updater (RemoteDataDict comparableId res)
 insertValue id maybeResource dict =
     Dict.insert id (Success maybeResource) dict
+
+
+fromList : List ( comparable, Maybe res ) -> RemoteDataDict comparable res
+fromList list =
+    List.map (Tuple.mapSecond Success) list
+        |> Dict.fromList

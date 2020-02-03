@@ -1,20 +1,20 @@
 module Page.Campaign.Update exposing (load, update)
 
 import Basics.Extra exposing (flip)
-import Data.Cache as Cache
 import Data.CmdUpdater as CmdUpdater exposing (CmdUpdater, withModel)
 import Data.Draft as Draft
 import Data.Session exposing (Session)
+import Maybe.Extra
 import Page.Campaign.Model exposing (Model)
 import Page.Campaign.Msg exposing (Msg(..))
 import Page.Msg
 import Random
 import RemoteData exposing (RemoteData(..))
-import Resource.Draft.Update exposing (loadDraftsByLevelId, saveDraft)
 import Route
+import Service.Draft.DraftService exposing (loadDraftsByLevelId, saveDraft)
+import Service.Level.LevelService exposing (getLevelByLevelId, loadLevelsByCampaignId)
 import Update.HighScore exposing (loadHighScoreByLevelId)
 import Update.SessionMsg exposing (SessionMsg)
-import Update.Update exposing (loadLevelsByCampaignId)
 
 
 load : CmdUpdater ( Session, Model ) SessionMsg
@@ -82,8 +82,10 @@ update msg tuple =
         ClickedGenerateDraft ->
             fromMsg <|
                 case
-                    Maybe.map (flip Cache.get session.levels) model.selectedLevelId
+                    model.selectedLevelId
+                        |> Maybe.map (flip getLevelByLevelId session)
                         |> Maybe.andThen RemoteData.toMaybe
+                        |> Maybe.Extra.join
                 of
                     Just level ->
                         ( tuple, Random.generate GeneratedDraft (Draft.generator level) )

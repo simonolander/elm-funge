@@ -19,7 +19,7 @@ import Data.UserInfo exposing (UserInfo)
 
 type SessionMsg
     = GeneratedSolution Solution
-    | GotDeleteDraftResponse DraftId (Maybe SaveError)
+    | GotDeleteDraftByDraftIdResponse DraftId (Maybe SaveError)
     | GotLoadDraftByDraftIdResponse DraftId (Result GetError (Maybe Draft))
     | GotLoadDraftsByLevelIdResponse LevelId (Result GetError (List Draft))
     | GotLoadHighScoreResponse LevelId (Result GetError HighScore)
@@ -27,6 +27,7 @@ type SessionMsg
     | GotLoadLevelsByCampaignIdResponse CampaignId (Result GetError (List Level))
     | GotLoadBlueprintResponse BlueprintId (Result GetError (Maybe Blueprint))
     | GotLoadBlueprintsResponse (Result GetError (List Blueprint))
+    | GotLoadSolutionBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
     | GotLoadSolutionsByLevelIdResponse LevelId (Result GetError (List Solution))
     | GotLoadSolutionsByLevelIdsResponse (List LevelId) (Result GetError (List Solution))
     | GotLoadSolutionsBySolutionIdResponse SolutionId (Result GetError (Maybe Solution))
@@ -35,3 +36,4 @@ type SessionMsg
     | GotDeleteBlueprintResponse BlueprintId (Maybe SaveError)
     | GotSaveBlueprintResponse Blueprint (Maybe SaveError)
     | GotSaveSolutionResponse Solution (Maybe SubmitSolutionError)
+    | GotDeleteSolutionBySolutionIdResponse SolutionId (Maybe SaveError)

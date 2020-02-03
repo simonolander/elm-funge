@@ -1,6 +1,7 @@
-module Resource.ModifiableResource exposing
+module Service.ModifiableRemoteResource exposing
     ( ModifiableRemoteResource
     , getAllIds
+    , getResourceById
     , loadedTriplets
     , updateActual
     , updateExpected
@@ -14,8 +15,8 @@ import Data.SaveRequest exposing (SaveRequest)
 import Data.Updater exposing (Updater)
 import Dict exposing (Dict)
 import List.Extra
-import RemoteData exposing (RemoteData)
-import Service.RemoteResource exposing (RemoteResource)
+import RemoteData exposing (RemoteData(..))
+import Service.RemoteResource as RemoteResource exposing (RemoteResource)
 
 
 type alias ModifiableRemoteResource id res a =
@@ -26,6 +27,26 @@ type alias ModifiableRemoteResource id res a =
             , expected : Dict id (Maybe res)
             , saving : Dict id (SaveRequest SaveError (Maybe res))
         }
+
+
+getResourceById : comparableId -> ModifiableRemoteResource comparableId res a -> RemoteData GetError (Maybe res)
+getResourceById id resource =
+    case RemoteResource.getResourceById id resource of
+        NotAsked ->
+            NotAsked
+
+        Loading ->
+            Loading
+
+        Failure error ->
+            Dict.get id resource.local
+                |> Maybe.map Success
+                |> Maybe.withDefault (Failure error)
+
+        Success value ->
+            Dict.get id resource.local
+                |> Maybe.withDefault value
+                |> Success
 
 
 updateLocal : Updater (Dict id (Maybe res)) -> Updater (ModifiableRemoteResource id res a)

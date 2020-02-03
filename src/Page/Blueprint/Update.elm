@@ -18,7 +18,7 @@ import Maybe.Extra
 import Page.Blueprint.Model exposing (Model)
 import Page.Blueprint.Msg exposing (Msg(..))
 import RemoteData
-import Resource.Blueprint.Update exposing (getBlueprintByBlueprintId, loadBlueprintByBlueprintId, saveBlueprint)
+import Service.Blueprint.BlueprintService exposing (getBlueprintByBlueprintId, loadBlueprintByBlueprintId, saveBlueprint)
 import Update.SessionMsg exposing (SessionMsg)
 
 
